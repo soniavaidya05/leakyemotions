@@ -1,10 +1,8 @@
 import numpy as np
 from models.perception import agentVisualField
-import torch 
+import torch
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
-
-
 
 
 def one_hot(N, pos, val=1):
@@ -17,93 +15,96 @@ def findMoveables(world):
     moveList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
-            if world[i,j,0].static == 0:
-                moveList.append([i,j])
+            if world[i, j, 0].static == 0:
+                moveList.append([i, j])
     return moveList
+
 
 def updateEpsilon(epsilon, turn, epoch):
     if epsilon > 0.1:
-        epsilon -= (1/(turn))
+        epsilon -= 1 / (turn)
 
-    if epsilon > 0.2: 
-        if epoch > 1000 and epoch%10000 == 0:
-            epsilon -= .1
+    if epsilon > 0.2:
+        if epoch > 1000 and epoch % 10000 == 0:
+            epsilon -= 0.1
     return epsilon
 
 
 # view a replay memory
 
+
 def examineReplay(models, index, modelnum):
 
-  image_r =  models[modelnum].replay[index][0][0][0].numpy()
-  image_g =  models[modelnum].replay[index][0][0][1].numpy()
-  image_b =  models[modelnum].replay[index][0][0][2].numpy()
+    image_r = models[modelnum].replay[index][0][0][0].numpy()
+    image_g = models[modelnum].replay[index][0][0][1].numpy()
+    image_b = models[modelnum].replay[index][0][0][2].numpy()
 
-  image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
+    image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
 
-  image_r =  models[modelnum].replay[index][3][0][0].numpy()
-  image_g =  models[modelnum].replay[index][3][0][1].numpy()
-  image_b =  models[modelnum].replay[index][3][0][2].numpy()
+    image_r = models[modelnum].replay[index][3][0][0].numpy()
+    image_g = models[modelnum].replay[index][3][0][1].numpy()
+    image_b = models[modelnum].replay[index][3][0][2].numpy()
 
-  image2 = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)  
+    image2 = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
 
-  action = models[modelnum].replay[index][1]
-  reward = models[modelnum].replay[index][2]
-  done = models[modelnum].replay[index][4]
+    action = models[modelnum].replay[index][1]
+    reward = models[modelnum].replay[index][2]
+    done = models[modelnum].replay[index][4]
 
-  return image, image2, (action, reward, done)
+    return image, image2, (action, reward, done)
 
 
 # look at a few replay games
 def replayGames(numGames, modelNum, startingMem, models):
-  for i in range(numGames):
-    image, image2, memInfo = examineReplay(models, i+startingMem,modelNum)
+    for i in range(numGames):
+        image, image2, memInfo = examineReplay(models, i + startingMem, modelNum)
 
-    plt.subplot(1, 2, 1)
-    plt.imshow(image, cmap="Blues_r")
-    plt.subplot(1, 2, 2)
-    plt.imshow(image2, cmap="Accent_r")
-
-    print(memInfo)
-
-    plt.show()
-
-
-def examineReplayMemory(models, episode, index, modelnum):
-
-  image_r =  models[modelnum].replay.memory[episode][index][0][0][0].numpy()
-  image_g =  models[modelnum].replay.memory[episode][index][0][0][1].numpy()
-  image_b =  models[modelnum].replay.memory[episode][index][0][0][2].numpy()
-
-  image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
-
-  image_r =  models[modelnum].replay.memory[episode][index][3][0][0].numpy()
-  image_g =  models[modelnum].replay.memory[episode][index][3][0][1].numpy()
-  image_b =  models[modelnum].replay.memory[episode][index][3][0][2].numpy()
-
-  image2 = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)  
-
-  action = models[modelnum].replay.memory[episode][index][1]
-  reward = models[modelnum].replay.memory[episode][index][2]
-  done = models[modelnum].replay.memory[episode][index][4]
-
-  return image, image2, (action, reward, done)
-
-
-# look at a few replay games
-
-def replayMemoryGames(models, modelNum, episode):
-    epLength = len(models[modelNum].replay.memory[episode])
-    for i in range(epLength):
-        image, image2, memInfo = examineReplayMemory(models, episode, i,modelNum)
-    
         plt.subplot(1, 2, 1)
         plt.imshow(image, cmap="Blues_r")
         plt.subplot(1, 2, 2)
         plt.imshow(image2, cmap="Accent_r")
-    
+
         print(memInfo)
-    
+
+        plt.show()
+
+
+def examineReplayMemory(models, episode, index, modelnum):
+
+    image_r = models[modelnum].replay.memory[episode][index][0][0][0].numpy()
+    image_g = models[modelnum].replay.memory[episode][index][0][0][1].numpy()
+    image_b = models[modelnum].replay.memory[episode][index][0][0][2].numpy()
+
+    image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
+
+    image_r = models[modelnum].replay.memory[episode][index][3][0][0].numpy()
+    image_g = models[modelnum].replay.memory[episode][index][3][0][1].numpy()
+    image_b = models[modelnum].replay.memory[episode][index][3][0][2].numpy()
+
+    image2 = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
+
+    action = models[modelnum].replay.memory[episode][index][1]
+    reward = models[modelnum].replay.memory[episode][index][2]
+    done = models[modelnum].replay.memory[episode][index][4]
+
+    return image, image2, (action, reward, done)
+
+
+# look at a few replay games
+
+
+def replayMemoryGames(models, modelNum, episode):
+    epLength = len(models[modelNum].replay.memory[episode])
+    for i in range(epLength):
+        image, image2, memInfo = examineReplayMemory(models, episode, i, modelNum)
+
+        plt.subplot(1, 2, 1)
+        plt.imshow(image, cmap="Blues_r")
+        plt.subplot(1, 2, 2)
+        plt.imshow(image2, cmap="Accent_r")
+
+        print(memInfo)
+
         plt.show()
 
 
@@ -114,22 +115,25 @@ def numberOfMemories(modelNum, models):
         epLength = len(models[0].replay.memory[e])
         print("Memory ", e, " is ", epLength, " long.")
 
-def updateMemories(world, expList, endUpdate = True):
+
+def updateMemories(world, expList, endUpdate=True):
     # update the reward and last state after all have moved
     for i, j in expList:
         exp = world[i, j, 0].replay[0]
         if endUpdate == True:
-            img2 = agentVisualField(world, (i,j), world[i,j,0].vision)
-            input2 = torch.tensor(img2).unsqueeze(0).permute(0,3,1,2).float()
-            exp = (exp[0], exp[1], world[i, j, 0].reward,input2, exp[4])
-        world[i,j,0].replay[0] = exp
-        if world[i,j,0].kind == "deadAgent": # the dead agent can not move after the last memory update
-            world[i,j,0].static = 1
+            img2 = agentVisualField(world, (i, j), world[i, j, 0].vision)
+            input2 = torch.tensor(img2).unsqueeze(0).permute(0, 3, 1, 2).float()
+            exp = (exp[0], exp[1], world[i, j, 0].reward, input2, exp[4])
+        world[i, j, 0].replay[0] = exp
+        if (
+            world[i, j, 0].kind == "deadAgent"
+        ):  # the dead agent can not move after the last memory update
+            world[i, j, 0].static = 1
     return world
-                
+
 
 def transferMemories(models, world, expList):
-# transfer the events from agent memory to model replay
+    # transfer the events from agent memory to model replay
     for i, j in expList:
         exp = world[i, j, 0].replay[0]
         models[world[i, j, 0].policy].replay.append(exp)

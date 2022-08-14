@@ -4,7 +4,8 @@ import numpy as np
 
 # this may no longer be needed
 
-class Memory():
+
+class Memory:
     def __init__(self, memsize):
         self.memsize = memsize
         self.memory = deque(maxlen=self.memsize)
@@ -20,6 +21,6 @@ class Memory():
             while len(episode) + 1 - time_step < 1:
                 episode = random.sample(self.memory, 1)[0]
             point = np.random.randint(0, len(episode) + 1 - time_step)
-            batches.append(episode[point:point + time_step])
+            batches.append(episode[point : point + time_step])
 
         return batches
