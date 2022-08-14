@@ -1,3 +1,10 @@
+<<<<<<< Updated upstream:objectClasses.py
+=======
+from collections import deque
+
+# define the object classes for a game
+
+>>>>>>> Stashed changes:gem/environment/elements.py
 class Gem:
 
     kind = 'gem'                    # class variable shared by all instances
@@ -13,7 +20,6 @@ class Gem:
         self.passable = 1           # whether the object blocks movement
         self.trainable = 0           # whether there is a network to be optimized
 
-
 class Agent:
 
     kind = 'agent'                  # class variable shared by all instances
@@ -28,22 +34,7 @@ class Agent:
         self.static = 0             # whether the object gets to take actions or not
         self.passable = 0           # whether the object blocks movement
         self.trainable = 1           # whether there is a network to be optimized
-        self.epoch_mem = []
-        self.CurrExp = CurrExp()
-        self.memories = deque([],maxlen=3)
-
-
-
-        
-    def instanceDead(self):
-        self.kind = "deadAgent"
-        self.static = 1             # whether the object gets to take actions or not
-        self.passable = 0           # whether the object blocks movement
-        self.trainable = 1           # whether there is a network to be optimized
-        self.appearence = [130.,130.,130.] # dead agents are grey
-        self.epoch_mem = []
-        # note, this has to allow for one last training
-        
+        self.replay = deque([],maxlen=1)
 
 class deadAgent:
 
@@ -56,12 +47,9 @@ class deadAgent:
         self.policy = "NA"         # agent model here. 
         self.value = 0              # agents have no value
         self.reward = 0             # how much reward this agent has collected
-        self.static = 1             # whether the object gets to take actions or not
+        self.static = 0             # whether the object gets to take actions or not (starts as 0, then goes to 1)
         self.passable = 0           # whether the object blocks movement
         self.trainable = 0           # whether there is a network to be optimized
-        # self.currentExp = []
-        self.CurrExp = ()
-        self.epoch_mem = []
 
 class Wolf:
 
@@ -77,34 +65,7 @@ class Wolf:
         self.static = 0             # whether the object gets to take actions or not
         self.passable = 0           # whether the object blocks movement
         self.trainable = 1           # whether there is a network to be optimized
-        self.epoch_mem = []
-        self.currExp = CurrExp()
-        self.memories = deque([],maxlen=3)
-
-
-    def instanceDead(self):
-        self.kind = "deadwolf"
-        self.static = 1             # whether the object gets to take actions or not
-        self.passable = 0           # whether the object blocks movement
-        self.trainable = 1           # whether there is a network to be optimized
-        self.appearence = [130.,130.,130.]    # dead agents are grey
-        # note, this has to allow for one last training
-        
-class deadwolf:
-
-    kind = 'deadwolf'               # class variable shared by all instances
-
-    def __init__(self):
-        self.health = 10            # for the agents, this is how hungry they are
-        self.appearence = [130.,130.,130.]    # agents are blue
-        self.vision = 4             # agents can see three radius around them
-        self.policy = "NA"         # agent model here. 
-        self.value = 0              # agents have no value
-        self.reward = 0             # how much reward this agent has collected
-        self.static = 1             # whether the object gets to take actions or not
-        self.passable = 0           # whether the object blocks movement
-        self.trainable = 0           # whether there is a network to be optimized
-
+        self.replay = deque([],maxlen=1)
 
 class Wall:
 
@@ -151,31 +112,3 @@ class EmptyObject:
         self.static = 1             # whether the object gets to take actions or not
         self.passable = 1           # whether the object blocks movement
         self.trainable = 0           # whether there is a network to be optimized
-
-class tagAgent:
-
-    kind = 'agent'                  # class variable shared by all instances
-
-    def __init__(self, model):
-        self.health = 10            # for the agents, this is how hungry they are
-        self.is_it = 0              # everyone starts off not it
-        self.appearence = [0., 0., 255.]    # agents are blue when not it
-        self.vision = 4             # agents can see three radius around them
-        # agent model here. need to add a tad that tells the learning somewhere that it is DQN
-        self.policy = model
-        self.value = 0              # agents have no value
-        self.reward = 0             # how much reward this agent has collected
-        self.static = 0             # whether the object gets to take actions or not
-        self.passable = 0           # whether the object blocks movement
-        self.trainable = 1           # whether there is a network to be optimized
-        self.frozen = 0
-
-    def tag(self):
-        if self.is_it == 0:
-            self.is_it = 1
-            self.appearence = [255, 0., 0.]
-            self.frozen = 2
-        else:
-            self.is_it = 0
-            self.appearence = [0., 0., 255]
-
