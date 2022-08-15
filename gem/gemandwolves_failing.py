@@ -51,7 +51,7 @@ emptyObject = EmptyObject()
 walls = Wall()
 
 # create the instances
-def createGemWorld(worldSize, gem1p=0.115, gem2p=0.06, wolf1p=0.01):
+def createGemWorld(worldSize, gem1p=0.115, gem2p=0.06, wolf1p=0.004):
 
     # make the world and populate
     world = createWorld(worldSize, worldSize, 1, emptyObject)
@@ -278,7 +278,7 @@ newModels = 1
 if newModels == 1:
     models = []
     models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent1 model
-    models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))  # wolf model
+    models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
     models = playGame(models, 15, 10000, 100, 0.85)
     with open("modelFile", "wb") as fp:
         pickle.dump(models, fp)
