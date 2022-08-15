@@ -48,6 +48,7 @@ class deadAgent:
         self.static = 0  # whether the object gets to take actions or not (starts as 0, then goes to 1)
         self.passable = 0  # whether the object blocks movement
         self.trainable = 0  # whether there is a network to be optimized
+        self.replay = deque([], maxlen=1)
 
 
 class Wolf:

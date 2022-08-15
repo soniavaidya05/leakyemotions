@@ -98,11 +98,12 @@ def wolfTransitions(
         if world[attLoc1, attLoc2, 0].kind == "agent":
             reward = 10
             wolfEats = wolfEats + 1
+            lastexp = world[attLoc1, attLoc2, 0].replay[0]
+            world[attLoc1, attLoc2, 0] = deadAgent()
+            world[attLoc1, attLoc2, 0].replay.append(lastexp)
 
             if expBuff == True:
                 world[attLoc1, attLoc2, 0].reward = +-10
-
-            world[attLoc1, attLoc2, 0] = deadAgent()
 
     if expBuff == True:
 
