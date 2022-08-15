@@ -33,6 +33,11 @@ class Agent:
         self.trainable = 1  # whether there is a network to be optimized
         self.replay = deque([], maxlen=1)
 
+    # def died(self):
+    #    self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
+    #    self.trainable = 0  # whether there is a network to be optimized
+    #    self.kind = "deadAgent"  # label the agents death
+
 
 class deadAgent:
 

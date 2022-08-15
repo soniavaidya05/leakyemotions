@@ -213,6 +213,7 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
             # but for now, write separate code for different model types to get the memory into the
             # right form for your specific model.
 
+            expList = findMoveables(world)
             models = transferMemories(models, world, expList)
 
         # epdate epsilon to move from mostly random to greedy choices for action with time
