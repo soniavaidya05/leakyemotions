@@ -46,11 +46,12 @@ from collections import deque
 agent1 = Agent(0)
 wolf1 = Wolf(1)
 gem1 = Gem(5, [0.0, 255.0, 0.0])
+gem2 = Gem(15, [255.0, 255.0, 0.0])
 emptyObject = EmptyObject()
 walls = Wall()
 
 # create the instances
-def createGemWorld(worldSize, agentp=0.0, gem1p=0.115, wolf1p=0.02):
+def createGemWorld(worldSize, gem1p=0.115, gem2p=0.06, wolf1p=0.01):
 
     # make the world and populate
     world = createWorld(worldSize, worldSize, 1, emptyObject)
@@ -58,12 +59,12 @@ def createGemWorld(worldSize, agentp=0.0, gem1p=0.115, wolf1p=0.02):
     for i in range(worldSize):
         for j in range(worldSize):
             obj = np.random.choice(
-                [0, 1, 2, 3], p=[agentp, gem1p, wolf1p, 1 - agentp - gem1p - wolf1p]
+                [0, 1, 2, 3], p=[gem1p, gem2p, wolf1p, 1 - gem2p - gem1p - wolf1p]
             )
             if obj == 0:
-                world[i, j, 0] = agent1
-            if obj == 1:
                 world[i, j, 0] = gem1
+            if obj == 1:
+                world[i, j, 0] = gem2
             if obj == 2:
                 world[i, j, 0] = wolf1
 

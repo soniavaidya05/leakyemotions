@@ -132,9 +132,12 @@ def updateMemories(world, expList, endUpdate=True):
     return world
 
 
-def transferMemories(models, world, expList):
+def transferMemories(models, world, expList,extraReward=True):
     # transfer the events from agent memory to model replay
     for i, j in expList:
         exp = world[i, j, 0].replay[0]
         models[world[i, j, 0].policy].replay.append(exp)
+        if extraReward == True and abs(exp[2]) > 9:
+            for _ in range(5):
+                models[world[i, j, 0].policy].replay.append(exp)
     return models
