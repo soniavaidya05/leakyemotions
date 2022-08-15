@@ -106,6 +106,15 @@ def gameTest(worldSize):
     plt.show()
 
 
+def findAgents(world):
+    moveList = []
+    for i in range(world.shape[0]):
+        for j in range(world.shape[0]):
+            if world[i, j, 0].kind == "agent":
+                moveList.append([i, j])
+    return moveList
+
+
 # play and learn the game
 
 
@@ -125,6 +134,10 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
         wolfEats = 0
         agentEats = 0
         while done == 0:
+
+            findAgent = findAgents(world)
+            if len(findAgent) == 0:
+                done = 1
 
             withinTurn = withinTurn + 1
             turn = turn + 1
@@ -192,7 +205,7 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
             losses = losses + loss.detach().numpy()
 
         if epoch % 100 == 0:
-            print(epoch, totalRewards, wolfEats, losses, epsilon)
+            print(epoch, withinTurn, totalRewards, wolfEats, losses, epsilon)
             wolfEats = 0
             agentEats = 0
             losses = 0
