@@ -16,7 +16,9 @@ Our hope is that Gem will foster new research ideas, applications, and tools for
 ## Development
 Gem uses the [poetry](https://python-poetry.org/) package manager to manage its dependencies. To install gem in development mode, run the following command:
 ```
-poetry install
+conda create --name socialai python=3.9
+conda activate socialai
+pip install poetry && poetry env use system && poetry install
 ```
 in the folder containing the ``pyproject.toml`` file.
 
