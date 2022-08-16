@@ -104,8 +104,8 @@ def wolfTransitions(
             world[attLoc1, attLoc2, 0] = deadAgent()
             world[attLoc1, attLoc2, 0].replay.append(lastexp)
 
-            if expBuff == True:
-                world[attLoc1, attLoc2, 0].reward = +-10
+            #if expBuff == True:
+            #    world[attLoc1, attLoc2, 0].reward += 10
 
     if expBuff == True:
 
