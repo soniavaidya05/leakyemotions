@@ -19,11 +19,30 @@ def findMoveables(world):
                 moveList.append([i, j])
     return moveList
 
+
+def findAgents_tag(world):
+    agentList = []
+    for i in range(world.shape[0]):
+        for j in range(world.shape[0]):
+            if world[i, j, 0].kind == "tagAgent":
+                agentList.append(world[i, j, 0])
+    return agentList
+
+
+def findAgents_static(world):
+    agentList = []
+    for i in range(world.shape[0]):
+        for j in range(world.shape[0]):
+            if world[i, j, 0].kind == "staticAgent":
+                agentList.append(world[i, j, 0])
+    return agentList
+
+
 def findAgents(world):
     agentList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
-            if world[i, j, 0].kind == 'tagAgent':
+            if world[i, j, 0].kind == "Agent":
                 agentList.append(world[i, j, 0])
     return agentList
 
@@ -35,6 +54,7 @@ def updateEpsilon(epsilon, turn, epoch):
     if epsilon > 0.2:
         if epoch > 1000 and epoch % 10000 == 0:
             epsilon -= 0.1
+    # print("new epsilon", epsilon)
     return epsilon
 
 

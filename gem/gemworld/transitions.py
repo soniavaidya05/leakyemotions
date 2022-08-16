@@ -1,4 +1,4 @@
-from gem.environment.elements import EmptyObject, deadAgent
+from gem.environment.elements import EmptyObject, deadAgent, deadAgent2
 from models.perception import agentVisualField
 import torch
 import torch.nn as nn
@@ -101,11 +101,16 @@ def wolfTransitions(
             lastexp = world[attLoc1, attLoc2, 0].replay[-1]
             # need to ensure that the agent knows that it is dying
             exp = (lastexp[0], lastexp[1], -25, lastexp[3], 1)
-            #world[attLoc1, attLoc2, 0].reward -= 25
+            # world[attLoc1, attLoc2, 0].reward -= 25
             world[attLoc1, attLoc2, 0] = deadAgent()
             world[attLoc1, attLoc2, 0].replay.append(exp)
 
-            #if expBuff == True:
+        if world[attLoc1, attLoc2, 0].kind == "staticAgent":
+            reward = 10
+            wolfEats = wolfEats + 1
+            world[attLoc1, attLoc2, 0] = deadAgent2()
+
+            # if expBuff == True:
             #    world[attLoc1, attLoc2, 0].reward += 10
 
     if expBuff == True:

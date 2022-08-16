@@ -2,11 +2,13 @@
 # coding: utf-8
 
 from gem.utils import (
+    findAgents_static,
     one_hot,
     updateEpsilon,
     updateMemories,
     transferMemories,
     findMoveables,
+    findAgents,
 )
 
 
@@ -17,7 +19,15 @@ from models.dqn import DQN, modelDQN
 from models.randomActions import modelRandomAction
 
 from models.perception import agentVisualField
-from environment.elements import Agent, EmptyObject, Wolf, Gem, Wall, deadAgent
+from environment.elements import (
+    Agent,
+    EmptyObject,
+    StaticAgent,
+    Wolf,
+    Gem,
+    Wall,
+    deadAgent,
+)
 from gem.game_utils import createWorld, createWorldImage
 from gemworld.transitions import agentTransitions, wolfTransitions
 
@@ -51,9 +61,12 @@ gem1 = Gem(5, [0.0, 255.0, 0.0])
 gem2 = Gem(15, [255.0, 255.0, 0.0])
 emptyObject = EmptyObject()
 walls = Wall()
+staticAgent1 = StaticAgent()
 
 # create the instances
-def createGemWorld(worldSize, gem1p=0.115, gem2p=0.06, agent1p=0.008):
+def createGemWorld(
+    worldSize, staticAgents=False, gem1p=0.115, gem2p=0.06, agent1p=0.008
+):
 
     # make the world and populate
     world = createWorld(worldSize, worldSize, 1, emptyObject)
@@ -68,7 +81,10 @@ def createGemWorld(worldSize, gem1p=0.115, gem2p=0.06, agent1p=0.008):
             if obj == 1:
                 world[i, j, 0] = gem2
             if obj == 2:
-                world[i, j, 0] = agent1
+                if staticAgents == False:
+                    world[i, j, 0] = agent1
+                if staticAgents == True:
+                    world[i, j, 0] = staticAgent1
 
     cBal = np.random.choice([0, 1])
     if cBal == 0:
@@ -121,7 +137,9 @@ def findAgents(world):
 # play and learn the game
 
 
-def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9, staticAgents = True):
+def playGame(
+    models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9, staticAgents=True
+):
 
     losses = 0
     totalRewards = 0
@@ -133,7 +151,7 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9, st
     trainableModels = [1]
 
     for epoch in range(epochs):
-        world = createGemWorld(worldSize)
+        world = createGemWorld(worldSize, staticAgents)
         rewards = 0
         done = 0
         withinTurn = 0
@@ -141,8 +159,9 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9, st
         agentEats = 0
         while done == 0:
 
-            findAgent = findAgents(world)
-            if len(findAgent) == 0:
+            findAgent1 = findAgents(world)
+            findAgent2 = findAgents_static(world)
+            if len(findAgent1) + len(findAgent2) == 0:
                 done = 1
 
             withinTurn = withinTurn + 1
@@ -170,12 +189,16 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9, st
                 if staticAgents == True:
                     if holdObject.static != 1:
                         if holdObject.kind != "deadAgent":
-                            action = models[holdObject.policy].takeAction([input, epsilon])
+                            action = models[holdObject.policy].takeAction(
+                                [input, epsilon]
+                            )
                 if staticAgents == False:
                     if holdObject.kind != "agent":
                         if holdObject.static != 1:
                             if holdObject.kind != "deadAgent":
-                                action = models[holdObject.policy].takeAction([input, epsilon])
+                                action = models[holdObject.policy].takeAction(
+                                    [input, epsilon]
+                                )
 
                 if withinTurn == maxEpochs:
                     done = 1
@@ -292,15 +315,14 @@ if newModels == 1:
     models.append(modelRandomAction(10, 4))  # agent1 model
     # models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))
     models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
-    models = playGame(models, 15, 10000, 100, 0.85, staticAgents = True)
+    models = playGame(models, 15, 10000, 100, 0.85, staticAgents=True)
     with open("modelFileWolf", "wb") as fp:
         pickle.dump(models, fp)
     createVideo(30, 0)
-    models = playGame(models, 15, 10000, 100, 0.5, staticAgents = True)
+    models = playGame(models, 15, 10000, 100, 0.5, staticAgents=True)
     with open("modelFileWolf", "wb") as fp:
         pickle.dump(models, fp)
     createVideo(30, 1)
-    
 
 
 if newModels == 2:
@@ -308,7 +330,7 @@ if newModels == 2:
         models = pickle.load(fp)
 
 for games in range(20):
-    models = playGame(models, 15, 10000, 100, 0.3, staticAgents = False)
+    models = playGame(models, 15, 10000, 100, 0.3, staticAgents=False)
     with open("modelFileWolf_" + str(games), "wb") as fp:
         pickle.dump(models, fp)
     createVideo(30, games + 2)
