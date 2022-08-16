@@ -279,6 +279,7 @@ if newModels == 1:
     models = []
     models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent1 model
     models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
+    # why is this at epsilon -.15 for the random part?
     models = playGame(models, 15, 10000, 100, 0.85)
     with open("modelFile", "wb") as fp:
         pickle.dump(models, fp)

@@ -100,7 +100,7 @@ def wolfTransitions(
             wolfEats = wolfEats + 1
             lastexp = world[attLoc1, attLoc2, 0].replay[-1]
             # need to ensure that the agent knows that it is dying
-            world[attLoc1, attLoc2, 0].reward = +-25
+            world[attLoc1, attLoc2, 0].reward -= 25
             world[attLoc1, attLoc2, 0] = deadAgent()
             world[attLoc1, attLoc2, 0].replay.append(lastexp)
 
@@ -113,6 +113,6 @@ def wolfTransitions(
         input2 = torch.tensor(img2).unsqueeze(0).permute(0, 3, 1, 2).float()
         exp = (input, action, reward, input2, done)
         world[newLoc1, newLoc2, 0].replay.append(exp)
-        world[newLoc1, newLoc2, 0].reward = +reward
+        world[newLoc1, newLoc2, 0].reward += reward
 
     return world, models, wolfEats
