@@ -98,7 +98,9 @@ def wolfTransitions(
         if world[attLoc1, attLoc2, 0].kind == "agent":
             reward = 10
             wolfEats = wolfEats + 1
-            lastexp = world[attLoc1, attLoc2, 0].replay[0]
+            lastexp = world[attLoc1, attLoc2, 0].replay[-1]
+            # need to ensure that the agent knows that it is dying
+            world[attLoc1, attLoc2, 0].reward = +-25
             world[attLoc1, attLoc2, 0] = deadAgent()
             world[attLoc1, attLoc2, 0].replay.append(lastexp)
 

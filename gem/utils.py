@@ -119,7 +119,8 @@ def numberOfMemories(modelNum, models):
 def updateMemories(world, expList, endUpdate=True):
     # update the reward and last state after all have moved
     for i, j in expList:
-        exp = world[i, j, 0].replay[0]
+        # note, should these replay[0]s be replay[-1] in case we need to store more memories?
+        exp = world[i, j, 0].replay[-1]
         if endUpdate == True:
             img2 = agentVisualField(world, (i, j), world[i, j, 0].vision)
             input2 = torch.tensor(img2).unsqueeze(0).permute(0, 3, 1, 2).float()
@@ -132,10 +133,11 @@ def updateMemories(world, expList, endUpdate=True):
     return world
 
 
-def transferMemories(models, world, expList,extraReward=True):
+def transferMemories(models, world, expList, extraReward=True):
     # transfer the events from agent memory to model replay
     for i, j in expList:
-        exp = world[i, j, 0].replay[0]
+        # note, should these replay[0]s be replay[-1] in case we need to store more memories?
+        exp = world[i, j, 0].replay[-1]
         models[world[i, j, 0].policy].replay.append(exp)
         if extraReward == True and abs(exp[2]) > 9:
             for _ in range(5):
