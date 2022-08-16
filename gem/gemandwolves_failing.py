@@ -119,7 +119,7 @@ def findAgents(world):
 # play and learn the game
 
 
-def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
+def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9, staticAgents = False):
 
     losses = 0
     totalRewards = 0
@@ -161,9 +161,16 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
 
                 img = agentVisualField(world, (i, j), holdObject.vision)
                 input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+                if staticAgents == True:
                 if holdObject.static != 1:
                     if holdObject.kind != "deadAgent":
                         action = models[holdObject.policy].takeAction([input, epsilon])
+                if staticAgents == False:
+                    if holdObject.kind != "agent":
+                        if holdObject.static != 1:
+                            if holdObject.kind != "deadAgent":
+                                action = models[holdObject.policy].takeAction([input, epsilon])
+
 
                 if withinTurn == maxEpochs:
                     done = 1
@@ -280,7 +287,7 @@ if newModels == 1:
     models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent1 model
     models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
     # why is this at epsilon -.15 for the random part?
-    models = playGame(models, 15, 10000, 100, 0.85)
+    models = playGame(models, 15, 10000, 100, 0.85, staticAgents = True)
     with open("modelFile", "wb") as fp:
         pickle.dump(models, fp)
     createVideo(30, 0)
@@ -291,7 +298,7 @@ if newModels == 2:
         models = pickle.load(fp)
 
 for games in range(20):
-    models = playGame(models, 15, 10000, 100, 0.3)
+    models = playGame(models, 15, 10000, 100, 0.3, staticAgents=True)
     with open("modelFile_" + str(games), "wb") as fp:
         pickle.dump(models, fp)
     createVideo(30, games + 1)

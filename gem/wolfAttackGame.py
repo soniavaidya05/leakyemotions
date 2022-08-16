@@ -121,7 +121,7 @@ def findAgents(world):
 # play and learn the game
 
 
-def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
+def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9, staticAgents = True):
 
     losses = 0
     totalRewards = 0
@@ -167,9 +167,15 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
 
                 img = agentVisualField(world, (i, j), holdObject.vision)
                 input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
-                if holdObject.static != 1:
-                    if holdObject.kind != "deadAgent":
-                        action = models[holdObject.policy].takeAction([input, epsilon])
+                if staticAgents == True:
+                    if holdObject.static != 1:
+                        if holdObject.kind != "deadAgent":
+                            action = models[holdObject.policy].takeAction([input, epsilon])
+                if staticAgents == False:
+                    if holdObject.kind != "agent":
+                        if holdObject.static != 1:
+                            if holdObject.kind != "deadAgent":
+                                action = models[holdObject.policy].takeAction([input, epsilon])
 
                 if withinTurn == maxEpochs:
                     done = 1
@@ -286,10 +292,15 @@ if newModels == 1:
     models.append(modelRandomAction(10, 4))  # agent1 model
     # models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))
     models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
-    models = playGame(models, 15, 10000, 100, 0.85)
+    models = playGame(models, 15, 10000, 100, 0.85, staticAgents = True)
     with open("modelFileWolf", "wb") as fp:
         pickle.dump(models, fp)
     createVideo(30, 0)
+    models = playGame(models, 15, 10000, 100, 0.5, staticAgents = True)
+    with open("modelFileWolf", "wb") as fp:
+        pickle.dump(models, fp)
+    createVideo(30, 1)
+    
 
 
 if newModels == 2:
@@ -297,7 +308,7 @@ if newModels == 2:
         models = pickle.load(fp)
 
 for games in range(20):
-    models = playGame(models, 15, 10000, 100, 0.3)
+    models = playGame(models, 15, 10000, 100, 0.3, staticAgents = False)
     with open("modelFileWolf_" + str(games), "wb") as fp:
         pickle.dump(models, fp)
-    createVideo(30, games + 1)
+    createVideo(30, games + 2)
