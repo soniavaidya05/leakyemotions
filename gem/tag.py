@@ -7,6 +7,7 @@ from gem.utils import (
     updateMemories,
     transferMemories,
     findMoveables,
+    findAgents_tag,
 )
 
 
