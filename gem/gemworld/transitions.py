@@ -51,7 +51,7 @@ def agentTransitions(
         input2 = torch.tensor(img2).unsqueeze(0).permute(0, 3, 1, 2).float()
         exp = (input, action, reward, input2, done)
         world[newLoc1, newLoc2, 0].replay.append(exp)
-        world[newLoc1, newLoc2, 0].reward = +reward
+        world[newLoc1, newLoc2, 0].reward += reward
 
     return world, models, totalRewards
 
