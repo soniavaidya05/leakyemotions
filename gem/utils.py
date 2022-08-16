@@ -19,6 +19,14 @@ def findMoveables(world):
                 moveList.append([i, j])
     return moveList
 
+def findAgents(world):
+    agentList = []
+    for i in range(world.shape[0]):
+        for j in range(world.shape[0]):
+            if world[i, j, 0].kind == 'tagAgent':
+                agentList.append(world[i, j, 0])
+    return agentList
+
 
 def updateEpsilon(epsilon, turn, epoch):
     if epsilon > 0.1:

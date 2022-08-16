@@ -43,12 +43,37 @@ from collections import deque
 
 # generate the gem search game objects
 
-agent1 = Agent(0)
-agent2 = Agent(1)
-gem1 = Gem(5, [0.0, 255.0, 0.0])
-gem2 = Gem(15, [255.0, 0.0, 0.0])
-emptyObject = EmptyObject()
-walls = Wall()
+
+def createTagWorld(worldSize, agentp=.05):
+    agents = 0
+    emptyObject = EmptyObject()
+    walls = Wall()
+
+    # make the world and populate
+    world = createWorld(worldSize, worldSize, 1, emptyObject)
+    for i in range(worldSize):
+        for j in range(worldSize):
+            obj = np.random.choice([0, 1], p=[agentp, 1 - agentp])
+            if obj == 0:
+                world[i, j, 0] = TagAgent(0)
+                agents = + 1
+    
+    agents = findAgents(world)
+    itAgent = random.choice(agents)
+    itAgent.tag()
+
+        #world[round(worldSize/2),round(worldSize/2),0] = agent1
+        #world[round((worldSize/2))-1,(round(worldSize/2))+1,0] = agent2
+    for i in range(worldSize):
+        world[0, i, 0] = walls
+        world[worldSize-1, i, 0] = walls
+        world[i, 0, 0] = walls
+        world[i, worldSize-1, 0] = walls
+
+    return world
+
+
+
 
 # create the instances
 def createGemWorld(worldSize, agentp=0.0, gem1p=0.115, gem2p=0.06):
