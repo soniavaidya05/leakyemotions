@@ -1,61 +1,12 @@
-import os
-os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from astropy.visualization import make_lupton_rgb
-
+from gem.environment.elements import EmptyObject, tagAgent, Wall
+from models.perception import agentVisualField
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import random
-import copy
-
-import pickle
-
-from collections import deque
-
-import objectClasses
-
-
-def findAgents(world):
-    agentList = []
-    for i in range(world.shape[0]):
-        for j in range(world.shape[0]):
-            if world[i, j, 0].kind == 'agent':
-                agentList.append(world[i, j, 0])
-    return agentList
-
-def createTagWorldMulti(worldSize, agentp=.05):
-    agents = 0
-
-    # make the world and populate
-    world = createWorld(worldSize, worldSize, 1, emptyObject)
-    for i in range(worldSize):
-        for j in range(worldSize):
-            obj = np.random.choice([0, 1], p=[agentp, 1 - agentp])
-            if obj == 0:
-                world[i, j, 0] = tagAgent(0)
-                agents = + 1
-    
-    agents = findAgents(world)
-    itAgent = random.choice(agents)
-    itAgent.tag()
-
-        #world[round(worldSize/2),round(worldSize/2),0] = agent1
-        #world[round((worldSize/2))-1,(round(worldSize/2))+1,0] = agent2
-    for i in range(worldSize):
-        world[0, i, 0] = walls
-        world[worldSize-1, i, 0] = walls
-        world[i, 0, 0] = walls
-        world[i, worldSize-1, 0] = walls
-
-    return world
-
 
 # ---------------------------------------------------------------------
-#                      Agent transition rules (updated)
+#                      Tag Agent transition rules
 # ---------------------------------------------------------------------
 def tagAgentTransitions(holdObject, action, world, models, i, j, rewards, totalRewards, done, input, expBuff=True):
 
@@ -153,3 +104,111 @@ def tagAgentTransitions(holdObject, action, world, models, i, j, rewards, totalR
 
     return world, models, totalRewards
 
+
+
+def agentTransitions(
+    holdObject, action, world, models, i, j, totalRewards, done, input, expBuff=True
+):
+
+    newLoc1 = i
+    newLoc2 = j
+
+    reward = 0
+
+    if action == 0:
+        attLoc1 = i - 1
+        attLoc2 = j
+
+    if action == 1:
+        attLoc1 = i + 1
+        attLoc2 = j
+
+    if action == 2:
+        attLoc1 = i
+        attLoc2 = j - 1
+
+    if action == 3:
+        attLoc1 = i
+        attLoc2 = j + 1
+
+    if world[attLoc1, attLoc2, 0].passable == 1:
+        world[i, j, 0] = EmptyObject()
+        reward = world[attLoc1, attLoc2, 0].value
+        world[attLoc1, attLoc2, 0] = holdObject
+        newLoc1 = attLoc1
+        newLoc2 = attLoc2
+        totalRewards = totalRewards + reward
+    else:
+        if world[attLoc1, attLoc2, 0].kind == "wall":
+            reward = -0.1
+
+    if expBuff == True:
+        img2 = agentVisualField(world, (newLoc1, newLoc2), holdObject.vision)
+        input2 = torch.tensor(img2).unsqueeze(0).permute(0, 3, 1, 2).float()
+        exp = (input, action, reward, input2, done)
+        world[newLoc1, newLoc2, 0].replay.append(exp)
+        world[newLoc1, newLoc2, 0].reward = +reward
+
+    return world, models, totalRewards
+
+
+# ---------------------------------------------------------------------
+#                      Wolf transition rules
+# ---------------------------------------------------------------------
+
+
+def wolfTransitions(
+    holdObject, action, world, models, i, j, wolfEats, done, input, expBuff=True
+):
+
+    newLoc1 = i
+    newLoc2 = j
+
+    reward = 0
+
+    if action == 0:
+        attLoc1 = i - 1
+        attLoc2 = j
+
+    if action == 1:
+        attLoc1 = i + 1
+        attLoc2 = j
+
+    if action == 2:
+        attLoc1 = i
+        attLoc2 = j - 1
+
+    if action == 3:
+        attLoc1 = i
+        attLoc2 = j + 1
+
+    if world[attLoc1, attLoc2, 0].passable == 1:
+        world[i, j, 0] = EmptyObject()
+        world[attLoc1, attLoc2, 0] = holdObject
+        newLoc1 = attLoc1
+        newLoc2 = attLoc2
+        reward = 0
+    else:
+        if world[attLoc1, attLoc2, 0].kind == "wall":
+            reward = -0.1
+        if world[attLoc1, attLoc2, 0].kind == "agent":
+            reward = 10
+            wolfEats = wolfEats + 1
+            lastexp = world[attLoc1, attLoc2, 0].replay[-1]
+            # need to ensure that the agent knows that it is dying
+            world[attLoc1, attLoc2, 0].reward = +-25
+            world[attLoc1, attLoc2, 0] = deadAgent()
+            world[attLoc1, attLoc2, 0].replay.append(lastexp)
+
+            if expBuff == True:
+                world[attLoc1, attLoc2, 0].reward = +-10
+
+    if expBuff == True:
+
+        img2 = agentVisualField(world, (newLoc1, newLoc2), holdObject.vision)
+        input2 = torch.tensor(img2).unsqueeze(0).permute(0, 3, 1, 2).float()
+        exp = (input, action, reward, input2, done)
+        world[newLoc1, newLoc2, 0].replay.append(exp)
+        world[newLoc1, newLoc2, 0].reward = +reward
+
+    return world, models, wolfEats
