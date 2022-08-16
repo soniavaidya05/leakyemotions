@@ -1,4 +1,4 @@
-from gem.environment.elements import EmptyObject, deadAgent, deadAgent2
+from gem.environment.elements import EmptyObject, deadAgent
 from models.perception import agentVisualField
 import torch
 import torch.nn as nn
