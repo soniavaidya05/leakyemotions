@@ -100,9 +100,10 @@ def wolfTransitions(
             wolfEats = wolfEats + 1
             lastexp = world[attLoc1, attLoc2, 0].replay[-1]
             # need to ensure that the agent knows that it is dying
-            world[attLoc1, attLoc2, 0].reward -= 25
+            exp = (lastexp[0], lastexp[1], -25, lastexp[3], 1)
+            #world[attLoc1, attLoc2, 0].reward -= 25
             world[attLoc1, attLoc2, 0] = deadAgent()
-            world[attLoc1, attLoc2, 0].replay.append(lastexp)
+            world[attLoc1, attLoc2, 0].replay.append(exp)
 
             #if expBuff == True:
             #    world[attLoc1, attLoc2, 0].reward += 10
