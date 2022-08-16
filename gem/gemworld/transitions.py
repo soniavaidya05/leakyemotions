@@ -108,7 +108,7 @@ def wolfTransitions(
         if world[attLoc1, attLoc2, 0].kind == "staticAgent":
             reward = 10
             wolfEats = wolfEats + 1
-            world[attLoc1, attLoc2, 0] = deadAgent2()
+            world[attLoc1, attLoc2, 0].died()
 
             # if expBuff == True:
             #    world[attLoc1, attLoc2, 0].reward += 10
