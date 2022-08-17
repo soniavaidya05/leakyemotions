@@ -62,6 +62,7 @@ def createTagWorld(worldSize, agentp=.05):
     agents = findAgents_tag(world)
     itAgent = random.choice(agents)
     itAgent.tag()
+    itAgent.frozen = 0
 
         #world[round(worldSize/2),round(worldSize/2),0] = agent1
         #world[round((worldSize/2))-1,(round(worldSize/2))+1,0] = agent2
@@ -110,7 +111,6 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
 
     for epoch in range(epochs):
         world = createTagWorld(worldSize)
-        rewards = 0
         done = 0
         withinTurn = 0
         while done == 0:

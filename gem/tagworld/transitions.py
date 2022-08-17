@@ -16,12 +16,6 @@ def tagAgentTransitions(holdObject, action, world, models, i, j, totalRewards, d
 
     reward = 0
 
-    # if object is frozen, just decrease frozen count and then go from there
-    # hope this doesn't break learning
-    if holdObject.frozen > 0:
-        holdObject.frozen -= 1
-        return world, models, totalRewards
-
     if action == 0:
         attLoc1 = i-1
         attLoc2 = j
@@ -34,8 +28,12 @@ def tagAgentTransitions(holdObject, action, world, models, i, j, totalRewards, d
     elif action == 3:
         attLoc1 = i
         attLoc2 = j+1
-
-    if world[attLoc1, attLoc2, 0].passable == 1:
+    
+    if holdObject.frozen > 0:
+        # if object is frozen, just decrease frozen count and then go from there
+        # hope this doesn't break learning
+        holdObject.frozen -= 1
+    elif world[attLoc1, attLoc2, 0].passable == 1:
         world[i, j, 0] = EmptyObject()
         reward += 1
         world[attLoc1, attLoc2, 0] = holdObject
