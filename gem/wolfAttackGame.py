@@ -325,8 +325,16 @@ if newModels == 2:
     with open("modelFileWolf", "rb") as fp:
         models = pickle.load(fp)
 
-for games in range(20):
+for games in range(10):
     models = playGame(models, 15, 10000, 100, 0.3, staticAgents=False)
     with open("modelFileWolf_" + str(games + 10), "wb") as fp:
         pickle.dump(models, fp)
     createVideo(15, games + 10)
+
+# let the agents start to learn the world as well and move to a larger world
+for games in range(10):
+    models[0] = modelDQN(5, 0.0001, 1500, 650, 350, 100, 4)
+    models = playGame(models, 25, 10000, 100, 0.3, staticAgents=False)
+    with open("modelFileWolf_" + str(games + 10), "wb") as fp:
+        pickle.dump(models, fp)
+    createVideo(25, games + 20)
