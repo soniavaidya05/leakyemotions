@@ -93,6 +93,10 @@ def createTagWorld(worldSize, agentp=.05):
 
 # test the world models
 
+def plotWorld(world):
+    img = createWorldImage(world)
+    plt.imshow(img)
+    plt.show()
 
 def gameTest(worldSize):
     world = createTagWorld(worldSize)
@@ -241,6 +245,9 @@ def watchAgame(world, models, maxEpochs):
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
     return ani
 
+
+video = watchAgame(world3, models, maxEpochs=100)
+video.save('./tag_output/tag_vid_1.gif', writer="PillowWriter", fps=2)
 
 def createVideo(worldSize, num):
     filename = "animation_A" + str(num) + ".gif"
