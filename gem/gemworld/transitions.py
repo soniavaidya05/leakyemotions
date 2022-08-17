@@ -87,6 +87,9 @@ def wolfTransitions(
         attLoc2 = j + 1
 
     if world[attLoc1, attLoc2, 0].passable == 1:
+        if world[attLoc1, attLoc2, 0].appearence == [0.0, 0.0, 255.0]:
+            reward = 10
+            wolfEats = wolfEats + 1
         world[i, j, 0] = EmptyObject()
         world[attLoc1, attLoc2, 0] = holdObject
         newLoc1 = attLoc1
@@ -105,13 +108,13 @@ def wolfTransitions(
             world[attLoc1, attLoc2, 0] = deadAgent()
             world[attLoc1, attLoc2, 0].replay.append(exp)
 
-        if world[attLoc1, attLoc2, 0].kind == "staticAgent":
-            reward = 10
-            wolfEats = wolfEats + 1
-            world[attLoc1, attLoc2, 0].died()
+        # if world[attLoc1, attLoc2, 0].kind == "StaticAgent":
+        #    reward = 10
+        #    wolfEats = wolfEats + 1
+        #    world[attLoc1, attLoc2, 0].died()
 
-            # if expBuff == True:
-            #    world[attLoc1, attLoc2, 0].reward += 10
+        # if expBuff == True:
+        #    world[attLoc1, attLoc2, 0].reward += 10
 
     if expBuff == True:
         img2 = agentVisualField(world, (newLoc1, newLoc2), holdObject.vision)

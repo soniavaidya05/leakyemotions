@@ -59,12 +59,15 @@ agent1 = Agent(0)
 wolf1 = Wolf(1)
 gem1 = Gem(5, [0.0, 255.0, 0.0])
 gem2 = Gem(15, [255.0, 255.0, 0.0])
+gem3 = Gem(10, [0.0, 0.0, 255.0])
 emptyObject = EmptyObject()
 walls = Wall()
-staticAgent1 = StaticAgent()
+staticAgent1 = StaticAgent(0)
 
 # create the instances
-def createGemWorld(worldSize, staticAgents=False, gem1p=0.115, gem2p=0.06, agent1p=0.1):
+def createGemWorld(
+    worldSize, staticAgents=False, gem1p=0.115, gem2p=0.06, agent1p=0.05
+):
 
     # make the world and populate
     world = createWorld(worldSize, worldSize, 1, emptyObject)
@@ -82,7 +85,7 @@ def createGemWorld(worldSize, staticAgents=False, gem1p=0.115, gem2p=0.06, agent
                 if staticAgents == False:
                     world[i, j, 0] = agent1
                 if staticAgents == True:
-                    world[i, j, 0] = staticAgent1
+                    world[i, j, 0] = gem3
 
     cBal = np.random.choice([0, 1])
     if cBal == 0:
@@ -144,6 +147,7 @@ def playGame(
     status = 1
     turn = 0
     sync_freq = 500
+    modelUpdate_freq = 25
     # note, rather than having random actions, we could keep the memories growing and just not train agents for
     # little while to train a different part of the model, or could stop training wolves, etc.
     trainableModels = [1]
@@ -157,10 +161,10 @@ def playGame(
         agentEats = 0
         while done == 0:
 
-            findAgent1 = findAgents(world)
-            findAgent2 = findAgents_static(world)
-            if len(findAgent1) + len(findAgent2) == 0:
-                done = 1
+            if staticAgents == False:
+                findAgent = findAgents(world)
+                if len(findAgent) == 0:
+                    done = 1
 
             withinTurn = withinTurn + 1
             turn = turn + 1
@@ -230,13 +234,19 @@ def playGame(
             expList = findMoveables(world)
             models = transferMemories(models, world, expList)
 
+            # testing training after every event
+            if withinTurn % modelUpdate_freq == 0:
+                for mods in trainableModels:
+                    loss = models[mods].training(150, 0.9)
+                    losses = losses + loss.detach().numpy()
+
         # epdate epsilon to move from mostly random to greedy choices for action with time
         epsilon = updateEpsilon(epsilon, turn, epoch)
 
         # only train at the end of the game, and train each of the models that are in the model list
-        for mods in trainableModels:
-            loss = models[mods].training(150, 0.9)
-            losses = losses + loss.detach().numpy()
+        # for mods in trainableModels:
+        #    loss = models[mods].training(150, 0.9)
+        #    losses = losses + loss.detach().numpy()
 
         if epoch % 100 == 0:
             print(epoch, withinTurn, totalRewards, wolfEats, losses, epsilon)
@@ -313,15 +323,12 @@ if newModels == 1:
     models.append(modelRandomAction(10, 4))  # agent1 model
     # models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))
     models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
-    models = playGame(models, 15, 10000, 100, 0.85, staticAgents=False)
-    with open("modelFileWolf", "wb") as fp:
-        pickle.dump(models, fp)
-    createVideo(30, 0)
-    models = playGame(models, 15, 10000, 100, 0.5, staticAgents=False)
-    with open("modelFileWolf", "wb") as fp:
-        pickle.dump(models, fp)
-    createVideo(30, 1)
 
+    for games in range(10):
+        models = playGame(models, 15, 1000, 100, 0.85, staticAgents=False)
+        with open("modelFileWolf_" + str(games), "wb") as fp:
+            pickle.dump(models, fp)
+        createVideo(15, games)
 
 if newModels == 2:
     with open("modelFileWolf", "rb") as fp:
@@ -329,6 +336,6 @@ if newModels == 2:
 
 for games in range(20):
     models = playGame(models, 15, 10000, 100, 0.3, staticAgents=False)
-    with open("modelFileWolf_" + str(games), "wb") as fp:
+    with open("modelFileWolf_" + str(games + 10), "wb") as fp:
         pickle.dump(models, fp)
-    createVideo(30, games + 2)
+    createVideo(15, games + 10)

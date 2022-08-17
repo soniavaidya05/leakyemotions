@@ -38,25 +38,27 @@ class Agent:
         self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
         self.trainable = 0  # whether there is a network to be optimized
 
+
 class StaticAgent:
 
-    kind = "staticAgent"  # class variable shared by all instances
+    kind = "StaticAgent"  # class variable shared by all instances
 
-    def __init__(self):
+    def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
         self.appearence = [0.0, 0.0, 255.0]  # agents are blue
         self.vision = 4  # agents can see three radius around them
-        self.policy = "NA"  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
+        self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.value = 0  # agents have no value
         self.reward = 0  # how much reward this agent has collected
         self.static = 1  # whether the object gets to take actions or not
         self.passable = 0  # whether the object blocks movement
-        self.trainable = 0  # whether there is a network to be optimized
+        self.trainable = 1  # whether there is a network to be optimized
         self.replay = deque([], maxlen=1)
 
     def died(self):
-        self.kind = "deadAgent2"  # label the agents death
+        self.kind = "deadAgent"  # label the agents death
         self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
+        self.trainable = 0  # whether there is a network to be optimized
 
 
 class deadAgent:
@@ -71,7 +73,7 @@ class deadAgent:
         self.value = 0  # agents have no value
         self.reward = 0  # how much reward this agent has collected
         self.static = 0  # whether the object gets to take actions or not (starts as 0, then goes to 1)
-        self.passable = 1  # whether the object blocks movement
+        self.passable = 0  # whether the object blocks movement
         self.trainable = 0  # whether there is a network to be optimized
         self.replay = deque([], maxlen=1)
 
