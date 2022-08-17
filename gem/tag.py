@@ -59,11 +59,6 @@ def createTagWorld(worldSize, agentp=.05):
                 world[i, j, 0] = TagAgent(0)
                 num_agents += 1
     
-    agents = findAgents_tag(world)
-    itAgent = random.choice(agents)
-    itAgent.tag()
-    itAgent.frozen = 0
-
         #world[round(worldSize/2),round(worldSize/2),0] = agent1
         #world[round((worldSize/2))-1,(round(worldSize/2))+1,0] = agent2
     for i in range(worldSize):
@@ -71,6 +66,17 @@ def createTagWorld(worldSize, agentp=.05):
         world[worldSize-1, i, 0] = walls
         world[i, 0, 0] = walls
         world[i, worldSize-1, 0] = walls
+    
+    agents = findAgents_tag(world)
+    itAgent = random.choice(agents)
+    itAgent.tag()
+    itAgent.frozen = 0
+
+    # need to initialize replay buffer of each agent
+    # state and next state - curstate
+    # action = random(0,4)
+    # reward = 0
+    # done = 0
 
     return world
 
@@ -110,6 +116,7 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
     sync_freq = 500
 
     for epoch in range(epochs):
+        print(epoch)
         world = createTagWorld(worldSize)
         done = 0
         withinTurn = 0
