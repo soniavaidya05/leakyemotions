@@ -22,6 +22,9 @@ def findMoveables(world):
 
 # we will want to have a single "find" script that takes as input what you are looking for and finds those objects
 def findAgents_tag(world):
+    print(
+        "the findAgents_tag function will be deleted soon. Please update to findInstance"
+    )
     agentList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
@@ -34,7 +37,7 @@ def findAgents(world):
     agentList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
-            if world[i, j, 0].kind == "Agent":
+            if world[i, j, 0].kind == "agent":
                 agentList.append(world[i, j, 0])
     return agentList
 
