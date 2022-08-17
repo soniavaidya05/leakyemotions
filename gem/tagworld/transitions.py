@@ -44,11 +44,12 @@ def tagAgentTransitions(holdObject, action, world, models, i, j, totalRewards, d
         # bump into each other
         alterAgent = world[attLoc1, attLoc2, 0]
         if holdObject.is_it == 1 & alterAgent.is_it == 0:
+            print('tag')
             reward += 7
             holdObject.tag()  # change who is it
             alterAgent.tag()
 
-            lastexp = world[attLoc1, attLoc2, 0].replay[-1]
+            lastexp = alterAgent.replay[-1]
             exp = (lastexp[0], lastexp[1], -15, lastexp[3], 1)
             world[attLoc1, attLoc2, 0].replay.append(exp)
 
