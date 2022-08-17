@@ -77,6 +77,17 @@ def createTagWorld(worldSize, agentp=.05):
     # action = random(0,4)
     # reward = 0
     # done = 0
+    all_agents = findMoveables(world)
+    for i, j in all_agents:
+        agent = world[i,j,0]
+        img = agentVisualField(world, (i, j), agent.vision)
+        current_state = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+        next_state = current_state
+        action = random.randint(0,3)
+        reward = 0
+        done = 0
+        exp = (current_state, action, reward, next_state, done)
+        agent.replay.append(exp)
 
     return world
 
