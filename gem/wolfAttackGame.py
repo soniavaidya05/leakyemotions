@@ -64,9 +64,7 @@ walls = Wall()
 staticAgent1 = StaticAgent()
 
 # create the instances
-def createGemWorld(
-    worldSize, staticAgents=False, gem1p=0.115, gem2p=0.06, agent1p=0.008
-):
+def createGemWorld(worldSize, staticAgents=False, gem1p=0.115, gem2p=0.06, agent1p=0.1):
 
     # make the world and populate
     world = createWorld(worldSize, worldSize, 1, emptyObject)
@@ -138,7 +136,7 @@ def findAgents(world):
 
 
 def playGame(
-    models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9, staticAgents=True
+    models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9, staticAgents=False
 ):
 
     losses = 0
@@ -186,13 +184,13 @@ def playGame(
 
                 img = agentVisualField(world, (i, j), holdObject.vision)
                 input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
-                if staticAgents == True:
+                if staticAgents == False:
                     if holdObject.static != 1:
                         if holdObject.kind != "deadAgent":
                             action = models[holdObject.policy].takeAction(
                                 [input, epsilon]
                             )
-                if staticAgents == False:
+                if staticAgents == True:
                     if holdObject.kind != "agent":
                         if holdObject.static != 1:
                             if holdObject.kind != "deadAgent":
@@ -315,11 +313,11 @@ if newModels == 1:
     models.append(modelRandomAction(10, 4))  # agent1 model
     # models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))
     models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
-    models = playGame(models, 15, 10000, 100, 0.85, staticAgents=True)
+    models = playGame(models, 15, 10000, 100, 0.85, staticAgents=False)
     with open("modelFileWolf", "wb") as fp:
         pickle.dump(models, fp)
     createVideo(30, 0)
-    models = playGame(models, 15, 10000, 100, 0.5, staticAgents=True)
+    models = playGame(models, 15, 10000, 100, 0.5, staticAgents=False)
     with open("modelFileWolf", "wb") as fp:
         pickle.dump(models, fp)
     createVideo(30, 1)

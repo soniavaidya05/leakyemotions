@@ -33,11 +33,10 @@ class Agent:
         self.trainable = 1  # whether there is a network to be optimized
         self.replay = deque([], maxlen=1)
 
-    # def died(self):
-    #    self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
-    #    self.trainable = 0  # whether there is a network to be optimized
-    #    self.kind = "deadAgent"  # label the agents death
-
+    def died(self):
+        self.kind = "deadAgent"  # label the agents death
+        self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
+        self.trainable = 0  # whether there is a network to be optimized
 
 class StaticAgent:
 
@@ -56,12 +55,8 @@ class StaticAgent:
         self.replay = deque([], maxlen=1)
 
     def died(self):
-        self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
-        self.trainable = 0  # whether there is a network to be optimized
         self.kind = "deadAgent2"  # label the agents death
-        self.static = 1  # whether the object gets to take actions or not (starts as 0, then goes to 1)
-        self.passable = 0  # whether the object blocks movement
-        self.trainable = 0  # whether there is a network to be optimized
+        self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
 
 
 class deadAgent:
