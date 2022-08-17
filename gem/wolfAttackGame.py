@@ -65,7 +65,7 @@ walls = Wall()
 staticAgent1 = StaticAgent(0)
 
 # create the instances
-def createGemWorld(
+def createWolfHunt(
     worldSize, staticAgents=False, gem1p=0.115, gem2p=0.06, agent1p=0.05
 ):
 
@@ -104,11 +104,50 @@ def createGemWorld(
     return world
 
 
+def createWolvesGems(
+    worldSize, staticAgents=False, gem1p=0.115, gem2p=0.06, agent1p=0.005
+):
+
+    # make the world and populate
+    world = createWorld(worldSize, worldSize, 1, emptyObject)
+
+    for i in range(worldSize):
+        for j in range(worldSize):
+            obj = np.random.choice(
+                [0, 1, 2, 3], p=[gem1p, gem2p, agent1p, 1 - gem2p - gem1p - agent1p]
+            )
+            if obj == 0:
+                world[i, j, 0] = gem1
+            if obj == 1:
+                world[i, j, 0] = gem2
+            if obj == 2:
+                if staticAgents == False:
+                    world[i, j, 0] = wolf1
+                if staticAgents == True:
+                    world[i, j, 0] = gem3
+
+    cBal = np.random.choice([0, 1])
+    if cBal == 0:
+        world[round(worldSize / 2), round(worldSize / 2), 0] = agent1
+        world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent1
+    if cBal == 1:
+        world[round(worldSize / 2), round(worldSize / 2), 0] = agent1
+        world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent1
+
+    for i in range(worldSize):
+        world[0, i, 0] = walls
+        world[worldSize - 1, i, 0] = walls
+        world[i, 0, 0] = walls
+        world[i, worldSize - 1, 0] = walls
+
+    return world
+
+
 # test the world models
 
 
 def gameTest(worldSize):
-    world = createGemWorld(worldSize)
+    world = createWolfHunt(worldSize)
     image = createWorldImage(world)
 
     moveList = []
@@ -130,7 +169,13 @@ def gameTest(worldSize):
 
 
 def playGame(
-    models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9, staticAgents=False
+    models,
+    worldSize=15,
+    epochs=200000,
+    maxEpochs=100,
+    epsilon=0.9,
+    staticAgents=False,
+    gameVersion="wolfHunt",
 ):
 
     losses = 0
@@ -144,7 +189,10 @@ def playGame(
     trainableModels = [1]
 
     for epoch in range(epochs):
-        world = createGemWorld(worldSize, staticAgents)
+        if gameVersion == "wolfHunt":
+            world = createWolfHunt(worldSize, staticAgents)
+        if gameVersion == "wolvesGems":
+            world = createWolvesGems(worldSize, staticAgents)
         rewards = 0
         done = 0
         withinTurn = 0
@@ -153,7 +201,7 @@ def playGame(
         while done == 0:
 
             if staticAgents == False:
-                findAgent = findInstance(world, "Agent")
+                findAgent = findAgents(world)
                 if len(findAgent) == 0:
                     done = 1
 
@@ -296,9 +344,12 @@ def watchAgame(world, models, maxEpochs):
     return ani
 
 
-def createVideo(worldSize, num):
+def createVideo(worldSize, num, gameVersion="wolfHunt"):
     filename = "wolfattack_animation_" + str(num) + ".gif"
-    world = createGemWorld(worldSize)
+    if gameVersion == "wolfHunt":
+        world = createWolfHunt(worldSize, staticAgents=False)
+    if gameVersion == "wolvesGems":
+        world = createWolvesGems(worldSize, staticAgents=False)
     ani1 = watchAgame(world, models, 100)
     ani1.save(filename, writer="PillowWriter", fps=2)
 
@@ -306,7 +357,7 @@ def createVideo(worldSize, num):
 # setup a game and save models (this is a quick proof of principle version that can be vastly improved on)
 # note, the outputs can be better done than the hard coded print, but we need something.
 
-newModels = 1
+newModels = 2
 
 # create neuralnet models
 if newModels == 1:
@@ -315,18 +366,33 @@ if newModels == 1:
     # models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))
     models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
 
-    for games in range(10):
-        models = playGame(models, 15, 1000, 100, 0.85, staticAgents=False)
+    for games in range(2):
+        models = playGame(
+            models, 15, 10000, 100, 0.85, staticAgents=False, gameVersion="wolfHunt"
+        )
         with open("modelFileWolf_" + str(games), "wb") as fp:
             pickle.dump(models, fp)
-        createVideo(15, games)
+        createVideo(15, games, gameVersion="wolfHunt")
 
 if newModels == 2:
-    with open("modelFileWolf", "rb") as fp:
+    with open("modelFileWolf_10", "rb") as fp:
         models = pickle.load(fp)
 
-for games in range(20):
-    models = playGame(models, 15, 10000, 100, 0.3, staticAgents=False)
+
+# let the agents start to learn the world as well and move to a larger world
+for games in range(5):
+    models[0] = modelDQN(5, 0.0001, 1500, 650, 350, 100, 4)
+    models = playGame(
+        models, 25, 10000, 100, 0.95, staticAgents=False, gameVersion="wolvesGems"
+    )
     with open("modelFileWolf_" + str(games + 10), "wb") as fp:
         pickle.dump(models, fp)
-    createVideo(15, games + 10)
+    createVideo(25, games + 10, gameVersion="wolvesGems")
+
+for games in range(5):
+    models = playGame(
+        models, 15, 10000, 100, 0.3, staticAgents=False, gameVersion="wolvesGems"
+    )
+    with open("modelFileWolf_" + str(games + 10), "wb") as fp:
+        pickle.dump(models, fp)
+    createVideo(15, games + 20, gameVersion="wolvesGems")
