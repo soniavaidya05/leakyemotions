@@ -20,20 +20,12 @@ def findMoveables(world):
     return moveList
 
 
+# we will want to have a single "find" script that takes as input what you are looking for and finds those objects
 def findAgents_tag(world):
     agentList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
             if world[i, j, 0].kind == "tagAgent":
-                agentList.append(world[i, j, 0])
-    return agentList
-
-
-def findAgents_static(world):
-    agentList = []
-    for i in range(world.shape[0]):
-        for j in range(world.shape[0]):
-            if world[i, j, 0].kind == "StaticAgent":
                 agentList.append(world[i, j, 0])
     return agentList
 
@@ -45,6 +37,15 @@ def findAgents(world):
             if world[i, j, 0].kind == "Agent":
                 agentList.append(world[i, j, 0])
     return agentList
+
+
+def findInstance(world, kind):
+    instList = []
+    for i in range(world.shape[0]):
+        for j in range(world.shape[0]):
+            if world[i, j, 0].kind == kind:
+                instList.append(world[i, j, 0])
+    return instList
 
 
 def updateEpsilon(epsilon, turn, epoch):

@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from gem.utils import (
-    findAgents_static,
+    findInstance,
     one_hot,
     updateEpsilon,
     updateMemories,
@@ -126,15 +126,6 @@ def gameTest(worldSize):
     plt.show()
 
 
-def findAgents(world):
-    moveList = []
-    for i in range(world.shape[0]):
-        for j in range(world.shape[0]):
-            if world[i, j, 0].kind == "agent":
-                moveList.append([i, j])
-    return moveList
-
-
 # play and learn the game
 
 
@@ -162,7 +153,7 @@ def playGame(
         while done == 0:
 
             if staticAgents == False:
-                findAgent = findAgents(world)
+                findAgent = findInstance(world, "Agent")
                 if len(findAgent) == 0:
                     done = 1
 
