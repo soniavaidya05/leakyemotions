@@ -1,3 +1,14 @@
+from collections import deque
+import random
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+
+from models.memory import Memory
+from models.perception import agentVisualField
+
+
 class modelClassPlayer:
 
     kind = "humanPlayer"  # class variable shared by all instances
@@ -10,6 +21,10 @@ class modelClassPlayer:
 
     def takeAction(self, params):
         pytorchInput, epsilon = params
+        inp = pytorchInput.permute(0, 3, 1, 2).numpy()
+        inp = np.squeeze(inp)
+
+        # something like above
 
         # img = needs to convert the pytorchInput back into RGB
         # change (1,3,9,9) back to (9,9,3)
