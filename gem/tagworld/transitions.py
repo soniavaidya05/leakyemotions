@@ -9,18 +9,12 @@ import torch.nn.functional as F
 #                      Tag Agent transition rules
 # ---------------------------------------------------------------------
 
-def tagAgentTransitions(holdObject, action, world, models, i, j, rewards, totalRewards, done, input, expBuff=True):
+def tagAgentTransitions(holdObject, action, world, models, i, j, totalRewards, done, input, expBuff=True):
 
     newLoc1 = i
     newLoc2 = j
 
     reward = 0
-
-    # if object is frozen, just decrease frozen count and then go from there
-    # hope this doesn't break learning
-    if holdObject.frozen > 0:
-        holdObject.frozen -= 1
-        return world, models, totalRewards
 
     if action == 0:
         attLoc1 = i-1
@@ -34,8 +28,12 @@ def tagAgentTransitions(holdObject, action, world, models, i, j, rewards, totalR
     elif action == 3:
         attLoc1 = i
         attLoc2 = j+1
-
-    if world[attLoc1, attLoc2, 0].passable == 1:
+    
+    if holdObject.frozen > 0:
+        # if object is frozen, just decrease frozen count and then go from there
+        # hope this doesn't break learning
+        holdObject.frozen -= 1
+    elif world[attLoc1, attLoc2, 0].passable == 1:
         world[i, j, 0] = EmptyObject()
         reward += 1
         world[attLoc1, attLoc2, 0] = holdObject
@@ -46,11 +44,12 @@ def tagAgentTransitions(holdObject, action, world, models, i, j, rewards, totalR
         # bump into each other
         alterAgent = world[attLoc1, attLoc2, 0]
         if holdObject.is_it == 1 & alterAgent.is_it == 0:
+            print('tag')
             reward += 7
             holdObject.tag()  # change who is it
             alterAgent.tag()
 
-            lastexp = world[attLoc1, attLoc2, 0].replay[-1]
+            lastexp = alterAgent.replay[-1]
             exp = (lastexp[0], lastexp[1], -15, lastexp[3], 1)
             world[attLoc1, attLoc2, 0].replay.append(exp)
 

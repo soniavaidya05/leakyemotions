@@ -16,9 +16,9 @@ from gem.utils import (
 from models.memory import Memory
 from models.dqn import DQN, modelDQN
 from models.perception import agentVisualField
-from environment.elements import TagAgent, EmptyObject, Wolf, Gem, Wall, deadAgent
+from environment.elements import TagAgent, EmptyObject, Wall
 from gem.game_utils import createWorld, createWorldImage
-from gemworld.transitions import agentTransitions, wolfTransitions
+from tagworld.transitions import tagAgentTransitions
 
 
 import os
@@ -46,7 +46,7 @@ from collections import deque
 
 
 def createTagWorld(worldSize, agentp=.05):
-    agents = 0
+    num_agents = 0
     emptyObject = EmptyObject()
     walls = Wall()
 
@@ -57,11 +57,12 @@ def createTagWorld(worldSize, agentp=.05):
             obj = np.random.choice([0, 1], p=[agentp, 1 - agentp])
             if obj == 0:
                 world[i, j, 0] = TagAgent(0)
-                agents = + 1
+                num_agents += 1
     
-    agents = findAgents(world)
+    agents = findAgents_tag(world)
     itAgent = random.choice(agents)
     itAgent.tag()
+    itAgent.frozen = 0
 
         #world[round(worldSize/2),round(worldSize/2),0] = agent1
         #world[round((worldSize/2))-1,(round(worldSize/2))+1,0] = agent2
@@ -73,82 +74,11 @@ def createTagWorld(worldSize, agentp=.05):
 
     return world
 
-
-
-
-# create the instances
-def createGemWorld(worldSize, agentp=0.0, gem1p=0.115, gem2p=0.06):
-
-    # make the world and populate
-    world = createWorld(worldSize, worldSize, 1, emptyObject)
-
-    for i in range(worldSize):
-        for j in range(worldSize):
-            obj = np.random.choice(
-                [0, 1, 2, 3], p=[agentp, gem1p, gem2p, 1 - agentp - gem1p - gem2p]
-            )
-            if obj == 0:
-                world[i, j, 0] = agent1
-            if obj == 1:
-                world[i, j, 0] = gem1
-            if obj == 2:
-                world[i, j, 0] = gem2
-
-    cBal = np.random.choice([0, 1])
-    if cBal == 0:
-        world[round(worldSize / 2), round(worldSize / 2), 0] = agent1
-        world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent2
-    if cBal == 1:
-        world[round(worldSize / 2), round(worldSize / 2), 0] = agent2
-        world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent1
-
-    for i in range(worldSize):
-        world[0, i, 0] = walls
-        world[worldSize - 1, i, 0] = walls
-        world[i, 0, 0] = walls
-        world[i, worldSize - 1, 0] = walls
-
-    return world
-
-
-def createGemWorldTest(worldSize, agentp=0.0, gem1p=0.1, gem2p=0.0):
-
-    # make the world and populate
-    world = createWorld(worldSize, worldSize, 1, emptyObject)
-
-    for i in range(worldSize):
-        for j in range(worldSize):
-            obj = np.random.choice(
-                [0, 1, 2, 3], p=[agentp, gem1p, gem2p, 1 - agentp - gem1p - gem2p]
-            )
-            if obj == 1:
-                if i > round(worldSize / 2):
-                    world[i, j, 0] = gem1
-                else:
-                    world[i, j, 0] = gem2
-
-    cBal = np.random.choice([0, 1])
-    if cBal == 0:
-        world[round(worldSize / 2), round(worldSize / 2), 0] = agent1
-        world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent2
-    if cBal == 1:
-        world[round(worldSize / 2), round(worldSize / 2), 0] = agent2
-        world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent1
-
-    for i in range(worldSize):
-        world[0, i, 0] = walls
-        world[worldSize - 1, i, 0] = walls
-        world[i, 0, 0] = walls
-        world[i, worldSize - 1, 0] = walls
-
-    return world
-
-
 # test the world models
 
 
 def gameTest(worldSize):
-    world = createGemWorld(worldSize)
+    world = createTagWorld(worldSize)
     image = createWorldImage(world)
 
     moveList = []
@@ -167,7 +97,9 @@ def gameTest(worldSize):
 
 
 # play and learn the game
-
+# world1 = createTagWorld(30)
+# plt.imshow(createWorldImage(world1))
+# plt.show()
 
 def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
 
@@ -178,12 +110,9 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
     sync_freq = 500
 
     for epoch in range(epochs):
-        world = createGemWorld(worldSize)
-        rewards = 0
+        world = createTagWorld(worldSize)
         done = 0
         withinTurn = 0
-        wolfEats = 0
-        agentEats = 0
         while done == 0:
 
             withinTurn = withinTurn + 1
@@ -206,6 +135,7 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
                 holdObject = world[i, j, 0]
 
                 img = agentVisualField(world, (i, j), holdObject.vision)
+
                 input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
                 if holdObject.static != 1:
                     action = models[holdObject.policy].takeAction([input, epsilon])
@@ -213,8 +143,8 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
                 if withinTurn == maxEpochs:
                     done = 1
 
-                if holdObject.kind == "agent":
-                    world, models, totalRewards = agentTransitions(
+                if holdObject.kind == "TagAgent":
+                    world, models, totalRewards = tagAgentTransitions(
                         holdObject,
                         action,
                         world,
@@ -224,11 +154,6 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
                         totalRewards,
                         done,
                         input,
-                    )
-
-                if holdObject.kind == "wolf":
-                    world, models, wolfEats = wolfTransitions(
-                        holdObject, action, world, models, i, j, wolfEats, done, input
                     )
 
             # transfer the events for each agent into the appropriate model after all have moved
@@ -251,20 +176,18 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
             losses = losses + loss.detach().numpy()
 
         if epoch % 100 == 0:
-            print(epoch, totalRewards, wolfEats, losses, epsilon)
-            wolfEats = 0
-            agentEats = 0
+            print(epoch, totalRewards, losses, epsilon)
             losses = 0
             totalRewards = 0
     return models
 
+tmp = playGame(models, 15, 1000, 100, .85)
 
 def watchAgame(world, models, maxEpochs):
     fig = plt.figure()
     ims = []
 
     totalRewards = 0
-    wolfEats = 0
     done = 0
 
     for _ in range(maxEpochs):
@@ -284,8 +207,8 @@ def watchAgame(world, models, maxEpochs):
             if holdObject.static != 1:
                 action = models[holdObject.policy].takeAction([input, 0.1])
 
-            if holdObject.kind == "agent":
-                world, models, totalRewards = agentTransitions(
+            if holdObject.kind == "TagAgent":
+                world, models, totalRewards = tagAgentTransitions(
                     holdObject,
                     action,
                     world,
@@ -295,11 +218,6 @@ def watchAgame(world, models, maxEpochs):
                     totalRewards,
                     done,
                     input,
-                )
-
-            if holdObject.kind == "wolf":
-                world, models, wolfEats = wolfTransitions(
-                    holdObject, action, world, models, i, j, wolfEats, done, input
                 )
 
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
@@ -329,7 +247,7 @@ if newModels == 1:
     models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent1 model
     models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent2 model
     models = playGame(models, 15, 10000, 100, 0.85)
-    with open("modelFile", "wb") as fp:
+    with open("tagModelFile", "wb") as fp:
         pickle.dump(models, fp)
     createVideo(30, 0)
 

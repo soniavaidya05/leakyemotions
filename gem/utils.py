@@ -25,7 +25,7 @@ def findAgents_tag(world):
     agentList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
-            if world[i, j, 0].kind == "tagAgent":
+            if world[i, j, 0].kind == "TagAgent":
                 agentList.append(world[i, j, 0])
     return agentList
 
