@@ -148,7 +148,7 @@ class EmptyObject:
 
 class TagAgent:
 
-    kind = "agent"  # class variable shared by all instances
+    kind = "TagAgent"  # class variable shared by all instances
 
     def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
@@ -163,6 +163,7 @@ class TagAgent:
         self.passable = 0  # whether the object blocks movement
         self.trainable = 1  # whether there is a network to be optimized
         self.frozen = 0
+        self.replay = deque([], maxlen=1)
 
     def tag(self):
         if self.is_it == 0:

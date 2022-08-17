@@ -9,7 +9,7 @@ import torch.nn.functional as F
 #                      Tag Agent transition rules
 # ---------------------------------------------------------------------
 
-def tagAgentTransitions(holdObject, action, world, models, i, j, rewards, totalRewards, done, input, expBuff=True):
+def tagAgentTransitions(holdObject, action, world, models, i, j, totalRewards, done, input, expBuff=True):
 
     newLoc1 = i
     newLoc2 = j
