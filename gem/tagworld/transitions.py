@@ -32,7 +32,7 @@ def tagAgentTransitions(holdObject, action, world, models, i, j, totalRewards, d
     if holdObject.frozen > 0:
         # if object is frozen, just decrease frozen count and then go from there
         # hope this doesn't break learning
-        holdObject.frozen -= 1
+        holdObject.dethaw()
     elif world[attLoc1, attLoc2, 0].passable == 1:
         world[i, j, 0] = EmptyObject()
         reward += 1
@@ -43,7 +43,7 @@ def tagAgentTransitions(holdObject, action, world, models, i, j, totalRewards, d
     elif world[attLoc1, attLoc2, 0].kind == "TagAgent":
         # bump into each other
         alterAgent = world[attLoc1, attLoc2, 0]
-        if holdObject.is_it == 1 & alterAgent.is_it == 0:
+        if holdObject.is_it == 1 and alterAgent.is_it == 0:
             reward += 7
             holdObject.tag()  # change who is it
             alterAgent.tag()
@@ -52,7 +52,7 @@ def tagAgentTransitions(holdObject, action, world, models, i, j, totalRewards, d
             exp = (lastexp[0], lastexp[1], -15, lastexp[3], 1)
             world[attLoc1, attLoc2, 0].replay.append(exp)
 
-        elif holdObject.is_it == 0 & alterAgent.is_it == 1:
+        elif holdObject.is_it == 0 and alterAgent.is_it == 1:
             # agent bumpbed into tag person
 
             reward -= 13
