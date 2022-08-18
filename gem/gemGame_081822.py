@@ -424,7 +424,7 @@ if newModels == 1:
         createVideo(15, games, gameVersion="createGemsSearch")
 
 if newModels == 2:
-    with open("modelGemsSearch_10", "rb") as fp:
+    with open("Model_StableWolfAttack", "rb") as fp:
         models = pickle.load(fp)
 
 
