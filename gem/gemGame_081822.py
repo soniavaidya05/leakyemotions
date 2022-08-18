@@ -410,14 +410,14 @@ if newModels == 1:
 
     for games in range(2):
         models = playGame(
-            models,
-            [1],
-            15,
-            10000,
-            100,
-            0.85,
-            staticAgents=False,
-            gameVersion="wolfHunt",
+            models,  # model file list
+            [1],  # which models from that list should be trained, here not the agents
+            15,  # world size
+            10000,  # number of epochs
+            100,  # max epoch length
+            0.85,  # starting epsilon
+            staticAgents=False,  # should the agents be frozen to train wolves (not working)
+            gameVersion="wolfHunt",  # which game to play
         )
         with open("modelGemsSearch_" + str(games), "wb") as fp:
             pickle.dump(models, fp)
