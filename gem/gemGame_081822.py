@@ -430,10 +430,12 @@ if newModels == 2:
 
 # let the agents start to learn the world as well and move to a larger world
 for games in range(1):
-    models[0] = modelDQN(5, 0.0001, 1500, 650, 350, 100, 4)
+    models[0] = modelDQN(
+        5, 0.0001, 1500, 650, 350, 100, 4
+    )  # replace the random action model with agent behaviour
     models = playGame(
         models,
-        [0, 1],
+        [0, 1],  # train the agents in addition to the volves
         25,
         10000,
         100,
