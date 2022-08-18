@@ -8,6 +8,8 @@ import numpy as np
 from models.memory import Memory
 from models.perception import agentVisualField
 
+import matplotlib.pyplot as plt
+
 
 class modelClassPlayer:
 
@@ -22,7 +24,7 @@ class modelClassPlayer:
     def takeAction(self, params):
         pytorchInput, epsilon = params
         inp = pytorchInput.permute(0, 3, 1, 2).numpy()
-        inp = np.squeeze(inp)
+        img = np.squeeze(inp)
 
         # something like above
 
