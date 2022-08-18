@@ -232,6 +232,9 @@ def playGame(
             world = createWolfHunt(worldSize, staticAgents)
         if gameVersion == "wolvesGems":
             world = createWolvesGems(worldSize, staticAgents)
+        if gameVersion == "createGemsSearch":
+            world = createGemsSearch(worldSize, staticAgents)
+
         rewards = 0
         done = 0
         withinTurn = 0
@@ -384,7 +387,7 @@ def watchAgame(world, models, maxEpochs):
 
 
 def createVideo(worldSize, num, gameVersion="wolfHunt"):
-    filename = "wolfattack_animation_" + str(num) + ".gif"
+    filename = "GemsSearch_animation_" + str(num) + ".gif"
     if gameVersion == "wolfHunt":
         world = createWolfHunt(worldSize, staticAgents=False)
     if gameVersion == "wolvesGems":
@@ -396,25 +399,25 @@ def createVideo(worldSize, num, gameVersion="wolfHunt"):
 # setup a game and save models (this is a quick proof of principle version that can be vastly improved on)
 # note, the outputs can be better done than the hard coded print, but we need something.
 
-newModels = 2
+newModels = 1
 
 # create neuralnet models
 if newModels == 1:
     models = []
     models.append(modelRandomAction(10, 4))  # agent1 model
-    # models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))
+    models.append(modelDQN(5, 0.0001, 650, 2570, 350, 100, 4))
     models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
 
     for games in range(2):
         models = playGame(
-            models, 15, 10000, 100, 0.85, staticAgents=False, gameVersion="wolfHunt"
+            models, 15, 10000, 100, 0.85, staticAgents=False, gameVersion="createGemsSearch"
         )
-        with open("modelFileWolf_" + str(games), "wb") as fp:
+        with open("modelGemsSearch_" + str(games), "wb") as fp:
             pickle.dump(models, fp)
-        createVideo(15, games, gameVersion="wolfHunt")
+        createVideo(15, games, gameVersion="createGemsSearch")
 
 if newModels == 2:
-    with open("modelFileWolf_10", "rb") as fp:
+    with open("modelGemsSearch_10", "rb") as fp:
         models = pickle.load(fp)
 
 
@@ -422,16 +425,18 @@ if newModels == 2:
 for games in range(5):
     models[0] = modelDQN(5, 0.0001, 1500, 650, 350, 100, 4)
     models = playGame(
-        models, 25, 10000, 100, 0.95, staticAgents=False, gameVersion="wolvesGems"
+        models, 25, 10000, 100, 0.95, staticAgents=False, gameVersion="createGemsSearch"
     )
-    with open("modelFileWolf_" + str(games + 10), "wb") as fp:
+    with open("modelGemsSearch_" + str(games + 10), "wb") as fp:
         pickle.dump(models, fp)
-    createVideo(25, games + 10, gameVersion="wolvesGems")
+    createVideo(25, games + 10, gameVersion="createGemsSearch")
 
 for games in range(5):
     models = playGame(
-        models, 15, 10000, 100, 0.3, staticAgents=False, gameVersion="wolvesGems"
+        models, 15, 10000, 100, 0.3, staticAgents=False, gameVersion="createGemsSearch"
     )
-    with open("modelFileWolf_" + str(games + 10), "wb") as fp:
+    with open("modelGemsSearch_" + str(games + 10), "wb") as fp:
         pickle.dump(models, fp)
-    createVideo(15, games + 20, gameVersion="wolvesGems")
+    createVideo(15, games + 20, gameVersion="createGemsSearch")
+
+#createGemsSearch
