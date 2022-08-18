@@ -463,3 +463,5 @@ for games in range(5):
     createVideo(15, games + 20, gameVersion="createGemsSearch")
 
 # createGemsSearch
+# need to update where the obejcts and videos are saved
+# need to convert the games and the playgame to be classes?
