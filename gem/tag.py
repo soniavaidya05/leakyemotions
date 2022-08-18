@@ -70,7 +70,6 @@ def createTagWorld(worldSize, agentp=.05):
     agents = findAgents_tag(world)
     itAgent = random.choice(agents)
     itAgent.tag()
-    itAgent.frozen = 0
 
     # need to initialize replay buffer of each agent
     # state and next state - curstate
@@ -245,8 +244,8 @@ def watchAgame(world, models, maxEpochs):
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
     return ani
 
-
-video = watchAgame(world3, models, maxEpochs=100)
+world3 = createTagWorld(30)
+video = watchAgame(world3, models, maxEpochs=200)
 video.save('./tag_output/tag_vid_1.gif', writer="PillowWriter", fps=2)
 
 def createVideo(worldSize, num):

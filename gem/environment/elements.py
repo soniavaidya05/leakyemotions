@@ -162,11 +162,24 @@ class TagAgent:
         self.frozen = 0
         self.replay = deque([], maxlen=1)
 
-    def tag(self):
+    def tag(self, change_model = True):
         if self.is_it == 0:
             self.is_it = 1
-            self.appearence = [255, 0.0, 0.0]
+            self.appearence = [54, 139, 193]
             self.frozen = 2
+            if change_model:
+                self.policy = 1
         else:
             self.is_it = 0
             self.appearence = [0.0, 0.0, 255]
+            if change_model:
+                self.policy = 0
+    
+    def dethaw(self):
+        if(self.frozen > 0):
+            self.frozen -= 1
+        if(self.frozen == 0):
+            if(self.is_it == 1):
+                self.appearence = [255, 0.0, 0.0]
+            else:
+                self.appearence = [0.0, 0.0, 255]
