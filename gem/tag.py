@@ -130,7 +130,7 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
     sync_freq = 500
 
     for epoch in range(epochs):
-        print(epoch)
+        # print(epoch)
         world = createTagWorld(worldSize)
         done = 0
         withinTurn = 0
@@ -203,6 +203,7 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
     return models
 
 tmp = playGame(models, 15, 1000, 100, .85)
+models = playGame(models, 15, 10000, 100, 0.85)
 
 def watchAgame(world, models, maxEpochs):
     fig = plt.figure()
