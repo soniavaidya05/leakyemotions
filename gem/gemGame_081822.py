@@ -445,7 +445,7 @@ for games in range(1):
     )
     with open("modelGemsSearch_" + str(games + 10), "wb") as fp:
         pickle.dump(models, fp)
-    createVideo(25, games + 10, gameVersion="createGemsSearch")
+    createVideo(25, games + 10, gameVersion="wolvesGems")
 
 for games in range(5):
     models = playGame(
@@ -460,7 +460,7 @@ for games in range(5):
     )
     with open("modelGemsSearch_" + str(games + 10), "wb") as fp:
         pickle.dump(models, fp)
-    createVideo(15, games + 20, gameVersion="createGemsSearch")
+    createVideo(15, games + 20, gameVersion="wolvesGems")
 
 # createGemsSearch
 # need to update where the obejcts and videos are saved
