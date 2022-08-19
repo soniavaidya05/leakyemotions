@@ -1,0 +1,105 @@
+from abc import ABC
+from turtle import width
+from gem.environment.elements import Agent, EmptyObject, Gem, Wall, Wolf
+import numpy as np
+from abc import ABC, abstractmethod
+
+class Board(ABC):
+
+    def __init__(self, height, width, layers, defaultObject):
+        self.height = height
+        self.width = width
+        self.layers = layers
+        self.defaultObjectClass = EmptyObject
+        self.create_world()
+
+    def create_world(self):
+        self.world = np.full(self.height, self.width, self.layers, self.defaultObject)
+
+    def insert_walls(self):
+        """
+        Inserts walls into the world.
+        Assumes that the world is square - fixme.
+        """
+        wall = Wall()
+        for i in range(self.height):
+            self.world[0, i, 0] = wall
+            self.world[self.height - 1, i, 0] = wall
+            self.world[i, 0, 0] = wall
+            self.world[i, self.height - 1, 0] = wall
+
+    def find_instance(self, world, kind):
+        """
+        TODO: consider implementing type hinting for kind param, etc.
+        """
+        instList = []
+        for i in range(self.height):
+            for j in range(self.width):
+                for k in range(self.layers):
+                    if world[i, j, k].kind == kind:
+                        instList.append(world[i, j, k])
+        return instList
+    
+    def plot(self, layer=0):
+        pass
+
+    @abstractmethod
+    def populate(self):
+        pass
+
+class WolfHuntBoard(Board):
+
+    def __init__(
+        self,
+        height, 
+        width, 
+        layers, 
+        defaultObject,
+        gem1p=0.115, 
+        gem2p=0.06, 
+        agent1p=0.05
+    ):
+        super().__init__(height, width, layers, defaultObject)
+        self.insert_walls()
+        self.gem1p = gem1p
+        self.gem2p = gem2p
+        self.agent1p = agent1p
+
+
+    def plot(self, layer):
+        pass
+
+    def init_elements(self):
+        self.agent1 = Agent(0)
+        self.wolf1 = Wolf(1)
+        self.gem1 = Gem(5, [0.0, 255.0, 0.0])
+        self.gem2 = Gem(15, [255.0, 255.0, 0.0])
+        self.gem3 = Gem(10, [0.0, 0.0, 255.0])
+        self.emptyObject = EmptyObject()
+        self.walls = Wall()
+        
+
+    def populate(self):
+        for i in range(self.height):
+            for j in range(self.width):
+                obj = np.random.choice(
+                    [0, 1, 2, 3], p=[
+                        self.gem1p, self.gem2p, self.agent1p, 
+                        1 - self.gem2p - self.gem1p - self.agent1p
+                    ]
+                )
+                if obj == 0:
+                    self.world[i, j, 0] = self.gem1
+                if obj == 1:
+                    self.world[i, j, 0] = self.gem2
+                if obj == 2:
+                    self.world[i, j, 0] = self.agent1
+                    
+        cBal = np.random.choice([0, 1])
+        if cBal == 0:
+            self.world[round(self.height / 2), round(self.width / 2), 0] = self.wolf1
+            self.world[round(self.height / 2) + 1, round(self.width / 2) - 1, 0] = self.wolf1
+        if cBal == 1:
+            self.world[round(self.height / 2), round(self.width / 2), 0] = self.wolf1
+            self.world[round(self.height / 2) + 1, round(self.width / 2) - 1, 0] = self.wolf1
+
