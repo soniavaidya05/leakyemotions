@@ -358,12 +358,16 @@ def watchAgame(world, models, maxEpochs):
     return ani
 
 
-def createVideo(worldSize, num, gameVersion="wolfHunt"):
-    filename = "GemsSearch_animation_" + str(num) + ".gif"
+def createVideo(
+    models, worldSize, num, gameVersion="wolfHunt", filename="gemWorld_unnamed"
+):
     if gameVersion == "wolfHunt":
         world = createWolfHunt(worldSize)
     if gameVersion == "wolvesGems":
         world = createWolvesGems(worldSize)
+    if gameVersion == "createGemsSearch":
+        world = createGemsSearch(worldSize)
+
     ani1 = watchAgame(world, models, 100)
     ani1.save(filename, writer="PillowWriter", fps=2)
 
@@ -371,66 +375,122 @@ def createVideo(worldSize, num, gameVersion="wolfHunt"):
 # setup a game and save models (this is a quick proof of principle version that can be vastly improved on)
 # note, the outputs can be better done than the hard coded print, but we need something.
 
-newModels = 2
-
-# create neuralnet models
-if newModels == 1:
-    models = []
-    # models.append(modelRandomAction(10, 4))  # agent1 model
-    models.append(modelDQN(5, 0.0001, 650, 2570, 350, 100, 4))
-    models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
-
-    for games in range(2):
-        models = playGame(
-            models,  # model file list
-            [1],  # which models from that list should be trained, here not the agents
-            15,  # world size
-            10000,  # number of epochs
-            100,  # max epoch length
-            0.85,  # starting epsilon
-            gameVersion="wolfHunt",  # which game to play
-        )
-        with open("modelGemsSearch_" + str(games), "wb") as fp:
-            pickle.dump(models, fp)
-        createVideo(15, games, gameVersion="createGemsSearch")
-
-if newModels == 2:
-    with open("Model_StableWolfAttack", "rb") as fp:
-        models = pickle.load(fp)
-
-
-# let the agents start to learn the world as well and move to a larger world
-for games in range(1):
-    # models[0] = modelDQN(
-    #    5, 0.0001, 1500, 650, 350, 100, 4
-    # )  # replace the random action model with agent behaviour
-    models = playGame(
-        models,
-        [0, 1],  # train the agents in addition to the volves
-        25,
-        10000,
-        100,
-        0.95,
-        gameVersion="wolvesGems",
-    )
-    with open("modelGemsSearch_" + str(games + 10), "wb") as fp:
-        pickle.dump(models, fp)
-    createVideo(25, games + 10, gameVersion="wolvesGems")
-
-for games in range(5):
-    models = playGame(
-        models,
-        [0, 1],
-        15,
-        10000,
-        100,
-        0.3,
-        gameVersion="wolvesGems",
-    )
-    with open("modelGemsSearch_" + str(games + 10), "wb") as fp:
-        pickle.dump(models, fp)
-    createVideo(15, games + 20, gameVersion="wolvesGems")
-
 # createGemsSearch
 # need to update where the obejcts and videos are saved
 # need to convert the games and the playgame to be classes?
+
+
+def train_wolf_attack():
+    models = []
+    models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))
+    models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
+    models = playGame(
+        models,  # model file list
+        [1],  # which models from that list should be trained, here not the agents
+        15,  # world size
+        25000,  # number of epochs
+        100,  # max epoch length
+        0.85,  # starting epsilon
+        gameVersion="wolfHunt",  # which game to play
+    )
+
+    with open("wolf_attack_Models_01", "wb") as fp:
+        pickle.dump(models, fp)
+
+    models = playGame(
+        models,  # model file list
+        [1],  # which models from that list should be trained, here not the agents
+        15,  # world size
+        50000,  # number of epochs
+        100,  # max epoch length
+        0.3,  # starting epsilon
+        gameVersion="wolfHunt",  # which game to play
+    )
+    with open("wolf_attack_Models_02", "wb") as fp:
+        pickle.dump(models, fp)
+    return models
+
+
+def train_gem_collector():
+    models = []
+    models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))
+    models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
+    models = playGame(
+        models,  # model file list
+        [0],  # which models from that list should be trained, here not the agents
+        15,  # world size
+        15000,  # number of epochs
+        100,  # max epoch length
+        0.85,  # starting epsilon
+        gameVersion="createGemsSearch",  # which game to play
+    )
+
+    with open("gem_collector_Models_01", "wb") as fp:
+        pickle.dump(models, fp)
+
+    models = playGame(
+        models,  # model file list
+        [0],  # which models from that list should be trained, here not the agents
+        15,  # world size
+        50000,  # number of epochs
+        100,  # max epoch length
+        0.3,  # starting epsilon
+        gameVersion="createGemsSearch",  # which game to play
+    )
+    with open("gem_collector_Models_02", "wb") as fp:
+        pickle.dump(models, fp)
+    return models
+
+
+def runCombinedTraining(wolf_model, agent_model, epochs, max_epochs, epsilon, videoNum):
+    with open(wolf_model, "rb") as fp:
+        wolf_models = pickle.load(fp)
+    with open(agent_model, "rb") as fp:
+        agent_models = pickle.load(fp)
+    models = []
+    models.append(agent_models[0])
+    models.append(wolf_models[1])
+
+    models = playGame(
+        models,  # model file list
+        [0, 1],  # which models from that list should be trained, here not the agents
+        15,  # world size
+        epochs,  # number of epochs
+        max_epochs,  # max epoch length
+        epsilon,  # starting epsilon
+        gameVersion="wolvesGems",  # which game to play
+    )
+    # filename =  "GemsSearch_animation_" + str(num) + ".gif"
+    filename = "WolfsGem_01.gif"
+    createVideo(models, 15, videoNum, gameVersion="wolvesGems", filename=filename)
+
+    return models
+
+
+def moreTraining(models, epochs, max_epochs, epsilon, videoNum):
+    models = playGame(
+        models,  # model file list
+        [0, 1],  # which models from that list should be trained, here not the agents
+        15,  # world size
+        epochs,  # number of epochs
+        max_epochs,  # max epoch length
+        epsilon,  # starting epsilon
+        gameVersion="wolvesGems",  # which game to play
+    )
+    filename = "WolfsGem_" + str(videoNum) + ".gif"
+    createVideo(models, 15, videoNum, gameVersion="wolvesGems", filename=filename)
+
+    return models
+
+
+models = runCombinedTraining(
+    wolf_model="Model_StableWolfAttack",
+    agent_model="modelGemsSearch_0",
+    epochs=10000,
+    max_epochs=100,
+    epsilon=0.5,
+    videoNum=1000,
+)
+
+for game in range(10):
+    models = moreTraining(models, 10000, 100, 0.3, game + 1001)
