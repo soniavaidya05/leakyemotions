@@ -410,30 +410,32 @@ if newModels == 1:
 
     for games in range(2):
         models = playGame(
-            models,
-            [1],
-            15,
-            10000,
-            100,
-            0.85,
-            staticAgents=False,
-            gameVersion="wolfHunt",
+            models,  # model file list
+            [1],  # which models from that list should be trained, here not the agents
+            15,  # world size
+            10000,  # number of epochs
+            100,  # max epoch length
+            0.85,  # starting epsilon
+            staticAgents=False,  # should the agents be frozen to train wolves (not working)
+            gameVersion="wolfHunt",  # which game to play
         )
         with open("modelGemsSearch_" + str(games), "wb") as fp:
             pickle.dump(models, fp)
         createVideo(15, games, gameVersion="createGemsSearch")
 
 if newModels == 2:
-    with open("modelGemsSearch_10", "rb") as fp:
+    with open("Model_StableWolfAttack", "rb") as fp:
         models = pickle.load(fp)
 
 
 # let the agents start to learn the world as well and move to a larger world
 for games in range(1):
-    models[0] = modelDQN(5, 0.0001, 1500, 650, 350, 100, 4)
+    models[0] = modelDQN(
+        5, 0.0001, 1500, 650, 350, 100, 4
+    )  # replace the random action model with agent behaviour
     models = playGame(
         models,
-        [0, 1],
+        [0, 1],  # train the agents in addition to the volves
         25,
         10000,
         100,
@@ -461,3 +463,5 @@ for games in range(5):
     createVideo(15, games + 20, gameVersion="createGemsSearch")
 
 # createGemsSearch
+# need to update where the obejcts and videos are saved
+# need to convert the games and the playgame to be classes?
