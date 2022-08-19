@@ -22,7 +22,6 @@ from models.perception import agentVisualField
 from environment.elements import (
     Agent,
     EmptyObject,
-    StaticAgent,
     Wolf,
     Gem,
     Wall,
@@ -62,12 +61,9 @@ gem2 = Gem(15, [255.0, 255.0, 0.0])
 gem3 = Gem(10, [0.0, 0.0, 255.0])
 emptyObject = EmptyObject()
 walls = Wall()
-staticAgent1 = StaticAgent(0)
 
 # create the instances
-def createWolfHunt(
-    worldSize, staticAgents=False, gem1p=0.115, gem2p=0.06, agent1p=0.05
-):
+def createWolfHunt(worldSize, gem1p=0.115, gem2p=0.06, agent1p=0.05):
 
     # make the world and populate
     world = createWorld(worldSize, worldSize, 1, emptyObject)
@@ -82,10 +78,7 @@ def createWolfHunt(
             if obj == 1:
                 world[i, j, 0] = gem2
             if obj == 2:
-                if staticAgents == False:
-                    world[i, j, 0] = agent1
-                if staticAgents == True:
-                    world[i, j, 0] = gem3
+                world[i, j, 0] = agent1
 
     cBal = np.random.choice([0, 1])
     if cBal == 0:
@@ -104,9 +97,7 @@ def createWolfHunt(
     return world
 
 
-def createWolvesGems(
-    worldSize, staticAgents=False, gem1p=0.115, gem2p=0.06, agent1p=0.005
-):
+def createWolvesGems(worldSize, gem1p=0.115, gem2p=0.06, agent1p=0.005):
 
     # make the world and populate
     world = createWorld(worldSize, worldSize, 1, emptyObject)
@@ -121,10 +112,7 @@ def createWolvesGems(
             if obj == 1:
                 world[i, j, 0] = gem2
             if obj == 2:
-                if staticAgents == False:
-                    world[i, j, 0] = wolf1
-                if staticAgents == True:
-                    world[i, j, 0] = gem3
+                world[i, j, 0] = wolf1
 
     cBal = np.random.choice([0, 1])
     if cBal == 0:
@@ -143,9 +131,7 @@ def createWolvesGems(
     return world
 
 
-def createGemsSearch(
-    worldSize, staticAgents=False, gem1p=0.115, gem2p=0.06, agent1p=0.00
-):
+def createGemsSearch(worldSize, gem1p=0.115, gem2p=0.06, agent1p=0.00):
 
     # make the world and populate
     world = createWorld(worldSize, worldSize, 1, emptyObject)
@@ -160,10 +146,7 @@ def createGemsSearch(
             if obj == 1:
                 world[i, j, 0] = gem2
             if obj == 2:
-                if staticAgents == False:
-                    world[i, j, 0] = wolf1
-                if staticAgents == True:
-                    world[i, j, 0] = gem3
+                world[i, j, 0] = wolf1
 
     cBal = np.random.choice([0, 1])
     if cBal == 0:
@@ -214,7 +197,6 @@ def playGame(
     epochs=200000,
     maxEpochs=100,
     epsilon=0.9,
-    staticAgents=False,
     gameVersion="wolfHunt",
 ):
 
@@ -229,11 +211,11 @@ def playGame(
 
     for epoch in range(epochs):
         if gameVersion == "wolfHunt":
-            world = createWolfHunt(worldSize, staticAgents)
+            world = createWolfHunt(worldSize)
         if gameVersion == "wolvesGems":
-            world = createWolvesGems(worldSize, staticAgents)
+            world = createWolvesGems(worldSize)
         if gameVersion == "createGemsSearch":
-            world = createGemsSearch(worldSize, staticAgents)
+            world = createGemsSearch(worldSize)
 
         rewards = 0
         done = 0
@@ -242,10 +224,9 @@ def playGame(
         agentEats = 0
         while done == 0:
 
-            if staticAgents == False:
-                findAgent = findAgents(world)
-                if len(findAgent) == 0:
-                    done = 1
+            findAgent = findAgents(world)
+            if len(findAgent) == 0:
+                done = 1
 
             withinTurn = withinTurn + 1
             turn = turn + 1
@@ -269,19 +250,10 @@ def playGame(
 
                 img = agentVisualField(world, (i, j), holdObject.vision)
                 input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
-                if staticAgents == False:
-                    if holdObject.static != 1:
-                        if holdObject.kind != "deadAgent":
-                            action = models[holdObject.policy].takeAction(
-                                [input, epsilon]
-                            )
-                if staticAgents == True:
-                    if holdObject.kind != "agent":
-                        if holdObject.static != 1:
-                            if holdObject.kind != "deadAgent":
-                                action = models[holdObject.policy].takeAction(
-                                    [input, epsilon]
-                                )
+
+                if holdObject.static != 1:
+                    if holdObject.kind != "deadAgent":
+                        action = models[holdObject.policy].takeAction([input, epsilon])
 
                 if withinTurn == maxEpochs:
                     done = 1
@@ -389,9 +361,9 @@ def watchAgame(world, models, maxEpochs):
 def createVideo(worldSize, num, gameVersion="wolfHunt"):
     filename = "GemsSearch_animation_" + str(num) + ".gif"
     if gameVersion == "wolfHunt":
-        world = createWolfHunt(worldSize, staticAgents=False)
+        world = createWolfHunt(worldSize)
     if gameVersion == "wolvesGems":
-        world = createWolvesGems(worldSize, staticAgents=False)
+        world = createWolvesGems(worldSize)
     ani1 = watchAgame(world, models, 100)
     ani1.save(filename, writer="PillowWriter", fps=2)
 
@@ -404,7 +376,7 @@ newModels = 2
 # create neuralnet models
 if newModels == 1:
     models = []
-    models.append(modelRandomAction(10, 4))  # agent1 model
+    # models.append(modelRandomAction(10, 4))  # agent1 model
     models.append(modelDQN(5, 0.0001, 650, 2570, 350, 100, 4))
     models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
 
@@ -416,7 +388,6 @@ if newModels == 1:
             10000,  # number of epochs
             100,  # max epoch length
             0.85,  # starting epsilon
-            staticAgents=False,  # should the agents be frozen to train wolves (not working)
             gameVersion="wolfHunt",  # which game to play
         )
         with open("modelGemsSearch_" + str(games), "wb") as fp:
@@ -430,9 +401,9 @@ if newModels == 2:
 
 # let the agents start to learn the world as well and move to a larger world
 for games in range(1):
-    models[0] = modelDQN(
-        5, 0.0001, 1500, 650, 350, 100, 4
-    )  # replace the random action model with agent behaviour
+    # models[0] = modelDQN(
+    #    5, 0.0001, 1500, 650, 350, 100, 4
+    # )  # replace the random action model with agent behaviour
     models = playGame(
         models,
         [0, 1],  # train the agents in addition to the volves
@@ -440,7 +411,6 @@ for games in range(1):
         10000,
         100,
         0.95,
-        staticAgents=False,
         gameVersion="wolvesGems",
     )
     with open("modelGemsSearch_" + str(games + 10), "wb") as fp:
@@ -455,7 +425,6 @@ for games in range(5):
         10000,
         100,
         0.3,
-        staticAgents=False,
         gameVersion="wolvesGems",
     )
     with open("modelGemsSearch_" + str(games + 10), "wb") as fp:
