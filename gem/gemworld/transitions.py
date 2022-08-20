@@ -108,14 +108,6 @@ def wolfTransitions(
             world[attLoc1, attLoc2, 0] = deadAgent()
             world[attLoc1, attLoc2, 0].replay.append(exp)
 
-        # if world[attLoc1, attLoc2, 0].kind == "StaticAgent":
-        #    reward = 10
-        #    wolfEats = wolfEats + 1
-        #    world[attLoc1, attLoc2, 0].died()
-
-        # if expBuff == True:
-        #    world[attLoc1, attLoc2, 0].reward += 10
-
     if expBuff == True:
         img2 = agentVisualField(world, (newLoc1, newLoc2), holdObject.vision)
         input2 = torch.tensor(img2).unsqueeze(0).permute(0, 3, 1, 2).float()

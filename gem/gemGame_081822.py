@@ -442,7 +442,9 @@ def train_gem_collector():
     return models
 
 
-def runCombinedTraining(wolf_model, agent_model, epochs, max_epochs, epsilon, videoNum):
+def runCombinedTraining(
+    wolf_model, agent_model, trainableModels, epochs, max_epochs, epsilon, videoNum
+):
     with open(wolf_model, "rb") as fp:
         wolf_models = pickle.load(fp)
     with open(agent_model, "rb") as fp:
@@ -453,7 +455,7 @@ def runCombinedTraining(wolf_model, agent_model, epochs, max_epochs, epsilon, vi
 
     models = playGame(
         models,  # model file list
-        [0, 1],  # which models from that list should be trained, here not the agents
+        trainableModels,  # which models from that list should be trained, here not the agents
         15,  # world size
         epochs,  # number of epochs
         max_epochs,  # max epoch length
@@ -462,23 +464,35 @@ def runCombinedTraining(wolf_model, agent_model, epochs, max_epochs, epsilon, vi
     )
     # filename =  "GemsSearch_animation_" + str(num) + ".gif"
     filename = "WolfsGem_01.gif"
-    createVideo(models, 15, videoNum, gameVersion="wolvesGems", filename=filename)
+    createVideo(
+        models,
+        15,
+        videoNum,
+        gameVersion="wolvesGems",
+        filename=filename,
+    )
+    with open("combinedModel_0001", "wb") as fp:
+        pickle.dump(models, fp)
 
     return models
 
 
-def moreTraining(models, epochs, max_epochs, epsilon, videoNum):
+def moreTraining(
+    models, trainableModels, worldsize, epochs, max_epochs, epsilon, videoNum
+):
     models = playGame(
         models,  # model file list
-        [0, 1],  # which models from that list should be trained, here not the agents
-        15,  # world size
+        trainableModels,  # which models from that list should be trained, here not the agents
+        worldsize,  # world size
         epochs,  # number of epochs
         max_epochs,  # max epoch length
         epsilon,  # starting epsilon
         gameVersion="wolvesGems",  # which game to play
     )
     filename = "WolfsGem_" + str(videoNum) + ".gif"
-    createVideo(models, 15, videoNum, gameVersion="wolvesGems", filename=filename)
+    createVideo(models, 25, videoNum, gameVersion="wolvesGems", filename=filename)
+    with open("combinedModel_" + str(videoNum + 1), "wb") as fp:
+        pickle.dump(models, fp)
 
     return models
 
@@ -486,11 +500,30 @@ def moreTraining(models, epochs, max_epochs, epsilon, videoNum):
 models = runCombinedTraining(
     wolf_model="Model_StableWolfAttack",
     agent_model="modelGemsSearch_0",
-    epochs=10000,
+    trainableModels=[0],
+    epochs=30000,
     max_epochs=100,
-    epsilon=0.5,
+    epsilon=0.9,
     videoNum=1000,
 )
 
+
+with open("combinedModel_1002", "rb") as fp:
+    models = pickle.load(fp)
+filename = "test1.gif"
+createVideo(models, 25, 1, gameVersion="wolvesGems", filename=filename)
+filename = "test2.gif"
+createVideo(models, 25, 2, gameVersion="wolvesGems", filename=filename)
+filename = "test3.gif"
+createVideo(models, 35, 2, gameVersion="wolvesGems", filename=filename)
+
+
 for game in range(10):
-    models = moreTraining(models, 10000, 100, 0.3, game + 1001)
+    models = moreTraining(models, [0], 25, 10000, 100, 0.3, game + 2000)
+
+
+# note, to really test the model, we need to build test cases. like simple
+# 9 x 9 worlds with a green and yellow gem
+# or a wolf in a location, and look at the Q values to see if avoidance is being learned
+
+# additional note, may need to have larger worlds to escape from wolves in

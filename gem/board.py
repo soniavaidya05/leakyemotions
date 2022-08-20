@@ -4,8 +4,8 @@ from gem.environment.elements import Agent, EmptyObject, Gem, Wall, Wolf
 import numpy as np
 from abc import ABC, abstractmethod
 
-class Board(ABC):
 
+class Board(ABC):
     def __init__(self, height, width, layers, defaultObject):
         self.height = height
         self.width = width
@@ -39,32 +39,45 @@ class Board(ABC):
                     if world[i, j, k].kind == kind:
                         instList.append(world[i, j, k])
         return instList
-    
+
     def plot(self, layer=0):
-        pass
+        """
+        Creates an RGB image of the whole world
+        """
+        image_r = np.random.random((self.world.shape[0], self.world.shape[1]))
+        image_g = np.random.random((self.world.shape[0], self.world.shape[1]))
+        image_b = np.random.random((self.world.shape[0], self.world.shape[1]))
+
+        for i in range(self.world.shape[0]):
+            for j in range(self.world.shape[1]):
+                image_r[i, j] = self.world[i, j, layer].appearence[0]
+                image_g[i, j] = self.world[i, j, layer].appearence[1]
+                image_b[i, j] = self.world[i, j, layer].appearence[2]
+
+        image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
+        return image
 
     @abstractmethod
     def populate(self):
         pass
 
-class WolfHuntBoard(Board):
 
+class WolfHuntBoard(Board):
     def __init__(
         self,
-        height, 
-        width, 
-        layers, 
-        defaultObject,
-        gem1p=0.115, 
-        gem2p=0.06, 
-        agent1p=0.05
+        height=15,
+        width=15,
+        layers=1,
+        defaultObject=EmptyObject(),
+        gem1p=0.115,
+        gem2p=0.06,
+        agent1p=0.05,
     ):
         super().__init__(height, width, layers, defaultObject)
         self.insert_walls()
         self.gem1p = gem1p
         self.gem2p = gem2p
         self.agent1p = agent1p
-
 
     def plot(self, layer):
         pass
@@ -77,16 +90,22 @@ class WolfHuntBoard(Board):
         self.gem3 = Gem(10, [0.0, 0.0, 255.0])
         self.emptyObject = EmptyObject()
         self.walls = Wall()
-        
+
+    # below make it so that it only puts objects in the non wall parts.
+    # this may need to have a parameter that indicates whether things can be
+    # on the edges or not
 
     def populate(self):
         for i in range(self.height):
             for j in range(self.width):
                 obj = np.random.choice(
-                    [0, 1, 2, 3], p=[
-                        self.gem1p, self.gem2p, self.agent1p, 
-                        1 - self.gem2p - self.gem1p - self.agent1p
-                    ]
+                    [0, 1, 2, 3],
+                    p=[
+                        self.gem1p,
+                        self.gem2p,
+                        self.agent1p,
+                        1 - self.gem2p - self.gem1p - self.agent1p,
+                    ],
                 )
                 if obj == 0:
                     self.world[i, j, 0] = self.gem1
@@ -94,12 +113,15 @@ class WolfHuntBoard(Board):
                     self.world[i, j, 0] = self.gem2
                 if obj == 2:
                     self.world[i, j, 0] = self.agent1
-                    
+
         cBal = np.random.choice([0, 1])
         if cBal == 0:
             self.world[round(self.height / 2), round(self.width / 2), 0] = self.wolf1
-            self.world[round(self.height / 2) + 1, round(self.width / 2) - 1, 0] = self.wolf1
+            self.world[
+                round(self.height / 2) + 1, round(self.width / 2) - 1, 0
+            ] = self.wolf1
         if cBal == 1:
             self.world[round(self.height / 2), round(self.width / 2), 0] = self.wolf1
-            self.world[round(self.height / 2) + 1, round(self.width / 2) - 1, 0] = self.wolf1
-
+            self.world[
+                round(self.height / 2) + 1, round(self.width / 2) - 1, 0
+            ] = self.wolf1
