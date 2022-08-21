@@ -57,10 +57,14 @@ from gemGame_experimental import train_wolf_gem, save_models, load_models
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
+models = train_wolf_gem(50000)
+save_models(models, save_dir, "wolf_gem_50000", 10)
+
+
 # it may be necessary to initialize a large game with all trainable objects in it once
 # for 5 turns to make sure everything is setup. Ideally we would not need that
 # but as a temp looks better than failing
 
-
-models = train_wolf_gem(50000)
-save_models(models, save_dir, "wolf_gem_50000", 20)
+# need to figure out why wolfeat is not being updated
+# i figured it out..... wolf attack is not being passed back
+# in the transitions arguments!
