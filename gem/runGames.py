@@ -1,43 +1,43 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from gem.utils import (
-    findInstance,
-    one_hot,
-    updateEpsilon,
-    updateMemories,
-    transferMemories,
-    findMoveables,
-    findAgents,
-)
+# from gem.utils import (
+#    findInstance,
+#    one_hot,
+#    updateEpsilon,
+#    updateMemories,
+#    transferMemories,
+#    findMoveables,
+#    findAgents,
+# )
 
 
 # replay memory class
 
-from models.memory import Memory
-from models.dqn import DQN, modelDQN
-from models.randomActions import modelRandomAction
+# from models.memory import Memory
+# from models.dqn import DQN, modelDQN
+# from models.randomActions import modelRandomAction
 
-from models.perception import agentVisualField
-from environment.elements import (
-    Agent,
-    EmptyObject,
-    Wolf,
-    Gem,
-    Wall,
-    deadAgent,
-)
-from gem.game_utils import createWorld, createWorldImage
-from gemworld.transitions import agentTransitions, wolfTransitions
+# from models.perception import agentVisualField
+# from environment.elements import (
+#    Agent,
+#    EmptyObject,
+#    Wolf,
+#    Gem,
+#    Wall,
+#    deadAgent,
+# )
+# from gem.game_utils import createWorld, createWorldImage
+# from gemworld.transitions import agentTransitions, wolfTransitions
 
 
-import os
+# import os
 
 # os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from astropy.visualization import make_lupton_rgb
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import matplotlib.animation as animation
+# from astropy.visualization import make_lupton_rgb
 
 # import torch
 # import torch.nn as nn
@@ -46,7 +46,7 @@ from astropy.visualization import make_lupton_rgb
 # import random
 # import copy
 
-import pickle
+# import pickle
 
 # from collections import deque
 
@@ -62,20 +62,5 @@ save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # but as a temp looks better than failing
 
 
-models = train_wolf_gem(1000)
-save_models(models, save_dir, "wolf_gem_1000_a", 0)
-save_models(models, save_dir, "wolf_gem_1000_b", 2)
-
 models = train_wolf_gem(50000)
-save_models(models, save_dir, "wolf_gem_50000_a", 0)
-save_models(models, save_dir, "wolf_gem_50000_b", 2)
-
-# note, the wolf attack is not being updated, although it looks like wolf attacks are happening
-
-# models = load_models(save_dir, "wolf_gem_50000")
-
-
-# filename = "wolf_gem_50000"
-
-# with open(save_dir + filename, "rb") as fp:
-#    models = pickle.load(fp)
+save_models(models, save_dir, "wolf_gem_50000", 20)
