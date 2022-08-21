@@ -39,53 +39,43 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from astropy.visualization import make_lupton_rgb
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+# import torch
+# import torch.nn as nn
+# import torch.nn.functional as F
 
-import random
-import copy
+# import random
+# import copy
 
 import pickle
 
-from collections import deque
+# from collections import deque
 
-from gemGame import runCombinedTraining, moreTraining
-
+# from gemGame import runCombinedTraining, moreTraining
+from gemGame_experimental import train_wolf_gem, save_models, load_models
 
 # RUNNING THE MODELS BELOW
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+
+# it may be necessary to initialize a large game with all trainable objects in it once
+# for 5 turns to make sure everything is setup. Ideally we would not need that
+# but as a temp looks better than failing
 
 
-models = runCombinedTraining(
-    save_dir,
-    wolf_model="Model_StableWolfAttack",
-    agent_model="modelGemsSearch_0",
-    trainableModels=[0],
-    epochs=30000,
-    max_epochs=100,
-    epsilon=0.9,
-    videoNum=1000,
-)
+models = train_wolf_gem(1000)
+save_models(models, save_dir, "wolf_gem_1000_a", 0)
+save_models(models, save_dir, "wolf_gem_1000_b", 2)
+
+models = train_wolf_gem(50000)
+save_models(models, save_dir, "wolf_gem_50000_a", 0)
+save_models(models, save_dir, "wolf_gem_50000_b", 2)
+
+# note, the wolf attack is not being updated, although it looks like wolf attacks are happening
+
+# models = load_models(save_dir, "wolf_gem_50000")
 
 
-with open(save_dir + "combinedModel_1002", "rb") as fp:
-    models = pickle.load(fp)
-filename = "test1.gif"
-createVideo(models, 25, 1, gameVersion="wolvesGems", filename=filename)
-filename = "test2.gif"
-createVideo(models, 25, 2, gameVersion="wolvesGems", filename=filename)
-filename = "test3.gif"
-createVideo(models, 35, 2, gameVersion="wolvesGems", filename=filename)
+# filename = "wolf_gem_50000"
 
-
-for game in range(10):
-    models = moreTraining(save_dir, models, [0], 25, 10000, 100, 0.3, game + 2000)
-
-
-# note, to really test the model, we need to build test cases. like simple
-# 9 x 9 worlds with a green and yellow gem
-# or a wolf in a location, and look at the Q values to see if avoidance is being learned
-
-# additional note, may need to have larger worlds to escape from wolves in
+# with open(save_dir + filename, "rb") as fp:
+#    models = pickle.load(fp)
