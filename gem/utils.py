@@ -158,10 +158,6 @@ def updateMemories(world, expList, endUpdate=True):
             input2 = torch.tensor(img2).unsqueeze(0).permute(0, 3, 1, 2).float()
             exp = (exp[0], exp[1], world[i, j, 0].reward, input2, exp[4])
         world[i, j, 0].replay[0] = exp
-        if (
-            world[i, j, 0].kind == "deadAgent"
-        ):  # the dead agent can not move after the last memory update
-            world[i, j, 0].static = 1
     return world
 
 

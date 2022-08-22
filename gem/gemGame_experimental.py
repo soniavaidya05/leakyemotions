@@ -201,7 +201,7 @@ def playGame(
 ):
 
     losses = 0
-    totalRewards = 0
+    gamePoints = [0, 0]
     status = 1
     turn = 0
     sync_freq = 500
@@ -217,11 +217,14 @@ def playGame(
         if gameVersion == "createGemsSearch":
             world = createGemsSearch(worldSize)
 
-        rewards = 0
+        # rewards = 0
         done = 0
         withinTurn = 0
-        wolfEats = 0
-        agentEats = 0
+
+        moveList = findMoveables(world)
+        for i, j in moveList:
+            world[i, j, 0].init_replay()
+
         while done == 0:
 
             findAgent = findAgents(world)
@@ -252,21 +255,21 @@ def playGame(
                 input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
 
                 if holdObject.static != 1:
-                    if holdObject.kind != "deadAgent":
-                        action = models[holdObject.policy].takeAction([input, epsilon])
+                    # if holdObject.kind != "deadAgent":
+                    action = models[holdObject.policy].takeAction([input, epsilon])
 
                 if withinTurn == maxEpochs:
                     done = 1
 
             # rewrite this so all classes have transition, most are just pass
-            if holdObject.kind == "agent" or holdObject.kind == "wolf":
-                world, models, totalRewards = holdObject.transition(
+            if holdObject.has_transitions == True:
+                world, models, gamePoints = holdObject.transition(
                     action,
                     world,
                     models,
                     i,
                     j,
-                    totalRewards,
+                    gamePoints,
                     done,
                     input,
                 )
@@ -279,7 +282,7 @@ def playGame(
             # but for now, write separate code for different model types to get the memory into the
             # right form for your specific model.
 
-            expList = findMoveables(world)
+            # expList = findMoveables(world)
             models = transferMemories(models, world, expList)
 
             # testing training after every event
@@ -297,11 +300,9 @@ def playGame(
         #    losses = losses + loss.detach().numpy()
 
         if epoch % 100 == 0:
-            print(epoch, withinTurn, totalRewards, wolfEats, losses, epsilon)
-            wolfEats = 0
-            agentEats = 0
+            print(epoch, withinTurn, gamePoints, losses, epsilon)
+            gamePoints = [0, 0]
             losses = 0
-            totalRewards = 0
     return models
 
 
@@ -309,8 +310,7 @@ def watchAgame(world, models, maxEpochs):
     fig = plt.figure()
     ims = []
 
-    totalRewards = 0
-    wolfEats = 0
+    gamePoints = [0, 0]
     done = 0
 
     for _ in range(maxEpochs):
@@ -331,14 +331,14 @@ def watchAgame(world, models, maxEpochs):
                 if holdObject.kind != "deadAgent":
                     action = models[holdObject.policy].takeAction([input, 0.1])
 
-            if holdObject.kind == "agent" or holdObject.kind == "wolf":
-                world, models, totalRewards = holdObject.transition(
+            if holdObject.has_transitions == True:
+                world, models, gamePoints = holdObject.transition(
                     action,
                     world,
                     models,
                     i,
                     j,
-                    totalRewards,
+                    gamePoints,
                     done,
                     input,
                 )

@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 
 def agentTransitions(
-    holdObject, action, world, models, i, j, totalRewards, done, input, expBuff=True
+    holdObject, action, world, models, i, j, gamePoints, done, input, expBuff=True
 ):
 
     newLoc1 = i
@@ -41,7 +41,7 @@ def agentTransitions(
         world[attLoc1, attLoc2, 0] = holdObject
         newLoc1 = attLoc1
         newLoc2 = attLoc2
-        totalRewards = totalRewards + reward
+        gamePoints[0] = gamePoints[0] + reward
     else:
         if world[attLoc1, attLoc2, 0].kind == "wall":
             reward = -0.1
@@ -53,7 +53,7 @@ def agentTransitions(
         world[newLoc1, newLoc2, 0].replay.append(exp)
         world[newLoc1, newLoc2, 0].reward += reward
 
-    return world, models, totalRewards
+    return world, models, gamePoints
 
 
 # ---------------------------------------------------------------------
@@ -62,7 +62,7 @@ def agentTransitions(
 
 
 def wolfTransitions(
-    holdObject, action, world, models, i, j, wolfEats, done, input, expBuff=True
+    holdObject, action, world, models, i, j, gamePoints, done, input, expBuff=True
 ):
 
     newLoc1 = i
@@ -100,12 +100,12 @@ def wolfTransitions(
             reward = -0.1
         if world[attLoc1, attLoc2, 0].kind == "agent":
             reward = 10
-            wolfEats = wolfEats + 1
+            gamePoints[1] = gamePoints[1] + 1
             lastexp = world[attLoc1, attLoc2, 0].replay[-1]
             # need to ensure that the agent knows that it is dying
             exp = (lastexp[0], lastexp[1], -25, lastexp[3], 1)
             # world[attLoc1, attLoc2, 0].reward -= 25
-            world[attLoc1, attLoc2, 0] = deadAgent()
+            world[attLoc1, attLoc2, 0].died()
             world[attLoc1, attLoc2, 0].replay.append(exp)
 
     if expBuff == True:
@@ -115,4 +115,4 @@ def wolfTransitions(
         world[newLoc1, newLoc2, 0].replay.append(exp)
         world[newLoc1, newLoc2, 0].reward += reward
 
-    return world, models, wolfEats
+    return world, models, gamePoints
