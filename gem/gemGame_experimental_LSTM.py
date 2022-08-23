@@ -9,6 +9,7 @@ from gem.utils import (
     transferMemories,
     findMoveables,
     findAgents,
+    transferMemories_LSTM,
 )
 
 
@@ -559,3 +560,136 @@ def train_wolf_gem(epochs=10000):
 # # or a wolf in a location, and look at the Q values to see if avoidance is being learned
 
 # # additional note, may need to have larger worlds to escape from wolves in
+
+
+def playGameTest(
+    models,
+    trainableModels,
+    worldSize=15,
+    epochs=200000,
+    maxEpochs=100,
+    epsilon=0.9,
+    gameVersion="wolfHunt",
+):
+
+    losses = 0
+    gamePoints = [0, 0]
+    status = 1
+    turn = 0
+    sync_freq = 500
+    modelUpdate_freq = 25
+    # note, rather than having random actions, we could keep the memories growing and just not train agents for
+    # little while to train a different part of the model, or could stop training wolves, etc.
+
+    for epoch in range(epochs):
+        if gameVersion == "wolfHunt":
+            world = createWolfHunt(worldSize)
+        if gameVersion == "wolvesGems":
+            world = createWolvesGems(worldSize)
+        if gameVersion == "createGemsSearch":
+            world = createGemsSearch(worldSize)
+
+        # rewards = 0
+        done = 0
+        withinTurn = 0
+
+        moveList = findMoveables(world)
+        for i, j in moveList:
+            world[i, j, 0].init_replay(5)
+
+        while done == 0:
+
+            findAgent = findAgents(world)
+            if len(findAgent) == 0:
+                done = 1
+
+            withinTurn = withinTurn + 1
+            turn = turn + 1
+
+            # this may be a better form than having functions that do nothing in a class
+            if turn % sync_freq == 0:
+                for mods in trainableModels:
+                    models[mods].model2.load_state_dict(
+                        models[mods].model1.state_dict()
+                    )
+                    # models[mods].updateQ
+
+            moveList = findMoveables(world)
+            for i, j in moveList:
+                # reset the rewards for the trial to be zero for all agents
+                world[i, j, 0].reward = 0
+            random.shuffle(moveList)
+
+            for i, j in moveList:
+                holdObject = world[i, j, 0]
+
+                # note the prep vision may need to be a function within the model class
+                input = models[holdObject.policy].createInput(world, i, j, holdObject)
+
+                if holdObject.static != 1:
+                    # if holdObject.kind != "deadAgent":
+                    action = models[holdObject.policy].takeAction([input, epsilon])
+
+                if withinTurn == maxEpochs:
+                    done = 1
+
+            # rewrite this so all classes have transition, most are just pass
+            if holdObject.has_transitions == True:
+                world, models, gamePoints = holdObject.transition(
+                    action,
+                    world,
+                    models,
+                    i,
+                    j,
+                    gamePoints,
+                    done,
+                    input,
+                )
+
+            # transfer the events for each agent into the appropriate model after all have moved
+            expList = findMoveables(world)
+            world = updateMemories(models, world, expList, endUpdate=True)
+
+            # below is DQN specific and we will need to come up with the general form for all models
+            # but for now, write separate code for different model types to get the memory into the
+            # right form for your specific model.
+
+            # expList = findMoveables(world)
+            models = transferMemories_LSTM(models, world, expList)
+
+            # testing training after every event
+            if withinTurn % modelUpdate_freq == 0:
+                for mods in trainableModels:
+                    loss = models[mods].training(150, 0.9)
+                    losses = losses + loss.detach().numpy()
+
+        # epdate epsilon to move from mostly random to greedy choices for action with time
+        epsilon = updateEpsilon(epsilon, turn, epoch)
+
+        # only train at the end of the game, and train each of the models that are in the model list
+        # for mods in trainableModels:
+        #    loss = models[mods].training(150, 0.9)
+        #    losses = losses + loss.detach().numpy()
+
+        if epoch % 100 == 0:
+            print(epoch, withinTurn, gamePoints, losses, epsilon)
+            gamePoints = [0, 0]
+            losses = 0
+    return models, world
+
+
+def train_wolf_gem_LSTM5(epochs=10000):
+    models = []
+    # 405 / 1445 should go back to 650 / 2570 when fixed
+    models.append(model_CNN_LSTM_DQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent model
+    models.append(model_CNN_LSTM_DQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
+    models, world = playGameTest(
+        models,  # model file list
+        [0, 1],  # which models from that list should be trained, here not the agents
+        15,  # world size
+        epochs,  # number of epochs
+        100,  # max epoch length
+        0.85,  # starting epsilon
+        gameVersion="wolvesGems",  # which game to play
+    )
+    return models, world

@@ -201,8 +201,24 @@ class Wolf:
             if world[attLoc1, attLoc2, 0].kind == "agent":
                 reward = 10
                 gamePoints[1] = gamePoints[1] + 1
+
+                # this is now fixed to LSTM = 5 replay.
+                # needs to be generalized
+
                 lastexp = world[attLoc1, attLoc2, 0].replay[-1]
-                exp = (lastexp[0], lastexp[1], -25, lastexp[3], 1)
+
+                t2 = world[attLoc1, attLoc2, 0].replay[-5][3]
+                t3 = world[attLoc1, attLoc2, 0].replay[-4][3]
+                t4 = world[attLoc1, attLoc2, 0].replay[-3][3]
+                t5 = world[attLoc1, attLoc2, 0].replay[-2][3]
+                t6 = world[attLoc1, attLoc2, 0].replay[-1][3]
+
+                seq1 = torch.cat([t2, t3, t4, t5], dim=1)
+                seq2 = torch.cat([t3, t4, t5, t6], dim=1)
+
+                exp = (seq1, lastexp[1], -25, seq2, 1)
+                # below works for double DQN
+                # exp = (lastexp[0], lastexp[1], -25, lastexp[3], 1)
                 for _ in range(5):
                     models[world[attLoc1, attLoc2, 0].policy].replay.append(exp)
                 world[attLoc1, attLoc2, 0] = deadAgent()
