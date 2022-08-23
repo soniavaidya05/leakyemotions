@@ -9,45 +9,70 @@ from models.memory import Memory
 from models.perception import agentVisualField
 
 
-class DQN(nn.Module):
-    def __init__(self, numFilters, insize, hidsize1, hidsize2, outsize):
-        super(DQN, self).__init__()
+class CNN_CLD(nn.Module):
+    def __init__(self, numFilters):
+        super(CNN_CLD, self).__init__()
         self.conv_layer1 = nn.Conv2d(
             in_channels=3, out_channels=numFilters, kernel_size=1
         )
-        self.l2 = nn.Linear(insize, hidsize1)
-        self.l3 = nn.Linear(hidsize1, hidsize1)
-        self.l4 = nn.Linear(hidsize1, hidsize2)
-        self.l5 = nn.Linear(hidsize2, outsize)
         self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
-        self.dropout = nn.Dropout(0.1)
-        self.conv_bn = nn.BatchNorm2d(5)
 
     def forward(self, x):
-        """
-        forward of DQN
-        """
         x = x / 255  # note, a better normalization should be applied
         y1 = F.relu(self.conv_layer1(x))
         y2 = self.avg_pool(y1)  # ave pool is intentional (like a count)
         y2 = torch.flatten(y2, 1)
         y1 = torch.flatten(y1, 1)
         y = torch.cat((y1, y2), 1)
+        return y
+
+
+class Combine_CLD(nn.Module):
+    def __init__(
+        self,
+        numFilters,
+        insize,
+        hidsize1,
+        hidsize2,
+        outsize,
+        n_layers=1,
+        batch_first=True,
+    ):
+        super(Combine_CLD, self).__init__()
+        self.cnn = CNN_CLD(numFilters)
+        self.rnn = nn.LSTM(
+            input_size=insize,
+            hidden_size=hidsize1,
+            num_layers=n_layers,
+            batch_first=True,
+        )
+        self.l1 = nn.Linear(hidsize1, hidsize1)
+        self.l2 = nn.Linear(hidsize1, hidsize2)
+        self.l3 = nn.Linear(hidsize2, outsize)
+
+    def forward(self, x):
+        batch_size, timesteps, C, H, W = x.size()
+        c_in = x.view(batch_size * timesteps, C, H, W)
+        c_out = self.cnn(c_in)
+        r_in = c_out.view(batch_size, timesteps, -1)
+
+        r_out, (h_n, h_c) = self.rnn(r_in)
+
+        y = F.relu(self.l1(r_out[:, -1, :]))
         y = F.relu(self.l2(y))
-        y = F.relu(self.l3(y))
-        y = F.relu(self.l4(y))
-        value = self.l5(y)
-        return value
+        y = self.l3(y)
+
+        return y
 
 
-class modelDQN:
+class model_CNN_LSTM_DQN:
 
-    kind = "double_dqn"  # class variable shared by all instances
+    kind = "cnn_lstm_dqn"  # class variable shared by all instances
 
     def __init__(self, numFilters, lr, replaySize, insize, hidsize1, hidsize2, outsize):
-        self.modeltype = "double_dqn"
-        self.model1 = DQN(numFilters, insize, hidsize1, hidsize2, outsize)
-        self.model2 = DQN(numFilters, insize, hidsize1, hidsize2, outsize)
+        self.modeltype = "cnn_lstm_dqn"
+        self.model1 = Combine_CLD(numFilters, insize, hidsize1, hidsize2, outsize)
+        self.model2 = Combine_CLD(numFilters, insize, hidsize1, hidsize2, outsize)
         self.optimizer = torch.optim.Adam(
             self.model1.parameters(), lr=lr, weight_decay=0.01
         )
@@ -55,9 +80,13 @@ class modelDQN:
         self.replay = deque([], maxlen=replaySize)
         self.sm = nn.Softmax(dim=1)
 
-    def createInput(self, world, i, j, holdObject):
+    def createInput(self, world, i, j, holdObject, numMemories = -1):
+        if numMemories > 0:
+            for _ in range(numMemories):
+                print("Do Something")
         img = agentVisualField(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+        input = input.unsqueeze(0)
         return input
 
     def takeAction(self, params):

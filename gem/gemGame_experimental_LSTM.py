@@ -17,6 +17,7 @@ from gem.utils import (
 from models.memory import Memory
 from models.dqn import DQN, modelDQN
 from models.randomActions import modelRandomAction
+from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
 
 from models.perception import agentVisualField
 from environment.elements import (
@@ -188,6 +189,9 @@ def gameTest(worldSize):
 
 
 # play and learn the game
+def createInput(img):
+    input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+    return input
 
 
 def playGame(
@@ -223,8 +227,7 @@ def playGame(
 
         moveList = findMoveables(world)
         for i, j in moveList:
-            # -1 for init_replay doesn't build a memory stack
-            world[i, j, 0].init_replay(-1)
+            world[i, j, 0].init_replay(5)
 
         while done == 0:
 
@@ -252,8 +255,8 @@ def playGame(
             for i, j in moveList:
                 holdObject = world[i, j, 0]
 
-                img = agentVisualField(world, (i, j), holdObject.vision)
-                input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+                # note the prep vision may need to be a function within the model class
+                input = models[holdObject.policy].createInput(world, i, j, holdObject)
 
                 if holdObject.static != 1:
                     # if holdObject.kind != "deadAgent":
@@ -328,6 +331,7 @@ def watchAgame(world, models, maxEpochs):
 
             img = agentVisualField(world, (i, j), holdObject.vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+            input = input.unsqueeze(0)
             if holdObject.static != 1:
                 if holdObject.kind != "deadAgent":
                     action = models[holdObject.policy].takeAction([input, 0.1])
@@ -386,8 +390,9 @@ def load_models(save_dir, filename):
 
 def train_wolf_gem(epochs=10000):
     models = []
-    models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent model
-    models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
+    # 405 / 1445 should go back to 650 / 2570 when fixed
+    models.append(model_CNN_LSTM_DQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent model
+    models.append(model_CNN_LSTM_DQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents

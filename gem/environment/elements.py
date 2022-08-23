@@ -36,15 +36,20 @@ class Agent:
         self.static = 0  # whether the object gets to take actions or not
         self.passable = 0  # whether the object blocks movement
         self.trainable = 1  # whether there is a network to be optimized
-        self.replay = deque([], maxlen=1)
+        self.replay = deque([], maxlen=5)  # we should read in these maxlens
         self.has_transitions = True
         self.justDied = False
 
-    def init_replay(self):
+    def init_replay(self, numberMemories):
         img = np.random.rand(9, 9, 3) * 0
         state = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+        if numberMemories > 0:
+            state = state.unsqueeze(0)
         exp = (state, 0, 0, state, 0)
         self.replay.append(exp)
+        if numberMemories > 0:
+            for _ in range(numberMemories):
+                self.replay.append(exp)
 
     def died(self):
         # this can only be used it seems if all agents have a different id
@@ -97,8 +102,7 @@ class Agent:
                 reward = -0.1
 
         if expBuff == True:
-            img2 = agentVisualField(world, (newLoc1, newLoc2), self.vision)
-            input2 = torch.tensor(img2).unsqueeze(0).permute(0, 3, 1, 2).float()
+            input2 = models[self.policy].createInput(world, newLoc1, newLoc1, self)
             exp = (input, action, reward, input2, done)
             self.replay.append(exp)
             self.reward += reward
@@ -138,14 +142,20 @@ class Wolf:
         self.static = 0  # whether the object gets to take actions or not
         self.passable = 0  # whether the object blocks movement
         self.trainable = 1  # whether there is a network to be optimized
-        self.replay = deque([], maxlen=1)
+        self.replay = deque([], maxlen=5)  # we should read in these maxlens
         self.has_transitions = True
 
-    def init_replay(self):
+    # init is now for LSTM, may need to have a toggle for LSTM of not
+    def init_replay(self, numberMemories):
         img = np.random.rand(17, 17, 3) * 0
         state = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+        if numberMemories > 0:
+            state = state.unsqueeze(0)
         exp = (state, 0, 0, state, 0)
         self.replay.append(exp)
+        if numberMemories > 0:
+            for _ in range(numberMemories):
+                self.replay.append(exp)
 
     def transition(
         self, action, world, models, i, j, gamePoints, done, input, expBuff=True
@@ -198,8 +208,7 @@ class Wolf:
                 world[attLoc1, attLoc2, 0] = deadAgent()
 
         if expBuff == True:
-            img2 = agentVisualField(world, (newLoc1, newLoc2), self.vision)
-            input2 = torch.tensor(img2).unsqueeze(0).permute(0, 3, 1, 2).float()
+            input2 = models[self.policy].createInput(world, newLoc1, newLoc1, self)
             exp = (input, action, reward, input2, done)
             self.replay.append(exp)
             self.reward += reward
