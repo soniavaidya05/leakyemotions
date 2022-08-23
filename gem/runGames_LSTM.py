@@ -8,5 +8,5 @@ from gemGame_experimental_LSTM import train_wolf_gem, save_models, load_models
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
-models = train_wolf_gem(50000)
-save_models(models, save_dir, "lstm_test_wolf_gem_50000", 10)
+models = train_wolf_gem(1000)
+save_models(models, save_dir, "lstm_build_replay_memories", 3)
