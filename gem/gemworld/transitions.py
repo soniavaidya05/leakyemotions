@@ -1,3 +1,8 @@
+# ----------------------------------------
+# NOTE, THIS FILE MAY NO LONGER BE NEEDED
+# ----------------------------------------
+
+
 from gem.environment.elements import EmptyObject, deadAgent
 from models.perception import agentVisualField
 import torch

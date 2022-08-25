@@ -107,3 +107,11 @@ class modelDQN:
 
     def updateQ(self):
         self.model2.load_state_dict(self.model1.state_dict())
+
+    def transferMemories(self, world, expList, extraReward=True):
+        # transfer the events from agent memory to model replay
+        exp = world[i, j, 0].replay[-1]
+        self.replay.append(exp)
+        if extraReward == True and abs(exp[2]) > 9:
+            for _ in range(5):
+                self.replay.append(exp)

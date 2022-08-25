@@ -158,8 +158,21 @@ def updateMemories(models, world, expList, endUpdate=True):
                 world, i, j, world[i, j, 0]
             )
             exp = (exp[0], exp[1], world[i, j, 0].reward, input2, exp[4])
-        world[i, j, 0].replay[0] = exp
+        # changed this from replay[0] to replay[-1]
+        world[i, j, 0].replay[-1] = exp
     return world
+
+
+def transferWorldMemories(models, world, expList, extraReward=True):
+    # transfer the events from agent memory to model replay
+    for i, j in expList:
+        # this moves the specific form of the replay memory into the model class
+        # where it can be setup exactly for the model
+        models[world[i, j, 0].policy].transferMemories(world, i, j, extraReward=True)
+    return models
+
+
+# functions below are legacy and should be moved before 0.1.2
 
 
 def transferMemories(models, world, expList, extraReward=True):
@@ -174,26 +187,26 @@ def transferMemories(models, world, expList, extraReward=True):
     return models
 
 
-def transferMemories_LSTM(models, world, expList, extraReward=True):
-    # transfer the events from agent memory to model replay
-    for i, j in expList:
-
-        # note, should these replay[0]s be replay[-1] in case we need to store more memories?
-        exp = world[i, j, 0].replay[-1]
-
-        t1 = world[i, j, 0].replay[-5][0]
-        t2 = world[i, j, 0].replay[-4][0]
-        t3 = world[i, j, 0].replay[-3][0]
-        t4 = world[i, j, 0].replay[-2][0]
-        t5 = world[i, j, 0].replay[-1][0]
-
-        seq1 = torch.cat([t1, t2, t3, t4], dim=1)
-        seq2 = torch.cat([t2, t3, t4, t5], dim=1)
-
-        exp = (seq1, exp[1], exp[2], seq2, exp[4])
-
-        models[world[i, j, 0].policy].replay.append(exp)
-        if extraReward == True and abs(exp[2]) > 9:
-            for _ in range(5):
-                models[world[i, j, 0].policy].replay.append(exp)
-    return models
+# def transferMemories_LSTM(models, world, expList, extraReward=True):
+#    # transfer the events from agent memory to model replay
+#    for i, j in expList:
+#
+#        # note, should these replay[0]s be replay[-1] in case we need to store more memories?
+#        exp = world[i, j, 0].replay[-1]
+#
+#        t1 = world[i, j, 0].replay[-5][0]
+#        t2 = world[i, j, 0].replay[-4][0]
+#        t3 = world[i, j, 0].replay[-3][0]
+#        t4 = world[i, j, 0].replay[-2][0]
+#        t5 = world[i, j, 0].replay[-1][0]
+#
+#        seq1 = torch.cat([t1, t2, t3, t4], dim=1)
+#        seq2 = torch.cat([t2, t3, t4, t5], dim=1)
+#
+#        exp = (seq1, exp[1], exp[2], seq2, exp[4])
+#
+#        models[world[i, j, 0].policy].replay.append(exp)
+#        if extraReward == True and abs(exp[2]) > 9:
+#            for _ in range(5):
+#                models[world[i, j, 0].policy].replay.append(exp)
+#    return models

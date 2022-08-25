@@ -1,4 +1,6 @@
 from abc import ABC
+
+# I assume the below is an automatic addition and not what we want
 from turtle import width
 from gem.environment.elements import Agent, EmptyObject, Gem, Wall, Wolf
 import numpy as np

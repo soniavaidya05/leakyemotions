@@ -27,5 +27,4 @@ class modelRandomAction:
         return loss
 
     def updateQ(self):
-        update = 0
-        # this model does not update
+        pass
