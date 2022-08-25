@@ -21,6 +21,9 @@ class Gem:
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
 
+    def transition():
+        pass
+
 
 class Agent:
 

@@ -1,10 +1,12 @@
 from abc import ABC
 
 # I assume the below is an automatic addition and not what we want
-from turtle import width
+#from turtle import width
 from gem.environment.elements import Agent, EmptyObject, Gem, Wall, Wolf
 import numpy as np
 from abc import ABC, abstractmethod
+from astropy.visualization import make_lupton_rgb
+
 
 
 class Board(ABC):
@@ -12,11 +14,11 @@ class Board(ABC):
         self.height = height
         self.width = width
         self.layers = layers
-        self.defaultObjectClass = EmptyObject
+        self.defaultObjectClass = EmptyObject()
         self.create_world()
 
     def create_world(self):
-        self.world = np.full(self.height, self.width, self.layers, self.defaultObject)
+        self.world = np.full(self.height, self.width, self.layers, self.defaultObjectClass)
 
     def insert_walls(self):
         """
@@ -141,67 +143,3 @@ class WolfsAndGems(Board):
                 round(self.height / 2) + 1, round(self.width / 2) - 1, 0
             ] = self.agent1
 
-
-class WolfHuntBoard(Board):
-    def __init__(
-        self,
-        height=15,
-        width=15,
-        layers=1,
-        defaultObject=EmptyObject(),
-        gem1p=0.115,
-        gem2p=0.06,
-        agent1p=0.05,
-    ):
-        super().__init__(height, width, layers, defaultObject)
-        self.insert_walls()
-        self.gem1p = gem1p
-        self.gem2p = gem2p
-        self.agent1p = agent1p
-
-    def plot(self, layer):  # is this defined in the master?
-        pass
-
-    def init_elements(self):
-        self.agent1 = Agent(0)
-        self.wolf1 = Wolf(1)
-        self.gem1 = Gem(5, [0.0, 255.0, 0.0])
-        self.gem2 = Gem(15, [255.0, 255.0, 0.0])
-        self.gem3 = Gem(10, [0.0, 0.0, 255.0])
-        self.emptyObject = EmptyObject()
-        self.walls = Wall()
-
-    # below make it so that it only puts objects in the non wall parts.
-    # this may need to have a parameter that indicates whether things can be
-    # on the edges or not
-
-    def populate(self):
-        for i in range(self.height):
-            for j in range(self.width):
-                obj = np.random.choice(
-                    [0, 1, 2, 3],
-                    p=[
-                        self.gem1p,
-                        self.gem2p,
-                        self.agent1p,
-                        1 - self.gem2p - self.gem1p - self.agent1p,
-                    ],
-                )
-                if obj == 0:
-                    self.world[i, j, 0] = self.gem1
-                if obj == 1:
-                    self.world[i, j, 0] = self.gem2
-                if obj == 2:
-                    self.world[i, j, 0] = self.agent1
-
-        cBal = np.random.choice([0, 1])
-        if cBal == 0:
-            self.world[round(self.height / 2), round(self.width / 2), 0] = self.wolf1
-            self.world[
-                round(self.height / 2) + 1, round(self.width / 2) - 1, 0
-            ] = self.wolf1
-        if cBal == 1:
-            self.world[round(self.height / 2), round(self.width / 2), 0] = self.wolf1
-            self.world[
-                round(self.height / 2) + 1, round(self.width / 2) - 1, 0
-            ] = self.wolf1
