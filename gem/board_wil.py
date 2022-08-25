@@ -60,7 +60,7 @@ def playGame(
     epochs=200000,
     maxEpochs=100,
     epsilon=0.9,
-    gameVersion = WolfsAndGems()
+    gameVersion = WolfsAndGems
 ):
 
     losses = 0
@@ -71,11 +71,7 @@ def playGame(
 
 
     for epoch in range(epochs):
-        env = gameVersion
-        env.create_world(worldSize,worldSize,1)
-        env.init_elements()
-        env.populate()
-        env.insert_walls()
+        env = gameVersion()
 
         done = 0
         withinTurn = 0
@@ -174,7 +170,7 @@ def train_wolf_gem(epochs=10000):
         epochs,  # number of epochs
         100,  # max epoch length
         0.85,  # starting epsilon
-        gameVersion = WolfsAndGems(),
+        gameVersion = WolfsAndGems,
     )
     return models
 

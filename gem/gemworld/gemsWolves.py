@@ -25,8 +25,12 @@ class WolfsAndGems():
         self.width=width,
         self.layers=layers,
         self.defaultObject=defaultObject
+        self.create_world()
+        self.init_elements()
+        self.populate()
+        self.insert_walls()
 
-    def create_world(self, height, width, layers):
+    def create_world(self, height = 15, width = 15, layers = 1):
         #self.world = np.full((self.height, self.width, self.layers), self.defaultObject)
         self.world = np.full((height, width, layers), self.defaultObject)
 
