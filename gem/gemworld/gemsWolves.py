@@ -1,4 +1,8 @@
-from gem.environment.elements import Agent, EmptyObject, Gem, Wall, Wolf
+# from gem.environment.elements import Agent, EmptyObject, Gem, Wall, Wolf
+from gem.environment.elements.agent import Agent
+from gem.environment.elements.element import EmptyObject, Wall
+from gem.environment.elements.gem import Gem
+from gem.environment.elements.wolf import Wolf
 import numpy as np
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
