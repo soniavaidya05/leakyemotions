@@ -38,6 +38,9 @@ class WolfsAndGems:
         self.populate()
         self.insert_walls()
         # needed because the previous version was resetting the replay buffer
+        # in the reset we should be able to make a bigger or smaller world
+        # right now the game is stuck in 15x15, and will want to start increasing
+        # the size of the world as the agents learn
 
     def plot(self, layer):  # is this defined in the master?
         """
