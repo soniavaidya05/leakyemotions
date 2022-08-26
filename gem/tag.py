@@ -17,7 +17,7 @@ from models.memory import Memory
 from models.dqn import DQN, modelDQN
 from models.perception import agentVisualField
 from environment.elements import TagAgent, EmptyObject, Wall
-from gem.game_utils import createWorld, createWorldImage
+from old_game_file.game_utils import createWorld, createWorldImage
 from tagworld.transitions import tagAgentTransitions
 
 
@@ -45,7 +45,7 @@ from collections import deque
 # generate the gem search game objects
 
 
-def createTagWorld(worldSize, agentp=.05):
+def createTagWorld(worldSize, agentp=0.05):
     num_agents = 0
     emptyObject = EmptyObject()
     walls = Wall()
@@ -58,15 +58,15 @@ def createTagWorld(worldSize, agentp=.05):
             if obj == 0:
                 world[i, j, 0] = TagAgent(0)
                 num_agents += 1
-    
-        #world[round(worldSize/2),round(worldSize/2),0] = agent1
-        #world[round((worldSize/2))-1,(round(worldSize/2))+1,0] = agent2
+
+        # world[round(worldSize/2),round(worldSize/2),0] = agent1
+        # world[round((worldSize/2))-1,(round(worldSize/2))+1,0] = agent2
     for i in range(worldSize):
         world[0, i, 0] = walls
-        world[worldSize-1, i, 0] = walls
+        world[worldSize - 1, i, 0] = walls
         world[i, 0, 0] = walls
-        world[i, worldSize-1, 0] = walls
-    
+        world[i, worldSize - 1, 0] = walls
+
     agents = findAgents_tag(world)
     itAgent = random.choice(agents)
     itAgent.tag()
@@ -78,11 +78,11 @@ def createTagWorld(worldSize, agentp=.05):
     # done = 0
     all_agents = findMoveables(world)
     for i, j in all_agents:
-        agent = world[i,j,0]
+        agent = world[i, j, 0]
         img = agentVisualField(world, (i, j), agent.vision)
         current_state = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         next_state = current_state
-        action = random.randint(0,3)
+        action = random.randint(0, 3)
         reward = 0
         done = 0
         exp = (current_state, action, reward, next_state, done)
@@ -90,12 +90,15 @@ def createTagWorld(worldSize, agentp=.05):
 
     return world
 
+
 # test the world models
+
 
 def plotWorld(world):
     img = createWorldImage(world)
     plt.imshow(img)
     plt.show()
+
 
 def gameTest(worldSize):
     world = createTagWorld(worldSize)
@@ -120,6 +123,7 @@ def gameTest(worldSize):
 # world1 = createTagWorld(30)
 # plt.imshow(createWorldImage(world1))
 # plt.show()
+
 
 def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
 
@@ -202,8 +206,10 @@ def playGame(models, worldSize=15, epochs=200000, maxEpochs=100, epsilon=0.9):
             totalRewards = 0
     return models
 
-tmp = playGame(models, 15, 1000, 100, .85)
+
+tmp = playGame(models, 15, 1000, 100, 0.85)
 models = playGame(models, 15, 10000, 100, 0.85)
+
 
 def watchAgame(world, models, maxEpochs):
     fig = plt.figure()
@@ -245,9 +251,11 @@ def watchAgame(world, models, maxEpochs):
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
     return ani
 
+
 world3 = createTagWorld(30)
 video = watchAgame(world3, models, maxEpochs=200)
-video.save('./tag_output/tag_vid_1.gif', writer="PillowWriter", fps=2)
+video.save("./tag_output/tag_vid_1.gif", writer="PillowWriter", fps=2)
+
 
 def createVideo(worldSize, num):
     filename = "animation_A" + str(num) + ".gif"

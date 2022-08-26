@@ -16,8 +16,8 @@ from models.memory import Memory
 from models.dqn import DQN, modelDQN
 from models.perception import agentVisualField
 from environment.elements import Agent, EmptyObject, Wolf, Gem, Wall, deadAgent
-from gem.game_utils import createWorld, createWorldImage
-from gemworld.transitions import agentTransitions, wolfTransitions
+from old_game_file.game_utils import createWorld, createWorldImage
+from old_game_file.transitions import agentTransitions, wolfTransitions
 
 
 import os

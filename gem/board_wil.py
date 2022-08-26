@@ -27,7 +27,7 @@ from environment.elements import (
     Wall,
     deadAgent,
 )
-from gem.game_utils import createWorld, createWorldImage
+from old_game_file.game_utils import createWorld, createWorldImage
 from gemworld.gemsWolves import WolfsAndGems
 
 
@@ -57,7 +57,7 @@ def playGame(
     epochs=200000,
     maxEpochs=100,
     epsilon=0.9,
-    gameVersion=WolfsAndGems,
+    gameVersion=WolfsAndGems(),
     trainModels=True,
 ):
 
@@ -66,7 +66,7 @@ def playGame(
     turn = 0
     sync_freq = 500
     modelUpdate_freq = 25
-    env = gameVersion()
+    env = WolfsAndGems()
 
     if trainModels == False:
         fig = plt.figure()
@@ -113,12 +113,13 @@ def playGame(
             for i, j in moveList:
                 holdObject = env.world[i, j, 0]
 
-                # note the prep vision may need to be a function within the model class
-                input = models[holdObject.policy].createInput(
-                    env.world, i, j, holdObject
-                )
-
                 if holdObject.static != 1:
+
+                    # note the prep vision may need to be a function within the model class
+                    input = models[holdObject.policy].createInput(
+                        env.world, i, j, holdObject
+                    )
+
                     # I assume that we will need to update the "action" below to be something like
                     # [output] where action is the first thing that is returned
                     # the current structure would not work with multi-head output (Actor-Critic, immagination, etc.)
@@ -127,18 +128,19 @@ def playGame(
                 if withinTurn == maxEpochs:
                     done = 1
 
-            # rewrite this so all classes have transition, most are just pass
-            if holdObject.has_transitions == True:
-                env.world, models, gamePoints = holdObject.transition(
-                    action,
-                    env.world,
-                    models,
-                    i,
-                    j,
-                    gamePoints,
-                    done,
-                    input,
-                )
+                # rewrite this so all classes have transition, most are just pass
+
+                if holdObject.has_transitions == True:
+                    env.world, models, gamePoints = holdObject.transition(
+                        action,
+                        env.world,
+                        models,
+                        i,
+                        j,
+                        gamePoints,
+                        done,
+                        input,
+                    )
 
             if trainModels == True:
                 # transfer the events for each agent into the appropriate model after all have moved
@@ -175,7 +177,6 @@ def playGame(
 
 
 def createVideo(models, worldSize, num, gameVersion, filename="unnamed_video.gif"):
-
     # env = gameVersion()
     ani1 = playGame(
         models,  # model file list
@@ -243,6 +244,8 @@ save_models(models, save_dir, "modelClass_test_20000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.6)
 save_models(models, save_dir, "modelClass_test_30000", 5)
+
+models = load_models(save_dir, "modelClass_test_30000")
 
 models = addTrain_wolf_gem(models, 10000, 0.3)
 save_models(models, save_dir, "modelClass_test_40000", 5)

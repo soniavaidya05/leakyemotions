@@ -29,8 +29,8 @@ from environment.elements import (
     Wall,
     deadAgent,
 )
-from gem.game_utils import createWorld, createWorldImage
-from gemworld.transitions import agentTransitions, wolfTransitions
+from old_game_file.game_utils import createWorld, createWorldImage
+from old_game_file.transitions import agentTransitions, wolfTransitions
 
 
 import os
@@ -348,9 +348,7 @@ def watchAgame(world, models, maxEpochs):
     return ani
 
 
-def createVideo(
-    models, worldSize, num, filename="unnamed_video.gif"
-):
+def createVideo(models, worldSize, num, filename="unnamed_video.gif"):
     world = createWolvesGems(worldSize)
     ani1 = watchAgame(world, models, 100)
     ani1.save(filename, writer="PillowWriter", fps=2)
