@@ -1,4 +1,3 @@
-
 from gem.utils import (
     findInstance,
     one_hot,
@@ -34,7 +33,6 @@ from gemworld.gemsWolves import WolfsAndGems
 
 import os
 
-# os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -52,7 +50,6 @@ import pickle
 from collections import deque
 
 
-
 def playGame(
     models,
     trainableModels,
@@ -60,7 +57,8 @@ def playGame(
     epochs=200000,
     maxEpochs=100,
     epsilon=0.9,
-    gameVersion = WolfsAndGems
+    gameVersion=WolfsAndGems,
+    trainModels=True,
 ):
 
     losses = 0
@@ -69,6 +67,9 @@ def playGame(
     sync_freq = 500
     modelUpdate_freq = 25
 
+    if trainModels == False:
+        fig = plt.figure()
+        ims = []
 
     for epoch in range(epochs):
         env = gameVersion()
@@ -81,6 +82,11 @@ def playGame(
             env.world[i, j, 0].init_replay(5)
 
         while done == 0:
+
+            if trainModels == False:
+                image = createWorldImage(env.world)
+                im = plt.imshow(image, animated=True)
+                ims.append([im])
 
             findAgent = findAgents(env.world)
             if len(findAgent) == 0:
@@ -107,7 +113,9 @@ def playGame(
                 holdObject = env.world[i, j, 0]
 
                 # note the prep vision may need to be a function within the model class
-                input = models[holdObject.policy].createInput(env.world, i, j, holdObject)
+                input = models[holdObject.policy].createInput(
+                    env.world, i, j, holdObject
+                )
 
                 if holdObject.static != 1:
                     # I assume that we will need to update the "action" below to be something like
@@ -131,34 +139,71 @@ def playGame(
                     input,
                 )
 
-            # transfer the events for each agent into the appropriate model after all have moved
-            expList = findMoveables(env.world)
-            env.world = updateMemories(models, env.world, expList, endUpdate=True)
+            if trainModels == True:
+                # transfer the events for each agent into the appropriate model after all have moved
+                expList = findMoveables(env.world)
+                env.world = updateMemories(models, env.world, expList, endUpdate=True)
 
-            # expList = findMoveables(world)
-            stableVersion = False
-            if stableVersion == False:
-                models = transferWorldMemories(models, env.world, expList)
-            if stableVersion == True:
-                models = transferMemories(models, env.world, expList)
+                # expList = findMoveables(world)
+                stableVersion = False
+                if stableVersion == False:
+                    models = transferWorldMemories(models, env.world, expList)
+                if stableVersion == True:
+                    models = transferMemories(models, env.world, expList)
 
-            # testing training after every event
-            if withinTurn % modelUpdate_freq == 0:
-                for mods in trainableModels:
-                    loss = models[mods].training(150, 0.9)
-                    losses = losses + loss.detach().numpy()
+                # testing training after every event
+                if withinTurn % modelUpdate_freq == 0:
+                    for mods in trainableModels:
+                        loss = models[mods].training(150, 0.9)
+                        losses = losses + loss.detach().numpy()
 
         # epdate epsilon to move from mostly random to greedy choices for action with time
         epsilon = updateEpsilon(epsilon, turn, epoch)
 
-        if epoch % 100 == 0:
+        if epoch % 100 == 0 and trainModels == True:
             print(epoch, withinTurn, gamePoints, losses, epsilon)
             gamePoints = [0, 0]
             losses = 0
-    return models
+    if trainModels == True:
+        return models
+    if trainModels == False:
+        ani = animation.ArtistAnimation(
+            fig, ims, interval=50, blit=True, repeat_delay=1000
+        )
+        return ani
 
 
-def train_wolf_gem(epochs=10000):
+def createVideo(models, worldSize, num, gameVersion, filename="unnamed_video.gif"):
+
+    env = gameVersion()
+    ani1 = playGame(
+        models,  # model file list
+        [],  # which models from that list should be trained, here not the agents
+        25,  # world size
+        1,  # number of epochs
+        100,  # max epoch length
+        0.85,  # starting epsilon
+        gameVersion=WolfsAndGems,  # which game
+        trainModels=False,  # this plays a game without learning
+    )
+    ani1.save(filename, writer="PillowWriter", fps=2)
+
+
+def save_models(models, save_dir, filename, add_videos):
+    with open(save_dir + filename, "wb") as fp:
+        pickle.dump(models, fp)
+    for video_num in range(add_videos):
+        vfilename = save_dir + filename + "_replayVid_" + str(video_num) + ".gif"
+        createVideo(models, 25, video_num, WolfsAndGems, vfilename)
+
+
+def load_models(save_dir, filename):
+    with open(save_dir + filename, "rb") as fp:
+        model = pickle.load(fp)
+    return model
+
+
+def train_wolf_gem(epochs=10000, epsilon=0.85):
     models = []
     # 405 / 1445 should go back to 650 / 2570 when fixed
     models.append(model_CNN_LSTM_DQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent model
@@ -170,8 +215,36 @@ def train_wolf_gem(epochs=10000):
         epochs,  # number of epochs
         100,  # max epoch length
         0.85,  # starting epsilon
-        gameVersion = WolfsAndGems,
+        gameVersion=WolfsAndGems,
     )
     return models
 
-models = train_wolf_gem(1000)
+
+def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
+    models = playGame(
+        models,  # model file list
+        [0, 1],  # which models from that list should be trained, here not the agents
+        15,  # world size
+        epochs,  # number of epochs
+        100,  # max epoch length
+        0.85,  # starting epsilon
+        gameVersion=WolfsAndGems,
+    )
+    return models
+
+
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+models = train_wolf_gem(10000)
+save_models(models, save_dir, "modelClass_test_10000", 5)
+
+models = addTrain_wolf_gem(models, 10000)
+save_models(models, save_dir, "modelClass_test_20000", 5)
+
+models = addTrain_wolf_gem(models, 10000)
+save_models(models, save_dir, "modelClass_test_30000", 5)
+
+models = addTrain_wolf_gem(models, 10000)
+save_models(models, save_dir, "modelClass_test_40000", 5)
+
+models = addTrain_wolf_gem(models, 10000)
+save_models(models, save_dir, "modelClass_test_50000", 5)

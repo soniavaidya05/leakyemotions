@@ -310,7 +310,6 @@ def watchAgame(world, models, maxEpochs):
     done = 0
 
     for _ in range(maxEpochs):
-
         image = createWorldImage(world)
         im = plt.imshow(image, animated=True)
         ims.append([im])
@@ -350,15 +349,9 @@ def watchAgame(world, models, maxEpochs):
 
 
 def createVideo(
-    models, worldSize, num, gameVersion="wolfHunt", filename="unnamed_video.gif"
+    models, worldSize, num, filename="unnamed_video.gif"
 ):
-    if gameVersion == "wolfHunt":
-        world = createWolfHunt(worldSize)
-    if gameVersion == "wolvesGems":
-        world = createWolvesGems(worldSize)
-    if gameVersion == "createGemsSearch":
-        world = createGemsSearch(worldSize)
-
+    world = createWolvesGems(worldSize)
     ani1 = watchAgame(world, models, 100)
     ani1.save(filename, writer="PillowWriter", fps=2)
 
@@ -368,7 +361,7 @@ def save_models(models, save_dir, filename, add_videos):
         pickle.dump(models, fp)
     for video_num in range(add_videos):
         vfilename = save_dir + filename + "_replayVid_" + str(video_num) + ".gif"
-        createVideo(models, 25, video_num, gameVersion="wolvesGems", filename=vfilename)
+        createVideo(models, 25, video_num, filename=vfilename)
 
 
 def load_models(save_dir, filename):
@@ -400,6 +393,6 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.85):
         15,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
-        0.85,  # starting epsilon
+        epsilon,  # starting epsilon
     )
     return models
