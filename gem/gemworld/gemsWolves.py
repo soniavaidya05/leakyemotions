@@ -20,22 +20,24 @@ class WolfsAndGems:
         self.gem1p = gem1p
         self.gem2p = gem2p
         self.wolf1p = wolf1p
-        self.height = (height,)
-        self.width = (width,)
-        self.layers = (layers,)
+        self.height = height
+        self.width = width
+        self.layers = layers
         self.defaultObject = defaultObject
-        self.create_world()
+        self.create_world(self.height, self.width, self.layers)
         self.init_elements()
-        self.populate()
+        self.populate(self.gem1p, self.gem2p, self.wolf1p)
         self.insert_walls()
 
     def create_world(self, height=15, width=15, layers=1):
         # self.world = np.full((self.height, self.width, self.layers), self.defaultObject)
         self.world = np.full((height, width, layers), self.defaultObject)
 
-    def reset_env(self):
-        self.create_world()
-        self.populate()
+    def reset_env(
+        self, height=15, width=15, layers=1, gem1p=0.115, gem2p=0.06, wolf1p=0.005
+    ):
+        self.create_world(height, width, layers)
+        self.populate(gem1p, gem2p, wolf1p)
         self.insert_walls()
         # needed because the previous version was resetting the replay buffer
         # in the reset we should be able to make a bigger or smaller world
@@ -88,16 +90,16 @@ class WolfsAndGems:
         plt.imshow(img)
         plt.show()
 
-    def populate(self):
+    def populate(self, gem1p=0.115, gem2p=0.06, wolf1p=0.005):
         for i in range(self.world.shape[0]):
             for j in range(self.world.shape[1]):
                 obj = np.random.choice(
                     [0, 1, 2, 3],
                     p=[
-                        self.gem1p,
-                        self.gem2p,
-                        self.wolf1p,
-                        1 - self.gem2p - self.gem1p - self.wolf1p,
+                        gem1p,
+                        gem2p,
+                        wolf1p,
+                        1 - gem2p - gem1p - wolf1p,
                     ],
                 )
                 if obj == 0:
