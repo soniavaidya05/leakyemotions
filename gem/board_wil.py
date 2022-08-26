@@ -19,14 +19,19 @@ from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
 
 
 from models.perception import agentVisualField
-from environment.elements import (
-    Agent,
-    EmptyObject,
-    Wolf,
-    Gem,
-    Wall,
-    deadAgent,
-)
+
+"""
+TODO: Remove old/stale imports.
+"""
+
+# from environment.elements import (
+#     Agent,
+#     EmptyObject,
+#     Wolf,
+#     Gem,
+#     Wall,
+#     deadAgent,
+# )
 from old_game_file.game_utils import createWorld, createWorldImage
 from gemworld.gemsWolves import WolfsAndGems
 
