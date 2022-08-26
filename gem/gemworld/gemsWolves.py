@@ -6,8 +6,7 @@ import matplotlib.animation as animation
 from models.perception import agentVisualField
 
 
-
-class WolfsAndGems():
+class WolfsAndGems:
     def __init__(
         self,
         height=15,
@@ -21,18 +20,24 @@ class WolfsAndGems():
         self.gem1p = gem1p
         self.gem2p = gem2p
         self.wolf1p = wolf1p
-        self.height=height,
-        self.width=width,
-        self.layers=layers,
-        self.defaultObject=defaultObject
+        self.height = (height,)
+        self.width = (width,)
+        self.layers = (layers,)
+        self.defaultObject = defaultObject
         self.create_world()
         self.init_elements()
         self.populate()
         self.insert_walls()
 
-    def create_world(self, height = 15, width = 15, layers = 1):
-        #self.world = np.full((self.height, self.width, self.layers), self.defaultObject)
+    def create_world(self, height=15, width=15, layers=1):
+        # self.world = np.full((self.height, self.width, self.layers), self.defaultObject)
         self.world = np.full((height, width, layers), self.defaultObject)
+
+    def reset_env(self):
+        self.create_world()
+        self.populate()
+        self.insert_walls()
+        # needed because the previous version was resetting the replay buffer
 
     def plot(self, layer):  # is this defined in the master?
         """
@@ -63,8 +68,7 @@ class WolfsAndGems():
     # this may need to have a parameter that indicates whether things can be
     # on the edges or not
 
-
-    def gameTest(self, layer = 0):
+    def gameTest(self, layer=0):
         image = self.plot(layer)
 
         moveList = []
@@ -80,7 +84,6 @@ class WolfsAndGems():
         plt.subplot(1, 2, 2)
         plt.imshow(img)
         plt.show()
-
 
     def populate(self):
         for i in range(self.world.shape[0]):
@@ -103,16 +106,23 @@ class WolfsAndGems():
 
         cBal = np.random.choice([0, 1])
         if cBal == 0:
-            self.world[round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0] = self.agent1
             self.world[
-                round(self.world.shape[0] / 2) + 1, round(self.world.shape[1] / 2) - 1, 0
+                round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
+            ] = self.agent1
+            self.world[
+                round(self.world.shape[0] / 2) + 1,
+                round(self.world.shape[1] / 2) - 1,
+                0,
             ] = self.agent1
         if cBal == 1:
-            self.world[round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0] = self.agent1
             self.world[
-                round(self.world.shape[0] / 2) + 1, round(self.world.shape[1] / 2) - 1, 0
+                round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
             ] = self.agent1
-
+            self.world[
+                round(self.world.shape[0] / 2) + 1,
+                round(self.world.shape[1] / 2) - 1,
+                0,
+            ] = self.agent1
 
     def insert_walls(self):
         """

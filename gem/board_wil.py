@@ -66,13 +66,14 @@ def playGame(
     turn = 0
     sync_freq = 500
     modelUpdate_freq = 25
+    env = gameVersion()
 
     if trainModels == False:
         fig = plt.figure()
         ims = []
 
     for epoch in range(epochs):
-        env = gameVersion()
+        env.reset_env()
 
         done = 0
         withinTurn = 0
@@ -175,7 +176,7 @@ def playGame(
 
 def createVideo(models, worldSize, num, gameVersion, filename="unnamed_video.gif"):
 
-    env = gameVersion()
+    # env = gameVersion()
     ani1 = playGame(
         models,  # model file list
         [],  # which models from that list should be trained, here not the agents
@@ -227,24 +228,27 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
         15,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
-        0.85,  # starting epsilon
+        epsilon,  # starting epsilon
         gameVersion=WolfsAndGems,
     )
     return models
 
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-models = train_wolf_gem(10000)
-save_models(models, save_dir, "modelClass_test_10000", 5)
+# models = train_wolf_gem(10000)
+# save_models(models, save_dir, "modelClass_test_10000", 5)
 
-models = addTrain_wolf_gem(models, 10000)
-save_models(models, save_dir, "modelClass_test_20000", 5)
+# models = addTrain_wolf_gem(models, 10000)
+# save_models(models, save_dir, "modelClass_test_20000", 5)
 
-models = addTrain_wolf_gem(models, 10000)
+models = load_models(save_dir, "modelClass_test_20000")
+models = addTrain_wolf_gem(models, 10000, 0.6)
 save_models(models, save_dir, "modelClass_test_30000", 5)
 
-models = addTrain_wolf_gem(models, 10000)
+models = addTrain_wolf_gem(models, 10000, 0.3)
 save_models(models, save_dir, "modelClass_test_40000", 5)
 
-models = addTrain_wolf_gem(models, 10000)
+models = addTrain_wolf_gem(models, 10000, 0.3)
 save_models(models, save_dir, "modelClass_test_50000", 5)
+
+# it is not learning because it is clearing the replay!
