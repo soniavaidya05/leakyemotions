@@ -130,120 +130,141 @@ class model_CNN_LSTM_AC:
         return action
 
     def training(self, batch_size, gamma):
+        clc = 0.1
+        gamma = 0.95
 
-        loss = torch.tensor(0.0)
+        rewards = torch.Tensor(self.rewards).flip(dims=(0,)).view(-1)  # A
+        logprobs = torch.stack(self.logprobs).flip(dims=(0,)).view(-1)
+        values = torch.stack(self.values).flip(dims=(0,)).view(-1)
+        Returns = []
+        ret_ = torch.Tensor([0])
+        for r in range(rewards.shape[0]):  # B
+            ret_ = rewards[r] + gamma * ret_
+            Returns.append(ret_)
+        Returns = torch.stack(Returns).view(-1)
+        Returns = F.normalize(Returns, dim=0)
+        actor_loss = -1 * logprobs * (Returns - values.detach())  # C
+        critic_loss = torch.pow(values - Returns, 2)  # D
+        loss = actor_loss.sum() + clc * critic_loss.sum()  # E
+        self.loss.backward()
+        self.optimizer.step()
+        return actor_loss, critic_loss, len(rewards)
 
-        if len(self.replay) > batch_size:
-
-            minibatch = random.sample(self.replay, batch_size)
-            state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
-            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
-            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch])
-            state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
-            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch])
-
-            Q1 = self.model1(state1_batch)
-            with torch.no_grad():
-                Q2 = self.model2(state2_batch)
-
-            Y = reward_batch + gamma * (
-                (1 - done_batch) * torch.max(Q2.detach(), dim=1)[0]
-            )
-            X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
-
-            self.optimizer.zero_grad()
-            loss = self.loss_fn(X, Y.detach())
-            loss.backward()
-            self.optimizer.step()
-        return loss
+        # loss = torch.tensor(0.0)
+        #
+        # if len(self.replay) > batch_size:
+        #
+        #    minibatch = random.sample(self.replay, batch_size)
+        #    state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
+        #    action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
+        #    reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch])
+        #    state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
+        #    done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch])
+        #
+        # Q1 = self.model1(state1_batch)
+        #    with torch.no_grad():
+        #        Q2 = self.model2(state2_batch)
+        #
+        #    Y = reward_batch + gamma * (
+        #        (1 - done_batch) * torch.max(Q2.detach(), dim=1)[0]
+        #    )
+        #    X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
+        #
+        #    self.optimizer.zero_grad()
+        #    loss = self.loss_fn(X, Y.detach())
+        #    loss.backward()
+        #    self.optimizer.step()
+        # return loss
 
     def updateQ(self):
         self.model2.load_state_dict(self.model1.state_dict())
 
     def transferMemories(self, world, i, j, extraReward=True, seqLength=5):
+        reward = 0  # needs to be added into this command
+        self.rewards.append(reward)
         # transfer the events from agent memory to model replay
 
         # the version below should be a replication of the version in utils
         # that seems to be working. this will test if the problem is the general
         # class problem, or in the specific code commented out beelow
 
-        version = 3
-
-        if version == 0:
-            exp = world[i, j, 0].replay[-1]
-            self.replay.append(exp)
-            if extraReward == True and abs(exp[2]) > 9:
-                for _ in range(5):
-                    self.replay.append(exp)
-
-        if version == 1:
-            # conceptually, if the selection of elements is right, this should be identical to above
-            exp = world[i, j, 0].replay[-1]
-            seq1 = world[i, j, 0].replay[-1][0]
-            seq2 = world[i, j, 0].replay[-1][3]
-            exp = (seq1, exp[1], exp[2], seq2, exp[4])
-            self.replay.append(exp)
-            if extraReward == True and abs(exp[2]) > 9:
-                for _ in range(5):
-                    self.replay.append(exp)
-
-        if version == 2:
-            # conceptually, this should be like above, but adding one memory to state and nextstate
-            exp = world[i, j, 0].replay[-1]
-            state_previous = world[i, j, 0].replay[-2][0]
-            state_now = world[i, j, 0].replay[-1][0]
-            state_next = world[i, j, 0].replay[-1][3]
-            seq1 = torch.cat([state_previous, state_now], dim=1)
-            seq2 = torch.cat([state_now, state_next], dim=1)
-            exp = (seq1, exp[1], exp[2], seq2, exp[4])
-            self.replay.append(exp)
-            if extraReward == True and abs(exp[2]) > 9:
-                for _ in range(5):
-                    self.replay.append(exp)
-
-        if version == 3:
-            # conceptually, just like 2, but increasing the step to 4 time points
-            exp = world[i, j, 0].replay[-1]
-            state_previous3 = world[i, j, 0].replay[-4][0]
-            state_previous2 = world[i, j, 0].replay[-3][0]
-            state_previous1 = world[i, j, 0].replay[-2][0]
-            state_now = world[i, j, 0].replay[-1][0]
-            state_next = world[i, j, 0].replay[-1][3]
-            seq1 = torch.cat(
-                [state_previous3, state_previous2, state_previous1, state_now], dim=1
-            )
-            seq2 = torch.cat(
-                [state_previous2, state_previous1, state_now, state_next], dim=1
-            )
-            exp = (seq1, exp[1], exp[2], seq2, exp[4])
-            self.replay.append(exp)
-            if extraReward == True and abs(exp[2]) > 9:
-                for _ in range(5):
-                    self.replay.append(exp)
-
-        if version == 4:
-
-            exp = world[i, j, 0].replay[-1]
-
-            state_now = world[i, j, 0].replay[-1][0]
-            state_next = world[i, j, 0].replay[-1][3]
-
-            seq1 = world[i, j, 0].replay[seqLength * -1][0]
-            seq2 = world[i, j, 0].replay[(seqLength * -1) + 1][0]
-
-            for mem in np.arange((seqLength * -1) + 1, -1):
-                seq1 = torch.cat([seq1, world[i, j, 0].replay[mem][0]], dim=1)
-                seq2 = torch.cat([seq2, world[i, j, 0].replay[mem + 1][0]], dim=1)
-
-            seq1 = torch.cat([seq1, state_now], dim=1)
-            seq2 = torch.cat([seq1, state_next], dim=1)
-
-            exp = (seq1, exp[1], exp[2], seq2, exp[4])
-
-            self.replay.append(exp)
-            if extraReward == True and abs(exp[2]) > 9:
-                for _ in range(5):
-                    self.replay.append(exp)
+        # version = 3
+        #
+        # if version == 0:
+        #    exp = world[i, j, 0].replay[-1]
+        #    self.replay.append(exp)
+        #    if extraReward == True and abs(exp[2]) > 9:
+        #        for _ in range(5):
+        #            self.replay.append(exp)
+        #
+        # if version == 1:
+        #    # conceptually, if the selection of elements is right, this should be identical to above
+        #    exp = world[i, j, 0].replay[-1]
+        #    seq1 = world[i, j, 0].replay[-1][0]
+        #    seq2 = world[i, j, 0].replay[-1][3]
+        #    exp = (seq1, exp[1], exp[2], seq2, exp[4])
+        #    self.replay.append(exp)
+        #    if extraReward == True and abs(exp[2]) > 9:
+        #        for _ in range(5):
+        #            self.replay.append(exp)
+        #
+        # if version == 2:
+        #    # conceptually, this should be like above, but adding one memory to state and nextstate
+        #    exp = world[i, j, 0].replay[-1]
+        #    state_previous = world[i, j, 0].replay[-2][0]
+        #    state_now = world[i, j, 0].replay[-1][0]
+        #    state_next = world[i, j, 0].replay[-1][3]
+        #    seq1 = torch.cat([state_previous, state_now], dim=1)
+        #    seq2 = torch.cat([state_now, state_next], dim=1)
+        #    exp = (seq1, exp[1], exp[2], seq2, exp[4])
+        #    self.replay.append(exp)
+        #    if extraReward == True and abs(exp[2]) > 9:
+        #        for _ in range(5):
+        #            self.replay.append(exp)
+        #
+        # if version == 3:
+        #    # conceptually, just like 2, but increasing the step to 4 time points
+        #    exp = world[i, j, 0].replay[-1]
+        #    state_previous3 = world[i, j, 0].replay[-4][0]
+        #    state_previous2 = world[i, j, 0].replay[-3][0]
+        #    state_previous1 = world[i, j, 0].replay[-2][0]
+        #    state_now = world[i, j, 0].replay[-1][0]
+        #    state_next = world[i, j, 0].replay[-1][3]
+        #    seq1 = torch.cat(
+        #        [state_previous3, state_previous2, state_previous1, state_now], dim=1
+        #    )
+        #    seq2 = torch.cat(
+        #        [state_previous2, state_previous1, state_now, state_next], dim=1
+        #    )
+        #    exp = (seq1, exp[1], exp[2], seq2, exp[4])
+        #    self.replay.append(exp)
+        #    if extraReward == True and abs(exp[2]) > 9:
+        #        for _ in range(5):
+        #            self.replay.append(exp)
+        #
+        # if version == 4:
+        #
+        #    exp = world[i, j, 0].replay[-1]
+        #
+        #    state_now = world[i, j, 0].replay[-1][0]
+        #    state_next = world[i, j, 0].replay[-1][3]
+        #
+        #    seq1 = world[i, j, 0].replay[seqLength * -1][0]
+        #    seq2 = world[i, j, 0].replay[(seqLength * -1) + 1][0]
+        #
+        #    for mem in np.arange((seqLength * -1) + 1, -1):
+        #        seq1 = torch.cat([seq1, world[i, j, 0].replay[mem][0]], dim=1)
+        #        seq2 = torch.cat([seq2, world[i, j, 0].replay[mem + 1][0]], dim=1)
+        #
+        #    seq1 = torch.cat([seq1, state_now], dim=1)
+        #    seq2 = torch.cat([seq1, state_next], dim=1)
+        #
+        #    exp = (seq1, exp[1], exp[2], seq2, exp[4])
+        #
+        #    self.replay.append(exp)
+        #    if extraReward == True and abs(exp[2]) > 9:
+        #        for _ in range(5):
+        #            self.replay.append(exp)
 
         # conceptually, this is the right code below
         # exp = world[i, j, 0].replay[-1]
