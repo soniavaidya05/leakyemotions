@@ -235,13 +235,12 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
 
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-# models = train_wolf_gem(10000)
-# save_models(models, save_dir, "modelClass_test_10000", 5)
+models = train_wolf_gem(10000)
+save_models(models, save_dir, "modelClass_test_10000", 5)
 
-# models = addTrain_wolf_gem(models, 10000)
-# save_models(models, save_dir, "modelClass_test_20000", 5)
+models = addTrain_wolf_gem(models, 10000, 0.7)
+save_models(models, save_dir, "modelClass_test_20000", 5)
 
-models = load_models(save_dir, "modelClass_test_20000")
 models = addTrain_wolf_gem(models, 10000, 0.6)
 save_models(models, save_dir, "modelClass_test_30000", 5)
 
@@ -251,4 +250,4 @@ save_models(models, save_dir, "modelClass_test_40000", 5)
 models = addTrain_wolf_gem(models, 10000, 0.3)
 save_models(models, save_dir, "modelClass_test_50000", 5)
 
-# it is not learning because it is clearing the replay!
+# models = load_models(save_dir, "modelClass_test_20000")
