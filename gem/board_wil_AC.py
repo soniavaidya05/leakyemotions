@@ -16,6 +16,7 @@ from models.memory import Memory
 from models.dqn import DQN, modelDQN
 from models.randomActions import modelRandomAction
 from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
+from models.cnn_lstm_AC import model_CNN_LSTM_AC
 
 
 from models.perception import agentVisualField
@@ -33,7 +34,9 @@ TODO: Remove old/stale imports.
 #     deadAgent,
 # )
 from old_game_file.game_utils import createWorld, createWorldImage
-from gemworld.gemsWolves import WolfsAndGems
+
+# from gemworld.gemsWolves import WolfsAndGems
+from gemworld.gemsWolvesSingle import WolfsAndGemsSingle
 
 
 import os
@@ -62,7 +65,7 @@ def playGame(
     epochs=200000,
     maxEpochs=100,
     epsilon=0.9,
-    gameVersion=WolfsAndGems(),
+    gameVersion=WolfsAndGemsSingle(),
     trainModels=True,
 ):
 
@@ -71,7 +74,7 @@ def playGame(
     turn = 0
     sync_freq = 500
     modelUpdate_freq = 25
-    env = WolfsAndGems()
+    env = WolfsAndGemsSingle()
 
     if trainModels == False:
         fig = plt.figure()
@@ -86,6 +89,9 @@ def playGame(
         moveList = findMoveables(env.world)
         for i, j in moveList:
             env.world[i, j, 0].init_replay(5)
+            env.world[i, j, 0].AC_logprob = []
+            env.world[i, j, 0].AC_value = []
+            env.world[i, j, 0].AC_reward = []
 
         while done == 0:
 
@@ -121,23 +127,22 @@ def playGame(
                 if holdObject.static != 1:
 
                     # note the prep vision may need to be a function within the model class
-                    # this input is wrong. need to update so that it is a sequence
-                    inputs = models[holdObject.policy].createInput2(
-                        env.world, i, j, holdObject, 1
+                    input = models[holdObject.policy].createInput(
+                        env.world, i, j, holdObject
                     )
-                    input, combined_input = inputs
-
-                    # input, combined_input = inputs
-
-                    # this is currently a problem. createInput sometimes need to return two things and sometimes
-                    # needs to return one. Need to have this become a general form
 
                     # I assume that we will need to update the "action" below to be something like
                     # [output] where action is the first thing that is returned
                     # the current structure would not work with multi-head output (Actor-Critic, immagination, etc.)
-                    action = models[holdObject.policy].takeAction(
-                        [combined_input, epsilon]
-                    )
+                    output = models[holdObject.policy].takeAction(input)
+                    action, logprob, value = output
+
+                    env.world[i, j, 0].AC_logprob.append(logprob)
+                    env.world[i, j, 0].AC_value.append(value)
+                    # env.world[i, j, 0].AC_reward = []
+
+                    # problem - we want to get this into the replay buffer, but the replay buffer is hard coded into the
+                    # replay for DQN. Maybe we could add a new memory class to the object at the beginning of this program?
 
                 if withinTurn == maxEpochs:
                     done = 1
@@ -161,18 +166,49 @@ def playGame(
                 expList = findMoveables(env.world)
                 env.world = updateMemories(models, env.world, expList, endUpdate=True)
 
+                for i, j in expList:
+                    env.world[i, j, 0].AC_reward.append(env.world[i, j, 0].reward)
+
                 # expList = findMoveables(world)
-                modelType = "DQN"
-                if modelType == "DQN":
-                    models = transferWorldMemories(models, env.world, expList)
-                if modelType == "AC":
-                    models[holdObject.policy].transferMemories_AC(holdObject.reward)
+                # modelType = "AC"
+                # if modelType == "DQN":
+                #    models = transferWorldMemories(models, env.world, expList)
+                # if modelType == "AC":
+                #    models[holdObject.policy].transferMemories_AC(holdObject.reward)
 
                 # testing training after every event
-                if withinTurn % modelUpdate_freq == 0:
-                    for mods in trainableModels:
-                        loss = models[mods].training(150, 0.9)
-                        losses = losses + loss.detach().numpy()
+                # if withinTurn % modelUpdate_freq == 0:
+                #    for mods in trainableModels:
+                #        loss = models[mods].training(150, 0.9)
+                #        losses = losses + loss.detach().numpy()
+        expList = findMoveables(env.world)
+        # for i, j in expList:
+        # need to put into one big model file and then run once to avoid
+        # going through graph more than once?
+        i, j = expList[0]
+        clc = 0.1
+        gamma = 0.95
+        rewards = (
+            torch.Tensor(env.world[i, j, 0].AC_reward).flip(dims=(0,)).view(-1)
+        )  # A
+        logprobs = torch.stack(env.world[i, j, 0].AC_logprob).flip(dims=(0,)).view(-1)
+        values = torch.stack(env.world[i, j, 0].AC_value).flip(dims=(0,)).view(-1)
+        Returns = []
+        ret_ = torch.Tensor([0])
+        for r in range(rewards.shape[0]):  # B
+            ret_ = rewards[r] + gamma * ret_
+            Returns.append(ret_)
+        Returns = torch.stack(Returns).view(-1)
+        Returns = F.normalize(Returns, dim=0)
+        actor_loss = -1 * logprobs * (Returns - values.detach())  # C
+        critic_loss = torch.pow(values - Returns, 2)  # D
+        loss = actor_loss.sum() + clc * critic_loss.sum()  # E
+        # models[env.world[i, j, 0].policy].optimizer.zero_grad() # this wasn't in example
+        loss.backward()
+        # self.optimizer.step()
+        models[env.world[i, j, 0].policy].optimizer.step()
+
+        # then, we move the individual memories to the main memory of the model here
 
         # epdate epsilon to move from mostly random to greedy choices for action with time
         epsilon = updateEpsilon(epsilon, turn, epoch)
@@ -198,8 +234,8 @@ def createVideo(models, worldSize, num, gameVersion, filename="unnamed_video.gif
         25,  # world size
         1,  # number of epochs
         100,  # max epoch length
-        0.1,  # starting epsilon
-        gameVersion=WolfsAndGems,  # which game
+        0.85,  # starting epsilon
+        gameVersion=WolfsAndGemsSingle,  # which game
         trainModels=False,  # this plays a game without learning
     )
     ani1.save(filename, writer="PillowWriter", fps=2)
@@ -210,7 +246,7 @@ def save_models(models, save_dir, filename, add_videos):
         pickle.dump(models, fp)
     for video_num in range(add_videos):
         vfilename = save_dir + filename + "_replayVid_" + str(video_num) + ".gif"
-        createVideo(models, 25, video_num, WolfsAndGems, vfilename)
+        createVideo(models, 25, video_num, WolfsAndGemsSingle, vfilename)
 
 
 def load_models(save_dir, filename):
@@ -222,16 +258,16 @@ def load_models(save_dir, filename):
 def train_wolf_gem(epochs=10000, epsilon=0.85):
     models = []
     # 405 / 1445 should go back to 650 / 2570 when fixed
-    models.append(model_CNN_LSTM_DQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent model
-    models.append(model_CNN_LSTM_DQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
+    models.append(model_CNN_LSTM_AC(5, 0.0001, 1500, 650, 350, 100, 4))  # agent model
+    models.append(model_CNN_LSTM_AC(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
     models = playGame(
         models,  # model file list
-        [0, 1],  # which models from that list should be trained, here not the agents
+        [0],  # which models from that list should be trained, here not the agents
         15,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
         0.85,  # starting epsilon
-        gameVersion=WolfsAndGems,
+        gameVersion=WolfsAndGemsSingle,
     )
     return models
 
@@ -244,25 +280,40 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
         epochs,  # number of epochs
         100,  # max epoch length
         epsilon,  # starting epsilon
-        gameVersion=WolfsAndGems,
+        gameVersion=WolfsAndGemsSingle,
     )
     return models
 
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-models = train_wolf_gem(10000)
-save_models(models, save_dir, "modelClass_test_10000_4_inCorr", 5)
+models = train_wolf_gem(50000)
+save_models(models, save_dir, "acmodelClass_test_50000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.7)
-save_models(models, save_dir, "modelClass_test_20000_4_inCorr", 5)
+save_models(models, save_dir, "acmodelClass_test_20000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.6)
-save_models(models, save_dir, "modelClass_test_30000_4_inCorr", 5)
+save_models(models, save_dir, "acmodelClass_test_30000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.3)
-save_models(models, save_dir, "modelClass_test_40000_4_inCorr", 5)
+save_models(models, save_dir, "acmodelClass_test_40000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.3)
-save_models(models, save_dir, "modelClass_test_50000_4_inCorr", 5)
+save_models(models, save_dir, "acmodelClass_test_50000", 5)
 
 # models = load_models(save_dir, "modelClass_test_20000")
+
+
+# move the reward, lopprobs, and value to the agent replay
+# transfer memories will then calculate the reverse loss
+# and add to the model memory for learning
+# this way multiple agents can add to a single memory
+# for additional learning!!!
+
+# note, AC model reward backwards  MAY lose rewards along
+# the way. Is that right? Check this out to be sure
+
+# we need to update the classes to take in a size
+# for the replay. The 5 for LSTM will not be enough
+# for the AC models, which probably need much longer time
+# scales
