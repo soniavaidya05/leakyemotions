@@ -55,7 +55,7 @@ class modelDQN:
         self.replay = deque([], maxlen=replaySize)
         self.sm = nn.Softmax(dim=1)
 
-    def createInput(self, world, i, j, holdObject):
+    def createInput(self, world, i, j, holdObject, numImages=-1):
         img = agentVisualField(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         return input
@@ -108,7 +108,7 @@ class modelDQN:
     def updateQ(self):
         self.model2.load_state_dict(self.model1.state_dict())
 
-    def transferMemories(self, world, expList, extraReward=True):
+    def transferMemories(self, world, i, j, extraReward=True):
         # transfer the events from agent memory to model replay
         exp = world[i, j, 0].replay[-1]
         self.replay.append(exp)
