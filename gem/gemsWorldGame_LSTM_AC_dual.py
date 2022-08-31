@@ -193,38 +193,37 @@ def playGame(
                 #    for mods in trainableModels:
                 #        loss = models[mods].training(150, 0.9)
                 #        losses = losses + loss.detach().numpy()
-
-        # set up for multiple agents sharing one model
-        for mod in range(len(models)):
-            models[mod].rewards = torch.tensor([])
-            models[mod].values = torch.tensor([])
-            models[mod].logprobs = torch.tensor([])
-            models[mod].Returns = torch.tensor([])
-
-        expList = findMoveables(env.world)
-        for i, j in expList:
-            mod = env.world[i, j, 0].policy
-
-            rewards = env.world[i, j, 0].AC_reward.flip(dims=(0,)).view(-1)
-            logprobs = env.world[i, j, 0].AC_logprob.flip(dims=(0,)).view(-1)
-            values = env.world[i, j, 0].AC_value.flip(dims=(0,)).view(-1)
-
-            clc = 0.1
-            gamma = 0.95
-            Returns = []
-            ret_ = torch.Tensor([0])
-            for r in range(rewards.shape[0]):  # B
-                ret_ = rewards[r] + gamma * ret_
-                Returns.append(ret_)
-            Returns = torch.stack(Returns).view(-1)
-            Returns = F.normalize(Returns, dim=0)
-
-            models[mod].rewards = torch.concat([models[mod].rewards, rewards])
-            models[mod].values = torch.concat([models[mod].values, values])
-            models[mod].logprobs = torch.concat([models[mod].logprobs, logprobs])
-            models[mod].Returns = torch.concat([models[mod].Returns, Returns])
-
         if trainModels == True:
+            # set up for multiple agents sharing one model
+            for mod in range(len(models)):
+                models[mod].rewards = torch.tensor([])
+                models[mod].values = torch.tensor([])
+                models[mod].logprobs = torch.tensor([])
+                models[mod].Returns = torch.tensor([])
+
+            expList = findMoveables(env.world)
+            for i, j in expList:
+                mod = env.world[i, j, 0].policy
+
+                rewards = env.world[i, j, 0].AC_reward.flip(dims=(0,)).view(-1)
+                logprobs = env.world[i, j, 0].AC_logprob.flip(dims=(0,)).view(-1)
+                values = env.world[i, j, 0].AC_value.flip(dims=(0,)).view(-1)
+
+                clc = 0.1
+                gamma = 0.95
+                Returns = []
+                ret_ = torch.Tensor([0])
+                for r in range(rewards.shape[0]):  # B
+                    ret_ = rewards[r] + gamma * ret_
+                    Returns.append(ret_)
+                Returns = torch.stack(Returns).view(-1)
+                Returns = F.normalize(Returns, dim=0)
+
+                models[mod].rewards = torch.concat([models[mod].rewards, rewards])
+                models[mod].values = torch.concat([models[mod].values, values])
+                models[mod].logprobs = torch.concat([models[mod].logprobs, logprobs])
+                models[mod].Returns = torch.concat([models[mod].Returns, Returns])
+
             for mod in range(len(models)):
                 if len(models[mod].rewards) > 1:
                     actor_loss = (
