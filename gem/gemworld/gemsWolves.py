@@ -73,6 +73,9 @@ class WolfsAndGems:
         self.emptyObject = EmptyObject()
         self.walls = Wall()
 
+        # do we need to name the instances, or can they just be called below
+        # and keep their identities?
+
     # below make it so that it only puts objects in the non wall parts.
     # this may need to have a parameter that indicates whether things can be
     # on the edges or not
