@@ -282,7 +282,7 @@ def train_wolf_gem(epochs=10000, epsilon=0.85):
     models = []
     # 405 / 1445 should go back to 650 / 2570 when fixed
     # models.append(model_CNN_LSTM_AC(5, 0.00005, 1500, 650, 300, 75, 4))  # agent model
-    models.append(model_CNN_LSTM_AC(5, 0.0001, 1500, 650, 100, 50, 4))  # agent model
+    models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 650, 100, 50, 4))  # agent model
     # models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 650, 300, 75, 4))  # agent model
     # models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 2570, 300, 75, 4))  # wolf model
     # models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 2570, 300, 75, 4))  # wolf model
@@ -313,7 +313,13 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 models = train_wolf_gem(5000)
-save_models(models, save_dir, "acmodelClass_test_5000_do", 5)
+save_models(models, save_dir, "acmodelClass_test_5000_do_sing", 5)
 
 models = addTrain_wolf_gem(models, 5000, 0.7)
-save_models(models, save_dir, "acmodelClass_test_10000_do", 5)
+save_models(models, save_dir, "acmodelClass_test_10000_do_sing", 5)
+
+models = addTrain_wolf_gem(models, 30000, 0.7)
+save_models(models, save_dir, "acmodelClass_test_40000_do_sing", 5)
+
+models = addTrain_wolf_gem(models, 30000, 0.7)
+save_models(models, save_dir, "acmodelClass_test_70000_do_sing", 5)

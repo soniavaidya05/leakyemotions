@@ -121,24 +121,13 @@ class model_CNN_LSTM_AC:
         # self.logprobs.append(logprob_)
         return action, logprob_, value
 
-    def training(self, batch_size, gamma):
-        clc = 0.1
-        gamma = 0.95
-        rewards = torch.Tensor(self.rewards).flip(dims=(0,)).view(-1)  # A
-        logprobs = torch.stack(self.logprobs).flip(dims=(0,)).view(-1)
-        values = torch.stack(self.values).flip(dims=(0,)).view(-1)
-        Returns = []
-        ret_ = torch.Tensor([0])
-        for r in range(rewards.shape[0]):  # B
-            ret_ = rewards[r] + gamma * ret_
-            Returns.append(ret_)
-        Returns = torch.stack(Returns).view(-1)
-        Returns = F.normalize(Returns, dim=0)
-        actor_loss = -1 * logprobs * (Returns - values.detach())  # C
-        critic_loss = torch.pow(values - Returns, 2)  # D
-        loss = actor_loss.sum() + clc * critic_loss.sum()  # E
-        loss.backward()
-        self.optimizer.step()
+    def training(self, batch_size=100, clc=0.1):
+        if len(self.rewards) > 1:
+            actor_loss = -1 * self.logprobs * (self.Returns - self.values.detach())
+            critic_loss = torch.pow(self.values - self.Returns, 2)
+            loss = actor_loss.sum() + clc * critic_loss.sum()
+            loss.backward()
+            self.optimizer.step()
         return loss
 
     def updateQ(self):
@@ -149,6 +138,21 @@ class model_CNN_LSTM_AC:
         # reward = 0  # needs to be added into this command
         # self.rewards.append(reward)
 
-    def transferMemories_AC(self, reward):
-        reward = 0  # needs to be added into this command
-        self.rewards.append(reward)
+    def transferMemories_AC(self, world, i, j):
+        rewards = world[i, j, 0].AC_reward.flip(dims=(0,)).view(-1)
+        logprobs = world[i, j, 0].AC_logprob.flip(dims=(0,)).view(-1)
+        values = world[i, j, 0].AC_value.flip(dims=(0,)).view(-1)
+
+        gamma = 0.95
+        Returns = []
+        ret_ = torch.Tensor([0])
+        for r in range(rewards.shape[0]):  # B
+            ret_ = rewards[r] + gamma * ret_
+            Returns.append(ret_)
+        Returns = torch.stack(Returns).view(-1)
+        Returns = F.normalize(Returns, dim=0)
+
+        self.rewards = torch.concat([self.rewards, rewards])
+        self.values = torch.concat([self.values, values])
+        self.logprobs = torch.concat([self.logprobs, logprobs])
+        self.Returns = torch.concat([self.Returns, Returns])

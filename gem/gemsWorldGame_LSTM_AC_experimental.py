@@ -164,39 +164,8 @@ def playGame(
                 # transfer the events for each agent into the appropriate model after all have moved
                 expList = findMoveables(env.world)
                 env.world = updateMemories(models, env.world, expList, endUpdate=True)
-                for i, j in expList:
 
-                    env.world[i, j, 0].AC_logprob = torch.concat(
-                        [env.world[i, j, 0].AC_logprob, logprob]
-                    )
-
-                    env.world[i, j, 0].AC_value = torch.concat(
-                        [env.world[i, j, 0].AC_value, value]
-                    )
-
-                    env.world[i, j, 0].AC_reward = torch.concat(
-                        [
-                            env.world[i, j, 0].AC_reward,
-                            torch.tensor(env.world[i, j, 0].reward)
-                            .float()
-                            .reshape(1, 1),
-                        ]
-                    )
-
-                # expList = findMoveables(world)
-                # modelType = "AC"
-                # if modelType == "DQN":
-                #    models = transferWorldMemories(models, env.world, expList)
-                # if modelType == "AC":
-                #    models[holdObject.policy].transferMemories_AC(holdObject.reward)
-
-                # testing training after every event
-                # if withinTurn % modelUpdate_freq == 0:
-                #    for mods in trainableModels:
-                #        loss = models[mods].training(150, 0.9)
-                #        losses = losses + loss.detach().numpy()
         if trainModels == True:
-            # set up for multiple agents sharing one model
             for mod in range(len(models)):
                 models[mod].rewards = torch.tensor([])
                 models[mod].values = torch.tensor([])
@@ -205,38 +174,25 @@ def playGame(
 
             expList = findMoveables(env.world)
             for i, j in expList:
-                mod = env.world[i, j, 0].policy
+                # below needs to get into the update memories
+                env.world[i, j, 0].AC_logprob = torch.concat(
+                    [env.world[i, j, 0].AC_logprob, logprob]
+                )
 
-                rewards = env.world[i, j, 0].AC_reward.flip(dims=(0,)).view(-1)
-                logprobs = env.world[i, j, 0].AC_logprob.flip(dims=(0,)).view(-1)
-                values = env.world[i, j, 0].AC_value.flip(dims=(0,)).view(-1)
+                env.world[i, j, 0].AC_value = torch.concat(
+                    [env.world[i, j, 0].AC_value, value]
+                )
 
-                clc = 0.1
-                gamma = 0.95
-                Returns = []
-                ret_ = torch.Tensor([0])
-                for r in range(rewards.shape[0]):  # B
-                    ret_ = rewards[r] + gamma * ret_
-                    Returns.append(ret_)
-                Returns = torch.stack(Returns).view(-1)
-                Returns = F.normalize(Returns, dim=0)
-
-                models[mod].rewards = torch.concat([models[mod].rewards, rewards])
-                models[mod].values = torch.concat([models[mod].values, values])
-                models[mod].logprobs = torch.concat([models[mod].logprobs, logprobs])
-                models[mod].Returns = torch.concat([models[mod].Returns, Returns])
+                env.world[i, j, 0].AC_reward = torch.concat(
+                    [
+                        env.world[i, j, 0].AC_reward,
+                        torch.tensor(env.world[i, j, 0].reward).float().reshape(1, 1),
+                    ]
+                )
+                models[env.world[i, j, 0].policy].transferMemories_AC(env.world, i, j)
 
             for mod in range(len(models)):
-                if len(models[mod].rewards) > 1:
-                    actor_loss = (
-                        -1
-                        * models[mod].logprobs
-                        * (models[mod].Returns - models[mod].values.detach())
-                    )
-                    critic_loss = torch.pow(models[mod].values - models[mod].Returns, 2)
-                    loss = actor_loss.sum() + clc * critic_loss.sum()
-                    loss.backward()
-                    models[env.world[i, j, 0].policy].optimizer.step()
+                models[mod].training()
 
         # epdate epsilon to move from mostly random to greedy choices for action with time
         epsilon = updateEpsilon(epsilon, turn, epoch)
@@ -318,13 +274,13 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 models = train_wolf_gem(5000)
-save_models(models, save_dir, "acmodelClass_test_5000_do", 5)
+save_models(models, save_dir, "acmodelClass_test_5000_do_2", 5)
 
 models = addTrain_wolf_gem(models, 5000, 0.7)
-save_models(models, save_dir, "acmodelClass_test_10000_do", 5)
+save_models(models, save_dir, "acmodelClass_test_10000_do_2", 5)
 
 models = addTrain_wolf_gem(models, 30000, 0.7)
-save_models(models, save_dir, "acmodelClass_test_40000_do", 5)
+save_models(models, save_dir, "acmodelClass_test_40000_do_2", 5)
 
 models = addTrain_wolf_gem(models, 30000, 0.7)
-save_models(models, save_dir, "acmodelClass_test_70000_do", 5)
+save_models(models, save_dir, "acmodelClass_test_70000_do_2", 5)
