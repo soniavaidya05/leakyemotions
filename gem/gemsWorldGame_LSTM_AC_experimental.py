@@ -138,6 +138,14 @@ def playGame(
                     action, logprob, value = output
                     logprob = logprob.reshape(1, 1)
 
+                    env.world[i, j, 0].AC_logprob = torch.concat(
+                        [env.world[i, j, 0].AC_logprob, logprob]
+                    )
+
+                    env.world[i, j, 0].AC_value = torch.concat(
+                        [env.world[i, j, 0].AC_value, value]
+                    )
+
                     # env.world[i, j, 0].AC_reward = []
 
                     # problem - we want to get this into the replay buffer, but the replay buffer is hard coded into the
@@ -164,6 +172,15 @@ def playGame(
                 # transfer the events for each agent into the appropriate model after all have moved
                 expList = findMoveables(env.world)
                 env.world = updateMemories(models, env.world, expList, endUpdate=True)
+                for i, j in expList:
+                    env.world[i, j, 0].AC_reward = torch.concat(
+                        [
+                            env.world[i, j, 0].AC_reward,
+                            torch.tensor(env.world[i, j, 0].reward)
+                            .float()
+                            .reshape(1, 1),
+                        ]
+                    )
 
         if trainModels == True:
             for mod in range(len(models)):
@@ -174,21 +191,6 @@ def playGame(
 
             expList = findMoveables(env.world)
             for i, j in expList:
-                # below needs to get into the update memories
-                env.world[i, j, 0].AC_logprob = torch.concat(
-                    [env.world[i, j, 0].AC_logprob, logprob]
-                )
-
-                env.world[i, j, 0].AC_value = torch.concat(
-                    [env.world[i, j, 0].AC_value, value]
-                )
-
-                env.world[i, j, 0].AC_reward = torch.concat(
-                    [
-                        env.world[i, j, 0].AC_reward,
-                        torch.tensor(env.world[i, j, 0].reward).float().reshape(1, 1),
-                    ]
-                )
                 models[env.world[i, j, 0].policy].transferMemories_AC(env.world, i, j)
 
             for mod in range(len(models)):
