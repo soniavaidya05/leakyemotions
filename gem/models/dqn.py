@@ -20,8 +20,8 @@ class DQN(nn.Module):
         self.l4 = nn.Linear(hidsize1, hidsize2)
         self.l5 = nn.Linear(hidsize2, outsize)
         self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
-        self.dropout = nn.Dropout(0.1)
         self.conv_bn = nn.BatchNorm2d(5)
+        self.dropout = nn.Dropout(0.15)
 
     def forward(self, x):
         """
@@ -34,8 +34,11 @@ class DQN(nn.Module):
         y1 = torch.flatten(y1, 1)
         y = torch.cat((y1, y2), 1)
         y = F.relu(self.l2(y))
+        y = self.dropout(y)
         y = F.relu(self.l3(y))
+        y = self.dropout(y)
         y = F.relu(self.l4(y))
+        y = self.dropout(y)
         value = self.l5(y)
         return value
 

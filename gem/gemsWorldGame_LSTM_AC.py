@@ -181,35 +181,55 @@ def playGame(
                 #    for mods in trainableModels:
                 #        loss = models[mods].training(150, 0.9)
                 #        losses = losses + loss.detach().numpy()
-        expList = findMoveables(env.world)
-        for i, j in expList:
 
-            # need to put into one big model file and then run once to avoid
-            # going through graph more than once?
-            # i, j = expList[0]
-            clc = 0.1
-            gamma = 0.95
-            rewards = (
-                torch.Tensor(env.world[i, j, 0].AC_reward).flip(dims=(0,)).view(-1)
-            )  # A
-            logprobs = (
-                torch.stack(env.world[i, j, 0].AC_logprob).flip(dims=(0,)).view(-1)
-            )
-            values = torch.stack(env.world[i, j, 0].AC_value).flip(dims=(0,)).view(-1)
-            Returns = []
-            ret_ = torch.Tensor([0])
-            for r in range(rewards.shape[0]):  # B
-                ret_ = rewards[r] + gamma * ret_
-                Returns.append(ret_)
-            Returns = torch.stack(Returns).view(-1)
-            Returns = F.normalize(Returns, dim=0)
-            actor_loss = -1 * logprobs * (Returns - values.detach())  # C
-            critic_loss = torch.pow(values - Returns, 2)  # D
-            loss = actor_loss.sum() + clc * critic_loss.sum()  # E
-            # models[env.world[i, j, 0].policy].optimizer.zero_grad() # this wasn't in example
-            loss.backward()
-            # self.optimizer.step()
-            models[env.world[i, j, 0].policy].optimizer.step()
+        # agentList = []
+        # for i in range(env.world.shape[0]):
+        #    for j in range(env.world.shape[0]):
+        #        if (
+        #            env.world[i, j, 0].kind == "agent"
+        #            or env.world[i, j, 0].kind == "deadAgent"
+        #        ):
+        #            agentList.append([i, j])
+        if trainModels == True:
+            expList = findMoveables(env.world)
+            for i, j in expList:
+
+                # need to put into one big model file and then run once to avoid
+                # going through graph more than once?
+                # i, j = expList[0]
+                if env.world[i, j, 0].policy < 2:
+                    clc = 0.1
+                    gamma = 0.95
+                    # gamma = 0.8
+                    rewards = (
+                        torch.Tensor(env.world[i, j, 0].AC_reward)
+                        .flip(dims=(0,))
+                        .view(-1)
+                    )  # A
+                    logprobs = (
+                        torch.stack(env.world[i, j, 0].AC_logprob)
+                        .flip(dims=(0,))
+                        .view(-1)
+                    )
+                    values = (
+                        torch.stack(env.world[i, j, 0].AC_value)
+                        .flip(dims=(0,))
+                        .view(-1)
+                    )
+                    Returns = []
+                    ret_ = torch.Tensor([0])
+                    for r in range(rewards.shape[0]):  # B
+                        ret_ = rewards[r] + gamma * ret_
+                        Returns.append(ret_)
+                    Returns = torch.stack(Returns).view(-1)
+                    Returns = F.normalize(Returns, dim=0)
+                    actor_loss = -1 * logprobs * (Returns - values.detach())  # C
+                    critic_loss = torch.pow(values - Returns, 2)  # D
+                    loss = actor_loss.sum() + clc * critic_loss.sum()  # E
+                    # models[env.world[i, j, 0].policy].optimizer.zero_grad() # this wasn't in example
+                    loss.backward()
+                    # self.optimizer.step()
+                    models[env.world[i, j, 0].policy].optimizer.step()
 
         # then, we move the individual memories to the main memory of the model here
 
@@ -261,19 +281,15 @@ def load_models(save_dir, filename):
 def train_wolf_gem(epochs=10000, epsilon=0.85):
     models = []
     # 405 / 1445 should go back to 650 / 2570 when fixed
-    models.append(model_CNN_LSTM_AC(5, 0.0001, 1500, 650, 350, 100, 4))  # agent model
-    models.append(model_CNN_LSTM_AC(5, 0.0001, 1500, 650, 350, 100, 4))  # agent model
-    models.append(model_CNN_LSTM_AC(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
-    models.append(model_CNN_LSTM_AC(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
+    # models.append(model_CNN_LSTM_AC(5, 0.00005, 1500, 650, 300, 75, 4))  # agent model
+    models.append(model_CNN_LSTM_AC(5, 0.0001, 1500, 650, 100, 50, 4))  # agent model
+    # models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 650, 300, 75, 4))  # agent model
+    # models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 2570, 300, 75, 4))  # wolf model
+    # models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 2570, 300, 75, 4))  # wolf model
     models = playGame(
         models,  # model file list
-        [
-            0,
-            1,
-            2,
-            3,
-        ],  # which models from that list should be trained, here not the agents
-        15,  # world size
+        [0],  # which models from that list should be trained, here not the agents
+        25,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
         0.85,  # starting epsilon
@@ -285,8 +301,8 @@ def train_wolf_gem(epochs=10000, epsilon=0.85):
 def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
     models = playGame(
         models,  # model file list
-        [0, 1, 2, 3],  # which models from that list should be trained, here not the agents
-        15,  # world size
+        [0],  # which models from that list should be trained, here not the agents
+        25,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
         epsilon,  # starting epsilon
@@ -296,34 +312,8 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
 
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-models = train_wolf_gem(50000)
-save_models(models, save_dir, "acmodelClass_test_50000", 5)
+models = train_wolf_gem(5000)
+save_models(models, save_dir, "acmodelClass_test_5000_do", 5)
 
-models = addTrain_wolf_gem(models, 10000, 0.7)
-save_models(models, save_dir, "acmodelClass_test_20000", 5)
-
-models = addTrain_wolf_gem(models, 10000, 0.6)
-save_models(models, save_dir, "acmodelClass_test_30000", 5)
-
-models = addTrain_wolf_gem(models, 10000, 0.3)
-save_models(models, save_dir, "acmodelClass_test_40000", 5)
-
-models = addTrain_wolf_gem(models, 10000, 0.3)
-save_models(models, save_dir, "acmodelClass_test_50000", 5)
-
-# models = load_models(save_dir, "modelClass_test_20000")
-
-
-# move the reward, lopprobs, and value to the agent replay
-# transfer memories will then calculate the reverse loss
-# and add to the model memory for learning
-# this way multiple agents can add to a single memory
-# for additional learning!!!
-
-# note, AC model reward backwards  MAY lose rewards along
-# the way. Is that right? Check this out to be sure
-
-# we need to update the classes to take in a size
-# for the replay. The 5 for LSTM will not be enough
-# for the AC models, which probably need much longer time
-# scales
+models = addTrain_wolf_gem(models, 5000, 0.7)
+save_models(models, save_dir, "acmodelClass_test_10000_do", 5)

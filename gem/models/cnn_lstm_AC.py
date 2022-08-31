@@ -52,6 +52,7 @@ class Combine_CLD_AC(nn.Module):
         self.actor_lin1 = nn.Linear(hidsize2, outsize)
         self.l3 = nn.Linear(hidsize2, 25)
         self.critic_lin1 = nn.Linear(25, 1)
+        self.dropout = nn.Dropout(0.15)
 
     def forward(self, x):
         batch_size, timesteps, C, H, W = x.size()
@@ -60,13 +61,20 @@ class Combine_CLD_AC(nn.Module):
         r_in = c_out.view(batch_size, timesteps, -1)
 
         r_out, (h_n, h_c) = self.rnn(r_in)
-
-        y = F.relu(self.l1(r_out[:, -1, :]))
-        y = F.relu(self.l2(y))
+        y = F.leaky_relu(self.l1(r_out[:, -1, :]))
+        # y = self.dropout(y)
+        y = F.leaky_relu(self.l2(y))
+        # y = self.dropout(y)
         # need to check the dim below, changed from 0 to -1
-        actor = F.log_softmax(self.actor_lin1(y), dim=0)
-        c = F.relu(self.l3(y.detach()))
-        critic = torch.tanh(self.critic_lin1(c))
+        # actor = self.actor_lin1(y)
+        # actor = nn.LogSoftmax(self.actor_lin1(y))
+        actor = F.log_softmax(self.actor_lin1(y), dim=-1)
+        # actor = F.log_softmax(self.actor_lin1(y), dim=1)
+        # actor = F.log_softmax(self.actor_lin1(y), dim=0)
+        c = F.leaky_relu(self.l3(y.detach()))
+        # critic = torch.tanh(self.critic_lin1(c))
+        # why is the tanh in some of the examples?
+        critic = self.critic_lin1(c)
 
         return actor, critic
 
@@ -90,16 +98,11 @@ class model_CNN_LSTM_AC:
         self.rewards = []
 
     def createInput(self, world, i, j, holdObject, numMemories=-1):
-        # t1 = world[i, j, 0].replay[-5][3]
-        # t2 = world[i, j, 0].replay[-4][3]
-        # t3 = world[i, j, 0].replay[-3][3]
-        # t4 = world[i, j, 0].replay[-2][3]
-        # t5 = world[i, j, 0].replay[-1][3]
-
-        # seq1 = torch.cat([t1, t2, t3, t4], dim=1)
-
-        # needs to be extended for LSTM for larger models. This should be
-        # a one image model at the moment
+        # note, this is not actually an LSTM for this model
+        # because it just uses the current image.
+        # will need to update to use the memories tag to create an image
+        # from the replay. But, still need to figure out the
+        # one vs. two outputs from these functions
 
         img = agentVisualField(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()

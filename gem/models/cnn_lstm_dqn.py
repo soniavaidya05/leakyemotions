@@ -49,6 +49,7 @@ class Combine_CLD(nn.Module):
         self.l1 = nn.Linear(hidsize1, hidsize1)
         self.l2 = nn.Linear(hidsize1, hidsize2)
         self.l3 = nn.Linear(hidsize2, outsize)
+        self.dropout = nn.Dropout(0.15)
 
     def forward(self, x):
         batch_size, timesteps, C, H, W = x.size()
@@ -59,7 +60,9 @@ class Combine_CLD(nn.Module):
         r_out, (h_n, h_c) = self.rnn(r_in)
 
         y = F.relu(self.l1(r_out[:, -1, :]))
+        y = self.dropout(y)
         y = F.relu(self.l2(y))
+        y = self.dropout(y)
         y = self.l3(y)
 
         return y

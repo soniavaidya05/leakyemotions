@@ -221,8 +221,8 @@ def load_models(save_dir, filename):
 def train_wolf_gem(epochs=10000, epsilon=0.85):
     models = []
     # 405 / 1445 should go back to 650 / 2570 when fixed
-    models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent model
-    models.append(modelDQN(5, 0.0001, 1500, 2570, 350, 100, 4))  # wolf model
+    models.append(modelDQN(5, 0.0001, 1500, 650, 425, 125, 4))  # agent model
+    models.append(modelDQN(5, 0.0001, 1500, 2570, 425, 125, 4))  # wolf model
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents

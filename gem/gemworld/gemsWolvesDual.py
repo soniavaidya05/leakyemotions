@@ -10,7 +10,7 @@ import matplotlib.animation as animation
 from models.perception import agentVisualField
 
 
-class WolfsAndGemsSingle:
+class WolfsAndGemsDual:
     def __init__(
         self,
         height=15,
@@ -68,7 +68,7 @@ class WolfsAndGemsSingle:
 
     def init_elements(self):
         self.agent1 = Agent(0)
-        self.agent2 = Agent(1)
+        self.agent2 = Agent(0)
         self.wolf1 = Wolf(2)
         self.wolf2 = Wolf(3)
         self.gem1 = Gem(5, [0.0, 255.0, 0.0])
@@ -124,41 +124,20 @@ class WolfsAndGemsSingle:
             self.world[
                 round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
             ] = self.agent1
-            # self.world[
-            #    round(self.world.shape[0] / 2) + 1,
-            #    round(self.world.shape[1] / 2) - 1,
-            #    0,
-            # ] = self.agent2
+            self.world[
+                round(self.world.shape[0] / 2) + 1,
+                round(self.world.shape[1] / 2) - 1,
+                0,
+            ] = self.agent2
         if cBal == 1:
-            # self.world[
-            #    round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
-            # ] = self.agent2
+            self.world[
+                round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
+            ] = self.agent2
             self.world[
                 round(self.world.shape[0] / 2) + 1,
                 round(self.world.shape[1] / 2) - 1,
                 0,
             ] = self.agent1
-
-        # numWolves = np.random.choice([0, 0, 1, 1, 2])
-        # if numWolves > 0:
-        #    cbal = np.random.choice([0, 1, 2, 3])
-        #    if cbal == 0:
-        #        self.world[3, 3, 0] = self.wolf1
-        #    if cbal == 1:
-        #        self.world[3, 13, 0] = self.wolf1
-        #    if cbal == 2:
-        #        self.world[13, 3, 0] = self.wolf1
-        #    if cbal == 3:
-        #        self.world[13, 13, 0] = self.wolf1
-        # if numWolves > 1:
-        #    if cbal == 0:
-        #        self.world[2, 3, 0] = self.wolf2
-        #    if cbal == 1:
-        #        self.world[2, 13, 0] = self.wolf2
-        #    if cbal == 2:
-        #        self.world[13, 2, 0] = self.wolf2
-        #    if cbal == 3:
-        #        self.world[12, 12, 0] = self.wolf2
 
     def insert_walls(self):
         """
