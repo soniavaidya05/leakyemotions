@@ -116,7 +116,8 @@ class model_CNN_LSTM_AC:
         if seqLength == -1:
             combined_input = input
 
-        version = 1
+        version = 2
+
         if version == 1:
             if seqLength > 1:
                 previous_input1 = world[i, j, 0].replay[-2][0]
