@@ -283,3 +283,6 @@ save_models(models, save_dir, "aacmodelClass_gemWolf_40000", 5)
 
 models = addTrain_wolf_gem(models, 30000, 0.7)
 save_models(models, save_dir, "aacmodelClass_gemWolf_70000", 5)
+
+# note, the LSTM is technically working, but it is only reading in a single
+# time frame. But that is easily updated
