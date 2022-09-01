@@ -132,7 +132,7 @@ def playGame(
                     # )
 
                     inputs = models[holdObject.policy].createInput2(
-                        env.world, i, j, holdObject, 1
+                        env.world, i, j, holdObject, 4
                     )
                     input, combined_input = inputs
 
