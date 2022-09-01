@@ -120,10 +120,13 @@ class model_CNN_LSTM_AC:
             previous_input2 = world[i, j, 0].replay[-1][0]
             combined_input = torch.cat([previous_input1, previous_input2, input], dim=1)
 
-        # state_combined = torch.tensor(0.0)
-        # if holdObject.kind == "agent" or holdObject.kind == "wolf":
-        #    state_previous = world[i, j, 0].replay[-1][0]
-        #    state_combined = torch.cat([state_previous, state_current], dim=1)
+        # Note: could add the sequences through torch.cat
+        # will the code below work?
+        # if seqLength > 1:
+        #    combined_input = input
+        #    for mem in range(seqLength):
+        #        previous_input = world[i, j, 0].replay[(mem + 1) * -1][0]
+        #        combined_input = torch.cat([previous_input, combined_input], dim=1)
 
         return input, combined_input
 
