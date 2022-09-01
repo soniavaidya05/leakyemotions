@@ -123,7 +123,7 @@ class WolfsAndGemsSingle:
         if cBal == 0:
             self.world[
                 round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
-            ] = self.agent1
+            ] = Agent(0)
             # self.world[
             #    round(self.world.shape[0] / 2) + 1,
             #    round(self.world.shape[1] / 2) - 1,
@@ -137,7 +137,7 @@ class WolfsAndGemsSingle:
                 round(self.world.shape[0] / 2) + 1,
                 round(self.world.shape[1] / 2) - 1,
                 0,
-            ] = self.agent1
+            ] = Agent(0)
 
         # numWolves = np.random.choice([0, 0, 1, 1, 2])
         # if numWolves > 0:
@@ -165,9 +165,9 @@ class WolfsAndGemsSingle:
         Inserts walls into the world.
         Assumes that the world is square - fixme.
         """
-        wall = Wall()
+        # wall = Wall()
         for i in range(15):
-            self.world[0, i, 0] = wall
-            self.world[15 - 1, i, 0] = wall
-            self.world[i, 0, 0] = wall
-            self.world[i, 15 - 1, 0] = wall
+            self.world[0, i, 0] = Wall()
+            self.world[15 - 1, i, 0] = Wall()
+            self.world[i, 0, 0] = Wall()
+            self.world[i, 15 - 1, 0] = Wall()

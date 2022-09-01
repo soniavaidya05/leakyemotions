@@ -74,7 +74,7 @@ def playGame(
     turn = 0
     sync_freq = 500
     modelUpdate_freq = 25
-    env = WolfsAndGemsDual()
+    env = WolfsAndGemsDual(worldSize, worldSize)
 
     if trainModels == False:
         fig = plt.figure()
@@ -194,7 +194,8 @@ def playGame(
                 models[env.world[i, j, 0].policy].transferMemories_AC(env.world, i, j)
 
             for mod in range(len(models)):
-                models[mod].training()
+                if len(models[mod].rewards) > 0:
+                    models[mod].training()
 
         # epdate epsilon to move from mostly random to greedy choices for action with time
         epsilon = updateEpsilon(epsilon, turn, epoch)
@@ -243,15 +244,11 @@ def load_models(save_dir, filename):
 
 def train_wolf_gem(epochs=10000, epsilon=0.85):
     models = []
-    # 405 / 1445 should go back to 650 / 2570 when fixed
-    # models.append(model_CNN_LSTM_AC(5, 0.00005, 1500, 650, 300, 75, 4))  # agent model
-    models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 650, 100, 50, 4))  # agent model
-    # models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 650, 300, 75, 4))  # agent model
-    # models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 2570, 300, 75, 4))  # wolf model
-    # models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 2570, 300, 75, 4))  # wolf model
+    models.append(model_CNN_LSTM_AC(5, 0.00001, 1500, 650, 150, 75, 4))  # agent model
+    models.append(model_CNN_LSTM_AC(5, 0.000001, 1500, 2570, 150, 75, 4))  # wolf model
     models = playGame(
         models,  # model file list
-        [0],  # which models from that list should be trained, here not the agents
+        [0, 1],  # which models from that list should be trained, here not the agents
         25,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
@@ -264,7 +261,7 @@ def train_wolf_gem(epochs=10000, epsilon=0.85):
 def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
     models = playGame(
         models,  # model file list
-        [0],  # which models from that list should be trained, here not the agents
+        [0, 1],  # which models from that list should be trained, here not the agents
         25,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
@@ -276,13 +273,13 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 models = train_wolf_gem(5000)
-save_models(models, save_dir, "acmodelClass_test_5000_do_2", 5)
+save_models(models, save_dir, "acmodelClass_gemWolf_5000", 5)
 
 models = addTrain_wolf_gem(models, 5000, 0.7)
-save_models(models, save_dir, "acmodelClass_test_10000_do_2", 5)
+save_models(models, save_dir, "acmodelClass_gemWolf_10000", 5)
 
 models = addTrain_wolf_gem(models, 30000, 0.7)
-save_models(models, save_dir, "acmodelClass_test_40000_do_2", 5)
+save_models(models, save_dir, "aacmodelClass_gemWolf_40000", 5)
 
 models = addTrain_wolf_gem(models, 30000, 0.7)
-save_models(models, save_dir, "acmodelClass_test_70000_do_2", 5)
+save_models(models, save_dir, "aacmodelClass_gemWolf_70000", 5)
