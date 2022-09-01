@@ -33,7 +33,7 @@ TODO: Remove old/stale imports.
 #     Wall,
 #     deadAgent,
 # )
-from old_game_file.game_utils import createWorld, createWorldImage
+from game_utils import createWorld, createWorldImage
 
 # from gemworld.gemsWolves import WolfsAndGems
 from gemworld.gemsWolvesDual import WolfsAndGemsDual
@@ -127,14 +127,19 @@ def playGame(
                 if holdObject.static != 1:
 
                     # note the prep vision may need to be a function within the model class
-                    input = models[holdObject.policy].createInput(
-                        env.world, i, j, holdObject
+                    # input = models[holdObject.policy].createInput(
+                    #    env.world, i, j, holdObject
+                    # )
+
+                    inputs = models[holdObject.policy].createInput2(
+                        env.world, i, j, holdObject, 1
                     )
+                    input, combined_input = inputs
 
                     # I assume that we will need to update the "action" below to be something like
                     # [output] where action is the first thing that is returned
                     # the current structure would not work with multi-head output (Actor-Critic, immagination, etc.)
-                    output = models[holdObject.policy].takeAction(input)
+                    output = models[holdObject.policy].takeAction(combined_input)
                     action, logprob, value = output
                     logprob = logprob.reshape(1, 1)
 

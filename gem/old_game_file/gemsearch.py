@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from gem.utils import (
+from old_files.utils import (
     one_hot,
     updateEpsilon,
     updateMemories,
@@ -44,7 +44,7 @@ from collections import deque
 # generate the gem search game objects
 
 agent1 = Agent(0)
-# agent2 = Agent(1)
+agent2 = Agent(1)
 gem1 = Gem(5, [0.0, 255.0, 0.0])
 gem2 = Gem(15, [255.0, 0.0, 0.0])
 emptyObject = EmptyObject()
@@ -71,9 +71,9 @@ def createGemWorld(worldSize, agentp=0.0, gem1p=0.115, gem2p=0.06):
     cBal = np.random.choice([0, 1])
     if cBal == 0:
         world[round(worldSize / 2), round(worldSize / 2), 0] = agent1
-        world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent1
+        world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent2
     if cBal == 1:
-        world[round(worldSize / 2), round(worldSize / 2), 0] = agent1
+        world[round(worldSize / 2), round(worldSize / 2), 0] = agent2
         world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent1
 
     for i in range(worldSize):
@@ -104,9 +104,9 @@ def createGemWorldTest(worldSize, agentp=0.0, gem1p=0.1, gem2p=0.0):
     cBal = np.random.choice([0, 1])
     if cBal == 0:
         world[round(worldSize / 2), round(worldSize / 2), 0] = agent1
-        world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent1
+        world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent2
     if cBal == 1:
-        world[round(worldSize / 2), round(worldSize / 2), 0] = agent1
+        world[round(worldSize / 2), round(worldSize / 2), 0] = agent2
         world[round(worldSize / 2) + 1, round(worldSize / 2) - 1, 0] = agent1
 
     for i in range(worldSize):
@@ -301,7 +301,7 @@ newModels = 1
 if newModels == 1:
     models = []
     models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent1 model
-    # models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent2 model
+    models.append(modelDQN(5, 0.0001, 1500, 650, 350, 100, 4))  # agent2 model
     models = playGame(models, 15, 10000, 100, 0.85)
     with open("modelFile", "wb") as fp:
         pickle.dump(models, fp)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from gem.utils import (
+from old_files.utils import (
     one_hot,
     updateEpsilon,
     updateMemories,
