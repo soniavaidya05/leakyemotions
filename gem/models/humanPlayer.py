@@ -22,6 +22,10 @@ class modelClassPlayer:
         self.replay = deque([], maxlen=replaySize)
 
     def takeAction(self, params):
+        """
+        Presnts a visual image to a player and they can take an action in the game
+        """
+
         pytorchInput, epsilon = params
         inp = pytorchInput.permute(0, 3, 1, 2).numpy()
         img = np.squeeze(inp)

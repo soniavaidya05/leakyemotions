@@ -59,11 +59,24 @@ class modelDQN:
         self.sm = nn.Softmax(dim=1)
 
     def createInput(self, world, i, j, holdObject, numImages=-1):
+        """
+        Creates a single input
+        TODO: This is all that would be needed for a non-RNN model
+              But we may need to consider changing this if a single function
+              can handle both types of input files for RNN models
+        """
+
         img = agentVisualField(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         return input
 
     def takeAction(self, params):
+        """
+        Selects an action
+        TODO: right now params are read in. there may be a more efficient way of reading in
+              kwargs
+        """
+
         inp, epsilon = params
         Q = self.model1(inp)
         p = self.sm(Q).detach().numpy()[0]
@@ -78,6 +91,9 @@ class modelDQN:
         return action
 
     def training(self, batch_size, gamma):
+        """
+        Batch Double DQN learning
+        """
 
         loss = torch.tensor(0.0)
 
@@ -90,11 +106,8 @@ class modelDQN:
             state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
             done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch])
 
-            # next test, remove the reshape and see if this still works
-            # Q1 = self.model1(state1_batch.reshape(batch_size,3,9,9))
             Q1 = self.model1(state1_batch)
             with torch.no_grad():
-                # Q2 = self.model2(state2_batch.reshape(batch_size,3,9,9))
                 Q2 = self.model2(state2_batch)
 
             Y = reward_batch + gamma * (
@@ -109,10 +122,16 @@ class modelDQN:
         return loss
 
     def updateQ(self):
+        """
+        Update DQN model
+        """
         self.model2.load_state_dict(self.model1.state_dict())
 
     def transferMemories(self, world, i, j, extraReward=True):
-        # transfer the events from agent memory to model replay
+        """
+        Transfer the events from agent memory to model replay
+        """
+
         exp = world[i, j, 0].replay[-1]
         self.replay.append(exp)
         if extraReward == True and abs(exp[2]) > 9:

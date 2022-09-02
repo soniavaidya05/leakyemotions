@@ -66,21 +66,16 @@ class WolfsAndGems:
         return image
 
     def init_elements(self):
-        self.agent1 = Agent(0)
-        self.wolf1 = Wolf(1)
-        self.gem1 = Gem(5, [0.0, 255.0, 0.0])
-        self.gem2 = Gem(15, [255.0, 255.0, 0.0])
+        """
+        Creates objects that survive from game to game
+        """
         self.emptyObject = EmptyObject()
         self.walls = Wall()
 
-        # do we need to name the instances, or can they just be called below
-        # and keep their identities?
-
-    # below make it so that it only puts objects in the non wall parts.
-    # this may need to have a parameter that indicates whether things can be
-    # on the edges or not
-
     def gameTest(self, layer=0):
+        """
+        Prints one frame to check game instance parameters
+        """
         image = self.plot(layer)
 
         moveList = []
@@ -98,6 +93,11 @@ class WolfsAndGems:
         plt.show()
 
     def populate(self, gem1p=0.115, gem2p=0.06, wolf1p=0.005):
+        """
+        Populates the game board with elements
+        TODO: test whether the probabilites above are working
+        """
+
         for i in range(self.world.shape[0]):
             for j in range(self.world.shape[1]):
                 obj = np.random.choice(
@@ -142,8 +142,8 @@ class WolfsAndGems:
         Assumes that the world is square - fixme.
         """
         # wall = Wall()
-        for i in range(15):
+        for i in range(self.height):
             self.world[0, i, 0] = Wall()
-            self.world[15 - 1, i, 0] = Wall()
+            self.world[self.height - 1, i, 0] = Wall()
             self.world[i, 0, 0] = Wall()
-            self.world[i, 15 - 1, 0] = Wall()
+            self.world[i, self.height - 1, 0] = Wall()

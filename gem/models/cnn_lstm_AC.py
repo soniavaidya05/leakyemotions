@@ -98,11 +98,9 @@ class model_CNN_LSTM_AC:
         self.rewards = []
 
     def createInput(self, world, i, j, holdObject, numMemories=-1):
-        # note, this is not actually an LSTM for this model
-        # because it just uses the current image.
-        # will need to update to use the memories tag to create an image
-        # from the replay. But, still need to figure out the
-        # one vs. two outputs from these functions
+        """
+        Creates a single input in RNN format
+        """
 
         img = agentVisualField(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
@@ -110,6 +108,14 @@ class model_CNN_LSTM_AC:
         return input
 
     def createInput2(self, world, i, j, holdObject, seqLength=-1):
+        """
+        Creates outputs of a single frame, and also a multiple image sequence
+        TODO: (1) need to get createInput and createInput2 into one function
+        TODO: (2) test whether version 1 and version 2 below work properly
+              Specifically, whether the sequences in version 2 are being
+              stacked properly
+        """
+
         img = agentVisualField(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         input = input.unsqueeze(0)
@@ -137,6 +143,12 @@ class model_CNN_LSTM_AC:
         return input, combined_input
 
     def takeAction(self, inp):
+        """
+        Takes action from the input
+        TODO: different models use different input parameters
+              need to figure out how to standardize
+        """
+
         # inp, epsilon = params
         policy, value = self.model1(inp)
         # self.values.append(value)
@@ -149,6 +161,11 @@ class model_CNN_LSTM_AC:
         return action, logprob_, value
 
     def training(self, batch_size=100, clc=0.1):
+        """
+        Actor critic training. This works but as an unncessary batch_size
+        Input that we should figure out if there is a way to make more efficient
+        """
+
         if len(self.rewards) > 1:
             actor_loss = -1 * self.logprobs * (self.Returns - self.values.detach())
             critic_loss = torch.pow(self.values - self.Returns, 2)
@@ -158,14 +175,28 @@ class model_CNN_LSTM_AC:
         return loss
 
     def updateQ(self):
-        self.model2.load_state_dict(self.model1.state_dict())
+        """
+        Update double DQN model
+        """
+        pass
 
     def transferMemories(self, world, i, j, extraReward=True, seqLength=5):
+        """
+        Transfer the indiviu=dual memories to the model
+        TODO: A second function is written below because the inputs for
+              Actor-Critic and DQN are different. Need to figure out how to
+              code that one generic set of functions will work
+        """
         pass
-        # reward = 0  # needs to be added into this command
-        # self.rewards.append(reward)
 
     def transferMemories_AC(self, world, i, j):
+        """
+        Transfer the indiviu=dual memories to the model
+        TODO: A second function is written below because the inputs for
+              Actor-Critic and DQN are different. Need to figure out how to
+              code that one generic set of functions will work
+        TODO: Gamma should be passed into this model rather than being predefined
+        """
         rewards = world[i, j, 0].AC_reward.flip(dims=(0,)).view(-1)
         logprobs = world[i, j, 0].AC_logprob.flip(dims=(0,)).view(-1)
         values = world[i, j, 0].AC_value.flip(dims=(0,)).view(-1)

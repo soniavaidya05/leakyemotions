@@ -9,35 +9,18 @@ from gem.utils import (
     transferWorldMemories,
 )
 
-
-# replay memory class
-
 from models.memory import Memory
 from models.dqn import DQN, modelDQN
 from models.randomActions import modelRandomAction
 from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
 from models.cnn_lstm_AC import model_CNN_LSTM_AC
 
-
 from models.perception import agentVisualField
 
-"""
-TODO: Remove old/stale imports.
-"""
-
-# from environment.elements import (
-#     Agent,
-#     EmptyObject,
-#     Wolf,
-#     Gem,
-#     Wall,
-#     deadAgent,
-# )
 from game_utils import createWorld, createWorldImage
 
-# from gemworld.gemsWolves import WolfsAndGems
-from gemworld.gemsWolvesDual import WolfsAndGemsDual
-
+# from gemworld.gemsWolvesDual import WolfsAndGemsDual
+from gemworld.gemsWolves import WolfsAndGems
 
 import os
 
@@ -65,7 +48,7 @@ def playGame(
     epochs=200000,
     maxEpochs=100,
     epsilon=0.9,
-    gameVersion=WolfsAndGemsDual(),
+    gameVersion=WolfsAndGems(),  # this is not working so hard coded below
     trainModels=True,
 ):
 
@@ -73,21 +56,22 @@ def playGame(
     gamePoints = [0, 0]
     turn = 0
     sync_freq = 500
-    modelUpdate_freq = 25
-    env = WolfsAndGemsDual(worldSize, worldSize)
+    modelUpdate_freq = 25  # this is not needed for the current AC mdoel
+    env = WolfsAndGems(worldSize, worldSize)
 
     if trainModels == False:
         fig = plt.figure()
         ims = []
 
     for epoch in range(epochs):
-        env.reset_env()
+        env.reset_env(worldSize, worldSize)
 
         done = 0
         withinTurn = 0
 
         moveList = findMoveables(env.world)
         for i, j in moveList:
+            # reset the memories for all agents
             env.world[i, j, 0].init_replay(5)
             env.world[i, j, 0].AC_logprob = torch.tensor([])
             env.world[i, j, 0].AC_value = torch.tensor([])
@@ -107,13 +91,10 @@ def playGame(
             withinTurn = withinTurn + 1
             turn = turn + 1
 
-            # this may be a better form than having functions that do nothing in a class
+            # This is not needed for an Actor Critic model. Should cause a PASS
             if turn % sync_freq == 0:
                 for mods in trainableModels:
-                    models[mods].model2.load_state_dict(
-                        models[mods].model1.state_dict()
-                    )
-                    # models[mods].updateQ
+                    models[mods].updateQ
 
             moveList = findMoveables(env.world)
             for i, j in moveList:
@@ -126,11 +107,6 @@ def playGame(
 
                 if holdObject.static != 1:
 
-                    # note the prep vision may need to be a function within the model class
-                    # input = models[holdObject.policy].createInput(
-                    #    env.world, i, j, holdObject
-                    # )
-
                     inputs = models[holdObject.policy].createInput2(
                         env.world, i, j, holdObject, 2
                     )
@@ -141,6 +117,11 @@ def playGame(
                     # the current structure would not work with multi-head output (Actor-Critic, immagination, etc.)
                     output = models[holdObject.policy].takeAction(combined_input)
                     action, logprob, value = output
+
+                    # the lines below save the current memories of the event to
+                    # the actor critic version of a replay. This should likely be
+                    # in the model class rather than here
+
                     logprob = logprob.reshape(1, 1)
 
                     env.world[i, j, 0].AC_logprob = torch.concat(
@@ -150,11 +131,6 @@ def playGame(
                     env.world[i, j, 0].AC_value = torch.concat(
                         [env.world[i, j, 0].AC_value, value]
                     )
-
-                    # env.world[i, j, 0].AC_reward = []
-
-                    # problem - we want to get this into the replay buffer, but the replay buffer is hard coded into the
-                    # replay for DQN. Maybe we could add a new memory class to the object at the beginning of this program?
 
                 if withinTurn == maxEpochs:
                     done = 1
@@ -189,6 +165,11 @@ def playGame(
 
         if trainModels == True:
             for mod in range(len(models)):
+                """
+                Resets the model memories to get ready for the new episode memories
+                this likely should be in the model class when we figure out how to
+                get AC and DQN models to have the same format
+                """
                 models[mod].rewards = torch.tensor([])
                 models[mod].values = torch.tensor([])
                 models[mod].logprobs = torch.tensor([])
@@ -227,7 +208,7 @@ def createVideo(models, worldSize, num, gameVersion, filename="unnamed_video.gif
         1,  # number of epochs
         100,  # max epoch length
         0.85,  # starting epsilon
-        gameVersion=WolfsAndGemsDual,  # which game
+        gameVersion=WolfsAndGems,  # which game
         trainModels=False,  # this plays a game without learning
     )
     ani1.save(filename, writer="PillowWriter", fps=2)
@@ -238,7 +219,7 @@ def save_models(models, save_dir, filename, add_videos):
         pickle.dump(models, fp)
     for video_num in range(add_videos):
         vfilename = save_dir + filename + "_replayVid_" + str(video_num) + ".gif"
-        createVideo(models, 25, video_num, WolfsAndGemsDual, vfilename)
+        createVideo(models, 20, video_num, WolfsAndGems, vfilename)
 
 
 def load_models(save_dir, filename):
@@ -254,11 +235,11 @@ def train_wolf_gem(epochs=10000, epsilon=0.85):
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents
-        25,  # world size
+        20,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
         0.85,  # starting epsilon
-        gameVersion=WolfsAndGemsDual,
+        gameVersion=WolfsAndGems,
     )
     return models
 
@@ -267,27 +248,26 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents
-        25,  # world size
+        20,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
         epsilon,  # starting epsilon
-        gameVersion=WolfsAndGemsDual,
+        gameVersion=WolfsAndGems,
     )
     return models
 
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 models = train_wolf_gem(5000)
-save_models(models, save_dir, "acmodelClass_gemWolf_5000", 5)
+save_models(models, save_dir, "AC_LSTM_5000", 5)
 
-models = addTrain_wolf_gem(models, 5000, 0.7)
-save_models(models, save_dir, "acmodelClass_gemWolf_10000", 5)
+models = addTrain_wolf_gem(
+    models, 5000, 0.7
+)  # note, the epsilon pamamter is meaningless here
+save_models(models, save_dir, "AC_LSTM_10000", 5)
 
 models = addTrain_wolf_gem(models, 30000, 0.7)
-save_models(models, save_dir, "aacmodelClass_gemWolf_40000", 5)
+save_models(models, save_dir, "AC_LSTM_40000", 5)
 
 models = addTrain_wolf_gem(models, 30000, 0.7)
-save_models(models, save_dir, "aacmodelClass_gemWolf_70000", 5)
-
-# note, the LSTM is technically working, but it is only reading in a single
-# time frame. But that is easily updated
+save_models(models, save_dir, "AC_LSTM_70000", 5)

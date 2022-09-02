@@ -84,24 +84,25 @@ class model_CNN_LSTM_DQN:
         self.sm = nn.Softmax(dim=1)
 
     def createInput(self, world, i, j, holdObject, seqLength=-1):
+        """
+        Creates a single input in RNN format
+        """
+
         img = agentVisualField(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         input = input.unsqueeze(0)
-        # if seqLength == -1:
-        #    combined_input = input
-        # if seqLength == 1:
-        #    previous_input1 = env.world[i,j,0].replay[-2][0]
-        #    previous_input2 = env.world[i,j,0].replay[-1][0]
-        #    combined_input = torch.cat([previous_input1, previous_input2, input], dim = 1)
-
-        # state_combined = torch.tensor(0.0)
-        # if holdObject.kind == "agent" or holdObject.kind == "wolf":
-        #    state_previous = world[i, j, 0].replay[-1][0]
-        #    state_combined = torch.cat([state_previous, state_current], dim=1)
 
         return input
 
     def createInput2(self, world, i, j, holdObject, seqLength=-1):
+        """
+        Creates outputs of a single frame, and also a multiple image sequence
+        TODO: (1) need to get createInput and createInput2 into one function
+        TODO: (2) test whether version 1 and version 2 below work properly
+              Specifically, whether the sequences in version 2 are being
+              stacked properly
+        """
+
         img = agentVisualField(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         input = input.unsqueeze(0)
@@ -112,14 +113,13 @@ class model_CNN_LSTM_DQN:
             previous_input2 = world[i, j, 0].replay[-1][0]
             combined_input = torch.cat([previous_input1, previous_input2, input], dim=1)
 
-        # state_combined = torch.tensor(0.0)
-        # if holdObject.kind == "agent" or holdObject.kind == "wolf":
-        #    state_previous = world[i, j, 0].replay[-1][0]
-        #    state_combined = torch.cat([state_previous, state_current], dim=1)
-
         return input, combined_input
 
     def takeAction(self, params):
+        """
+        Takes action from the input
+        """
+
         inp, epsilon = params
         Q = self.model1(inp)
         p = self.sm(Q).detach().numpy()[0]
@@ -134,6 +134,9 @@ class model_CNN_LSTM_DQN:
         return action
 
     def training(self, batch_size, gamma):
+        """
+        DQN batch learning
+        """
 
         loss = torch.tensor(0.0)
 
@@ -162,108 +165,38 @@ class model_CNN_LSTM_DQN:
         return loss
 
     def updateQ(self):
+        """
+        Update double DQN model
+        """
         self.model2.load_state_dict(self.model1.state_dict())
 
     def transferMemories(self, world, i, j, extraReward=True, seqLength=5):
-        # transfer the events from agent memory to model replay
+        """
+        Transfer the indiviu=dual memories to the model
+        TODO: We need to have a single version that works for both DQN and
+              Actor-criric models (or other types as well)
+        TODO: Need to double check the way that these sequences are being
+              concat. There couldbe errors
+        """
 
-        # the version below should be a replication of the version in utils
-        # that seems to be working. this will test if the problem is the general
-        # class problem, or in the specific code commented out beelow
+        exp = world[i, j, 0].replay[-1]
 
-        version = 4
+        state_now = world[i, j, 0].replay[-1][0]
+        state_next = world[i, j, 0].replay[-1][3]
 
-        if version == 0:
-            exp = world[i, j, 0].replay[-1]
-            self.replay.append(exp)
-            if extraReward == True and abs(exp[2]) > 9:
-                for _ in range(5):
-                    self.replay.append(exp)
+        seq1 = world[i, j, 0].replay[seqLength * -1][0]
+        seq2 = world[i, j, 0].replay[(seqLength * -1) + 1][0]
 
-        if version == 1:
-            # conceptually, if the selection of elements is right, this should be identical to above
-            exp = world[i, j, 0].replay[-1]
-            seq1 = world[i, j, 0].replay[-1][0]
-            seq2 = world[i, j, 0].replay[-1][3]
-            exp = (seq1, exp[1], exp[2], seq2, exp[4])
-            self.replay.append(exp)
-            if extraReward == True and abs(exp[2]) > 9:
-                for _ in range(5):
-                    self.replay.append(exp)
+        for mem in np.arange((seqLength * -1) + 1, -1):
+            seq1 = torch.cat([seq1, world[i, j, 0].replay[mem][0]], dim=1)
+            seq2 = torch.cat([seq2, world[i, j, 0].replay[mem + 1][0]], dim=1)
 
-        if version == 2:
-            # conceptually, this should be like above, but adding one memory to state and nextstate
-            exp = world[i, j, 0].replay[-1]
-            state_previous = world[i, j, 0].replay[-2][0]
-            state_now = world[i, j, 0].replay[-1][0]
-            state_next = world[i, j, 0].replay[-1][3]
-            seq1 = torch.cat([state_previous, state_now], dim=1)
-            seq2 = torch.cat([state_now, state_next], dim=1)
-            exp = (seq1, exp[1], exp[2], seq2, exp[4])
-            self.replay.append(exp)
-            if extraReward == True and abs(exp[2]) > 9:
-                for _ in range(5):
-                    self.replay.append(exp)
+        seq1 = torch.cat([seq1, state_now], dim=1)
+        seq2 = torch.cat([seq2, state_next], dim=1)
 
-        if version == 3:
-            # conceptually, just like 2, but increasing the step to 4 time points
-            exp = world[i, j, 0].replay[-1]
-            state_previous3 = world[i, j, 0].replay[-4][0]
-            state_previous2 = world[i, j, 0].replay[-3][0]
-            state_previous1 = world[i, j, 0].replay[-2][0]
-            state_now = world[i, j, 0].replay[-1][0]
-            state_next = world[i, j, 0].replay[-1][3]
-            seq1 = torch.cat(
-                [state_previous3, state_previous2, state_previous1, state_now], dim=1
-            )
-            seq2 = torch.cat(
-                [state_previous2, state_previous1, state_now, state_next], dim=1
-            )
-            exp = (seq1, exp[1], exp[2], seq2, exp[4])
-            self.replay.append(exp)
-            if extraReward == True and abs(exp[2]) > 9:
-                for _ in range(5):
-                    self.replay.append(exp)
+        exp = (seq1, exp[1], exp[2], seq2, exp[4])
 
-        if version == 4:
-
-            exp = world[i, j, 0].replay[-1]
-
-            state_now = world[i, j, 0].replay[-1][0]
-            state_next = world[i, j, 0].replay[-1][3]
-
-            seq1 = world[i, j, 0].replay[seqLength * -1][0]
-            seq2 = world[i, j, 0].replay[(seqLength * -1) + 1][0]
-
-            for mem in np.arange((seqLength * -1) + 1, -1):
-                seq1 = torch.cat([seq1, world[i, j, 0].replay[mem][0]], dim=1)
-                seq2 = torch.cat([seq2, world[i, j, 0].replay[mem + 1][0]], dim=1)
-
-            seq1 = torch.cat([seq1, state_now], dim=1)
-            seq2 = torch.cat([seq2, state_next], dim=1)
-
-            exp = (seq1, exp[1], exp[2], seq2, exp[4])
-
-            self.replay.append(exp)
-            if extraReward == True and abs(exp[2]) > 9:
-                for _ in range(5):
-                    self.replay.append(exp)
-
-        # conceptually, this is the right code below
-        # exp = world[i, j, 0].replay[-1]
-
-        # t1 = world[i, j, 0].replay[-5][3]
-        # t2 = world[i, j, 0].replay[-4][3]
-        # t3 = world[i, j, 0].replay[-3][3]
-        # t4 = world[i, j, 0].replay[-2][3]
-        # t5 = world[i, j, 0].replay[-1][3]
-
-        # seq1 = torch.cat([t1, t2, t3, t4], dim=1)
-        # seq2 = torch.cat([t2, t3, t4, t5], dim=1)
-
-        # exp = (seq1, exp[1], exp[2], seq2, exp[4])
-
-        # self.replay.append(exp)
-        # if extraReward == True and abs(exp[2]) > 9:
-        #    for _ in range(5):
-        #        self.replay.append(exp)
+        self.replay.append(exp)
+        if extraReward == True and abs(exp[2]) > 9:
+            for _ in range(5):
+                self.replay.append(exp)

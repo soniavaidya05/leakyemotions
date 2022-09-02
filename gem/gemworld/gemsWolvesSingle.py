@@ -67,18 +67,11 @@ class WolfsAndGemsSingle:
         return image
 
     def init_elements(self):
-        self.agent1 = Agent(0)
-        self.agent2 = Agent(1)
-        self.wolf1 = Wolf(2)
-        self.wolf2 = Wolf(3)
-        self.gem1 = Gem(5, [0.0, 255.0, 0.0])
-        self.gem2 = Gem(15, [255.0, 255.0, 0.0])
+        """
+        Creates objects that survive from game to game
+        """
         self.emptyObject = EmptyObject()
         self.walls = Wall()
-
-    # below make it so that it only puts objects in the non wall parts.
-    # this may need to have a parameter that indicates whether things can be
-    # on the edges or not
 
     def gameTest(self, layer=0):
         image = self.plot(layer)
@@ -166,8 +159,8 @@ class WolfsAndGemsSingle:
         Assumes that the world is square - fixme.
         """
         # wall = Wall()
-        for i in range(15):
+        for i in range(self.height):
             self.world[0, i, 0] = Wall()
-            self.world[15 - 1, i, 0] = Wall()
+            self.world[self.height - 1, i, 0] = Wall()
             self.world[i, 0, 0] = Wall()
-            self.world[i, 15 - 1, 0] = Wall()
+            self.world[i, self.height - 1, 0] = Wall()

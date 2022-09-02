@@ -1,4 +1,4 @@
-from old_files.utils import (
+from utils import (
     findInstance,
     one_hot,
     updateEpsilon,
@@ -10,31 +10,15 @@ from old_files.utils import (
 )
 
 
-# replay memory class
-
 from models.memory import Memory
 from models.dqn import DQN, modelDQN
 from models.randomActions import modelRandomAction
 from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
 
-
 from models.perception import agentVisualField
 
-"""
-TODO: Remove old/stale imports.
-"""
-
-# from environment.elements import (
-#     Agent,
-#     EmptyObject,
-#     Wolf,
-#     Gem,
-#     Wall,
-#     deadAgent,
-# )
-from old_game_file.game_utils import createWorld, createWorldImage
+from game_utils import createWorld, createWorldImage
 from gemworld.gemsWolves import WolfsAndGems
-
 
 import os
 
@@ -62,7 +46,7 @@ def playGame(
     epochs=200000,
     maxEpochs=100,
     epsilon=0.9,
-    gameVersion=WolfsAndGems(),
+    gameVersion=WolfsAndGems(),  # This is not working so is hard coded below
     trainModels=True,
 ):
 
@@ -71,14 +55,14 @@ def playGame(
     turn = 0
     sync_freq = 500
     modelUpdate_freq = 25
-    env = WolfsAndGems()
+    env = WolfsAndGems(worldSize, worldSize)
 
     if trainModels == False:
         fig = plt.figure()
         ims = []
 
     for epoch in range(epochs):
-        env.reset_env()
+        env.reset_env(worldSize, worldSize)
 
         done = 0
         withinTurn = 0
@@ -105,10 +89,11 @@ def playGame(
             # this may be a better form than having functions that do nothing in a class
             if turn % sync_freq == 0:
                 for mods in trainableModels:
-                    models[mods].model2.load_state_dict(
-                        models[mods].model1.state_dict()
-                    )
-                    # models[mods].updateQ
+                    # models[mods].model2.load_state_dict(
+                    #    models[mods].model1.state_dict()
+                    # )
+                    # TODO: need to make sure that the above is no longer needed
+                    models[mods].updateQ
 
             moveList = findMoveables(env.world)
             for i, j in moveList:
@@ -121,27 +106,14 @@ def playGame(
 
                 if holdObject.static != 1:
 
-                    # note the prep vision may need to be a function within the model class
-                    # this input is wrong. need to update so that it is a sequence
                     input = models[holdObject.policy].createInput(
                         env.world, i, j, holdObject, 1
                     )
-                    # input, combined_input = inputs
 
-                    # input, combined_input = inputs
-
-                    # this is currently a problem. createInput sometimes need to return two things and sometimes
-                    # needs to return one. Need to have this become a general form
-
-                    # I assume that we will need to update the "action" below to be something like
-                    # [output] where action is the first thing that is returned
-                    # the current structure would not work with multi-head output (Actor-Critic, immagination, etc.)
                     action = models[holdObject.policy].takeAction([input, epsilon])
 
                 if withinTurn == maxEpochs:
                     done = 1
-
-                # rewrite this so all classes have transition, most are just pass
 
                 if holdObject.has_transitions == True:
                     env.world, models, gamePoints = holdObject.transition(
@@ -160,12 +132,7 @@ def playGame(
                 expList = findMoveables(env.world)
                 env.world = updateMemories(models, env.world, expList, endUpdate=True)
 
-                # expList = findMoveables(world)
-                modelType = "DQN"
-                if modelType == "DQN":
-                    models = transferWorldMemories(models, env.world, expList)
-                if modelType == "AC":
-                    models[holdObject.policy].transferMemories_AC(holdObject.reward)
+                models = transferWorldMemories(models, env.world, expList)
 
                 # testing training after every event
                 if withinTurn % modelUpdate_freq == 0:
@@ -209,7 +176,7 @@ def save_models(models, save_dir, filename, add_videos):
         pickle.dump(models, fp)
     for video_num in range(add_videos):
         vfilename = save_dir + filename + "_replayVid_" + str(video_num) + ".gif"
-        createVideo(models, 25, video_num, WolfsAndGems, vfilename)
+        createVideo(models, 20, video_num, WolfsAndGems, vfilename)
 
 
 def load_models(save_dir, filename):
@@ -226,7 +193,7 @@ def train_wolf_gem(epochs=10000, epsilon=0.85):
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents
-        15,  # world size
+        20,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
         0.85,  # starting epsilon
@@ -239,7 +206,7 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents
-        15,  # world size
+        20,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
         epsilon,  # starting epsilon
@@ -250,18 +217,16 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 models = train_wolf_gem(10000)
-save_models(models, save_dir, "modelClass_test_10000_DQN", 5)
+save_models(models, save_dir, "DQN_10000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.7)
-save_models(models, save_dir, "modelClass_test_20000_DQN", 5)
+save_models(models, save_dir, "DQN_20000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.6)
-save_models(models, save_dir, "modelClass_test_30000_DQN", 5)
+save_models(models, save_dir, "DQN_30000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.3)
-save_models(models, save_dir, "modelClass_test_40000_DQN", 5)
+save_models(models, save_dir, "DQN_40000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.3)
-save_models(models, save_dir, "modelClass_test_50000_DQN", 5)
-
-# models = load_models(save_dir, "modelClass_test_20000")
+save_models(models, save_dir, "DQN_50000", 5)

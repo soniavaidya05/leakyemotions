@@ -1,4 +1,4 @@
-from old_files.utils import (
+from utils import (
     findInstance,
     one_hot,
     updateEpsilon,
@@ -9,32 +9,15 @@ from old_files.utils import (
     transferWorldMemories,
 )
 
-
-# replay memory class
-
 from models.memory import Memory
 from models.dqn import DQN, modelDQN
 from models.randomActions import modelRandomAction
 from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
 
-
 from models.perception import agentVisualField
 
-"""
-TODO: Remove old/stale imports.
-"""
-
-# from environment.elements import (
-#     Agent,
-#     EmptyObject,
-#     Wolf,
-#     Gem,
-#     Wall,
-#     deadAgent,
-# )
-from old_game_file.game_utils import createWorld, createWorldImage
+from game_utils import createWorld, createWorldImage
 from gemworld.gemsWolves import WolfsAndGems
-
 
 import os
 
@@ -120,21 +103,25 @@ def playGame(
 
                 if holdObject.static != 1:
 
-                    # note the prep vision may need to be a function within the model class
-                    # this input is wrong. need to update so that it is a sequence
+                    """
+                    Currently RNN and non-RNN models have different createInput files, with
+                    the RNN having createInput and createInput2. This needs to be fixed
+
+                    This creates an agent specific view of their environment
+                    This also may become more challenging with more output heads
+
+                    """
+
                     inputs = models[holdObject.policy].createInput2(
                         env.world, i, j, holdObject, 1
                     )
                     input, combined_input = inputs
 
-                    # input, combined_input = inputs
+                    """
+                    Below generates an action
 
-                    # this is currently a problem. createInput sometimes need to return two things and sometimes
-                    # needs to return one. Need to have this become a general form
+                    """
 
-                    # I assume that we will need to update the "action" below to be something like
-                    # [output] where action is the first thing that is returned
-                    # the current structure would not work with multi-head output (Actor-Critic, immagination, etc.)
                     action = models[holdObject.policy].takeAction(
                         [combined_input, epsilon]
                     )
@@ -195,7 +182,7 @@ def createVideo(models, worldSize, num, gameVersion, filename="unnamed_video.gif
     ani1 = playGame(
         models,  # model file list
         [],  # which models from that list should be trained, here not the agents
-        25,  # world size
+        20,  # world size
         1,  # number of epochs
         100,  # max epoch length
         0.1,  # starting epsilon
@@ -227,7 +214,7 @@ def train_wolf_gem(epochs=10000, epsilon=0.85):
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents
-        15,  # world size
+        20,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
         0.85,  # starting epsilon
@@ -240,7 +227,7 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents
-        15,  # world size
+        20,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
         epsilon,  # starting epsilon
@@ -251,18 +238,18 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 models = train_wolf_gem(10000)
-save_models(models, save_dir, "modelClass_test_10000_4_inCorr_fixed", 5)
+save_models(models, save_dir, "DQN_LSTM_10000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.7)
-save_models(models, save_dir, "modelClass_test_20000_4_inCorr_fixed", 5)
+save_models(models, save_dir, "DQN_LSTM_20000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.6)
-save_models(models, save_dir, "modelClass_test_30000_4_inCorr_fixed", 5)
+save_models(models, save_dir, "DQN_LSTM_30000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.3)
-save_models(models, save_dir, "modelClass_test_40000_4_inCorr_fixed", 5)
+save_models(models, save_dir, "DQN_LSTM_40000", 5)
 
 models = addTrain_wolf_gem(models, 10000, 0.3)
-save_models(models, save_dir, "modelClass_test_50000_4_inCorr_fixed", 5)
+save_models(models, save_dir, "DQN_LSTM_50000", 5)
 
 # models = load_models(save_dir, "modelClass_test_20000")
