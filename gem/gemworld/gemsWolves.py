@@ -17,8 +17,8 @@ class WolfsAndGems:
         width=15,
         layers=1,
         defaultObject=EmptyObject(),
-        gem1p=0.115,
-        gem2p=0.06,
+        gem1p=0.110,
+        gem2p=0.04,
         wolf1p=0.005,
     ):
         self.gem1p = gem1p
@@ -38,7 +38,7 @@ class WolfsAndGems:
         self.world = np.full((height, width, layers), self.defaultObject)
 
     def reset_env(
-        self, height=15, width=15, layers=1, gem1p=0.115, gem2p=0.06, wolf1p=0.005
+        self, height=15, width=15, layers=1, gem1p=0.110, gem2p=0.04, wolf1p=0.005
     ):
         self.create_world(height, width, layers)
         self.populate(gem1p, gem2p, wolf1p)

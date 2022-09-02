@@ -161,7 +161,7 @@ def createVideo(models, worldSize, num, gameVersion, filename="unnamed_video.gif
     ani1 = playGame(
         models,  # model file list
         [],  # which models from that list should be trained, here not the agents
-        25,  # world size
+        17,  # world size
         1,  # number of epochs
         100,  # max epoch length
         0.1,  # starting epsilon
@@ -176,7 +176,7 @@ def save_models(models, save_dir, filename, add_videos):
         pickle.dump(models, fp)
     for video_num in range(add_videos):
         vfilename = save_dir + filename + "_replayVid_" + str(video_num) + ".gif"
-        createVideo(models, 20, video_num, WolfsAndGems, vfilename)
+        createVideo(models, 17, video_num, WolfsAndGems, vfilename)
 
 
 def load_models(save_dir, filename):
@@ -193,7 +193,7 @@ def train_wolf_gem(epochs=10000, epsilon=0.85):
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents
-        20,  # world size
+        17,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
         0.85,  # starting epsilon
@@ -206,7 +206,7 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents
-        20,  # world size
+        17,  # world size
         epochs,  # number of epochs
         100,  # max epoch length
         epsilon,  # starting epsilon
