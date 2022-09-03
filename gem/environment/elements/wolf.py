@@ -36,7 +36,17 @@ class Wolf:
                 self.replay.append(exp)
 
     def transition(
-        self, action, world, models, i, j, gamePoints, done, input, expBuff=True
+        self,
+        action,
+        world,
+        models,
+        i,
+        j,
+        gamePoints,
+        done,
+        input,
+        expBuff=True,
+        ModelType="DQN",
     ):
 
         newLoc1 = i
@@ -90,11 +100,31 @@ class Wolf:
                     lastexp[3],
                     1,
                 )
-                models[world[attLoc1, attLoc2, 0].policy].transferMemories(
-                    world, attLoc1, attLoc2, extraReward=True
-                )
+
+                if ModelType == "DQN":
+                    models[world[attLoc1, attLoc2, 0].policy].transferMemories(
+                        world, attLoc1, attLoc2, extraReward=True
+                    )
+                if ModelType == "AC":
+                    # note, put in the whole code for updatng an AC model here
+
+                    finalReward = torch.tensor(-25).float().reshape(1, 1)
+
+                    if (
+                        world[attLoc1, attLoc2, 0].AC_reward.shape
+                        == world[attLoc1, attLoc2, 0].AC_value.shape
+                    ):
+                        world[attLoc1, attLoc2, 0].AC_reward[-1] = finalReward
+                    else:
+                        world[attLoc1, attLoc2, 0].AC_reward = torch.concat(
+                            [world[attLoc1, attLoc2, 0].AC_reward, finalReward]
+                        )
+                        models[world[attLoc1, attLoc2, 0].policy].transferMemories_AC(
+                            world, attLoc1, attLoc2
+                        )
 
                 world[attLoc1, attLoc2, 0] = DeadAgent()
+                # world[attLoc1, attLoc2, 0].died()
 
         if expBuff == True:
             input2 = models[self.policy].createInput(world, newLoc1, newLoc1, self)

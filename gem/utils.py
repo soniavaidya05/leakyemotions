@@ -20,6 +20,15 @@ def findMoveables(world):
     return moveList
 
 
+def findTrainables(world):
+    trainList = []
+    for i in range(world.shape[0]):
+        for j in range(world.shape[0]):
+            if world[i, j, 0].trainable == 1:
+                trainList.append([i, j])
+    return trainList
+
+
 # we will want to have a single "find" script that takes as input what you are looking for and finds those objects
 def findAgents_tag(world):
     print(

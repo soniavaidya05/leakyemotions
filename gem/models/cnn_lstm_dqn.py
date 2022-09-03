@@ -60,9 +60,9 @@ class Combine_CLD(nn.Module):
         r_out, (h_n, h_c) = self.rnn(r_in)
 
         y = F.relu(self.l1(r_out[:, -1, :]))
-        y = self.dropout(y)
+        # y = self.dropout(y)
         y = F.relu(self.l2(y))
-        y = self.dropout(y)
+        # y = self.dropout(y)
         y = self.l3(y)
 
         return y

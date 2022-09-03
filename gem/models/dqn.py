@@ -34,11 +34,11 @@ class DQN(nn.Module):
         y1 = torch.flatten(y1, 1)
         y = torch.cat((y1, y2), 1)
         y = F.relu(self.l2(y))
-        y = self.dropout(y)
+        # y = self.dropout(y)
         y = F.relu(self.l3(y))
-        y = self.dropout(y)
+        # y = self.dropout(y)
         y = F.relu(self.l4(y))
-        y = self.dropout(y)
+        # y = self.dropout(y)
         value = self.l5(y)
         return value
 

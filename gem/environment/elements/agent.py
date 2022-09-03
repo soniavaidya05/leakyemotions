@@ -39,12 +39,22 @@ class Agent:
         # this can only be used it seems if all agents have a different id
         self.kind = "deadAgent"  # label the agents death
         self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
-        self.trainable = 0  # whether there is a network to be optimized
+        self.trainable = 1  # whether there is a network to be optimized
         self.justDied = True
         self.static = 1
 
     def transition(
-        self, action, world, models, i, j, gamePoints, done, input, expBuff=True
+        self,
+        action,
+        world,
+        models,
+        i,
+        j,
+        gamePoints,
+        done,
+        input,
+        expBuff=True,
+        ModelType="DQN",
     ):
 
         newLoc1 = i
@@ -82,7 +92,9 @@ class Agent:
             newLoc2 = attLoc2
             gamePoints[0] = gamePoints[0] + reward
         else:
-            if isinstance(world[attLoc1, attLoc2, 0], Wall):  # Replacing comparison with string 'kind'
+            if isinstance(
+                world[attLoc1, attLoc2, 0], Wall
+            ):  # Replacing comparison with string 'kind'
                 reward = -0.1
 
         if expBuff == True:

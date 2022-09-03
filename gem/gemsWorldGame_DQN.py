@@ -89,11 +89,11 @@ def playGame(
             # this may be a better form than having functions that do nothing in a class
             if turn % sync_freq == 0:
                 for mods in trainableModels:
-                    # models[mods].model2.load_state_dict(
-                    #    models[mods].model1.state_dict()
-                    # )
+                    models[mods].model2.load_state_dict(
+                        models[mods].model1.state_dict()
+                    )
                     # TODO: need to make sure that the above is no longer needed
-                    models[mods].updateQ
+                    # models[mods].updateQ
 
             moveList = findMoveables(env.world)
             for i, j in moveList:

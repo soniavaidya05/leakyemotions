@@ -77,6 +77,17 @@ def playGame(
             env.world[i, j, 0].AC_value = torch.tensor([])
             env.world[i, j, 0].AC_reward = torch.tensor([])
 
+        for mod in range(len(models)):
+            """
+            Resets the model memories to get ready for the new episode memories
+            this likely should be in the model class when we figure out how to
+            get AC and DQN models to have the same format
+            """
+            models[mod].rewards = torch.tensor([])
+            models[mod].values = torch.tensor([])
+            models[mod].logprobs = torch.tensor([])
+            models[mod].Returns = torch.tensor([])
+
         while done == 0:
 
             if trainModels == False:
@@ -147,10 +158,18 @@ def playGame(
                         gamePoints,
                         done,
                         input,
+                        expBuff=True,
+                        ModelType="AC",
                     )
 
             if trainModels == True:
-                # transfer the events for each agent into the appropriate model after all have moved
+
+                """
+                transfer the events for each agent into the appropriate model after all have moved
+                TODO: This needs to be rewritten as findTrainables, currently deadagents do not move
+                    but they have information in their replay buffers that need to go into learning
+                """
+
                 expList = findMoveables(env.world)
                 env.world = updateMemories(models, env.world, expList, endUpdate=True)
                 for i, j in expList:
@@ -164,18 +183,11 @@ def playGame(
                     )
 
         if trainModels == True:
-            for mod in range(len(models)):
-                """
-                Resets the model memories to get ready for the new episode memories
-                this likely should be in the model class when we figure out how to
-                get AC and DQN models to have the same format
-                """
-                models[mod].rewards = torch.tensor([])
-                models[mod].values = torch.tensor([])
-                models[mod].logprobs = torch.tensor([])
-                models[mod].Returns = torch.tensor([])
 
             expList = findMoveables(env.world)
+            # TODO: just like above this needs to be changed to findTrainables because deadAgents have memories
+            #       that need to be learned
+
             for i, j in expList:
                 models[env.world[i, j, 0].policy].transferMemories_AC(env.world, i, j)
 
@@ -272,5 +284,5 @@ save_models(models, save_dir, "AC_LSTM_30000", 5)
 models = addTrain_wolf_gem(models, 10000, 0.7)
 save_models(models, save_dir, "AC_LSTM_40000", 5)
 
-models = addTrain_wolf_gem(models, 50000, 0.7)
+models = addTrain_wolf_gem(models, 10000, 0.7)
 save_models(models, save_dir, "AC_LSTM_50000", 5)
