@@ -232,7 +232,7 @@ def save_models(models, save_dir, filename, add_videos):
         pickle.dump(models, fp)
     for video_num in range(add_videos):
         vfilename = save_dir + filename + "_replayVid_" + str(video_num) + ".gif"
-        createVideo(models, 35, video_num, WolfsAndGems, vfilename)
+        createVideo(models, 30, video_num, WolfsAndGems, vfilename)
 
 
 def load_models(save_dir, filename):
@@ -248,9 +248,9 @@ def train_wolf_gem(epochs=10000, epsilon=0.85):
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents
-        50,  # world size
+        30,  # world size
         epochs,  # number of epochs
-        400,  # max epoch length
+        200,  # max epoch length
         0.85,  # starting epsilon
         gameVersion=WolfsAndGems,
     )
@@ -261,9 +261,9 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
     models = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents
-        50,  # world size
+        30,  # world size
         epochs,  # number of epochs
-        400,  # max epoch length
+        200,  # max epoch length
         epsilon,  # starting epsilon
         gameVersion=WolfsAndGems,
     )
@@ -271,7 +271,12 @@ def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
 
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-models = train_wolf_gem(10000)
+models = train_wolf_gem(1000)
+save_models(models, save_dir, "AC_LSTM_1000lw", 5)
+
+models = addTrain_wolf_gem(
+    models, 9000, 0.7
+)  # note, the epsilon pamamter is meaningless here
 save_models(models, save_dir, "AC_LSTM_10000lw", 5)
 
 models = addTrain_wolf_gem(
