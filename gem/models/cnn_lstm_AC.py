@@ -165,8 +165,8 @@ class model_CNN_LSTM_AC:
         Actor critic training. This works but as an unncessary batch_size
         Input that we should figure out if there is a way to make more efficient
         """
-
-        if len(self.rewards) > 1:
+        loss = torch.tensor(0.0)
+        if len(self.values) > 1:
             actor_loss = -1 * self.logprobs * (self.Returns - self.values.detach())
             critic_loss = torch.pow(self.values - self.Returns, 2)
             loss = actor_loss.sum() + clc * critic_loss.sum()

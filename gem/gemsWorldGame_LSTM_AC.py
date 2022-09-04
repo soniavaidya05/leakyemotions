@@ -193,7 +193,8 @@ def playGame(
 
             for mod in range(len(models)):
                 if len(models[mod].rewards) > 0:
-                    models[mod].training()
+                    loss = models[mod].training()
+                    losses = losses + loss.detach().numpy()
 
         # epdate epsilon to move from mostly random to greedy choices for action with time
         epsilon = updateEpsilon(epsilon, turn, epoch)

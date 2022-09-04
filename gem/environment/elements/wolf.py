@@ -101,27 +101,30 @@ class Wolf:
                     1,
                 )
 
+                # TODO: Below is very clunky and a more principles solution needs to be found
+
                 if ModelType == "DQN":
                     models[world[attLoc1, attLoc2, 0].policy].transferMemories(
                         world, attLoc1, attLoc2, extraReward=True
                     )
                 if ModelType == "AC":
                     # note, put in the whole code for updatng an AC model here
+                    if len(world[attLoc1, attLoc2, 0].AC_value) > 0:
 
-                    finalReward = torch.tensor(-25).float().reshape(1, 1)
+                        finalReward = torch.tensor(-25).float().reshape(1, 1)
 
-                    if (
-                        world[attLoc1, attLoc2, 0].AC_reward.shape
-                        == world[attLoc1, attLoc2, 0].AC_value.shape
-                    ):
-                        world[attLoc1, attLoc2, 0].AC_reward[-1] = finalReward
-                    else:
-                        world[attLoc1, attLoc2, 0].AC_reward = torch.concat(
-                            [world[attLoc1, attLoc2, 0].AC_reward, finalReward]
-                        )
-                        models[world[attLoc1, attLoc2, 0].policy].transferMemories_AC(
-                            world, attLoc1, attLoc2
-                        )
+                        if (
+                            world[attLoc1, attLoc2, 0].AC_reward.shape
+                            == world[attLoc1, attLoc2, 0].AC_value.shape
+                        ):
+                            world[attLoc1, attLoc2, 0].AC_reward[-1] = finalReward
+                        else:
+                            world[attLoc1, attLoc2, 0].AC_reward = torch.concat(
+                                [world[attLoc1, attLoc2, 0].AC_reward, finalReward]
+                            )
+                            models[
+                                world[attLoc1, attLoc2, 0].policy
+                            ].transferMemories_AC(world, attLoc1, attLoc2)
 
                 world[attLoc1, attLoc2, 0] = DeadAgent()
                 # world[attLoc1, attLoc2, 0].died()
