@@ -10,17 +10,16 @@ import matplotlib.animation as animation
 from models.perception import agentVisualField
 
 
-class WolfsAndGemsSingle:
+class WolfsAndGems:
     def __init__(
         self,
         height=15,
         width=15,
         layers=1,
         defaultObject=EmptyObject(),
-        gem1p=0.115,
-        gem2p=0.06,
-        # wolf1p=0.005,
-        wolf1p=0.00,
+        gem1p=0.110,
+        gem2p=0.04,
+        wolf1p=0.005,
     ):
         self.gem1p = gem1p
         self.gem2p = gem2p
@@ -39,7 +38,7 @@ class WolfsAndGemsSingle:
         self.world = np.full((height, width, layers), self.defaultObject)
 
     def reset_env(
-        self, height=15, width=15, layers=1, gem1p=0.115, gem2p=0.06, wolf1p=0.005
+        self, height=15, width=15, layers=1, gem1p=0.110, gem2p=0.04, wolf1p=0.005
     ):
         self.create_world(height, width, layers)
         self.populate(gem1p, gem2p, wolf1p)
@@ -74,6 +73,9 @@ class WolfsAndGemsSingle:
         self.walls = Wall()
 
     def gameTest(self, layer=0):
+        """
+        Prints one frame to check game instance parameters
+        """
         image = self.plot(layer)
 
         moveList = []
@@ -90,68 +92,52 @@ class WolfsAndGemsSingle:
         plt.imshow(img)
         plt.show()
 
-    # def populate(self, gem1p=0.115, gem2p=0.06, wolf1p=0.005):
-    def populate(self, gem1p=0.115, gem2p=0.06, wolf1p=0.000001):
+    def populate(self, gem1p=0.115, gem2p=0.06, wolf1p=0.007, agent1p=0.003):
+        """
+        Populates the game board with elements
+        TODO: test whether the probabilites above are working
+        """
+
         for i in range(self.world.shape[0]):
             for j in range(self.world.shape[1]):
                 obj = np.random.choice(
-                    [0, 1, 2, 3],
+                    [0, 1, 2, 3, 4],
                     p=[
                         gem1p,
                         gem2p,
                         wolf1p,
-                        1 - gem2p - gem1p - wolf1p,
+                        agent1p,
+                        1 - gem2p - gem1p - wolf1p - agent1p,
                     ],
                 )
                 if obj == 0:
-                    self.world[i, j, 0] = self.gem1
+                    self.world[i, j, 0] = Gem(5, [0.0, 255.0, 0.0])
                 if obj == 1:
-                    self.world[i, j, 0] = self.gem2
-                # if obj == 2:
-                #    self.world[i, j, 0] = self.wolf1
+                    self.world[i, j, 0] = Gem(15, [255.0, 255.0, 0.0])
                 if obj == 2:
-                    self.world[i, j, 0] = self.gem1
+                    self.world[i, j, 0] = Wolf(1)
+                if obj == 3:
+                    self.world[i, j, 0] = Agent(0)
 
         cBal = np.random.choice([0, 1])
         if cBal == 0:
             self.world[
                 round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
             ] = Agent(0)
-            # self.world[
-            #    round(self.world.shape[0] / 2) + 1,
-            #    round(self.world.shape[1] / 2) - 1,
-            #    0,
-            # ] = self.agent2
-        if cBal == 1:
-            # self.world[
-            #    round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
-            # ] = self.agent2
             self.world[
                 round(self.world.shape[0] / 2) + 1,
                 round(self.world.shape[1] / 2) - 1,
                 0,
             ] = Agent(0)
-
-        # numWolves = np.random.choice([0, 0, 1, 1, 2])
-        # if numWolves > 0:
-        #    cbal = np.random.choice([0, 1, 2, 3])
-        #    if cbal == 0:
-        #        self.world[3, 3, 0] = self.wolf1
-        #    if cbal == 1:
-        #        self.world[3, 13, 0] = self.wolf1
-        #    if cbal == 2:
-        #        self.world[13, 3, 0] = self.wolf1
-        #    if cbal == 3:
-        #        self.world[13, 13, 0] = self.wolf1
-        # if numWolves > 1:
-        #    if cbal == 0:
-        #        self.world[2, 3, 0] = self.wolf2
-        #    if cbal == 1:
-        #        self.world[2, 13, 0] = self.wolf2
-        #    if cbal == 2:
-        #        self.world[13, 2, 0] = self.wolf2
-        #    if cbal == 3:
-        #        self.world[12, 12, 0] = self.wolf2
+        if cBal == 1:
+            self.world[
+                round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
+            ] = Agent(0)
+            self.world[
+                round(self.world.shape[0] / 2) + 1,
+                round(self.world.shape[1] / 2) - 1,
+                0,
+            ] = Agent(0)
 
     def insert_walls(self):
         """
