@@ -184,7 +184,7 @@ class WolfsAndGems:
 
                 """
                 inputs = models[holdObject.policy].createInput2(
-                    self.world, i, j, holdObject, -1
+                    self.world, i, j, holdObject, 4
                 )
 
                 input, combined_input = inputs

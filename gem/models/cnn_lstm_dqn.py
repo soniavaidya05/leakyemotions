@@ -101,19 +101,18 @@ class model_CNN_LSTM_DQN:
         TODO: (2) test whether version 1 and version 2 below work properly
               Specifically, whether the sequences in version 2 are being
               stacked properly
+        TODO: check to make sure this is right
         """
 
         img = agentVisualField(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
-        input = input.unsqueeze(0)
-        if seqLength == -1:
-            combined_input = input
-        if seqLength == 1:
-            previous_input1 = world[i, j, 0].replay[-2][0]
-            previous_input2 = world[i, j, 0].replay[-1][0]
-            combined_input = torch.cat([previous_input1, previous_input2, input], dim=1)
-
-        return input, combined_input
+        state_now = input.unsqueeze(0)
+        seq1 = state_now
+        if seqLength > 1:
+            for mem in np.arange((seqLength * -1), 0):
+                seq1 = torch.cat([seq1, world[i, j, 0].replay[mem][0]], dim=1)
+            seq1 = torch.cat([seq1, state_now], dim=1)
+        return state_now, seq1
 
     def takeAction(self, params):
         """
@@ -170,13 +169,14 @@ class model_CNN_LSTM_DQN:
         """
         self.model2.load_state_dict(self.model1.state_dict())
 
-    def transferMemories(self, world, i, j, extraReward=True, seqLength=5):
+    def transferMemories(self, world, i, j, extraReward=True, seqLength=4):
         """
         Transfer the indiviu=dual memories to the model
         TODO: We need to have a single version that works for both DQN and
               Actor-criric models (or other types as well)
         TODO: Need to double check the way that these sequences are being
               concat. There couldbe errors
+        TODO: check to make sure that this is right
         """
 
         exp = world[i, j, 0].replay[-1]

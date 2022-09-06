@@ -23,12 +23,9 @@ def createVideo(models, worldSize, num, env, filename="unnamed_video.gif"):
     ani.save(filename, writer="PillowWriter", fps=2)
 
 
-def save_models(models, env, save_dir, filename, add_videos):
+def save_models(models, save_dir, filename):
     with open(save_dir + filename, "wb") as fp:
         pickle.dump(models, fp)
-    for video_num in range(add_videos):
-        vfilename = save_dir + filename + "_replayVid_" + str(video_num) + ".gif"
-        createVideo(models, 17, video_num, env, vfilename)
 
 
 def load_models(save_dir, filename):
