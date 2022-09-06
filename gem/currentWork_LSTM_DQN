@@ -28,8 +28,8 @@ from DQN_utils import createVideo, save_models, load_models
 import random
 import torch
 
-torch.manual_seed(0)
-random.seed(4)
+torch.manual_seed(1)
+random.seed(5)
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
@@ -127,14 +127,25 @@ def runGame(
     return models, env, turn, epsilon
 
 
-models, env = runGame(
+models, env, turn, epsilon = runGame(
     models,
     env,
     turn,
     epsilon,
-    epochs=10000,
+    epochs=1000,
     filename="currentWorkB",
     createVideos=False,
 )
+
+models, env, turn, epsilon = runGame(
+    models,
+    env,
+    turn,
+    epsilon,
+    epochs=9000,
+    filename="currentWorkB",
+    createVideos=False,
+)
+
 
 save_models(models, save_dir, "newModel10000")
