@@ -53,15 +53,17 @@ def playGame(
     gamePoints = [0, 0]
     turn = 0
     sync_freq = 500
-    modelUpdate_freq = 25
-    env = WolfsAndGems()
+    modelUpdate_freq = 10
+    env = WolfsAndGems(worldSize, worldSize)
+    env.gameTest()
 
     if trainModels == False:
         fig = plt.figure()
         ims = []
 
     for epoch in range(epochs):
-        env.reset_env()
+        env.reset_env(worldSize, worldSize)
+        env.gameTest()
 
         done = 0
         withinTurn = 0
@@ -158,7 +160,7 @@ def playGame(
                 # testing training after every event
                 if withinTurn % modelUpdate_freq == 0:
                     for mods in trainableModels:
-                        loss = models[mods].training(150, 0.9)
+                        loss = models[mods].training(300, 0.9)
                         losses = losses + loss.detach().numpy()
 
         # epdate epsilon to move from mostly random to greedy choices for action with time
@@ -169,7 +171,7 @@ def playGame(
             gamePoints = [0, 0]
             losses = 0
     if trainModels == True:
-        return models
+        return models, env
     if trainModels == False:
         ani = animation.ArtistAnimation(
             fig, ims, interval=50, blit=True, repeat_delay=1000
@@ -182,9 +184,9 @@ def createVideo(models, worldSize, num, gameVersion, filename="unnamed_video.gif
     ani1 = playGame(
         models,  # model file list
         [],  # which models from that list should be trained, here not the agents
-        17,  # world size
+        worldSize,  # world size
         1,  # number of epochs
-        100,  # max epoch length
+        150,  # max epoch length
         0.1,  # starting epsilon
         gameVersion=WolfsAndGems,  # which game
         trainModels=False,  # this plays a game without learning
@@ -192,64 +194,32 @@ def createVideo(models, worldSize, num, gameVersion, filename="unnamed_video.gif
     ani1.save(filename, writer="PillowWriter", fps=2)
 
 
-def save_models(models, save_dir, filename, add_videos):
-    with open(save_dir + filename, "wb") as fp:
-        pickle.dump(models, fp)
-    for video_num in range(add_videos):
-        vfilename = save_dir + filename + "_replayVid_" + str(video_num) + ".gif"
-        createVideo(models, 17, video_num, WolfsAndGems, vfilename)
-
-
-def load_models(save_dir, filename):
-    with open(save_dir + filename, "rb") as fp:
-        model = pickle.load(fp)
-    return model
-
-
-def train_wolf_gem(epochs=10000, epsilon=0.85):
+def createModels():
     models = []
-    # 405 / 1445 should go back to 650 / 2570 when fixed
-    models.append(model_CNN_LSTM_DQN(5, 0.0001, 1500, 650, 425, 125, 4))  # agent model
-    models.append(model_CNN_LSTM_DQN(5, 0.0001, 1500, 2570, 425, 125, 4))  # wolf model
-    models = playGame(
+    models.append(model_CNN_LSTM_DQN(5, 0.0001, 3000, 650, 425, 125, 4))  # agent model
+    models.append(model_CNN_LSTM_DQN(5, 0.0001, 3000, 2570, 425, 125, 4))  # wolf model
+    return models
+
+
+def trainModel(models, epochs=1, epsilon=0.85):
+    models, env = playGame(
         models,  # model file list
         [0, 1],  # which models from that list should be trained, here not the agents
-        17,  # world size
+        25,  # world size
         epochs,  # number of epochs
-        300,  # max epoch length
+        200,  # max epoch length
         0.85,  # starting epsilon
         gameVersion=WolfsAndGems,
     )
-    return models
+    return models, env
 
 
-def addTrain_wolf_gem(models, epochs=10000, epsilon=0.3):
-    models = playGame(
-        models,  # model file list
-        [0, 1],  # which models from that list should be trained, here not the agents
-        17,  # world size
-        epochs,  # number of epochs
-        300,  # max epoch length
-        epsilon,  # starting epsilon
-        gameVersion=WolfsAndGems,
-    )
-    return models
+models = createModels()
+models, env = trainModel(models)
+env.gameTest()
 
+env.reset_env(25, 25)
+env.gameTest()
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-models = train_wolf_gem(10000)
-save_models(models, save_dir, "DQN_LSTM_10000", 5)
-
-models = addTrain_wolf_gem(models, 10000, 0.7)
-save_models(models, save_dir, "DQN_LSTM_20000", 5)
-
-models = addTrain_wolf_gem(models, 10000, 0.6)
-save_models(models, save_dir, "DQN_LSTM_30000", 5)
-
-models = addTrain_wolf_gem(models, 10000, 0.3)
-save_models(models, save_dir, "DQN_LSTM_40000", 5)
-
-models = addTrain_wolf_gem(models, 10000, 0.3)
-save_models(models, save_dir, "DQN_LSTM_50000", 5)
-
-# models = load_models(save_dir, "modelClass_test_20000")
+reward_batch_0 = torch.Tensor([r for (s1, a, r, s2, d) in models[0].replay])
+reward_batch_1 = torch.Tensor([r for (s1, a, r, s2, d) in models[1].replay])

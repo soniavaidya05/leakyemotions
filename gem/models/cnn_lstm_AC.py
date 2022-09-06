@@ -201,14 +201,15 @@ class model_CNN_LSTM_AC:
         logprobs = world[i, j, 0].AC_logprob.flip(dims=(0,)).view(-1)
         values = world[i, j, 0].AC_value.flip(dims=(0,)).view(-1)
 
-        gamma = 0.95
+        gamma = 0.8
+        # gamma = 0.95
         Returns = []
         ret_ = torch.Tensor([0])
         for r in range(rewards.shape[0]):  # B
             ret_ = rewards[r] + gamma * ret_
             Returns.append(ret_)
         Returns = torch.stack(Returns).view(-1)
-        Returns = F.normalize(Returns, dim=0)
+        # Returns = F.normalize(Returns, dim=0)
 
         self.rewards = torch.concat([self.rewards, rewards])
         self.values = torch.concat([self.values, values])

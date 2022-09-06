@@ -17,9 +17,9 @@ class WolfsAndGems:
         width=15,
         layers=1,
         defaultObject=EmptyObject(),
-        gem1p=0.110,
+        gem1p=0.03,
         gem2p=0.04,
-        wolf1p=0.005,
+        wolf1p=0.03,
     ):
         self.gem1p = gem1p
         self.gem2p = gem2p
@@ -92,7 +92,7 @@ class WolfsAndGems:
         plt.imshow(img)
         plt.show()
 
-    def populate(self, gem1p=0.115, gem2p=0.06, wolf1p=0.007, agent1p=0.003):
+    def populate(self, gem1p=0.03, gem2p=0.04, wolf1p=0.035, agent1p=0.005):
         """
         Populates the game board with elements
         TODO: test whether the probabilites above are working

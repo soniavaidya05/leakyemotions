@@ -54,14 +54,14 @@ def playGame(
     turn = 0
     sync_freq = 500
     modelUpdate_freq = 10
-    env = WolfsAndGems()
+    env = WolfsAndGems(worldSize, worldSize)
 
     if trainModels == False:
         fig = plt.figure()
         ims = []
 
     for epoch in range(epochs):
-        env.reset_env()
+        env.reset_env(worldSize, worldSize)
 
         done = 0
         withinTurn = 0

@@ -9,18 +9,30 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from models.perception import agentVisualField
 
+import random
 
-class WolfsAndGemsDual:
+from utils import (
+    findInstance,
+    one_hot,
+    updateEpsilon,
+    updateMemories,
+    transferMemories,
+    findMoveables,
+    findAgents,
+    transferWorldMemories,
+)
+
+
+class WolfsAndGems:
     def __init__(
         self,
-        height=25,
-        width=25,
+        height=15,
+        width=15,
         layers=1,
         defaultObject=EmptyObject(),
-        gem1p=0.115,
-        gem2p=0.06,
-        # wolf1p=0.005,
-        wolf1p=0.00,
+        gem1p=0.110,
+        gem2p=0.04,
+        wolf1p=0.005,
     ):
         self.gem1p = gem1p
         self.gem2p = gem2p
@@ -39,7 +51,7 @@ class WolfsAndGemsDual:
         self.world = np.full((height, width, layers), self.defaultObject)
 
     def reset_env(
-        self, height=15, width=15, layers=1, gem1p=0.115, gem2p=0.06, wolf1p=0.005
+        self, height=15, width=15, layers=1, gem1p=0.110, gem2p=0.04, wolf1p=0.005
     ):
         self.create_world(height, width, layers)
         self.populate(gem1p, gem2p, wolf1p)
@@ -74,6 +86,9 @@ class WolfsAndGemsDual:
         self.walls = Wall()
 
     def gameTest(self, layer=0):
+        """
+        Prints one frame to check game instance parameters
+        """
         image = self.plot(layer)
 
         moveList = []
@@ -90,8 +105,12 @@ class WolfsAndGemsDual:
         plt.imshow(img)
         plt.show()
 
-    # def populate(self, gem1p=0.115, gem2p=0.06, wolf1p=0.005):
-    def populate(self, gem1p=0.115, gem2p=0.06, wolf1p=0.01):
+    def populate(self, gem1p=0.115, gem2p=0.06, wolf1p=0.005):
+        """
+        Populates the game board with elements
+        TODO: test whether the probabilites above are working
+        """
+
         for i in range(self.world.shape[0]):
             for j in range(self.world.shape[1]):
                 obj = np.random.choice(
@@ -141,3 +160,53 @@ class WolfsAndGemsDual:
             self.world[self.height - 1, i, 0] = Wall()
             self.world[i, 0, 0] = Wall()
             self.world[i, self.height - 1, 0] = Wall()
+
+    def step(self, models, gamePoints, epsilon=0.85, done=0):
+
+        moveList = findMoveables(self.world)
+
+        for i, j in moveList:
+            # reset the rewards for the trial to be zero for all agents
+            self.world[i, j, 0].reward = 0
+
+        for i, j in moveList:
+
+            holdObject = self.world[i, j, 0]
+
+            if holdObject.static != 1:
+
+                """
+                Currently RNN and non-RNN models have different createInput files, with
+                the RNN having createInput and createInput2. This needs to be fixed
+
+                This creates an agent specific view of their environment
+                This also may become more challenging with more output heads
+
+                """
+                inputs = models[holdObject.policy].createInput2(
+                    self.world, i, j, holdObject, -1
+                )
+
+                input, combined_input = inputs
+
+                """
+                Below generates an action
+
+                """
+
+                action = models[holdObject.policy].takeAction([combined_input, epsilon])
+
+            # rewrite this so all classes have transition, most are just pass
+
+            if holdObject.has_transitions == True:
+                self.world, models, gamePoints = holdObject.transition(
+                    action,
+                    self.world,
+                    models,
+                    i,
+                    j,
+                    gamePoints,
+                    done,
+                    input,
+                )
+        return gamePoints

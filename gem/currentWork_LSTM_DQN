@@ -1,0 +1,106 @@
+from gem.utils import (
+    updateEpsilon,
+    updateMemories,
+    findMoveables,
+    transferWorldMemories,
+    findAgents,
+)
+
+from models.memory import Memory
+from models.dqn import DQN, modelDQN
+from models.randomActions import modelRandomAction
+from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
+from models.cnn_lstm_AC import model_CNN_LSTM_AC
+
+from gemworld.gemsWolves_experimental import WolfsAndGems
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from astropy.visualization import make_lupton_rgb
+
+import torch.nn as nn
+import torch.nn.functional as F
+
+from collections import deque
+
+from DQN_utils import createVideo, save_models, load_models
+
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+
+
+def createModels():
+    models = []
+    models.append(model_CNN_LSTM_DQN(5, 0.0001, 3000, 650, 300, 100, 4))  # agent model
+    models.append(model_CNN_LSTM_DQN(5, 0.0001, 3000, 2570, 300, 100, 4))  # wolf model
+    return models
+
+
+worldSize = 15
+maxTurns = 100
+sync_freq = 500
+trainableModels = [0, 1]
+epochs = 50000
+modelUpdate_freq = 25
+epsilon = 0.8
+turn = 1
+losses = 0
+gamePoints = [0, 0]
+
+models = createModels()
+env = WolfsAndGems(worldSize, worldSize)
+env.gameTest()
+
+for epoch in range(epochs):
+    done, withinTurn = 0, 0
+
+    env.reset_env(worldSize, worldSize)
+    for i, j in findMoveables(env.world):
+        # reset the memories for all agents
+        env.world[i, j, 0].init_replay(5)
+
+    while done == 0:
+        turn = turn + 1
+        withinTurn = withinTurn + 1
+
+        if epoch % sync_freq == 0:
+            for mods in trainableModels:
+                models[mods].model2.load_state_dict(models[mods].model1.state_dict())
+
+        # note, the input is not working properly to build the sequence for LSTM
+        gamePoints = env.step(models, gamePoints)
+
+        if len(trainableModels) > 0:
+            # transfer the events for each agent into the appropriate model after all have moved
+            env.world = updateMemories(
+                models, env.world, findMoveables(env.world), endUpdate=True
+            )
+            models = transferWorldMemories(models, env.world, findMoveables(env.world))
+
+            if withinTurn % modelUpdate_freq == 0:
+                for mods in trainableModels:
+                    loss = models[mods].training(300, 0.9)
+                    losses = losses + loss.detach().numpy()
+
+        if withinTurn > maxTurns or len(findAgents(env.world)) == 0:
+            done = 1
+
+    epsilon = updateEpsilon(epsilon, turn, epoch)
+
+    if epoch % 100 == 0 and len(trainableModels) > 0:
+        print(epoch, withinTurn, gamePoints, losses, epsilon)
+        gamePoints = [0, 0]
+        losses = 0
+    if epoch % 10000 == 0:
+        filename = "currentWork"
+        for video_num in range(5):
+            vfilename = (
+                save_dir
+                + filename
+                + "_replayVid_"
+                + str(epoch)
+                + "_"
+                + str(video_num)
+                + ".gif"
+            )
+            createVideo(models, worldSize, 100, env, filename=vfilename)
