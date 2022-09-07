@@ -25,15 +25,9 @@ class Wolf:
 
     # init is now for LSTM, may need to have a toggle for LSTM of not
     def init_replay(self, numberMemories):
-        img = np.random.rand(17, 17, 3) * 0
-        state = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
-        if numberMemories > 0:
-            state = state.unsqueeze(0)
-        exp = (state, 0, 0, state, 0)
+        image = torch.zeros(1, numberMemories, 3, 17, 17).float()
+        exp = (image, 0, 0, image, 0)
         self.replay.append(exp)
-        if numberMemories > 0:
-            for _ in range(numberMemories):
-                self.replay.append(exp)
 
     def transition(
         self,
@@ -129,8 +123,14 @@ class Wolf:
                 world[attLoc1, attLoc2, 0] = DeadAgent()
                 # world[attLoc1, attLoc2, 0].died()
 
+        # if expBuff == True:
+        #    input2 = models[self.policy].createInput(world, newLoc1, newLoc1, self)
+        #    exp = (input, action, reward, input2, done)
+        #    self.replay.append(exp)
+        #    self.reward += reward
+
         if expBuff == True:
-            input2 = models[self.policy].createInput(world, newLoc1, newLoc1, self)
+            input2 = models[self.policy].pov(world, newLoc1, newLoc1, self)
             exp = (input, action, reward, input2, done)
             self.replay.append(exp)
             self.reward += reward

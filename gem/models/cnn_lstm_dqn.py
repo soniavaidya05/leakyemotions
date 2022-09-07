@@ -114,6 +114,29 @@ class model_CNN_LSTM_DQN:
             seq1 = torch.cat([seq1, state_now], dim=1)
         return state_now, seq1
 
+    def pov(self, world, i, j, holdObject):
+        """
+        Creates outputs of a single frame, and also a multiple image sequence
+        TODO: (1) need to get createInput and createInput2 into one function
+        TODO: (2) test whether version 1 and version 2 below work properly
+              Specifically, whether the sequences in version 2 are being
+              stacked properly
+        TODO: check to make sure this is right
+        """
+
+        previous_state = holdObject.replay[-1][0]
+        current_state = previous_state.clone()
+
+        current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
+
+        img = agentVisualField(world, (i, j), holdObject.vision)
+        input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+        state_now = input.unsqueeze(0)
+
+        current_state[:, -1, :, :, :] = state_now
+
+        return current_state
+
     def takeAction(self, params):
         """
         Takes action from the input
@@ -169,7 +192,7 @@ class model_CNN_LSTM_DQN:
         """
         self.model2.load_state_dict(self.model1.state_dict())
 
-    def transferMemories(self, world, i, j, extraReward=True, seqLength=4):
+    def transferMemoriesOLD(self, world, i, j, extraReward=True, seqLength=4):
         """
         Transfer the indiviu=dual memories to the model
         TODO: We need to have a single version that works for both DQN and
@@ -196,6 +219,21 @@ class model_CNN_LSTM_DQN:
 
         exp = (seq1, exp[1], exp[2], seq2, exp[4])
 
+        self.replay.append(exp)
+        if extraReward == True and abs(exp[2]) > 9:
+            for _ in range(5):
+                self.replay.append(exp)
+
+    def transferMemories(self, world, i, j, extraReward=True, seqLength=4):
+        """
+        Transfer the indiviu=dual memories to the model
+        TODO: We need to have a single version that works for both DQN and
+              Actor-criric models (or other types as well)
+        TODO: Need to double check the way that these sequences are being
+              concat. There couldbe errors
+        TODO: check to make sure that this is right
+        """
+        exp = world[i, j, 0].replay[-1]
         self.replay.append(exp)
         if extraReward == True and abs(exp[2]) > 9:
             for _ in range(5):

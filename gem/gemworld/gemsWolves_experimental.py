@@ -183,18 +183,14 @@ class WolfsAndGems:
                 This also may become more challenging with more output heads
 
                 """
-                inputs = models[holdObject.policy].createInput2(
-                    self.world, i, j, holdObject, 4
-                )
-
-                input, combined_input = inputs
+                input = models[holdObject.policy].pov(self.world, i, j, holdObject)
 
                 """
                 Below generates an action
 
                 """
 
-                action = models[holdObject.policy].takeAction([combined_input, epsilon])
+                action = models[holdObject.policy].takeAction([input, epsilon])
 
             # rewrite this so all classes have transition, most are just pass
 

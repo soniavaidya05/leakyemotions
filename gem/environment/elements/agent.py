@@ -25,15 +25,9 @@ class Agent:
         self.justDied = False
 
     def init_replay(self, numberMemories):
-        img = np.random.rand(9, 9, 3) * 0
-        state = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
-        if numberMemories > 0:
-            state = state.unsqueeze(0)
-        exp = (state, 0, 0, state, 0)
+        image = torch.zeros(1, numberMemories, 3, 9, 9).float()
+        exp = (image, 0, 0, image, 0)
         self.replay.append(exp)
-        if numberMemories > 0:
-            for _ in range(numberMemories):
-                self.replay.append(exp)
 
     def died(self):
         # this can only be used it seems if all agents have a different id
@@ -97,8 +91,14 @@ class Agent:
             ):  # Replacing comparison with string 'kind'
                 reward = -0.1
 
+        # if expBuff == True:
+        #    input2 = models[self.policy].createInput(world, newLoc1, newLoc1, self)
+        #    exp = (input, action, reward, input2, done)
+        #    self.replay.append(exp)
+        #    self.reward += reward
+
         if expBuff == True:
-            input2 = models[self.policy].createInput(world, newLoc1, newLoc1, self)
+            input2 = models[self.policy].pov(world, newLoc1, newLoc1, self)
             exp = (input, action, reward, input2, done)
             self.replay.append(exp)
             self.reward += reward

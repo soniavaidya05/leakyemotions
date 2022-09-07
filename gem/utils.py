@@ -163,9 +163,7 @@ def updateMemories(models, world, expList, endUpdate=True):
         # note, should these replay[0]s be replay[-1] in case we need to store more memories?
         exp = world[i, j, 0].replay[-1]
         if endUpdate == True:
-            input2 = models[world[i, j, 0].policy].createInput(
-                world, i, j, world[i, j, 0]
-            )
+            input2 = models[world[i, j, 0].policy].pov(world, i, j, world[i, j, 0])
             exp = (exp[0], exp[1], world[i, j, 0].reward, input2, exp[4])
         # changed this from replay[0] to replay[-1]
         world[i, j, 0].replay[-1] = exp

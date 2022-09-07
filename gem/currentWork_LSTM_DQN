@@ -132,7 +132,7 @@ models, env, turn, epsilon = runGame(
     env,
     turn,
     epsilon,
-    epochs=1000,
+    epochs=2,
     filename="currentWorkB",
     createVideos=False,
 )
