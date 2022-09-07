@@ -11,7 +11,6 @@ import pickle
 from gem.utils import findMoveables
 
 
-
 def createVideo(models, worldSize, num, env, filename="unnamed_video.gif"):
     fig = plt.figure()
     ims = []

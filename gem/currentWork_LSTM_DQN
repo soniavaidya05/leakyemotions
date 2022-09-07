@@ -135,21 +135,32 @@ models, env, turn, epsilon = runGame(
     models,
     env,
     turn,
-    0.85,
-    epochs=10,
-    filename="currentWorkB",
-    createVideos=False,
+    0.9,
+    epochs=10001,
+    filename="test1",
+    createVideos=True,
 )
 
 models, env, turn, epsilon = runGame(
     models,
     env,
     turn,
-    0.5,
-    epochs=5000,
-    filename="currentWorkB",
-    createVideos=False,
+    0.75,
+    epochs=10001,
+    filename="Test2",
+    createVideos=True,
 )
+
+models, env, turn, epsilon = runGame(
+    models,
+    env,
+    turn,
+    0.55,
+    epochs=10001,
+    filename="Test3",
+    createVideos=True,
+)
+
 
 
 save_models(models, save_dir, "newModel10000")
