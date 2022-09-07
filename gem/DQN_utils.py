@@ -8,11 +8,17 @@ import matplotlib.animation as animation
 
 import pickle
 
+from gem.utils import findMoveables
+
+
 
 def createVideo(models, worldSize, num, env, filename="unnamed_video.gif"):
     fig = plt.figure()
     ims = []
     env.reset_env(worldSize, worldSize)
+    for i, j in findMoveables(env.world):
+        # reset the memories for all agents
+        env.world[i, j, 0].init_replay(3)
     gamePoints = [0, 0]
     for _ in range(num):
         image = createWorldImage(env.world)

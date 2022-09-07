@@ -159,13 +159,13 @@ def numberOfMemories(modelNum, models):
 
 def updateMemories(models, world, expList, endUpdate=True):
     # update the reward and last state after all have moved
+    # changed to holdObject to see if this fixes the failure of updating last memory
     for i, j in expList:
-        # note, should these replay[0]s be replay[-1] in case we need to store more memories?
-        exp = world[i, j, 0].replay[-1]
+        holdObject = world[i, j, 0]
+        exp = holdObject.replay[-1]
         if endUpdate == True:
-            input2 = models[world[i, j, 0].policy].pov(world, i, j, world[i, j, 0])
-            exp = (exp[0], exp[1], world[i, j, 0].reward, input2, exp[4])
-        # changed this from replay[0] to replay[-1]
+            input2 = models[holdObject.policy].pov(world, i, j, holdObject)
+            exp = (exp[0], exp[1], holdObject.reward, input2, exp[4])
         world[i, j, 0].replay[-1] = exp
     return world
 

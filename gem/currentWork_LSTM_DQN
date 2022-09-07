@@ -6,22 +6,26 @@ from gem.utils import (
     findAgents,
 )
 
-from models.memory import Memory
-from models.dqn import DQN, modelDQN
-from models.randomActions import modelRandomAction
+# from game_utils import createWorld, createWorldImage
+
+
+# from models.memory import Memory
+# from models.dqn import DQN, modelDQN
+# from models.randomActions import modelRandomAction
 from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
 
 from gemworld.gemsWolves_experimental import WolfsAndGems
 
-import numpy as np
+# import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+
+# import matplotlib.animation as animation
 from astropy.visualization import make_lupton_rgb
 
 import torch.nn as nn
 import torch.nn.functional as F
 
-from collections import deque
+# from collections import deque
 
 from DQN_utils import createVideo, save_models, load_models
 
@@ -63,7 +67,7 @@ env.gameTest()
 
 
 def runGame(
-    models, env, turn, epsilon, epochs=10000, filename="filename", createVideos=False
+    models, env, turn, epsilon, epochs=10000, filename="filename", createVideos=True
 ):
     losses = 0
     gamePoints = [0, 0]
@@ -73,7 +77,7 @@ def runGame(
         env.reset_env(worldSize, worldSize)
         for i, j in findMoveables(env.world):
             # reset the memories for all agents
-            env.world[i, j, 0].init_replay(5)
+            env.world[i, j, 0].init_replay(3)
 
         while done == 0:
             turn = turn + 1
@@ -131,8 +135,8 @@ models, env, turn, epsilon = runGame(
     models,
     env,
     turn,
-    epsilon,
-    epochs=2,
+    0.85,
+    epochs=10,
     filename="currentWorkB",
     createVideos=False,
 )
@@ -141,11 +145,71 @@ models, env, turn, epsilon = runGame(
     models,
     env,
     turn,
-    epsilon,
-    epochs=9000,
+    0.5,
+    epochs=5000,
     filename="currentWorkB",
     createVideos=False,
 )
 
 
 save_models(models, save_dir, "newModel10000")
+
+
+# NOTE: env.world = updateMemories(models, env.world, findMoveables(env.world), endUpdate=False
+#       is failing with endUpdate=True (always the same next_state image)
+
+# SCRIPT TESTNG AREA BELOW
+
+
+def makeVideo(filename):
+    epoch = 10000
+    for video_num in range(5):
+        vfilename = (
+            save_dir
+            + filename
+            + "_replayVid_"
+            + str(epoch)
+            + "_"
+            + str(video_num)
+            + ".gif"
+        )
+        createVideo(models, worldSize, 100, env, filename=vfilename)
+
+
+def replayView(memoryNum, agentNumber):
+    agentList = findMoveables(env.world)
+    i, j = agentList[agentNumber]
+
+    Obj = env.world[i, j, 0]
+
+    state = Obj.replay[memoryNum][0]
+    next_state = Obj.replay[memoryNum][3]
+
+    state_RGB = state[:, -1, :, :, :].squeeze().permute(1, 2, 0).numpy()
+    image = make_lupton_rgb(
+        state_RGB[:, :, 0], state_RGB[:, :, 1], state_RGB[:, :, 2], stretch=0.5
+    )
+
+    next_state_RGB = next_state[:, -1, :, :, :].squeeze().permute(1, 2, 0).numpy()
+    imageNext = make_lupton_rgb(
+        next_state_RGB[:, :, 0],
+        next_state_RGB[:, :, 1],
+        next_state_RGB[:, :, 2],
+        stretch=0.5,
+    )
+
+    plt.subplot(1, 2, 1)
+    plt.imshow(image)
+    plt.subplot(1, 2, 2)
+    plt.imshow(imageNext)
+    plt.show()
+
+
+def createData(env, models, epochs):
+    gamePoints = [0, 0]
+    env.reset_env(worldSize, worldSize)
+    for i, j in findMoveables(env.world):
+        env.world[i, j, 0].init_replay(3)
+    for _ in range(epochs):
+        gamePoints = env.step(models, gamePoints)
+    return env

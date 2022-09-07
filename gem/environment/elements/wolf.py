@@ -130,7 +130,7 @@ class Wolf:
         #    self.reward += reward
 
         if expBuff == True:
-            input2 = models[self.policy].pov(world, newLoc1, newLoc1, self)
+            input2 = models[self.policy].pov(world, newLoc1, newLoc2, self)
             exp = (input, action, reward, input2, done)
             self.replay.append(exp)
             self.reward += reward

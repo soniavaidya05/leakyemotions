@@ -122,8 +122,9 @@ class model_CNN_LSTM_DQN:
               Specifically, whether the sequences in version 2 are being
               stacked properly
         TODO: check to make sure this is right
+        TODO: get rid of the holdObject input throughout the code
         """
-
+        # holdObject = world[i, j, 0]
         previous_state = holdObject.replay[-1][0]
         current_state = previous_state.clone()
 
