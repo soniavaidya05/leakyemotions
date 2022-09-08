@@ -99,7 +99,7 @@ def runGame(
         )
         for i, j in findMoveables(env.world):
             # reset the memories for all agents
-            env.world[i, j, 0].init_replay(1)
+            env.world[i, j, 0].init_replay(4)
 
         while done == 0:
             turn = turn + 1
@@ -191,7 +191,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.9,
     epochs=1000,
-    maxTurns=5,
+    maxTurns=25,
     filename="test1",
     createVideos=True,
 )
@@ -202,7 +202,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.8,
     epochs=5000,
-    maxTurns=5,
+    maxTurns=25,
     filename="Test2",
     createVideos=True,
 )
@@ -213,7 +213,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.7,
     epochs=5000,
-    maxTurns=5,
+    maxTurns=25,
     filename="Test3",
     createVideos=True,
 )
@@ -224,7 +224,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.2,
     epochs=10000,
-    maxTurns=5,
+    maxTurns=50,
     filename="Test4",
     createVideos=True,
 )
@@ -235,7 +235,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.2,
     epochs=10000,
-    maxTurns=15,
+    maxTurns=100,
     filename="Test5",
     createVideos=True,
 )
@@ -246,7 +246,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.2,
     epochs=25000,
-    maxTurns=25,
+    maxTurns=100,
     filename="Test6",
     createVideos=True,
 )
@@ -261,7 +261,7 @@ save_models(models, save_dir, "newModel10000_test")
 # SCRIPT TESTNG AREA BELOW
 
 
-def makeVideo(filename):
+def makeVideo(filename, models, worldSize, turns, env):
     epoch = 10000
     for video_num in range(5):
         vfilename = (
@@ -273,7 +273,7 @@ def makeVideo(filename):
             + str(video_num)
             + ".gif"
         )
-        createVideo(models, worldSize, 100, env, filename=vfilename)
+        createVideo(models, worldSize, turns, env, filename=vfilename)
 
 
 def replayView(memoryNum, agentNumber, env):
@@ -358,4 +358,4 @@ for i in range(40):
 for i in range(40):
     replayView(memoryNum=i, agentNumber=0, env=env)
 
-makeVideo("test_other")
+makeVideo("test_other", models, worldSize, 100, env)
