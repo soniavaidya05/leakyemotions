@@ -112,7 +112,7 @@ def runGame(
                     )
 
             # note, the input is not working properly to build the sequence for LSTM
-            gamePoints = env.step(models, gamePoints)
+            gamePoints = env.step(models, gamePoints, epsilon)
 
             if withinTurn > maxTurns or len(findAgents(env.world)) == 0:
                 done = 1
@@ -126,10 +126,10 @@ def runGame(
                     models, env.world, findMoveables(env.world)
                 )
 
-        # if withinTurn % modelUpdate_freq == 0:
-        for mods in trainableModels:
-            loss = models[mods].training(150, 0.9)
-            losses = losses + loss.detach().numpy()
+            if withinTurn % modelUpdate_freq == 0:
+                for mods in trainableModels:
+                    loss = models[mods].training(150, 0.9)
+                    losses = losses + loss.detach().numpy()
         updateEps = False
         if updateEps == True:
             epsilon = updateEpsilon(epsilon, turn, epoch)
@@ -202,9 +202,9 @@ models, env, turn, epsilon = runGame(
     models,
     env,
     turn,
-    0.2,
+    0.8,
     epochs=10000,
-    maxTurns=15,
+    maxTurns=25,
     filename="Test5",
     createVideos=True,
 )
@@ -213,10 +213,33 @@ models, env, turn, epsilon = runGame(
     models,
     env,
     turn,
-    0.2,
-    epochs=25000,
-    maxTurns=25,
+    0.6,
+    epochs=10000,
+    maxTurns=35,
     filename="Test6",
+    createVideos=True,
+)
+
+models, env, turn, epsilon = runGame(
+    models,
+    env,
+    turn,
+    0.2,
+    epochs=20000,
+    maxTurns=35,
+    filename="Test7",
+    createVideos=True,
+)
+
+
+models, env, turn, epsilon = runGame(
+    models,
+    env,
+    turn,
+    0.2,
+    epochs=20000,
+    maxTurns=50,
+    filename="Test8",
     createVideos=True,
 )
 

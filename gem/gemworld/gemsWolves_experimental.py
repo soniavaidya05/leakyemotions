@@ -206,3 +206,48 @@ class WolfsAndGems:
                     input,
                 )
         return gamePoints
+
+    def stepExp(self, world, models, gamePoints, epsilon=0.85, done=0):
+
+        moveList = findMoveables(world)
+        for i, j in moveList:
+            # reset the rewards for the trial to be zero for all agents
+            world[i, j, 0].reward = 0
+
+        for i, j in moveList:
+
+            holdObject = world[i, j, 0]
+
+            if holdObject.static != 1:
+
+                """
+                Currently RNN and non-RNN models have different createInput files, with
+                the RNN having createInput and createInput2. This needs to be fixed
+
+                This creates an agent specific view of their environment
+                This also may become more challenging with more output heads
+
+                """
+                input = models[holdObject.policy].pov(world, i, j, holdObject)
+
+                """
+                Below generates an action
+
+                """
+
+                action = models[holdObject.policy].takeAction([input, epsilon])
+
+            # rewrite this so all classes have transition, most are just pass
+
+            if holdObject.has_transitions == True:
+                world, models, gamePoints = holdObject.transition(
+                    action,
+                    world,
+                    models,
+                    i,
+                    j,
+                    gamePoints,
+                    done,
+                    input,
+                )
+        return world, models, gamePoints
