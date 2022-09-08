@@ -20,7 +20,7 @@ class Agent:
         self.static = 0  # whether the object gets to take actions or not
         self.passable = 0  # whether the object blocks movement
         self.trainable = 1  # whether there is a network to be optimized
-        self.replay = deque([], maxlen=5)  # we should read in these maxlens
+        self.replay = deque([], maxlen=100)  # we should read in these maxlens
         self.has_transitions = True
         self.justDied = False
 

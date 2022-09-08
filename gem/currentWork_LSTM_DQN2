@@ -112,7 +112,38 @@ def runGame(
                     )
 
             # note, the input is not working properly to build the sequence for LSTM
-            gamePoints = env.step(models, gamePoints)
+
+            envStepVer = 0
+            if envStepVer == 1:
+                gamePoints = env.step(models, gamePoints)
+
+            if envStepVer == 0:
+
+                moveList = findMoveables(env.world)
+                for i, j in moveList:
+                    env.world[i, j, 0].reward = 0
+
+                for i, j in moveList:
+
+                    holdObject = env.world[i, j, 0]
+
+                    if holdObject.static != 1:
+                        input = models[holdObject.policy].pov(
+                            env.world, i, j, holdObject
+                        )
+                        action = models[holdObject.policy].takeAction([input, epsilon])
+
+                    if holdObject.has_transitions == True:
+                        env.world, models, gamePoints = holdObject.transition(
+                            action,
+                            env.world,
+                            models,
+                            i,
+                            j,
+                            gamePoints,
+                            done,
+                            input,
+                        )
 
             if withinTurn > maxTurns or len(findAgents(env.world)) == 0:
                 done = 1
@@ -221,7 +252,7 @@ models, env, turn, epsilon = runGame(
 )
 
 
-save_models(models, save_dir, "newModel10000")
+save_models(models, save_dir, "newModel10000_test")
 
 
 # NOTE: env.world = updateMemories(models, env.world, findMoveables(env.world), endUpdate=False
@@ -327,4 +358,4 @@ for i in range(40):
 for i in range(40):
     replayView(memoryNum=i, agentNumber=0, env=env)
 
-makeVideo("test")
+makeVideo("test_other")
