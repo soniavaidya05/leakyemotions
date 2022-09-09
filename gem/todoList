@@ -7,7 +7,7 @@ gemsWolves_LSTM_DQN.py is current game.
 2) separate out the running the scripts and the game script
 3) remove phantom code (scripts that no longer are used, imports that are not needed)
 4) create video is missing: env.world = updateMemories(models, env.world, findMoveables(env.world), done, endUpdate=True) which is making playback choppy
-
+5) Fix update epsilon code to be more general. Might need to have a new equation that fits all variants
 
 ------------------------------
 Version 0.1.1
