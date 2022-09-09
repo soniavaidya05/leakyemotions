@@ -24,13 +24,14 @@ Things that need to be done
 6) create documentation and example tutorials
 7) change all the varables and functions to be in current python conventions (shon says there is script for this)
 8) move the agent replay memory update in the wolf transitions into the agent.died() [the memory transfer can happen before the agent.kind turns into a deadAgent)
-
+    this will likely be needed in tag as well
+    
     def died(self, models, world, attLoc1, attLoc2, extraReward=True):
         lastexp = self.replay[-1]
         self.replay[-1] = (lastexp[0], lastexp[1], -25, lastexp[3], 1)
         models[self.policy].transferMemories(world, attLoc1, attLoc2, extraReward=True)
         self.kind = "deadAgent"  # label the agents death
         self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
-        self.trainable = 1  # whether there is a network to be optimized
-        self.justDied = True
+        self.trainable = 0  # whether there is a network to be optimized
         self.static = 1
+
