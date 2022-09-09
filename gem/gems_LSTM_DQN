@@ -1,3 +1,9 @@
+"""
+Below are tests to show this works. More updated code is in the gemsWolves_LSTM_DQN
+WARNING: This code is already one generation behine!
+"""
+
+
 from gem.utils import (
     updateEpsilon,
     updateMemories,
@@ -152,6 +158,12 @@ def runGame(
                 )
                 createVideo(models, worldSize, 100, env, filename=vfilename)
     return models, env, turn, epsilon
+
+
+"""
+Below are tests to show this works. More updated code is in the gemsWolves_LSTM_DQN
+WARNING: This code is already one generation behine!
+"""
 
 
 models, env, turn, epsilon = runGame(
