@@ -1,5 +1,9 @@
 Version 0.1.0
-I think that this as it stands may be ready for push to main branch
+I think that this as it stands may be almost ready for push to main branch
+gemsWolves_LSTM_DQN.py is current game. 
+
+1) Need to refactor some of the tools at end of script into DQN_utils.py
+2) separate out the running the scripts and the game script
 
 Version 0.1.1
 Things that need to be done
