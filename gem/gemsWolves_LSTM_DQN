@@ -44,7 +44,6 @@ def createModels():
     in this function. Below should fully set up the NN in a flexible way for the studies
     """
     models = []
-    # models.append(model_CNN_LSTM_DQN(5, 0.0001, 3000, 650, 325, 75, 4))  # agent model
     models.append(model_CNN_LSTM_DQN(5, 0.0001, 1000, 650, 75, 30, 4))  # agent model
     models.append(model_CNN_LSTM_DQN(5, 0.0001, 1000, 2570, 150, 30, 4))  # wolf model
     return models
@@ -87,6 +86,9 @@ def runGame(
     for epoch in range(epochs):
         done, withinTurn = 0, 0
 
+        # create a new gameboard for each epoch and repopulate
+        # the resset does allow for different params, but when the world size changes, odd
+        # TODO: need to look at why changing the world size keeps walls at the original location
         env.reset_env(
             height=worldSize,
             width=worldSize,
@@ -97,6 +99,7 @@ def runGame(
         )
         for i, j in findMoveables(env.world):
             # reset the memories for all agents
+            # the parameter sets the length of the sequence for LSTM
             env.world[i, j, 0].init_replay(3)
 
         while done == 0:
@@ -104,34 +107,43 @@ def runGame(
             withinTurn = withinTurn + 1
 
             if epoch % sync_freq == 0:
+                # update the double DQN model ever sync_frew
                 for mods in trainableModels:
                     models[mods].model2.load_state_dict(
                         models[mods].model1.state_dict()
                     )
 
-            # note, the input is not working properly to build the sequence for LSTM
+            # take one step of the game for all agents
             gamePoints = env.step(models, gamePoints, epsilon)
 
+            # determine whether the game is finished (either max length or all agents are dead)
             if withinTurn > maxTurns or len(findAgents(env.world)) == 0:
                 done = 1
 
             if len(trainableModels) > 0:
-                # transfer the events for each agent into the appropriate model after all have moved
+                # this updates the last memory to be the final state of the game board
+                # TODO: endUpdate = False works, need to test endUpdate = True
                 env.world = updateMemories(
-                    models, env.world, findMoveables(env.world), done, endUpdate=False
+                    models, env.world, findMoveables(env.world), done, endUpdate=True
                 )
+                # transfer the events for each agent into the appropriate model after all have moved
                 models = transferWorldMemories(
                     models, env.world, findMoveables(env.world)
                 )
 
             if withinTurn % modelUpdate_freq == 0:
+                # trains all networks after modelUpdate_freq turns
                 for mods in trainableModels:
                     loss = models[mods].training(150, 0.9)
                     losses = losses + loss.detach().numpy()
+
         updateEps = False
+        # TODO: the updateEpsilon often does strange things. Needs to be reconceptualized
         if updateEps == True:
             epsilon = updateEpsilon(epsilon, turn, epoch)
+
         if epoch % 100 == 0 and len(trainableModels) > 0:
+            # print the state and update the counters. This should be made to be tensorboard instead
             print(epoch, withinTurn, gamePoints, losses, epsilon)
             gamePoints = [0, 0]
             losses = 0
