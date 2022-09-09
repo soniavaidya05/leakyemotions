@@ -31,7 +31,7 @@ TODO: Insert paper citation here
 
 ## Maintainers
 
-Gem is currently maintained by [Shon Verch](https://github.com/galacticglum) (aka @galacticglum), [Wil Cunningham](https://www.psych.utoronto.ca/people/directories/all-faculty/william-cunningham) (aka [@wacunn](https://github.com/wacunn)), [Paul Stillman](https://www.paulstillman.com/) (aka @paulstillman), and [Ethan Jackson](https://github.com/ethancjackson).
+Gem is currently maintained by [Shon Verch](https://github.com/galacticglum) (aka @galacticglum), [Wil Cunningham](https://www.psych.utoronto.ca/people/directories/all-faculty/william-cunningham) (aka [@wacunn](https://github.com/wacunn)), [Paul Stillman](https://www.paulstillman.com/) (aka [@paulstillman](https://github.com/paulstillman)), and [Ethan Jackson](https://github.com/ethancjackson) (aka @ethancjackson).
 
 **Important Note: We do not do technical support, nor consulting** and don't answer personal questions per email. If you have any questions, concerns, or suggestions, please post them on the [GitHub issues page](https://github.com/social-ai-uoft/gem/issues) or the [GitHub discussion page](https://github.com/social-ai-uoft/gem/discussions).
 
