@@ -23,3 +23,4 @@ Things that need to be done
     be slightly more flexible
 6) create documentation and example tutorials
 7) change all the varables and functions to be in current python conventions (shon says there is script for this)
+8) move the agent replay memory update in the wolf transitions into the agent.died() [the memory transfer can happen before the agent.kind turns into a deadAgent)
