@@ -137,6 +137,11 @@ def runGame(
                     loss = models[mods].training(150, 0.9)
                     losses = losses + loss.detach().numpy()
 
+        # train at the end of each epoch
+        for mods in trainableModels:
+            loss = models[mods].training(150, 0.9)
+            losses = losses + loss.detach().numpy()
+
         updateEps = False
         # TODO: the updateEpsilon often does strange things. Needs to be reconceptualized
         if updateEps == True:
