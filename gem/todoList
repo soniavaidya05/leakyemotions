@@ -6,6 +6,8 @@ gemsWolves_LSTM_DQN.py is current game.
 1) Need to refactor some of the tools at end of script into DQN_utils.py
 2) separate out the running the scripts and the game script
 3) remove phantom code (scripts that no longer are used, imports that are not needed)
+4) create video is missing: env.world = updateMemories(models, env.world, findMoveables(env.world), done, endUpdate=True) which is making playback choppy
+
 
 ------------------------------
 Version 0.1.1
@@ -35,4 +37,3 @@ Things that need to be done
         self.trainable = 0  # whether there is a network to be optimized
         self.static = 1
         
-9) create video is missing: env.world = updateMemories(models, env.world, findMoveables(env.world), done, endUpdate=True) which is making playback choppy
