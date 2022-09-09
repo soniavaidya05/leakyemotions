@@ -17,6 +17,9 @@ Things that need to be done
     but getting savings where we can will be important, especially with the integrated
     M1 chips
 3) need to make new environments and test generalization
-4) need to make the neural networks slightly more flexible. At the moment, we will keep
+4) need to include proper comments and use named variables in function calls
+5) need to make the neural networks slightly more flexible. At the moment, we will keep
     CNN input, LSTM, Fully connected, double DQN. But, number of layers, etc. should
     be slightly more flexible
+6) create documentation and example tutorials
+7) change all the varables and functions to be in current python conventions (shon says there is script for this)
