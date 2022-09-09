@@ -34,4 +34,5 @@ Things that need to be done
         self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
         self.trainable = 0  # whether there is a network to be optimized
         self.static = 1
-
+        
+9) create video is missing: env.world = updateMemories(models, env.world, findMoveables(env.world), done, endUpdate=True) which is making playback choppy
