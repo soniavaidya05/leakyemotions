@@ -23,41 +23,8 @@ def createVideo(models, worldSize, num, env, filename="unnamed_video.gif"):
         image = createWorldImage(env.world)
         im = plt.imshow(image, animated=True)
         ims.append([im])
-        done = 0
-        envStepVer = 0
-        if envStepVer == 1:
-            gamePoints = env.step(models, gamePoints)
+        gamePoints = env.step(models, gamePoints, 0.1)
 
-        if envStepVer == 0:
-
-            moveList = findMoveables(env.world)
-            for i, j in moveList:
-                env.world[i, j, 0].reward = 0
-
-            for i, j in moveList:
-
-                holdObject = env.world[i, j, 0]
-
-                if holdObject.static != 1:
-                    input = models[holdObject.policy].pov(
-                        env.world, i, j, holdObject
-                    )
-                    action = models[holdObject.policy].takeAction([input, .1])
-
-                if holdObject.has_transitions == True:
-                    env.world, models, gamePoints = holdObject.transition(
-                        action,
-                        env.world,
-                        models,
-                        i,
-                        j,
-                        gamePoints,
-                        done,
-                        input,
-                    )
-
-
-        gamePoints = env.step(models, gamePoints)
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
     ani.save(filename, writer="PillowWriter", fps=2)
 
