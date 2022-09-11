@@ -5,15 +5,15 @@ WARNING: This code is already one generation behine!
 
 
 from gem.utils import (
-    updateEpsilon,
-    updateMemories,
-    findMoveables,
-    transferWorldMemories,
-    findAgents,
+    update_epsilon,
+    update_memories,
+    find_moveables,
+    transfer_world_memories,
+    find_agents,
 )
 from gem.environment.elements.element import EmptyObject, Wall
 
-# from game_utils import createWorld, createWorldImage
+# from game_utils import create_world, create_world_image
 
 
 # from models.memory import Memory
@@ -43,7 +43,7 @@ import torch
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
 
-def createModels():
+def create_models():
     """
     Should make the sequence length of the LSTM part of the model and an input here
     Should also set up so that the number of hidden laters can be added to dynamically
@@ -56,21 +56,21 @@ def createModels():
     return models
 
 
-worldSize = 15
+world_size = 15
 epochs = 50000
-maxTurns = 100
+max_turns = 100
 
-trainableModels = [0, 1]
+trainable_models = [0, 1]
 sync_freq = 500
 modelUpdate_freq = 25
 epsilon = 0.99
 
 turn = 1
 
-models = createModels()
+models = create_models()
 env = WolfsAndGems(
-    height=worldSize,
-    width=worldSize,
+    height=world_size,
+    width=world_size,
     layers=1,
     defaultObject=EmptyObject(),
     gem1p=0.03,
@@ -86,63 +86,63 @@ def runGame(
     turn,
     epsilon,
     epochs=10000,
-    maxTurns=100,
+    max_turns=100,
     filename="filename",
     createVideos=True,
 ):
     losses = 0
-    gamePoints = [0, 0]
+    game_points = [0, 0]
     for epoch in range(epochs):
-        done, withinTurn = 0, 0
+        done, withinturn = 0, 0
 
         env.reset_env(
-            height=worldSize,
-            width=worldSize,
+            height=world_size,
+            width=world_size,
             layers=1,
             gem1p=0.03,
             gem2p=0.02,
             wolf1p=0,
         )
-        for i, j in findMoveables(env.world):
+        for i, j in find_moveables(env.world):
             # reset the memories for all agents
             env.world[i, j, 0].init_replay(1)
 
         while done == 0:
             turn = turn + 1
-            withinTurn = withinTurn + 1
+            withinturn = withinturn + 1
 
             if epoch % sync_freq == 0:
-                for mods in trainableModels:
+                for mods in trainable_models:
                     models[mods].model2.load_state_dict(
                         models[mods].model1.state_dict()
                     )
 
             # note, the input is not working properly to build the sequence for LSTM
-            gamePoints = env.step(models, gamePoints, epsilon)
+            game_points = env.step(models, game_points, epsilon)
 
-            if withinTurn > maxTurns or len(findAgents(env.world)) == 0:
+            if withinturn > max_turns or len(find_agents(env.world)) == 0:
                 done = 1
 
-            if len(trainableModels) > 0:
+            if len(trainable_models) > 0:
                 # transfer the events for each agent into the appropriate model after all have moved
-                env.world = updateMemories(
-                    models, env.world, findMoveables(env.world), done, endUpdate=False
+                env.world = update_memories(
+                    models, env.world, find_moveables(env.world), done, end_update=False
                 )
-                models = transferWorldMemories(
-                    models, env.world, findMoveables(env.world)
+                models = transfer_world_memories(
+                    models, env.world, find_moveables(env.world)
                 )
 
-            if withinTurn % modelUpdate_freq == 0:
-                for mods in trainableModels:
+            if withinturn % modelUpdate_freq == 0:
+                for mods in trainable_models:
                     loss = models[mods].training(150, 0.9)
                     losses = losses + loss.detach().numpy()
         updateEps = False
         if updateEps == True:
-            epsilon = updateEpsilon(epsilon, turn, epoch)
+            epsilon = update_epsilon(epsilon, turn, epoch)
         createVideos = False
-        if epoch % 100 == 0 and len(trainableModels) > 0:
-            print(epoch, withinTurn, gamePoints, losses, epsilon)
-            gamePoints = [0, 0]
+        if epoch % 100 == 0 and len(trainable_models) > 0:
+            print(epoch, withinturn, game_points, losses, epsilon)
+            game_points = [0, 0]
             losses = 0
         if epoch % 10000 == 0 and createVideos == True:
 
@@ -156,7 +156,7 @@ def runGame(
                     + str(video_num)
                     + ".gif"
                 )
-                createVideo(models, worldSize, 100, env, filename=vfilename)
+                createVideo(models, world_size, 100, env, filename=vfilename)
     return models, env, turn, epsilon
 
 
@@ -172,7 +172,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.9,
     epochs=1000,
-    maxTurns=5,
+    max_turns=5,
     filename="test1",
     createVideos=True,
 )
@@ -183,7 +183,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.8,
     epochs=5000,
-    maxTurns=5,
+    max_turns=5,
     filename="Test2",
     createVideos=True,
 )
@@ -194,7 +194,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.7,
     epochs=5000,
-    maxTurns=5,
+    max_turns=5,
     filename="Test3",
     createVideos=True,
 )
@@ -205,7 +205,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.2,
     epochs=10000,
-    maxTurns=5,
+    max_turns=5,
     filename="Test4",
     createVideos=True,
 )
@@ -216,7 +216,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.8,
     epochs=10000,
-    maxTurns=25,
+    max_turns=25,
     filename="Test5",
     createVideos=True,
 )
@@ -227,7 +227,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.6,
     epochs=10000,
-    maxTurns=35,
+    max_turns=35,
     filename="Test6",
     createVideos=True,
 )
@@ -238,7 +238,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.2,
     epochs=20000,
-    maxTurns=35,
+    max_turns=35,
     filename="Test7",
     createVideos=True,
 )
@@ -250,7 +250,7 @@ models, env, turn, epsilon = runGame(
     turn,
     0.2,
     epochs=20000,
-    maxTurns=50,
+    max_turns=50,
     filename="Test8",
     createVideos=True,
 )
@@ -259,8 +259,8 @@ models, env, turn, epsilon = runGame(
 save_models(models, save_dir, "newModel10000")
 
 
-# NOTE: env.world = updateMemories(models, env.world, findMoveables(env.world), endUpdate=False
-#       is failing with endUpdate=True (always the same next_state image)
+# NOTE: env.world = update_memories(models, env.world, find_moveables(env.world), end_update=False
+#       is failing with end_update=True (always the same next_state image)
 
 # SCRIPT TESTNG AREA BELOW
 
@@ -277,11 +277,11 @@ def makeVideo(filename):
             + str(video_num)
             + ".gif"
         )
-        createVideo(models, worldSize, 100, env, filename=vfilename)
+        createVideo(models, world_size, 100, env, filename=vfilename)
 
 
 def replayView(memoryNum, agentNumber, env):
-    agentList = findMoveables(env.world)
+    agentList = find_moveables(env.world)
     i, j = agentList[agentNumber]
 
     Obj = env.world[i, j, 0]
@@ -339,16 +339,16 @@ def replayViewModel(memoryNum, modelNumber, models):
 
 
 def createData(env, models, epochs):
-    gamePoints = [0, 0]
-    env.reset_env(worldSize, worldSize)
-    for i, j in findMoveables(env.world):
+    game_points = [0, 0]
+    env.reset_env(world_size, world_size)
+    for i, j in find_moveables(env.world):
         env.world[i, j, 0].init_replay(3)
     for _ in range(epochs):
-        gamePoints = env.step(models, gamePoints)
+        game_points = env.step(models, game_points)
     return env
 
 
-x = findMoveables(env.world)
+x = find_moveables(env.world)
 i, j = x[0]
 len(env.world[i, j, 0].replay)
 

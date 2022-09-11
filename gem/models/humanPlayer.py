@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from models.memory import Memory
-from models.perception import agentVisualField
+from models.perception import agent_visualfield
 
 import matplotlib.pyplot as plt
 
@@ -21,7 +21,7 @@ class ModelClassPlayer:
         self.inputType = "keyboard"
         self.replay = deque([], maxlen=replaySize)
 
-    def takeAction(self, params):
+    def take_action(self, params):
         """
         Presnts a visual image to a player and they can take an action in the game
         """

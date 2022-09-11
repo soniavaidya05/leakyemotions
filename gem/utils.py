@@ -1,5 +1,5 @@
 import numpy as np
-from models.perception import agentVisualField
+from models.perception import agent_visualfield
 import torch
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
@@ -11,7 +11,7 @@ def one_hot(N, pos, val=1):
     return one_hot_vec
 
 
-def findMoveables(world):
+def find_moveables(world):
     moveList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
@@ -20,7 +20,7 @@ def findMoveables(world):
     return moveList
 
 
-def findTrainables(world):
+def find_trainables(world):
     trainList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
@@ -30,9 +30,9 @@ def findTrainables(world):
 
 
 # we will want to have a single "find" script that takes as input what you are looking for and finds those objects
-def findAgents_tag(world):
+def find_agents_tag(world):
     print(
-        "the findAgents_tag function will be deleted soon. Please update to findInstance"
+        "the find_agents_tag function will be deleted soon. Please update to find_instance"
     )
     agentList = []
     for i in range(world.shape[0]):
@@ -42,7 +42,7 @@ def findAgents_tag(world):
     return agentList
 
 
-def findAgents(world):
+def find_agents(world):
     agentList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
@@ -51,7 +51,7 @@ def findAgents(world):
     return agentList
 
 
-def findInstance(world, kind):
+def find_instance(world, kind):
     instList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
@@ -60,7 +60,7 @@ def findInstance(world, kind):
     return instList
 
 
-def updateEpsilon(epsilon, turn, epoch):
+def update_epsilon(epsilon, turn, epoch):
     if epsilon > 0.1:
         epsilon -= 1 / (turn)
 
@@ -74,7 +74,7 @@ def updateEpsilon(epsilon, turn, epoch):
 # view a replay memory
 
 
-def examineReplay(models, index, modelnum):
+def examine_replay(models, index, modelnum):
 
     image_r = models[modelnum].replay[index][0][0][0].numpy()
     image_g = models[modelnum].replay[index][0][0][1].numpy()
@@ -96,9 +96,9 @@ def examineReplay(models, index, modelnum):
 
 
 # look at a few replay games
-def replayGames(numGames, modelNum, startingMem, models):
+def replay_games(numGames, modelNum, startingMem, models):
     for i in range(numGames):
-        image, image2, memInfo = examineReplay(models, i + startingMem, modelNum)
+        image, image2, memInfo = examine_replay(models, i + startingMem, modelNum)
 
         plt.subplot(1, 2, 1)
         plt.imshow(image, cmap="Blues_r")
@@ -110,7 +110,7 @@ def replayGames(numGames, modelNum, startingMem, models):
         plt.show()
 
 
-def examineReplayMemory(models, episode, index, modelnum):
+def examine_replay_memory(models, episode, index, modelnum):
 
     image_r = models[modelnum].replay.memory[episode][index][0][0][0].numpy()
     image_g = models[modelnum].replay.memory[episode][index][0][0][1].numpy()
@@ -134,22 +134,20 @@ def examineReplayMemory(models, episode, index, modelnum):
 # look at a few replay games
 
 
-def replayMemoryGames(models, modelNum, episode):
+def replay_MemoryGames(models, modelNum, episode):
     epLength = len(models[modelNum].replay.memory[episode])
     for i in range(epLength):
-        image, image2, memInfo = examineReplayMemory(models, episode, i, modelNum)
+        image, image2, memInfo = examine_replay_memory(models, episode, i, modelNum)
 
         plt.subplot(1, 2, 1)
         plt.imshow(image, cmap="Blues_r")
         plt.subplot(1, 2, 2)
         plt.imshow(image2, cmap="Accent_r")
-
         print(memInfo)
-
         plt.show()
 
 
-def numberOfMemories(modelNum, models):
+def number_memories(modelNum, models):
     episodes = len(models[modelNum].replay.memory)
     print("there are ", episodes, " in the model replay buffer.")
     for e in range(episodes):
@@ -157,7 +155,7 @@ def numberOfMemories(modelNum, models):
         print("Memory ", e, " is ", epLength, " long.")
 
 
-def updateMemories(models, world, expList, done, endUpdate=True):
+def update_memories(models, world, expList, done, end_update=True):
     # update the reward and last state after all have moved
     # changed to holdObject to see if this fixes the failure of updating last memory
     for i, j in expList:
@@ -166,59 +164,30 @@ def updateMemories(models, world, expList, done, endUpdate=True):
         lastdone = exp[4]
         if done == 1:
             lastdone = 1
-        if endUpdate == False:
+        if end_update == False:
             exp = (exp[0], exp[1], holdObject.reward, exp[3], lastdone)
-        if endUpdate == True:
+        if end_update == True:
             input2 = models[holdObject.policy].pov(world, i, j, holdObject)
             exp = (exp[0], exp[1], holdObject.reward, input2, lastdone)
         world[i, j, 0].replay[-1] = exp
     return world
 
 
-def transferWorldMemories(models, world, expList, extraReward=True):
+def transfer_world_memories(models, world, expList, extra_reward=True):
     # transfer the events from agent memory to model replay
     for i, j in expList:
         # this moves the specific form of the replay memory into the model class
         # where it can be setup exactly for the model
-        models[world[i, j, 0].policy].transferMemories(world, i, j, extraReward=True)
+        models[world[i, j, 0].policy].transfer_memories(world, i, j, extra_reward=True)
     return models
 
 
-# functions below are legacy and should be moved before 0.1.2
-
-
-def transferMemories(models, world, expList, extraReward=True):
+def transfer_memories(models, world, expList, extra_reward=True):
     # transfer the events from agent memory to model replay
     for i, j in expList:
-        # note, should these replay[0]s be replay[-1] in case we need to store more memories?
         exp = world[i, j, 0].replay[-1]
         models[world[i, j, 0].policy].replay.append(exp)
-        if extraReward == True and abs(exp[2]) > 9:
+        if extra_reward == True and abs(exp[2]) > 9:
             for _ in range(5):
                 models[world[i, j, 0].policy].replay.append(exp)
     return models
-
-
-# def transferMemories_LSTM(models, world, expList, extraReward=True):
-#    # transfer the events from agent memory to model replay
-#    for i, j in expList:
-#
-#        # note, should these replay[0]s be replay[-1] in case we need to store more memories?
-#        exp = world[i, j, 0].replay[-1]
-#
-#        t1 = world[i, j, 0].replay[-5][0]
-#        t2 = world[i, j, 0].replay[-4][0]
-#        t3 = world[i, j, 0].replay[-3][0]
-#        t4 = world[i, j, 0].replay[-2][0]
-#        t5 = world[i, j, 0].replay[-1][0]
-#
-#        seq1 = torch.cat([t1, t2, t3, t4], dim=1)
-#        seq2 = torch.cat([t2, t3, t4, t5], dim=1)
-#
-#        exp = (seq1, exp[1], exp[2], seq2, exp[4])
-#
-#        models[world[i, j, 0].policy].replay.append(exp)
-#        if extraReward == True and abs(exp[2]) > 9:
-#            for _ in range(5):
-#                models[world[i, j, 0].policy].replay.append(exp)
-#    return models

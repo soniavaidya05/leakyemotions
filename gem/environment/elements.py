@@ -1,6 +1,6 @@
 from collections import deque
 from re import S
-from models.perception import agentVisualField
+from models.perception import agent_visualfield
 import torch
 import numpy as np
 
@@ -41,7 +41,7 @@ class Agent:
         self.trainable = 1  # whether there is a network to be optimized
         self.replay = deque([], maxlen=5)  # we should read in these maxlens
         self.has_transitions = True
-        self.justDied = False
+        self.just_died = False
 
     def init_replay(self, numberMemories):
         img = np.random.rand(9, 9, 3) * 0
@@ -59,58 +59,69 @@ class Agent:
         self.kind = "deadAgent"  # label the agents death
         self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
         self.trainable = 0  # whether there is a network to be optimized
-        self.justDied = True
+        self.just_died = True
         self.static = 1
 
     def transition(
-        self, action, world, models, i, j, gamePoints, done, input, expBuff=True
+        self,
+        action,
+        world,
+        models,
+        i,
+        j,
+        game_points,
+        done,
+        input,
+        update_experience_buffer=True,
     ):
 
-        newLoc1 = i
-        newLoc2 = j
+        new_locaton_1 = i
+        new_locaton_2 = j
 
         # this should not be needed below, but getting errors
         # it is possible that this is fixed now with the
         # other changes that have been made
-        attLoc1 = i
-        attLoc2 = j
+        attempted_locaton_1 = i
+        attempted_locaton_2 = j
 
         reward = 0
 
         if action == 0:
-            attLoc1 = i - 1
-            attLoc2 = j
+            attempted_locaton_1 = i - 1
+            attempted_locaton_2 = j
 
         if action == 1:
-            attLoc1 = i + 1
-            attLoc2 = j
+            attempted_locaton_1 = i + 1
+            attempted_locaton_2 = j
 
         if action == 2:
-            attLoc1 = i
-            attLoc2 = j - 1
+            attempted_locaton_1 = i
+            attempted_locaton_2 = j - 1
 
         if action == 3:
-            attLoc1 = i
-            attLoc2 = j + 1
+            attempted_locaton_1 = i
+            attempted_locaton_2 = j + 1
 
-        if world[attLoc1, attLoc2, 0].passable == 1:
+        if world[attempted_locaton_1, attempted_locaton_2, 0].passable == 1:
             world[i, j, 0] = EmptyObject()
-            reward = world[attLoc1, attLoc2, 0].value
-            world[attLoc1, attLoc2, 0] = self
-            newLoc1 = attLoc1
-            newLoc2 = attLoc2
-            gamePoints[0] = gamePoints[0] + reward
+            reward = world[attempted_locaton_1, attempted_locaton_2, 0].value
+            world[attempted_locaton_1, attempted_locaton_2, 0] = self
+            new_locaton_1 = attempted_locaton_1
+            new_locaton_2 = attempted_locaton_2
+            game_points[0] = game_points[0] + reward
         else:
-            if world[attLoc1, attLoc2, 0].kind == "wall":
+            if world[attempted_locaton_1, attempted_locaton_2, 0].kind == "wall":
                 reward = -0.1
 
-        if expBuff == True:
-            input2 = models[self.policy].createInput(world, newLoc1, newLoc1, self)
+        if update_experience_buffer == True:
+            input2 = models[self.policy].createInput(
+                world, new_locaton_1, new_locaton_1, self
+            )
             exp = (input, action, reward, input2, done)
             self.replay.append(exp)
             self.reward += reward
 
-        return world, models, gamePoints
+        return world, models, game_points
 
 
 class deadAgent:
@@ -161,73 +172,90 @@ class Wolf:
                 self.replay.append(exp)
 
     def transition(
-        self, action, world, models, i, j, gamePoints, done, input, expBuff=True
+        self,
+        action,
+        world,
+        models,
+        i,
+        j,
+        game_points,
+        done,
+        input,
+        update_experience_buffer=True,
     ):
 
-        newLoc1 = i
-        newLoc2 = j
+        new_locaton_1 = i
+        new_locaton_2 = j
 
         # this should not be needed below, but getting errors
-        attLoc1 = i
-        attLoc2 = j
+        attempted_locaton_1 = i
+        attempted_locaton_2 = j
 
         reward = 0
 
         if action == 0:
-            attLoc1 = i - 1
-            attLoc2 = j
+            attempted_locaton_1 = i - 1
+            attempted_locaton_2 = j
 
         if action == 1:
-            attLoc1 = i + 1
-            attLoc2 = j
+            attempted_locaton_1 = i + 1
+            attempted_locaton_2 = j
 
         if action == 2:
-            attLoc1 = i
-            attLoc2 = j - 1
+            attempted_locaton_1 = i
+            attempted_locaton_2 = j - 1
 
         if action == 3:
-            attLoc1 = i
-            attLoc2 = j + 1
+            attempted_locaton_1 = i
+            attempted_locaton_2 = j + 1
 
-        if world[attLoc1, attLoc2, 0].passable == 1:
-            if world[attLoc1, attLoc2, 0].appearence == [0.0, 0.0, 255.0]:
+        if world[attempted_locaton_1, attempted_locaton_2, 0].passable == 1:
+            if world[attempted_locaton_1, attempted_locaton_2, 0].appearence == [
+                0.0,
+                0.0,
+                255.0,
+            ]:
                 reward = 10
                 wolfEats = wolfEats + 1
             world[i, j, 0] = EmptyObject()
-            world[attLoc1, attLoc2, 0] = self
-            newLoc1 = attLoc1
-            newLoc2 = attLoc2
+            world[attempted_locaton_1, attempted_locaton_2, 0] = self
+            new_locaton_1 = attempted_locaton_1
+            new_locaton_2 = attempted_locaton_2
             reward = 0
         else:
-            if world[attLoc1, attLoc2, 0].kind == "wall":
+            if world[attempted_locaton_1, attempted_locaton_2, 0].kind == "wall":
                 reward = -0.1
-            if world[attLoc1, attLoc2, 0].kind == "agent":
+            if world[attempted_locaton_1, attempted_locaton_2, 0].kind == "agent":
                 reward = 10
-                gamePoints[1] = gamePoints[1] + 1
+                game_points[1] = game_points[1] + 1
 
                 # update the last memory of the agent that was eaten
 
-                lastexp = world[attLoc1, attLoc2, 0].replay[-1]
-                world[attLoc1, attLoc2, 0].replay[-1] = (
+                lastexp = world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1]
+                world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1] = (
                     lastexp[0],
                     lastexp[1],
                     -25,
                     lastexp[3],
                     1,
                 )
-                models[world[attLoc1, attLoc2, 0].policy].transferMemories(
-                    world, attLoc1, attLoc2, extraReward=True
+                models[
+                    world[attempted_locaton_1, attempted_locaton_2, 0].policy
+                ].transfer_memories(
+                    world, attempted_locaton_1, attempted_locaton_2, extra_reward=True
                 )
 
-                world[attLoc1, attLoc2, 0] = deadAgent()
+                world[attempted_locaton_1, attempted_locaton_2, 0] = deadAgent()
 
-        if expBuff == True:
-            input2 = models[self.policy].createInput(world, newLoc1, newLoc1, self)
+        if update_experience_buffer == True:
+            input2 = models[self.policy].createInput(
+                world, new_locaton_1, new_locaton_1, self
+            )
             exp = (input, action, reward, input2, done)
             self.replay.append(exp)
             self.reward += reward
 
-        return world, models, gamePoints
+        return world, models, game_points
 
 
 class Wall:

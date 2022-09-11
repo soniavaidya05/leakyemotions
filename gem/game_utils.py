@@ -2,7 +2,7 @@ import numpy as np
 from astropy.visualization import make_lupton_rgb
 
 
-def createWorld(height, width, layers, defaultObject):
+def create_world(height, width, layers, defaultObject):
     """
     Create the empty grid world
     """
@@ -11,7 +11,7 @@ def createWorld(height, width, layers, defaultObject):
     return world
 
 
-def createWorldImage(world, layers=0):
+def create_world_image(world, layers=0):
     """
     Output an RGB of god view
     TODO: test to make sure that the shapes are correct for height and width

@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from models.memory import Memory
-from models.perception import agentVisualField
+from models.perception import agent_visualfield
 
 
 class CNN_CLD(nn.Module):
@@ -35,7 +35,7 @@ class Combine_CLD(nn.Module):
         hidsize1,
         hidsize2,
         outsize,
-        n_layers=1,
+        n_layers=2,
         batch_first=True,
     ):
         super(Combine_CLD, self).__init__()
@@ -97,7 +97,7 @@ class Model_CNN_LSTM_DQN:
 
         current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
 
-        img = agentVisualField(world, (i, j), holdObject.vision)
+        img = agent_visualfield(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         state_now = input.unsqueeze(0)
 
@@ -105,7 +105,7 @@ class Model_CNN_LSTM_DQN:
 
         return current_state
 
-    def takeAction(self, params):
+    def take_action(self, params):
         """
         Takes action from the input
         """
@@ -160,7 +160,7 @@ class Model_CNN_LSTM_DQN:
         """
         self.model2.load_state_dict(self.model1.state_dict())
 
-    def transferMemories(self, world, i, j, extraReward=True, seqLength=4):
+    def transfer_memories(self, world, i, j, extra_reward=True, seqLength=4):
         """
         Transfer the indiviu=dual memories to the model
         TODO: We need to have a single version that works for both DQN and
@@ -168,6 +168,6 @@ class Model_CNN_LSTM_DQN:
         """
         exp = world[i, j, 0].replay[-1]
         self.replay.append(exp)
-        if extraReward == True and abs(exp[2]) > 9:
+        if extra_reward == True and abs(exp[2]) > 9:
             for _ in range(5):
                 self.replay.append(exp)

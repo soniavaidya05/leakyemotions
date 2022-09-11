@@ -1,32 +1,32 @@
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
-from game_utils import createWorld, createWorldImage
+from game_utils import create_world, create_world_image
 import matplotlib.animation as animation
 
 import pickle
 
 from gem.utils import (
-    updateMemories,
-    findMoveables,
+    update_memories,
+    find_moveables,
 )
 
 
-def create_video(models, worldSize, num, env, filename="unnamed_video.gif"):
+def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
     fig = plt.figure()
     ims = []
-    env.reset_env(worldSize, worldSize)
+    env.reset_env(world_size, world_size)
     done = 0
-    for i, j in findMoveables(env.world):
+    for i, j in find_moveables(env.world):
         # reset the memories for all agents
         env.world[i, j, 0].init_replay(3)
-    gamePoints = [0, 0]
+    game_points = [0, 0]
     for _ in range(num):
-        image = createWorldImage(env.world)
+        image = create_world_image(env.world)
         im = plt.imshow(image, animated=True)
         ims.append([im])
-        gamePoints = env.step(models, gamePoints, 0.1)
-        env.world = updateMemories(
-            models, env.world, findMoveables(env.world), done, endUpdate=False
+        game_points = env.step(models, game_points, 0.1)
+        env.world = update_memories(
+            models, env.world, find_moveables(env.world), done, end_update=False
         )
 
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
@@ -44,7 +44,7 @@ def load_models(save_dir, filename):
     return model
 
 
-def make_video(filename, save_dir, models, worldSize, env):
+def make_video(filename, save_dir, models, world_size, env):
     epoch = 10000
     for video_num in range(5):
         vfilename = (
@@ -56,11 +56,11 @@ def make_video(filename, save_dir, models, worldSize, env):
             + str(video_num)
             + ".gif"
         )
-        create_video(models, worldSize, 100, env, filename=vfilename)
+        create_video(models, world_size, 100, env, filename=vfilename)
 
 
 def replay_view(memoryNum, agentNumber, env):
-    agentList = findMoveables(env.world)
+    agentList = find_moveables(env.world)
     i, j = agentList[agentNumber]
 
     Obj = env.world[i, j, 0]
@@ -117,11 +117,11 @@ def replay_view_model(memoryNum, modelNumber, models):
     )
 
 
-def create_data(env, models, epochs, worldSize):
-    gamePoints = [0, 0]
-    env.reset_env(worldSize, worldSize)
-    for i, j in findMoveables(env.world):
+def create_data(env, models, epochs, world_size):
+    game_points = [0, 0]
+    env.reset_env(world_size, world_size)
+    for i, j in find_moveables(env.world):
         env.world[i, j, 0].init_replay(3)
     for _ in range(epochs):
-        gamePoints = env.step(models, gamePoints)
+        game_points = env.step(models, game_points)
     return env

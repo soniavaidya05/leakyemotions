@@ -7,19 +7,19 @@ import numpy as np
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from models.perception import agentVisualField
+from models.perception import agent_visualfield
 
 import random
 
 from utils import (
-    findInstance,
+    find_instance,
     one_hot,
-    updateEpsilon,
-    updateMemories,
-    transferMemories,
-    findMoveables,
-    findAgents,
-    transferWorldMemories,
+    update_epsilon,
+    update_memories,
+    transfer_memories,
+    find_moveables,
+    find_agents,
+    transfer_world_memories,
 )
 
 
@@ -97,7 +97,7 @@ class WolfsAndGems:
                 if self.world[i, j, 0].static == 0:
                     moveList.append([i, j])
 
-        img = agentVisualField(self.world, (moveList[0][0], moveList[0][1]), k=4)
+        img = agent_visualfield(self.world, (moveList[0][0], moveList[0][1]), k=4)
 
         plt.subplot(1, 2, 1)
         plt.imshow(image)
@@ -161,9 +161,9 @@ class WolfsAndGems:
             self.world[i, 0, 0] = Wall()
             self.world[i, height - 1, 0] = Wall()
 
-    def step(self, models, gamePoints, epsilon=0.85, done=0):
+    def step(self, models, game_points, epsilon=0.85, done=0):
 
-        moveList = findMoveables(self.world)
+        moveList = find_moveables(self.world)
 
         for i, j in moveList:
             # reset the rewards for the trial to be zero for all agents
@@ -190,26 +190,26 @@ class WolfsAndGems:
 
                 """
 
-                action = models[holdObject.policy].takeAction([input, epsilon])
+                action = models[holdObject.policy].take_action([input, epsilon])
 
             # rewrite this so all classes have transition, most are just pass
 
             if holdObject.has_transitions == True:
-                self.world, models, gamePoints = holdObject.transition(
+                self.world, models, game_points = holdObject.transition(
                     action,
                     self.world,
                     models,
                     i,
                     j,
-                    gamePoints,
+                    game_points,
                     done,
                     input,
                 )
-        return gamePoints
+        return game_points
 
-    def stepExp(self, world, models, gamePoints, epsilon=0.85, done=0):
+    def stepExp(self, world, models, game_points, epsilon=0.85, done=0):
 
-        moveList = findMoveables(world)
+        moveList = find_moveables(world)
         for i, j in moveList:
             # reset the rewards for the trial to be zero for all agents
             world[i, j, 0].reward = 0
@@ -235,19 +235,19 @@ class WolfsAndGems:
 
                 """
 
-                action = models[holdObject.policy].takeAction([input, epsilon])
+                action = models[holdObject.policy].take_action([input, epsilon])
 
             # rewrite this so all classes have transition, most are just pass
 
             if holdObject.has_transitions == True:
-                world, models, gamePoints = holdObject.transition(
+                world, models, game_points = holdObject.transition(
                     action,
                     world,
                     models,
                     i,
                     j,
-                    gamePoints,
+                    game_points,
                     done,
                     input,
                 )
-        return world, models, gamePoints
+        return world, models, game_points

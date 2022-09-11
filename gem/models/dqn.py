@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from models.memory import Memory
-from models.perception import agentVisualField
+from models.perception import agent_visualfield
 
 
 class DQN(nn.Module):
@@ -66,11 +66,11 @@ class ModelDQN:
               can handle both types of input files for RNN models
         """
 
-        img = agentVisualField(world, (i, j), holdObject.vision)
+        img = agent_visualfield(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         return input
 
-    def takeAction(self, params):
+    def take_action(self, params):
         """
         Selects an action
         TODO: right now params are read in. there may be a more efficient way of reading in
@@ -127,13 +127,13 @@ class ModelDQN:
         """
         self.model2.load_state_dict(self.model1.state_dict())
 
-    def transferMemories(self, world, i, j, extraReward=True):
+    def transfer_memories(self, world, i, j, extra_reward=True):
         """
         Transfer the events from agent memory to model replay
         """
 
         exp = world[i, j, 0].replay[-1]
         self.replay.append(exp)
-        if extraReward == True and abs(exp[2]) > 9:
+        if extra_reward == True and abs(exp[2]) > 9:
             for _ in range(5):
                 self.replay.append(exp)

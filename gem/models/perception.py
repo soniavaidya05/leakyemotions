@@ -2,7 +2,7 @@ from astropy.visualization import make_lupton_rgb
 import numpy as np
 
 
-def agentVisualField(world, location, k=4, wall_app=[153.0, 51.0, 102.0]):
+def agent_visualfield(world, location, k=4, wall_app=[153.0, 51.0, 102.0]):
     """
     Create an agent visual field of size (2k + 1, 2k + 1) pixels
     """

@@ -36,60 +36,66 @@ class Wolf:
         models,
         i,
         j,
-        gamePoints,
+        game_points,
         done,
         input,
-        expBuff=True,
+        update_experience_buffer=True,
         ModelType="DQN",
     ):
 
-        newLoc1 = i
-        newLoc2 = j
+        new_locaton_1 = i
+        new_locaton_2 = j
 
         # this should not be needed below, but getting errors
-        attLoc1 = i
-        attLoc2 = j
+        attempted_locaton_1 = i
+        attempted_locaton_2 = j
 
         reward = 0
 
         if action == 0:
-            attLoc1 = i - 1
-            attLoc2 = j
+            attempted_locaton_1 = i - 1
+            attempted_locaton_2 = j
 
         if action == 1:
-            attLoc1 = i + 1
-            attLoc2 = j
+            attempted_locaton_1 = i + 1
+            attempted_locaton_2 = j
 
         if action == 2:
-            attLoc1 = i
-            attLoc2 = j - 1
+            attempted_locaton_1 = i
+            attempted_locaton_2 = j - 1
 
         if action == 3:
-            attLoc1 = i
-            attLoc2 = j + 1
+            attempted_locaton_1 = i
+            attempted_locaton_2 = j + 1
 
-        if world[attLoc1, attLoc2, 0].passable == 1:
-            if world[attLoc1, attLoc2, 0].appearence == [0.0, 0.0, 255.0]:
+        if world[attempted_locaton_1, attempted_locaton_2, 0].passable == 1:
+            if world[attempted_locaton_1, attempted_locaton_2, 0].appearence == [
+                0.0,
+                0.0,
+                255.0,
+            ]:
                 reward = 10
                 wolfEats = wolfEats + 1
             world[i, j, 0] = EmptyObject()
-            world[attLoc1, attLoc2, 0] = self
-            newLoc1 = attLoc1
-            newLoc2 = attLoc2
+            world[attempted_locaton_1, attempted_locaton_2, 0] = self
+            new_locaton_1 = attempted_locaton_1
+            new_locaton_2 = attempted_locaton_2
             reward = 0
         else:
-            if isinstance(world[attLoc1, attLoc2, 0], Wall):
+            if isinstance(world[attempted_locaton_1, attempted_locaton_2, 0], Wall):
                 reward = -0.1
-            if isinstance(world[attLoc1, attLoc2, 0], Agent):
+            if isinstance(world[attempted_locaton_1, attempted_locaton_2, 0], Agent):
                 reward = 10
-                gamePoints[1] = gamePoints[1] + 1
+                game_points[1] = game_points[1] + 1
                 newVersion = 0
                 if newVersion == 0:
 
                     # update the last memory of the agent that was eaten
 
-                    lastexp = world[attLoc1, attLoc2, 0].replay[-1]
-                    world[attLoc1, attLoc2, 0].replay[-1] = (
+                    lastexp = world[attempted_locaton_1, attempted_locaton_2, 0].replay[
+                        -1
+                    ]
+                    world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1] = (
                         lastexp[0],
                         lastexp[1],
                         -25,
@@ -100,39 +106,72 @@ class Wolf:
                     # TODO: Below is very clunky and a more principles solution needs to be found
 
                     if ModelType == "DQN":
-                        models[world[attLoc1, attLoc2, 0].policy].transferMemories(
-                            world, attLoc1, attLoc2, extraReward=True
+                        models[
+                            world[attempted_locaton_1, attempted_locaton_2, 0].policy
+                        ].transfer_memories(
+                            world,
+                            attempted_locaton_1,
+                            attempted_locaton_2,
+                            extra_reward=True,
                         )
                     if ModelType == "AC":
                         # note, put in the whole code for updatng an AC model here
-                        if len(world[attLoc1, attLoc2, 0].AC_value) > 0:
+                        if (
+                            len(
+                                world[
+                                    attempted_locaton_1, attempted_locaton_2, 0
+                                ].AC_value
+                            )
+                            > 0
+                        ):
 
                             finalReward = torch.tensor(-25).float().reshape(1, 1)
 
                             if (
-                                world[attLoc1, attLoc2, 0].AC_reward.shape
-                                == world[attLoc1, attLoc2, 0].AC_value.shape
+                                world[
+                                    attempted_locaton_1, attempted_locaton_2, 0
+                                ].AC_reward.shape
+                                == world[
+                                    attempted_locaton_1, attempted_locaton_2, 0
+                                ].AC_value.shape
                             ):
-                                world[attLoc1, attLoc2, 0].AC_reward[-1] = finalReward
+                                world[
+                                    attempted_locaton_1, attempted_locaton_2, 0
+                                ].AC_reward[-1] = finalReward
                             else:
-                                world[attLoc1, attLoc2, 0].AC_reward = torch.concat(
-                                    [world[attLoc1, attLoc2, 0].AC_reward, finalReward]
+                                world[
+                                    attempted_locaton_1, attempted_locaton_2, 0
+                                ].AC_reward = torch.concat(
+                                    [
+                                        world[
+                                            attempted_locaton_1, attempted_locaton_2, 0
+                                        ].AC_reward,
+                                        finalReward,
+                                    ]
                                 )
                                 models[
-                                    world[attLoc1, attLoc2, 0].policy
-                                ].transferMemories_AC(world, attLoc1, attLoc2)
+                                    world[
+                                        attempted_locaton_1, attempted_locaton_2, 0
+                                    ].policy
+                                ].transfer_memories_AC(
+                                    world, attempted_locaton_1, attempted_locaton_2
+                                )
 
-                    world[attLoc1, attLoc2, 0] = DeadAgent()
+                    world[attempted_locaton_1, attempted_locaton_2, 0] = DeadAgent()
                 if newVersion == 1:
-                    world = world[attLoc1, attLoc2, 0].died(
-                        models, world, attLoc1, attLoc2, extraReward=True
+                    world = world[attempted_locaton_1, attempted_locaton_2, 0].died(
+                        models,
+                        world,
+                        attempted_locaton_1,
+                        attempted_locaton_2,
+                        extra_reward=True,
                     )
-                    world[attLoc1, attLoc2, 0] = DeadAgent()
+                    world[attempted_locaton_1, attempted_locaton_2, 0] = DeadAgent()
 
-        if expBuff == True:
-            input2 = models[self.policy].pov(world, newLoc1, newLoc2, self)
+        if update_experience_buffer == True:
+            input2 = models[self.policy].pov(world, new_locaton_1, new_locaton_2, self)
             exp = (input, action, reward, input2, done)
             self.replay.append(exp)
             self.reward += reward
 
-        return world, models, gamePoints
+        return world, models, game_points

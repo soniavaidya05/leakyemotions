@@ -1,9 +1,9 @@
 from gem.utils import (
-    updateEpsilon,
-    updateMemories,
-    findMoveables,
-    transferWorldMemories,
-    findAgents,
+    update_epsilon,
+    update_memories,
+    find_moveables,
+    transfer_world_memories,
+    find_agents,
 )
 from gem.environment.elements.element import EmptyObject, Wall
 from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
@@ -17,7 +17,7 @@ from DQN_utils import save_models, load_models, make_video
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
 
-def createModels():
+def create_models():
     """
     Should make the sequence length of the LSTM part of the model and an input here
     Should also set up so that the number of hidden laters can be added to dynamically
@@ -29,19 +29,19 @@ def createModels():
     return models
 
 
-worldSize = 15
+world_size = 15
 
-trainableModels = [0, 1]
+trainable_models = [0, 1]
 sync_freq = 500
 modelUpdate_freq = 25
 epsilon = 0.99
 
 turn = 1
 
-models = createModels()
+models = create_models()
 env = WolfsAndGems(
-    height=worldSize,
-    width=worldSize,
+    height=world_size,
+    width=world_size,
     layers=1,
     defaultObject=EmptyObject(),
     gem1p=0.03,
@@ -57,77 +57,77 @@ def runGame(
     turn,
     epsilon,
     epochs=10000,
-    maxTurns=100,
+    max_turns=100,
 ):
     losses = 0
-    gamePoints = [0, 0]
+    game_points = [0, 0]
     for epoch in range(epochs):
-        done, withinTurn = 0, 0
+        done, withinturn = 0, 0
 
         # create a new gameboard for each epoch and repopulate
         # the resset does allow for different params, but when the world size changes, odd
         # TODO: need to look at why changing the world size keeps walls at the original location
         env.reset_env(
-            height=worldSize,
-            width=worldSize,
+            height=world_size,
+            width=world_size,
             layers=1,
             gem1p=0.03,
             gem2p=0.02,
             wolf1p=0.01,
         )
-        for i, j in findMoveables(env.world):
+        for i, j in find_moveables(env.world):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
             env.world[i, j, 0].init_replay(3)
 
         while done == 0:
             turn = turn + 1
-            withinTurn = withinTurn + 1
+            withinturn = withinturn + 1
 
             if epoch % sync_freq == 0:
                 # update the double DQN model ever sync_frew
-                for mods in trainableModels:
+                for mods in trainable_models:
                     models[mods].model2.load_state_dict(
                         models[mods].model1.state_dict()
                     )
 
             # take one step of the game for all agents
-            gamePoints = env.step(models, gamePoints, epsilon)
+            game_points = env.step(models, game_points, epsilon)
 
             # determine whether the game is finished (either max length or all agents are dead)
-            if withinTurn > maxTurns or len(findAgents(env.world)) == 0:
+            if withinturn > max_turns or len(find_agents(env.world)) == 0:
                 done = 1
 
-            if len(trainableModels) > 0:
+            if len(trainable_models) > 0:
                 # this updates the last memory to be the final state of the game board
-                env.world = updateMemories(
-                    models, env.world, findMoveables(env.world), done, endUpdate=True
+                env.world = update_memories(
+                    models, env.world, find_moveables(env.world), done, end_update=True
                 )
                 # transfer the events for each agent into the appropriate model after all have moved
-                models = transferWorldMemories(
-                    models, env.world, findMoveables(env.world)
+                models = transfer_world_memories(
+                    models, env.world, find_moveables(env.world)
                 )
 
-            if withinTurn % modelUpdate_freq == 0:
+            if withinturn % modelUpdate_freq == 0:
                 # trains all networks after modelUpdate_freq turns
-                for mods in trainableModels:
+                for mods in trainable_models:
                     loss = models[mods].training(150, 0.9)
                     losses = losses + loss.detach().numpy()
 
         # train at the end of each epoch
-        for mods in trainableModels:
+        for mods in trainable_models:
             loss = models[mods].training(150, 0.9)
             losses = losses + loss.detach().numpy()
 
         updateEps = False
-        # TODO: the updateEpsilon often does strange things. Needs to be reconceptualized
+        # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
         if updateEps == True:
-            epsilon = updateEpsilon(epsilon, turn, epoch)
+            epsilon = update_epsilon(epsilon, turn, epoch)
 
-        if epoch % 100 == 0 and len(trainableModels) > 0:
+        if epoch % 100 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
-            print(epoch, withinTurn, gamePoints, losses, epsilon)
-            gamePoints = [0, 0]
+            print(epoch, withinturn, game_points, losses, epsilon)
+            game_points = [0, 0]
             losses = 0
     return models, env, turn, epsilon
 
@@ -137,7 +137,7 @@ TEST SOME MODELS
 TODO: Once stable, these should be in a separate file for training models
 """
 
-runParams = (
+run_params = (
     [0.9, 1000, 5],
     [0.8, 5000, 5],
     [0.7, 5000, 5],
@@ -148,16 +148,16 @@ runParams = (
     [0.2, 20000, 50],
 )
 
-for modRun in range(len(runParams)):
+for modRun in range(len(run_params)):
     models, env, turn, epsilon = runGame(
         models,
         env,
         turn,
-        runParams[modRun][0],
-        epochs=runParams[modRun][1],
-        maxTurns=runParams[modRun][2],
+        run_params[modRun][0],
+        epochs=run_params[modRun][1],
+        max_turns=run_params[modRun][2],
     )
     save_models(models, save_dir, "newWolvesAndAgents" + str(modRun))
 
 
-make_video("test_new", save_dir, models, 50, env)
+make_video("test_new", save_dir, models, 20, env)

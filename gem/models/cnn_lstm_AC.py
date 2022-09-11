@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from models.memory import Memory
-from models.perception import agentVisualField
+from models.perception import agent_visualfield
 
 
 class CNN_CLD(nn.Module):
@@ -102,7 +102,7 @@ class Model_CNN_LSTM_AC:
         Creates a single input in RNN format
         """
 
-        img = agentVisualField(world, (i, j), holdObject.vision)
+        img = agent_visualfield(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         input = input.unsqueeze(0)
         return input
@@ -116,7 +116,7 @@ class Model_CNN_LSTM_AC:
               stacked properly
         """
 
-        img = agentVisualField(world, (i, j), holdObject.vision)
+        img = agent_visualfield(world, (i, j), holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         input = input.unsqueeze(0)
         if seqLength == -1:
@@ -142,7 +142,7 @@ class Model_CNN_LSTM_AC:
 
         return input, combined_input
 
-    def takeAction(self, inp):
+    def take_action(self, inp):
         """
         Takes action from the input
         TODO: different models use different input parameters
@@ -180,7 +180,7 @@ class Model_CNN_LSTM_AC:
         """
         pass
 
-    def transferMemories(self, world, i, j, extraReward=True, seqLength=5):
+    def transfer_memories(self, world, i, j, extra_reward=True, seqLength=5):
         """
         Transfer the indiviu=dual memories to the model
         TODO: A second function is written below because the inputs for
@@ -189,7 +189,7 @@ class Model_CNN_LSTM_AC:
         """
         pass
 
-    def transferMemories_AC(self, world, i, j):
+    def transfer_memories_AC(self, world, i, j):
         """
         Transfer the indiviu=dual memories to the model
         TODO: A second function is written below because the inputs for

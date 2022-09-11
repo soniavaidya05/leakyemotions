@@ -7,7 +7,7 @@ import numpy as np
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from models.perception import agentVisualField
+from models.perception import agent_visualfield
 
 
 class WolfsAndGems:
@@ -84,7 +84,7 @@ class WolfsAndGems:
                 if self.world[i, j, 0].static == 0:
                     moveList.append([i, j])
 
-        img = agentVisualField(self.world, (moveList[0][0], moveList[0][1]), k=4)
+        img = agent_visualfield(self.world, (moveList[0][0], moveList[0][1]), k=4)
 
         plt.subplot(1, 2, 1)
         plt.imshow(image)

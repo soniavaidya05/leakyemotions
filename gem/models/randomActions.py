@@ -16,7 +16,7 @@ class ModelRandomAction:
         self.sm = nn.Softmax(dim=1)
         self.actionSpace = outsize
 
-    def takeAction(self, params):
+    def take_action(self, params):
         inp, epsilon = params
         action = np.random.randint(0, self.actionSpace)
         return action

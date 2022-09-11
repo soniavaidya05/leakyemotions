@@ -1,12 +1,12 @@
 from gem.utils import (
-    findInstance,
+    find_instance,
     one_hot,
-    updateEpsilon,
-    updateMemories,
-    transferMemories,
-    findMoveables,
-    findAgents,
-    transferWorldMemories,
+    update_epsilon,
+    update_memories,
+    transfer_memories,
+    find_moveables,
+    find_agents,
+    transfer_world_memories,
 )
 
 from models.memory import Memory
@@ -15,9 +15,9 @@ from models.randomActions import modelRandomAction
 from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
 from models.cnn_lstm_AC import model_CNN_LSTM_AC
 
-from models.perception import agentVisualField
+from models.perception import agent_visualfield
 
-from game_utils import createWorld, createWorldImage
+from game_utils import create_world, create_world_image
 
 # from gemworld.gemsWolvesDual import WolfsAndGemsDual
 from experimental.gemsWolvesLargeWorld import WolfsAndGems
@@ -43,8 +43,8 @@ from collections import deque
 
 def playGame(
     models,
-    trainableModels,
-    worldSize=15,
+    trainable_models,
+    world_size=15,
     epochs=200000,
     maxEpochs=100,
     epsilon=0.9,
@@ -53,23 +53,23 @@ def playGame(
 ):
 
     losses = 0
-    gamePoints = [0, 0]
+    game_points = [0, 0]
     turn = 0
     sync_freq = 500
     modelUpdate_freq = 25  # this is not needed for the current AC mdoel
-    env = WolfsAndGems(worldSize, worldSize)
+    env = WolfsAndGems(world_size, world_size)
 
     if trainModels == False:
         fig = plt.figure()
         ims = []
 
     for epoch in range(epochs):
-        env.reset_env(worldSize, worldSize)
+        env.reset_env(world_size, world_size)
 
         done = 0
-        withinTurn = 0
+        withinturn = 0
 
-        moveList = findMoveables(env.world)
+        moveList = find_moveables(env.world)
         for i, j in moveList:
             # reset the memories for all agents
             env.world[i, j, 0].init_replay(5)
@@ -91,23 +91,23 @@ def playGame(
         while done == 0:
 
             if trainModels == False:
-                image = createWorldImage(env.world)
+                image = create_world_image(env.world)
                 im = plt.imshow(image, animated=True)
                 ims.append([im])
 
-            findAgent = findAgents(env.world)
+            findAgent = find_agents(env.world)
             if len(findAgent) == 0:
                 done = 1
 
-            withinTurn = withinTurn + 1
+            withinturn = withinturn + 1
             turn = turn + 1
 
             # This is not needed for an Actor Critic model. Should cause a PASS
             if turn % sync_freq == 0:
-                for mods in trainableModels:
+                for mods in trainable_models:
                     models[mods].updateQ
 
-            moveList = findMoveables(env.world)
+            moveList = find_moveables(env.world)
             for i, j in moveList:
                 # reset the rewards for the trial to be zero for all agents
                 env.world[i, j, 0].reward = 0
@@ -126,7 +126,7 @@ def playGame(
                     # I assume that we will need to update the "action" below to be something like
                     # [output] where action is the first thing that is returned
                     # the current structure would not work with multi-head output (Actor-Critic, immagination, etc.)
-                    output = models[holdObject.policy].takeAction(combined_input)
+                    output = models[holdObject.policy].take_action(combined_input)
                     action, logprob, value = output
 
                     # the lines below save the current memories of the event to
@@ -143,22 +143,22 @@ def playGame(
                         [env.world[i, j, 0].AC_value, value]
                     )
 
-                if withinTurn == maxEpochs:
+                if withinturn == maxEpochs:
                     done = 1
 
                 # rewrite this so all classes have transition, most are just pass
 
                 if holdObject.has_transitions == True:
-                    env.world, models, gamePoints = holdObject.transition(
+                    env.world, models, game_points = holdObject.transition(
                         action,
                         env.world,
                         models,
                         i,
                         j,
-                        gamePoints,
+                        game_points,
                         done,
                         input,
-                        expBuff=True,
+                        update_experience_buffer=True,
                         ModelType="AC",
                     )
 
@@ -166,12 +166,12 @@ def playGame(
 
                 """
                 transfer the events for each agent into the appropriate model after all have moved
-                TODO: This needs to be rewritten as findTrainables, currently deadagents do not move
+                TODO: This needs to be rewritten as find_trainables, currently deadagents do not move
                     but they have information in their replay buffers that need to go into learning
                 """
 
-                expList = findMoveables(env.world)
-                env.world = updateMemories(models, env.world, expList, endUpdate=True)
+                expList = find_moveables(env.world)
+                env.world = update_memories(models, env.world, expList, end_update=True)
                 for i, j in expList:
                     env.world[i, j, 0].AC_reward = torch.concat(
                         [
@@ -184,12 +184,12 @@ def playGame(
 
         if trainModels == True:
 
-            expList = findMoveables(env.world)
-            # TODO: just like above this needs to be changed to findTrainables because deadAgents have memories
+            expList = find_moveables(env.world)
+            # TODO: just like above this needs to be changed to find_trainables because deadAgents have memories
             #       that need to be learned
 
             for i, j in expList:
-                models[env.world[i, j, 0].policy].transferMemories_AC(env.world, i, j)
+                models[env.world[i, j, 0].policy].transfer_memories_AC(env.world, i, j)
 
             for mod in range(len(models)):
                 if len(models[mod].rewards) > 0:
@@ -197,11 +197,11 @@ def playGame(
                     losses = losses + loss.detach().numpy()
 
         # epdate epsilon to move from mostly random to greedy choices for action with time
-        epsilon = updateEpsilon(epsilon, turn, epoch)
+        epsilon = update_epsilon(epsilon, turn, epoch)
 
         if epoch % 100 == 0 and trainModels == True:
-            print(epoch, withinTurn, gamePoints, losses, epsilon)
-            gamePoints = [0, 0]
+            print(epoch, withinturn, game_points, losses, epsilon)
+            game_points = [0, 0]
             losses = 0
     if trainModels == True:
         return models
@@ -212,12 +212,12 @@ def playGame(
         return ani
 
 
-def createVideo(models, worldSize, num, gameVersion, filename="unnamed_video.gif"):
+def createVideo(models, world_size, num, gameVersion, filename="unnamed_video.gif"):
     # env = gameVersion()
     ani1 = playGame(
         models,  # model file list
         [],  # which models from that list should be trained, here not the agents
-        worldSize,  # world size
+        world_size,  # world size
         1,  # number of epochs
         150,  # max epoch length
         0.85,  # starting epsilon

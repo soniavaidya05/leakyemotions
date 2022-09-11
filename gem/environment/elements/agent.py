@@ -21,16 +21,18 @@ class Agent:
         self.trainable = 1  # whether there is a network to be optimized
         self.replay = deque([], maxlen=100)  # we should read in these maxlens
         self.has_transitions = True
-        self.justDied = False
+        self.just_died = False
 
     def init_replay(self, numberMemories):
         image = torch.zeros(1, numberMemories, 3, 9, 9).float()
         exp = (image, 0, 0, image, 0)
         self.replay.append(exp)
 
-    def died(self, models, world, attLoc1, attLoc2, extraReward=True):
-        lastexp = world[attLoc1, attLoc2, 0].replay[-1]
-        world[attLoc1, attLoc2, 0].replay[-1] = (
+    def died(
+        self, models, world, attempted_locaton_1, attempted_locaton_2, extra_reward=True
+    ):
+        lastexp = world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1]
+        world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1] = (
             lastexp[0],
             lastexp[1],
             -25,
@@ -40,15 +42,17 @@ class Agent:
 
         # TODO: Below is very clunky and a more principles solution needs to be found
 
-        models[world[attLoc1, attLoc2, 0].policy].transferMemories(
-            world, attLoc1, attLoc2, extraReward=True
+        models[
+            world[attempted_locaton_1, attempted_locaton_2, 0].policy
+        ].transfer_memories(
+            world, attempted_locaton_1, attempted_locaton_2, extra_reward=True
         )
 
         # this can only be used it seems if all agents have a different id
         # self.kind = "deadAgent"  # label the agents death
         # self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
         # self.trainable = 0  # whether there is a network to be optimized
-        # self.justDied = True
+        # self.just_died = True
         # self.static = 1
         # self.has_transitions = False
 
@@ -59,60 +63,60 @@ class Agent:
         models,
         i,
         j,
-        gamePoints,
+        game_points,
         done,
         input,
-        expBuff=True,
+        update_experience_buffer=True,
         ModelType="DQN",
     ):
 
-        newLoc1 = i
-        newLoc2 = j
+        new_locaton_1 = i
+        new_locaton_2 = j
 
         # this should not be needed below, but getting errors
         # it is possible that this is fixed now with the
         # other changes that have been made
-        attLoc1 = i
-        attLoc2 = j
+        attempted_locaton_1 = i
+        attempted_locaton_2 = j
 
         reward = 0
 
         if action == 0:
-            attLoc1 = i - 1
-            attLoc2 = j
+            attempted_locaton_1 = i - 1
+            attempted_locaton_2 = j
 
         if action == 1:
-            attLoc1 = i + 1
-            attLoc2 = j
+            attempted_locaton_1 = i + 1
+            attempted_locaton_2 = j
 
         if action == 2:
-            attLoc1 = i
-            attLoc2 = j - 1
+            attempted_locaton_1 = i
+            attempted_locaton_2 = j - 1
 
         if action == 3:
-            attLoc1 = i
-            attLoc2 = j + 1
+            attempted_locaton_1 = i
+            attempted_locaton_2 = j + 1
 
-        if world[attLoc1, attLoc2, 0].passable == 1:
+        if world[attempted_locaton_1, attempted_locaton_2, 0].passable == 1:
             world[i, j, 0] = EmptyObject()
-            reward = world[attLoc1, attLoc2, 0].value
-            world[attLoc1, attLoc2, 0] = self
-            newLoc1 = attLoc1
-            newLoc2 = attLoc2
-            gamePoints[0] = gamePoints[0] + reward
+            reward = world[attempted_locaton_1, attempted_locaton_2, 0].value
+            world[attempted_locaton_1, attempted_locaton_2, 0] = self
+            new_locaton_1 = attempted_locaton_1
+            new_locaton_2 = attempted_locaton_2
+            game_points[0] = game_points[0] + reward
         else:
             if isinstance(
-                world[attLoc1, attLoc2, 0], Wall
+                world[attempted_locaton_1, attempted_locaton_2, 0], Wall
             ):  # Replacing comparison with string 'kind'
                 reward = -0.1
 
-        if expBuff == True:
-            input2 = models[self.policy].pov(world, newLoc1, newLoc2, self)
+        if update_experience_buffer == True:
+            input2 = models[self.policy].pov(world, new_locaton_1, new_locaton_2, self)
             exp = (input, action, reward, input2, done)
             self.replay.append(exp)
             self.reward += reward
 
-        return world, models, gamePoints
+        return world, models, game_points
 
 
 class DeadAgent:
