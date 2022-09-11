@@ -6,6 +6,8 @@ gemsWolves_LSTM_DQN.py is current game.
 1) Need to refactor some of the tools at end of script into DQN_utils.py
 2) separate out the running the scripts and the game script
 3) remove phantom code (scripts that no longer are used, imports that are not needed)
+4) create video is missing: env.world = updateMemories(models, env.world, findMoveables(env.world), done, endUpdate=True) which is making playback choppy
+5) Fix update epsilon code to be more general. Might need to have a new equation that fits all variants
 
 ------------------------------
 Version 0.1.1
@@ -17,6 +19,21 @@ Things that need to be done
     but getting savings where we can will be important, especially with the integrated
     M1 chips
 3) need to make new environments and test generalization
-4) need to make the neural networks slightly more flexible. At the moment, we will keep
+4) need to include proper comments and use named variables in function calls
+5) need to make the neural networks slightly more flexible. At the moment, we will keep
     CNN input, LSTM, Fully connected, double DQN. But, number of layers, etc. should
     be slightly more flexible
+6) create documentation and example tutorials
+7) change all the varables and functions to be in current python conventions (shon says there is script for this)
+8) move the agent replay memory update in the wolf transitions into the agent.died() [the memory transfer can happen before the agent.kind turns into a deadAgent)
+    this will likely be needed in tag as well
+    
+    def died(self, models, world, attLoc1, attLoc2, extraReward=True):
+        lastexp = self.replay[-1]
+        self.replay[-1] = (lastexp[0], lastexp[1], -25, lastexp[3], 1)
+        models[self.policy].transferMemories(world, attLoc1, attLoc2, extraReward=True)
+        self.kind = "deadAgent"  # label the agents death
+        self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
+        self.trainable = 0  # whether there is a network to be optimized
+        self.static = 1
+        
