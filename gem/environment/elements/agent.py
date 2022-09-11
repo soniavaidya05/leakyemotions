@@ -24,6 +24,10 @@ class Agent:
         self.just_died = False
 
     def init_replay(self, numberMemories):
+        """
+        Fills in blank images for the LSTM before game play.
+        Impicitly defines the number of sequences that the LSTM will be trained on.
+        """
         image = torch.zeros(1, numberMemories, 3, 9, 9).float()
         exp = (image, 0, 0, image, 0)
         self.replay.append(exp)
@@ -31,6 +35,11 @@ class Agent:
     def died(
         self, models, world, attempted_locaton_1, attempted_locaton_2, extra_reward=True
     ):
+        """
+        Replaces the last memory with a memory that has a reward of -25 and the image of its
+        death. This is to encourage the agent to not die.
+        TODO: this is failing at the moment. Need to fix.
+        """
         lastexp = world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1]
         world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1] = (
             lastexp[0],
@@ -49,12 +58,12 @@ class Agent:
         )
 
         # this can only be used it seems if all agents have a different id
-        # self.kind = "deadAgent"  # label the agents death
-        # self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
-        # self.trainable = 0  # whether there is a network to be optimized
-        # self.just_died = True
-        # self.static = 1
-        # self.has_transitions = False
+        self.kind = "deadAgent"  # label the agents death
+        self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
+        self.trainable = 0  # whether there is a network to be optimized
+        self.just_died = True
+        self.static = 1
+        self.has_transitions = False
 
     def transition(
         self,
@@ -69,6 +78,10 @@ class Agent:
         update_experience_buffer=True,
         ModelType="DQN",
     ):
+        """
+        Sets the rules for how the agent moves and interacts with the world.
+        All immplications must be written here for how the object interacts with the other objects.
+        """
 
         new_locaton_1 = i
         new_locaton_2 = j
@@ -120,6 +133,9 @@ class Agent:
 
 
 class DeadAgent:
+    """
+    This is a placeholder for the dead agent. Can be replaced when .died() is corrected.
+    """
 
     kind = "deadAgent"  # class variable shared by all instances
 

@@ -25,6 +25,10 @@ class Wolf:
 
     # init is now for LSTM, may need to have a toggle for LSTM of not
     def init_replay(self, numberMemories):
+        """
+        Fills in blank images for the LSTM before game play.
+        Impicitly defines the number of sequences that the LSTM will be trained on.
+        """
         image = torch.zeros(1, numberMemories, 3, 17, 17).float()
         exp = (image, 0, 0, image, 0)
         self.replay.append(exp)
@@ -42,6 +46,10 @@ class Wolf:
         update_experience_buffer=True,
         ModelType="DQN",
     ):
+        """
+        Sets the rules for how the agent moves and interacts with the world.
+        All immplications must be written here for how the object interacts with the other objects.
+        """
 
         new_locaton_1 = i
         new_locaton_2 = j
