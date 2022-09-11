@@ -12,8 +12,7 @@ import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
-from DQN_utils import createVideo, save_models, load_models
-
+from DQN_utils import save_models, load_models, makeVideo
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
@@ -159,3 +158,6 @@ for modRun in range(len(runParams)):
         maxTurns=runParams[modRun][2],
     )
     save_models(models, save_dir, "newWolvesAndAgents" + str(modRun))
+
+
+makeVideo("test_new", save_dir, models, 15, env)
