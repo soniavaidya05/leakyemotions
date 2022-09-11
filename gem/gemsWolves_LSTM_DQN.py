@@ -130,34 +130,3 @@ def run_game(
             game_points = [0, 0]
             losses = 0
     return models, env, turn, epsilon
-
-
-"""
-TEST SOME MODELS
-TODO: Once stable, these should be in a separate file for training models
-"""
-
-run_params = (
-    [0.9, 1000, 5],
-    [0.8, 5000, 5],
-    [0.7, 5000, 5],
-    [0.2, 5000, 5],
-    [0.8, 10000, 25],
-    [0.6, 10000, 35],
-    [0.2, 10000, 35],
-    [0.2, 20000, 50],
-)
-
-for modRun in range(len(run_params)):
-    models, env, turn, epsilon = run_game(
-        models,
-        env,
-        turn,
-        run_params[modRun][0],
-        epochs=run_params[modRun][1],
-        max_turns=run_params[modRun][2],
-    )
-    save_models(models, save_dir, "newWolvesAndAgents" + str(modRun))
-
-
-make_video("test_new", save_dir, models, 20, env)
