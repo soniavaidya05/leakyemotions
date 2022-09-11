@@ -44,7 +44,7 @@ class WolfsAndGems:
         self.create_world(self.height, self.width, self.layers)
         self.init_elements()
         self.populate(self.gem1p, self.gem2p, self.wolf1p)
-        self.insert_walls()
+        self.insert_walls(self.height, self.width)
 
     def create_world(self, height=15, width=15, layers=1):
         # self.world = np.full((self.height, self.width, self.layers), self.defaultObject)
@@ -55,7 +55,7 @@ class WolfsAndGems:
     ):
         self.create_world(height, width, layers)
         self.populate(gem1p, gem2p, wolf1p)
-        self.insert_walls()
+        self.insert_walls(height, width)
         # needed because the previous version was resetting the replay buffer
         # in the reset we should be able to make a bigger or smaller world
         # right now the game is stuck in 15x15, and will want to start increasing
@@ -149,17 +149,17 @@ class WolfsAndGems:
                 0,
             ] = Agent(0)
 
-    def insert_walls(self):
+    def insert_walls(self, height, width):
         """
         Inserts walls into the world.
         Assumes that the world is square - fixme.
         """
         # wall = Wall()
-        for i in range(self.height):
+        for i in range(height):
             self.world[0, i, 0] = Wall()
-            self.world[self.height - 1, i, 0] = Wall()
+            self.world[height - 1, i, 0] = Wall()
             self.world[i, 0, 0] = Wall()
-            self.world[i, self.height - 1, 0] = Wall()
+            self.world[i, height - 1, 0] = Wall()
 
     def step(self, models, gamePoints, epsilon=0.85, done=0):
 

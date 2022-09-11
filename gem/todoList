@@ -6,7 +6,6 @@ gemsWolves_LSTM_DQN.py is current game.
 1) separate out the running the scripts and the game script
 2) remove phantom code (scripts that no longer are used, imports that are not needed)
 3) Fix update epsilon code to be more general. Might need to have a new equation that fits all variants
-4) Add walls always uses the original wall size. Needs to be updated to use the wall size of current environment
 
 ------------------------------
 Version 0.1.1

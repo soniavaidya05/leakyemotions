@@ -160,4 +160,4 @@ for modRun in range(len(runParams)):
     save_models(models, save_dir, "newWolvesAndAgents" + str(modRun))
 
 
-makeVideo("test_new", save_dir, models, 15, env)
+makeVideo("test_new", save_dir, models, 50, env)
