@@ -18,7 +18,7 @@ from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
 from models.perception import agent_visualfield
 
 from game_utils import create_world, create_world_image
-from gemworld.gemsWolves import WolfsAndGems
+from oldFiles.gemsWolves_OLD_ACuses import WolfsAndGems
 
 import os
 

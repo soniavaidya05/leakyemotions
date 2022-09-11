@@ -20,7 +20,7 @@ from models.perception import agent_visualfield
 from game_utils import create_world, create_world_image
 
 # from gemworld.gemsWolvesDual import WolfsAndGemsDual
-from gemworld.gemsWolves import WolfsAndGems
+from oldFiles.gemsWolves_OLD_ACuses import WolfsAndGems
 
 import os
 

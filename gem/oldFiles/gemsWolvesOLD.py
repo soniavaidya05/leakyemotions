@@ -1,3 +1,4 @@
+# from gem.environment.elements import Agent, EmptyObject, Gem, Wall, Wolf
 from gem.environment.elements.agent import Agent
 from gem.environment.elements.element import EmptyObject, Wall
 from gem.environment.elements.gem import Gem
@@ -5,12 +6,8 @@ from gem.environment.elements.wolf import Wolf
 import numpy as np
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 from models.perception import agent_visualfield
-
-
-from utils import (
-    find_moveables,
-)
 
 
 class WolfsAndGems:
@@ -34,23 +31,22 @@ class WolfsAndGems:
         self.create_world(self.height, self.width, self.layers)
         self.init_elements()
         self.populate(self.gem1p, self.gem2p, self.wolf1p)
-        self.insert_walls(self.height, self.width)
+        self.insert_walls()
 
     def create_world(self, height=15, width=15, layers=1):
-        """
-        Creates a world of the specified size with a default object
-        """
+        # self.world = np.full((self.height, self.width, self.layers), self.defaultObject)
         self.world = np.full((height, width, layers), self.defaultObject)
 
     def reset_env(
         self, height=15, width=15, layers=1, gem1p=0.110, gem2p=0.04, wolf1p=0.005
     ):
-        """
-        Resets the environment and repopulates it
-        """
         self.create_world(height, width, layers)
         self.populate(gem1p, gem2p, wolf1p)
-        self.insert_walls(height, width)
+        self.insert_walls()
+        # needed because the previous version was resetting the replay buffer
+        # in the reset we should be able to make a bigger or smaller world
+        # right now the game is stuck in 15x15, and will want to start increasing
+        # the size of the world as the agents learn
 
     def plot(self, layer):  # is this defined in the master?
         """
@@ -140,52 +136,14 @@ class WolfsAndGems:
                 0,
             ] = Agent(0)
 
-    def insert_walls(self, height, width):
+    def insert_walls(self):
         """
         Inserts walls into the world.
         Assumes that the world is square - fixme.
         """
-        for i in range(height):
+        # wall = Wall()
+        for i in range(self.height):
             self.world[0, i, 0] = Wall()
-            self.world[height - 1, i, 0] = Wall()
+            self.world[self.height - 1, i, 0] = Wall()
             self.world[i, 0, 0] = Wall()
-            self.world[i, height - 1, 0] = Wall()
-
-    def step(self, models, game_points, epsilon=0.85, done=0):
-        """
-        Every agent takes a step
-        """
-        moveList = find_moveables(self.world)
-
-        for i, j in moveList:
-            """
-            Reset the rewards for the trial to be zero for all agents
-            """
-            self.world[i, j, 0].reward = 0
-
-        for i, j in moveList:
-
-            holdObject = self.world[i, j, 0]
-
-            if holdObject.static != 1:
-                """
-                This is where the agent will make a decision
-                """
-                input = models[holdObject.policy].pov(self.world, i, j, holdObject)
-                action = models[holdObject.policy].take_action([input, epsilon])
-
-            if holdObject.has_transitions == True:
-                """
-                Updates the world given an action
-                """
-                self.world, models, game_points = holdObject.transition(
-                    action,
-                    self.world,
-                    models,
-                    i,
-                    j,
-                    game_points,
-                    done,
-                    input,
-                )
-        return game_points
+            self.world[i, self.height - 1, 0] = Wall()

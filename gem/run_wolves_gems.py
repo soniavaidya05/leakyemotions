@@ -1,6 +1,6 @@
 from gem.DQN_utils import make_video, save_models
 
-from gem.gemsWolves_LSTM_DQN import run_game
+from gemsWolves_LSTM_DQN import run_game
 
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"

@@ -21,7 +21,7 @@ from gem.environment.elements.element import EmptyObject, Wall
 # from models.randomActions import modelRandomAction
 from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
 
-from gemworld.gemsWolves_experimental import WolfsAndGems
+from gemworld.gemsWolves import WolfsAndGems
 
 # import numpy as np
 import matplotlib.pyplot as plt

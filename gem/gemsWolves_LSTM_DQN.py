@@ -7,7 +7,7 @@ from gem.utils import (
 )
 from gem.environment.elements.element import EmptyObject, Wall
 from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
-from gemworld.gemsWolves_experimental import WolfsAndGems
+from gemworld.gemsWolves import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -59,14 +59,22 @@ def run_game(
     epochs=10000,
     max_turns=100,
 ):
+    """
+    This is the main loop of the game
+    """
     losses = 0
     game_points = [0, 0]
     for epoch in range(epochs):
+
+        """
+        Move each agent once and then update the world
+        Creates new gamepoints, resets agents, and runs one episode
+        """
+
         done, withinturn = 0, 0
 
         # create a new gameboard for each epoch and repopulate
         # the resset does allow for different params, but when the world size changes, odd
-        # TODO: need to look at why changing the world size keeps walls at the original location
         env.reset_env(
             height=world_size,
             width=world_size,
@@ -81,6 +89,9 @@ def run_game(
             env.world[i, j, 0].init_replay(3)
 
         while done == 0:
+            """
+            Find the agents and wolves and move them
+            """
             turn = turn + 1
             withinturn = withinturn + 1
 
@@ -99,23 +110,32 @@ def run_game(
                 done = 1
 
             if len(trainable_models) > 0:
+                """
+                Update the next state and rewards for the agents after all have moved
+                And then transfer the local memory to the model memory
+                """
                 # this updates the last memory to be the final state of the game board
                 env.world = update_memories(
                     models, env.world, find_moveables(env.world), done, end_update=True
                 )
+
                 # transfer the events for each agent into the appropriate model after all have moved
                 models = transfer_world_memories(
                     models, env.world, find_moveables(env.world)
                 )
 
             if withinturn % modelUpdate_freq == 0:
-                # trains all networks after modelUpdate_freq turns
+                """
+                Train the neural networks within a eposide at rate of modelUpdate_freq
+                """
                 for mods in trainable_models:
                     loss = models[mods].training(150, 0.9)
                     losses = losses + loss.detach().numpy()
 
-        # train at the end of each epoch
         for mods in trainable_models:
+            """
+            Train the neural networks at the end of eac epoch
+            """
             loss = models[mods].training(150, 0.9)
             losses = losses + loss.detach().numpy()
 
