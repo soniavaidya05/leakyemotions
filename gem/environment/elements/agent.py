@@ -2,7 +2,6 @@ from collections import deque
 from gem.environment.elements.element import EmptyObject
 import numpy as np
 import torch
-
 from gem.environment.elements.element import Wall
 
 
@@ -29,13 +28,29 @@ class Agent:
         exp = (image, 0, 0, image, 0)
         self.replay.append(exp)
 
-    def died(self):
+    def died(self, models, world, attLoc1, attLoc2, extraReward=True):
+        lastexp = world[attLoc1, attLoc2, 0].replay[-1]
+        world[attLoc1, attLoc2, 0].replay[-1] = (
+            lastexp[0],
+            lastexp[1],
+            -25,
+            lastexp[3],
+            1,
+        )
+
+        # TODO: Below is very clunky and a more principles solution needs to be found
+
+        models[world[attLoc1, attLoc2, 0].policy].transferMemories(
+            world, attLoc1, attLoc2, extraReward=True
+        )
+
         # this can only be used it seems if all agents have a different id
-        self.kind = "deadAgent"  # label the agents death
-        self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
-        self.trainable = 1  # whether there is a network to be optimized
-        self.justDied = True
-        self.static = 1
+        # self.kind = "deadAgent"  # label the agents death
+        # self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
+        # self.trainable = 0  # whether there is a network to be optimized
+        # self.justDied = True
+        # self.static = 1
+        # self.has_transitions = False
 
     def transition(
         self,
@@ -90,12 +105,6 @@ class Agent:
                 world[attLoc1, attLoc2, 0], Wall
             ):  # Replacing comparison with string 'kind'
                 reward = -0.1
-
-        # if expBuff == True:
-        #    input2 = models[self.policy].createInput(world, newLoc1, newLoc1, self)
-        #    exp = (input, action, reward, input2, done)
-        #    self.replay.append(exp)
-        #    self.reward += reward
 
         if expBuff == True:
             input2 = models[self.policy].pov(world, newLoc1, newLoc2, self)

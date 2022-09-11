@@ -83,51 +83,51 @@ class Wolf:
             if isinstance(world[attLoc1, attLoc2, 0], Agent):
                 reward = 10
                 gamePoints[1] = gamePoints[1] + 1
+                newVersion = 0
+                if newVersion == 0:
 
-                # update the last memory of the agent that was eaten
+                    # update the last memory of the agent that was eaten
 
-                lastexp = world[attLoc1, attLoc2, 0].replay[-1]
-                world[attLoc1, attLoc2, 0].replay[-1] = (
-                    lastexp[0],
-                    lastexp[1],
-                    -25,
-                    lastexp[3],
-                    1,
-                )
-
-                # TODO: Below is very clunky and a more principles solution needs to be found
-
-                if ModelType == "DQN":
-                    models[world[attLoc1, attLoc2, 0].policy].transferMemories(
-                        world, attLoc1, attLoc2, extraReward=True
+                    lastexp = world[attLoc1, attLoc2, 0].replay[-1]
+                    world[attLoc1, attLoc2, 0].replay[-1] = (
+                        lastexp[0],
+                        lastexp[1],
+                        -25,
+                        lastexp[3],
+                        1,
                     )
-                if ModelType == "AC":
-                    # note, put in the whole code for updatng an AC model here
-                    if len(world[attLoc1, attLoc2, 0].AC_value) > 0:
 
-                        finalReward = torch.tensor(-25).float().reshape(1, 1)
+                    # TODO: Below is very clunky and a more principles solution needs to be found
 
-                        if (
-                            world[attLoc1, attLoc2, 0].AC_reward.shape
-                            == world[attLoc1, attLoc2, 0].AC_value.shape
-                        ):
-                            world[attLoc1, attLoc2, 0].AC_reward[-1] = finalReward
-                        else:
-                            world[attLoc1, attLoc2, 0].AC_reward = torch.concat(
-                                [world[attLoc1, attLoc2, 0].AC_reward, finalReward]
-                            )
-                            models[
-                                world[attLoc1, attLoc2, 0].policy
-                            ].transferMemories_AC(world, attLoc1, attLoc2)
+                    if ModelType == "DQN":
+                        models[world[attLoc1, attLoc2, 0].policy].transferMemories(
+                            world, attLoc1, attLoc2, extraReward=True
+                        )
+                    if ModelType == "AC":
+                        # note, put in the whole code for updatng an AC model here
+                        if len(world[attLoc1, attLoc2, 0].AC_value) > 0:
 
-                world[attLoc1, attLoc2, 0] = DeadAgent()
-                # world[attLoc1, attLoc2, 0].died()
+                            finalReward = torch.tensor(-25).float().reshape(1, 1)
 
-        # if expBuff == True:
-        #    input2 = models[self.policy].createInput(world, newLoc1, newLoc1, self)
-        #    exp = (input, action, reward, input2, done)
-        #    self.replay.append(exp)
-        #    self.reward += reward
+                            if (
+                                world[attLoc1, attLoc2, 0].AC_reward.shape
+                                == world[attLoc1, attLoc2, 0].AC_value.shape
+                            ):
+                                world[attLoc1, attLoc2, 0].AC_reward[-1] = finalReward
+                            else:
+                                world[attLoc1, attLoc2, 0].AC_reward = torch.concat(
+                                    [world[attLoc1, attLoc2, 0].AC_reward, finalReward]
+                                )
+                                models[
+                                    world[attLoc1, attLoc2, 0].policy
+                                ].transferMemories_AC(world, attLoc1, attLoc2)
+
+                    world[attLoc1, attLoc2, 0] = DeadAgent()
+                if newVersion == 1:
+                    world = world[attLoc1, attLoc2, 0].died(
+                        models, world, attLoc1, attLoc2, extraReward=True
+                    )
+                    world[attLoc1, attLoc2, 0] = DeadAgent()
 
         if expBuff == True:
             input2 = models[self.policy].pov(world, newLoc1, newLoc2, self)

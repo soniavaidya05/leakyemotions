@@ -6,32 +6,13 @@ from gem.utils import (
     findAgents,
 )
 from gem.environment.elements.element import EmptyObject, Wall
-
-# from game_utils import createWorld, createWorldImage
-
-
-# from models.memory import Memory
-# from models.dqn import DQN, modelDQN
-# from models.randomActions import modelRandomAction
 from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
-
 from gemworld.gemsWolves_experimental import WolfsAndGems
-
-# import numpy as np
 import matplotlib.pyplot as plt
-
-# import matplotlib.animation as animation
 from astropy.visualization import make_lupton_rgb
-
 import torch.nn as nn
 import torch.nn.functional as F
-
-# from collections import deque
-
 from DQN_utils import createVideo, save_models, load_models
-
-import random
-import torch
 
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
@@ -50,8 +31,6 @@ def createModels():
 
 
 worldSize = 15
-epochs = 50000
-maxTurns = 100
 
 trainableModels = [0, 1]
 sync_freq = 500
@@ -122,7 +101,6 @@ def runGame(
 
             if len(trainableModels) > 0:
                 # this updates the last memory to be the final state of the game board
-                # TODO: endUpdate = False works, need to test endUpdate = True
                 env.world = updateMemories(
                     models, env.world, findMoveables(env.world), done, endUpdate=True
                 )
@@ -181,109 +159,3 @@ for modRun in range(len(runParams)):
         maxTurns=runParams[modRun][2],
     )
     save_models(models, save_dir, "newWolvesAndAgents" + str(modRun))
-
-
-"""
-SCRIPT TESTNG AREA BELOW
-TODO: Once stable these need to be moevd into DQN_utils.py
-"""
-
-
-def makeVideo(filename):
-    epoch = 10000
-    for video_num in range(5):
-        vfilename = (
-            save_dir
-            + filename
-            + "_replayVid_"
-            + str(epoch)
-            + "_"
-            + str(video_num)
-            + ".gif"
-        )
-        createVideo(models, worldSize, 100, env, filename=vfilename)
-
-
-def replayView(memoryNum, agentNumber, env):
-    agentList = findMoveables(env.world)
-    i, j = agentList[agentNumber]
-
-    Obj = env.world[i, j, 0]
-
-    state = Obj.replay[memoryNum][0]
-    next_state = Obj.replay[memoryNum][3]
-
-    state_RGB = state[:, -1, :, :, :].squeeze().permute(1, 2, 0).numpy()
-    image = make_lupton_rgb(
-        state_RGB[:, :, 0], state_RGB[:, :, 1], state_RGB[:, :, 2], stretch=0.5
-    )
-
-    next_state_RGB = next_state[:, -1, :, :, :].squeeze().permute(1, 2, 0).numpy()
-    imageNext = make_lupton_rgb(
-        next_state_RGB[:, :, 0],
-        next_state_RGB[:, :, 1],
-        next_state_RGB[:, :, 2],
-        stretch=0.5,
-    )
-
-    plt.subplot(1, 2, 1)
-    plt.imshow(image)
-    plt.subplot(1, 2, 2)
-    plt.imshow(imageNext)
-    plt.show()
-
-
-def replayViewModel(memoryNum, modelNumber, models):
-    state = models[modelNumber].replay[memoryNum][0]
-    next_state = models[modelNumber].replay[memoryNum][3]
-
-    state_RGB = state[:, -1, :, :, :].squeeze().permute(1, 2, 0).numpy()
-    image = make_lupton_rgb(
-        state_RGB[:, :, 0], state_RGB[:, :, 1], state_RGB[:, :, 2], stretch=0.5
-    )
-
-    next_state_RGB = next_state[:, -1, :, :, :].squeeze().permute(1, 2, 0).numpy()
-    imageNext = make_lupton_rgb(
-        next_state_RGB[:, :, 0],
-        next_state_RGB[:, :, 1],
-        next_state_RGB[:, :, 2],
-        stretch=0.5,
-    )
-
-    plt.subplot(1, 2, 1)
-    plt.imshow(image)
-    plt.subplot(1, 2, 2)
-    plt.imshow(imageNext)
-    plt.show()
-    print(
-        models[modelNumber].replay[memoryNum][1],
-        models[modelNumber].replay[memoryNum][2],
-        models[modelNumber].replay[memoryNum][4],
-    )
-
-
-def createData(env, models, epochs):
-    gamePoints = [0, 0]
-    env.reset_env(worldSize, worldSize)
-    for i, j in findMoveables(env.world):
-        env.world[i, j, 0].init_replay(3)
-    for _ in range(epochs):
-        gamePoints = env.step(models, gamePoints)
-    return env
-
-
-x = findMoveables(env.world)
-i, j = x[0]
-len(env.world[i, j, 0].replay)
-
-
-replayViewModel(memoryNum=4, modelNumber=0, models=models)
-replayView(memoryNum=4, agentNumber=0, env=env)
-
-for i in range(40):
-    replayViewModel(memoryNum=i, modelNumber=0, models=models)
-
-for i in range(40):
-    replayView(memoryNum=i, agentNumber=0, env=env)
-
-makeVideo("test")
