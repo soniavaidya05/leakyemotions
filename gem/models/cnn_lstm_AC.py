@@ -79,7 +79,7 @@ class Combine_CLD_AC(nn.Module):
         return actor, critic
 
 
-class model_CNN_LSTM_AC:
+class Model_CNN_LSTM_AC:
 
     kind = "cnn_lstm_AC"  # class variable shared by all instances
 

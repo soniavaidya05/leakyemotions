@@ -6,13 +6,13 @@ from gem.utils import (
     findAgents,
 )
 from gem.environment.elements.element import EmptyObject, Wall
-from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
+from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
 from gemworld.gemsWolves_experimental import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
-from DQN_utils import save_models, load_models, makeVideo
+from DQN_utils import save_models, load_models, make_video
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
@@ -24,8 +24,8 @@ def createModels():
     in this function. Below should fully set up the NN in a flexible way for the studies
     """
     models = []
-    models.append(model_CNN_LSTM_DQN(5, 0.0001, 1000, 650, 75, 30, 4))  # agent model
-    models.append(model_CNN_LSTM_DQN(5, 0.0001, 1000, 2570, 150, 30, 4))  # wolf model
+    models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 650, 75, 30, 4))  # agent model
+    models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 2570, 150, 30, 4))  # wolf model
     return models
 
 
@@ -160,4 +160,4 @@ for modRun in range(len(runParams)):
     save_models(models, save_dir, "newWolvesAndAgents" + str(modRun))
 
 
-makeVideo("test_new", save_dir, models, 50, env)
+make_video("test_new", save_dir, models, 50, env)

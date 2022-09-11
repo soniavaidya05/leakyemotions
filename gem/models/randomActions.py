@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 
 
-class modelRandomAction:
+class ModelRandomAction:
 
     kind = "randomAction"  # class variable shared by all instances
 

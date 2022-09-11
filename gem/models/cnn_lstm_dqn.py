@@ -66,7 +66,7 @@ class Combine_CLD(nn.Module):
         return y
 
 
-class model_CNN_LSTM_DQN:
+class Model_CNN_LSTM_DQN:
 
     kind = "cnn_lstm_dqn"  # class variable shared by all instances
 

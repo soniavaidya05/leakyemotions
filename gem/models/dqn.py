@@ -43,7 +43,7 @@ class DQN(nn.Module):
         return value
 
 
-class modelDQN:
+class ModelDQN:
 
     kind = "double_dqn"  # class variable shared by all instances
 

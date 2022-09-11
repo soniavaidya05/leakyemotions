@@ -11,7 +11,7 @@ from gem.utils import (
 )
 
 
-def createVideo(models, worldSize, num, env, filename="unnamed_video.gif"):
+def create_video(models, worldSize, num, env, filename="unnamed_video.gif"):
     fig = plt.figure()
     ims = []
     env.reset_env(worldSize, worldSize)
@@ -44,7 +44,7 @@ def load_models(save_dir, filename):
     return model
 
 
-def makeVideo(filename, save_dir, models, worldSize, env):
+def make_video(filename, save_dir, models, worldSize, env):
     epoch = 10000
     for video_num in range(5):
         vfilename = (
@@ -56,10 +56,10 @@ def makeVideo(filename, save_dir, models, worldSize, env):
             + str(video_num)
             + ".gif"
         )
-        createVideo(models, worldSize, 100, env, filename=vfilename)
+        create_video(models, worldSize, 100, env, filename=vfilename)
 
 
-def replayView(memoryNum, agentNumber, env):
+def replay_view(memoryNum, agentNumber, env):
     agentList = findMoveables(env.world)
     i, j = agentList[agentNumber]
 
@@ -88,7 +88,7 @@ def replayView(memoryNum, agentNumber, env):
     plt.show()
 
 
-def replayViewModel(memoryNum, modelNumber, models):
+def replay_view_model(memoryNum, modelNumber, models):
     state = models[modelNumber].replay[memoryNum][0]
     next_state = models[modelNumber].replay[memoryNum][3]
 
@@ -117,7 +117,7 @@ def replayViewModel(memoryNum, modelNumber, models):
     )
 
 
-def createData(env, models, epochs, worldSize):
+def create_data(env, models, epochs, worldSize):
     gamePoints = [0, 0]
     env.reset_env(worldSize, worldSize)
     for i, j in findMoveables(env.world):

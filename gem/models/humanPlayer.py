@@ -11,7 +11,7 @@ from models.perception import agentVisualField
 import matplotlib.pyplot as plt
 
 
-class modelClassPlayer:
+class ModelClassPlayer:
 
     kind = "humanPlayer"  # class variable shared by all instances
 
