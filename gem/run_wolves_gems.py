@@ -1,9 +1,16 @@
 from gem.DQN_utils import make_video, save_models
 
-from gem.gemsWolves_LSTM_DQN import run_game
+from gem.gemsWolves_LSTM_DQN import setup_game, run_game
 
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+
+# needs a dictionary with the following keys:
+# turn, trainable_models, sync_freq, modelUpdate_freq
+
+# below needs to be written
+env, epsilon, params = setup_game(world_size=15)
+
 
 run_params = (
     [0.9, 1000, 5],
@@ -16,6 +23,7 @@ run_params = (
     [0.2, 20000, 50],
 )
 
+# the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
     models, env, turn, epsilon = run_game(
         models,

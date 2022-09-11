@@ -5,6 +5,7 @@ gemsWolves_LSTM_DQN.py is current game.
 
 1) remove phantom code (scripts that no longer are used, imports that are not needed)
 2) Fix update epsilon code to be more general. Might need to have a new equation that fits all variants
+3) run_wolves_gems.py started, but needs to be completed
 
 ------------------------------
 Version 0.1.1
