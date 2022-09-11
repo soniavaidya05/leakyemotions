@@ -85,7 +85,7 @@ class WolfsAndGems:
         self.emptyObject = EmptyObject()
         self.walls = Wall()
 
-    def gameTest(self, layer=0):
+    def game_test(self, layer=0):
         """
         Prints one frame to check game instance parameters
         """

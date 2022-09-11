@@ -77,7 +77,7 @@ env = WolfsAndGems(
     gem2p=0.02,
     wolf1p=0,
 )
-env.gameTest()
+env.game_test()
 
 
 def runGame(

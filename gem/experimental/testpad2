@@ -60,7 +60,7 @@ for i, j in moveList:
     env.world[i, j, 0].AC_reward = torch.tensor([])
 
 
-env.gameTest()
+env.game_test()
 models = create_models()
 env.step(models)
 
@@ -307,10 +307,10 @@ models, env = addTrain_wolf_gem(models, epochs=10000)
 save_models(models, save_dir, "AC_LSTM_50000_tp", 5)
 # print(min(models[0].rewards))
 # print(min(models[0].Returns))
-# env.gameTest()
+# env.game_test()
 
 # env.reset_env(20, 20)
-# env.gameTest()
+# env.game_test()
 
 reward_batch_0 = torch.Tensor([r for (s1, a, r, s2, d) in models[0].replay])
 reward_batch_1 = torch.Tensor([r for (s1, a, r, s2, d) in models[1].replay])

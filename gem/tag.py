@@ -100,7 +100,7 @@ def plotWorld(world):
     plt.show()
 
 
-def gameTest(world_size):
+def game_test(world_size):
     world = createTagWorld(world_size)
     image = create_world_image(world)
 

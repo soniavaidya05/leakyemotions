@@ -55,7 +55,7 @@ def playGame(
     sync_freq = 500
     modelUpdate_freq = 10
     env = WolfsAndGems(world_size, world_size)
-    env.gameTest()
+    env.game_test()
 
     if trainModels == False:
         fig = plt.figure()
@@ -63,7 +63,7 @@ def playGame(
 
     for epoch in range(epochs):
         env.reset_env(world_size, world_size)
-        env.gameTest()
+        env.game_test()
 
         done = 0
         withinturn = 0
@@ -216,10 +216,10 @@ def trainModel(models, epochs=1, epsilon=0.85):
 
 models = create_models()
 models, env = trainModel(models)
-env.gameTest()
+env.game_test()
 
 env.reset_env(25, 25)
-env.gameTest()
+env.game_test()
 
 reward_batch_0 = torch.Tensor([r for (s1, a, r, s2, d) in models[0].replay])
 reward_batch_1 = torch.Tensor([r for (s1, a, r, s2, d) in models[1].replay])

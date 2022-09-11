@@ -48,10 +48,10 @@ env = WolfsAndGems(
     gem2p=0.02,
     wolf1p=0.01,
 )
-env.gameTest()
+env.game_test()
 
 
-def runGame(
+def run_game(
     models,
     env,
     turn,
@@ -149,7 +149,7 @@ run_params = (
 )
 
 for modRun in range(len(run_params)):
-    models, env, turn, epsilon = runGame(
+    models, env, turn, epsilon = run_game(
         models,
         env,
         turn,
