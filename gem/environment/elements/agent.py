@@ -124,6 +124,9 @@ class Agent:
                 reward = -0.1
 
         if update_experience_buffer == True:
+            """
+            Put the transition into the experience buffer
+            """
             input2 = models[self.policy].pov(world, new_locaton_1, new_locaton_2, self)
             exp = (input, action, reward, input2, done)
             self.replay.append(exp)

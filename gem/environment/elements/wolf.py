@@ -93,6 +93,11 @@ class Wolf:
             if isinstance(world[attempted_locaton_1, attempted_locaton_2, 0], Wall):
                 reward = -0.1
             if isinstance(world[attempted_locaton_1, attempted_locaton_2, 0], Agent):
+                """
+                If the wolf and the agent are in the same location, the agent dies.
+                In addition to giving the wolf a reward, the agent also gets a punishment.
+                TODO: This needs to be updated to be in the Agent class rather than here
+                """
                 reward = 10
                 game_points[1] = game_points[1] + 1
                 newVersion = 0
@@ -177,6 +182,9 @@ class Wolf:
                     world[attempted_locaton_1, attempted_locaton_2, 0] = DeadAgent()
 
         if update_experience_buffer == True:
+            """
+            Put the transition into the experience buffer
+            """
             input2 = models[self.policy].pov(world, new_locaton_1, new_locaton_2, self)
             exp = (input, action, reward, input2, done)
             self.replay.append(exp)
