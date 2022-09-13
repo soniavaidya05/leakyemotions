@@ -162,7 +162,14 @@ def run_game(
 
         if epoch % 100 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
-            print(epoch, withinturn, game_points, losses, epsilon)
+            print(
+                epoch,
+                withinturn,
+                round(game_points[0]),
+                round(game_points[1]),
+                losses,
+                epsilon,
+            )
             game_points = [0, 0]
             losses = 0
     return models, env, turn, epsilon
