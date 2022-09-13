@@ -134,6 +134,53 @@ class Agent:
 
         return world, models, game_points
 
+    def transitionSingle(self, world, models, action, location):
+        i, j, k = location
+        done = 0
+
+        new_locaton_1 = i
+        new_locaton_2 = j
+
+        # this should not be needed below, but getting errors
+        # it is possible that this is fixed now with the
+        # other changes that have been made
+        attempted_locaton_1 = i
+        attempted_locaton_2 = j
+
+        reward = 0
+
+        if action == 0:
+            attempted_locaton_1 = i - 1
+            attempted_locaton_2 = j
+
+        if action == 1:
+            attempted_locaton_1 = i + 1
+            attempted_locaton_2 = j
+
+        if action == 2:
+            attempted_locaton_1 = i
+            attempted_locaton_2 = j - 1
+
+        if action == 3:
+            attempted_locaton_1 = i
+            attempted_locaton_2 = j + 1
+
+        if world[attempted_locaton_1, attempted_locaton_2, 0].passable == 1:
+            world[i, j, 0] = EmptyObject()
+            reward = world[attempted_locaton_1, attempted_locaton_2, 0].value
+            world[attempted_locaton_1, attempted_locaton_2, 0] = self
+            new_locaton_1 = attempted_locaton_1
+            new_locaton_2 = attempted_locaton_2
+        else:
+            if isinstance(
+                world[attempted_locaton_1, attempted_locaton_2, 0], Wall
+            ):  # Replacing comparison with string 'kind'
+                reward = -0.1
+
+        next_state = models[self.policy].pov(world, new_locaton_1, new_locaton_2, self)
+
+        return world, reward, next_state, done, (new_locaton_1, new_locaton_2, 0)
+
 
 class DeadAgent:
     """

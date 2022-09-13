@@ -48,6 +48,9 @@ Things that need to be done
       
       The params could have the extra stuff, like Value and logprobs if an actor critic model
       This could allow the game to look more like openAI gym
+
+      A test version of this has been created in gemsWorld_LSTM_DQN_experimental.py
+        It uses env.stepSingle and agent.transitionsSingle instead of env.step and agent.transitions
       
 
 

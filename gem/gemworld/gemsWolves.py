@@ -221,7 +221,9 @@ class WolfsAndGems:
             if going for this, the pov statement needs to know about location rather than separate
             i and j variables
             """
-            state = models[holdObject.policy].pov(self.world, location, holdObject)
+            state = models[holdObject.policy].pov(
+                self.world, location[0], location[1], holdObject
+            )
             action = models[holdObject.policy].take_action([state, epsilon])
 
         if holdObject.has_transitions == True:
@@ -229,12 +231,17 @@ class WolfsAndGems:
             Updates the world given an action
             TODO: does this need self.world in here, or can it be figured out by passing self?
             """
-            self.world, reward, next_state, done = holdObject.transitionSingle(
-                self.world, action, location
-            )
+            (
+                self.world,
+                reward,
+                next_state,
+                done,
+                newLocation,
+            ) = holdObject.transitionSingle(self.world, models, action, location)
         else:
             reward = 0
             next_state = state
+
         additional_output = []
 
-        return state, action, reward, next_state, done, additional_output
+        return state, action, reward, next_state, done, newLocation, additional_output
