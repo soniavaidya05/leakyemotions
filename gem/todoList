@@ -35,6 +35,20 @@ Things that need to be done
         self.trainable = 0  # whether there is a network to be optimized
         self.static = 1
 
-        NOTE: this is attempted as version 0 and 1 in wolf.py, but the agent.died 
-        is not working properly. This needs to be looked at.
+        NOTE: this is attempted as version 0 and 1 in wolf.py, but the agent.died is not working properly. This needs to be looked at.
+        
+ 9) this is a big question. Currently env.step() does everyone. Requires a bunch of inputs and arbitrary outputs. Alternatively, we can loop through the steps for each 
+    agent. So, like (this is not real code, but the idea)
+    
+      for agent in range(len(agentList)):
+        state, action, reward, next_step, done, params = env.step(agent)
+        agent.updateReplay(state, action, reward, next_step, done) # for DQN
+      updateMemories(allAgents) # puts the last state into the replay
+      models.train
+      
+      The params could have the extra stuff, like Value and logprobs if an actor critic model
+      This could allow the game to look more like openAI gym
+      
+
+
         
