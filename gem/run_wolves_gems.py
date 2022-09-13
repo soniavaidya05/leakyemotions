@@ -1,6 +1,6 @@
 from gem.DQN_utils import make_video, save_models
 
-from gemsWolves_LSTM_DQN import run_game
+from gemsWolves_LSTM_DQN import run_game, create_models
 
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
@@ -11,6 +11,8 @@ save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # below needs to be written
 # env, epsilon, params = setup_game(world_size=15)
 
+
+models = create_models()
 
 run_params = (
     [0.9, 1000, 5],
