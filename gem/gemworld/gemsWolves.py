@@ -227,9 +227,10 @@ class WolfsAndGems:
         if holdObject.has_transitions == True:
             """
             Updates the world given an action
+            TODO: does this need self.world in here, or can it be figured out by passing self?
             """
             self.world, reward, next_state, done = holdObject.transitionSingle(
-                action, self.world, location
+                self.world, action, location
             )
         else:
             reward = 0
