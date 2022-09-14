@@ -14,6 +14,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from DQN_utils import save_models, load_models, make_video
 
+import random
+
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
 
@@ -102,7 +104,10 @@ def run_game(
                         models[mods].model1.state_dict()
                     )
 
-            for i, j in find_moveables(env.world):
+            agentList = find_moveables(env.world)
+            random.shuffle(agentList)
+
+            for i, j in agentList:
                 if env.world[i, j, 0].static != 1:
                     (
                         state,

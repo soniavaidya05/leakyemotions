@@ -6,7 +6,7 @@ import numpy as np
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
 from models.perception import agent_visualfield
-
+import random
 
 from utils import (
     find_moveables,
@@ -156,6 +156,7 @@ class WolfsAndGems:
         Every agent takes a step
         """
         moveList = find_moveables(self.world)
+        random.shuffle(moveList)
 
         for i, j in moveList:
             """
