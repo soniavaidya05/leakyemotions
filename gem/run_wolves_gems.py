@@ -25,6 +25,12 @@ run_params = (
     [0.2, 20000, 50],
 )
 
+run_params = (
+    [0.6, 10000, 35],
+    [0.2, 10000, 35],
+    [0.2, 20000, 50],
+)
+
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
     models, env, turn, epsilon = run_game(
