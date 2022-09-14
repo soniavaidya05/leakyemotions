@@ -52,6 +52,6 @@ Things that need to be done
       A test version of this has been created in gemsWorld_LSTM_DQN_experimental.py
         It uses env.stepSingle and agent.transitionsSingle instead of env.step and agent.transitions
       
-
-
+10) throughout, need to change i, j, 0 to location which is i, j, k (or height, width, layer)
+    so that when we have more layers, the code still works
         
