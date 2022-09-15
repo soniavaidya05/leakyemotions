@@ -108,7 +108,15 @@ def run_game(
             random.shuffle(agentList)
 
             for i, j in agentList:
+                """
+                Reset the rewards for the trial to be zero for all agents
+                """
+                env.world[i, j, 0].reward = 0
+
+            for i, j in agentList:
+
                 if env.world[i, j, 0].static != 1:
+
                     (
                         state,
                         action,
