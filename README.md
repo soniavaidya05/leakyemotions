@@ -15,7 +15,7 @@ Our hope is that Gem will foster new research ideas, applications, and tools for
 
 ## Development
 
-**NOTE**: We recommend you do follow these instructions in a fresh conda/virtual environment to keep packages isolated from other environments and/or Python versions. Python 3.9+ is required. If you have conda, run
+**NOTE**: We recommend you follow these instructions in a fresh conda/virtual environment to keep packages isolated from other environments and/or Python versions. Python 3.9+ is required. If you have conda, run
 ```
 conda create --name gem python=3.9
 conda activate gem
