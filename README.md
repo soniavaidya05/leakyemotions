@@ -14,16 +14,39 @@ Our hope is that Gem will foster new research ideas, applications, and tools for
 ### NOTE: Gem is extremely experimental and subject to change!
 
 ## Development
-Gem uses the [poetry](https://python-poetry.org/) package manager to manage its dependencies. To install gem in development mode, run the following command:
+
+**NOTE**: We recommend you do follow these instructions in a fresh conda/virtual environment to keep packages isolated from other environments and/or Python versions. Python 3.9+ is required. If you have conda, run
 ```
-conda create --name socialai python=3.9
-conda activate socialai
-pip install poetry && poetry env use system && poetry install
+conda create --name gem python=3.9
+conda activate gem
 ```
-in the folder containing the ``pyproject.toml`` file.
+
+### Getting started
+
+Gem uses the [poetry](https://python-poetry.org/) package manager to manage its dependencies. Start by installing poetry by running ``pip install poetry``. To install gem in development mode, run the following command:
+```
+poetry install
+```
+in the folder containing the ``pyproject.toml`` file. 
 
 See the [poetry](https://python-poetry.org/) documentation for more information and
 installation instructions.
+
+
+### Workflow Tools
+We use a number of tools to simplify the development workflow for contributors. Among these tools include code formatters and linters (such as [autopep8](https://pypi.python.org/pypi/autopep8) and [flake8](https://pypi.python.org/pypi/flake8)) to report style errors and (try to) automatically format your code wherever possible, along with testing frameworks (such as [pytest](https://pypi.python.org/pypi/pytest)) to automatically test the code.
+
+Though you may manually run these tools, we include a [pre-commit](https://pre-commit.com/) configuration to automatically run all CI tasks whenever you attempt to commit to the Gem repository. **We highly recommend you use pre-commit as pull requests will NOT be merged unless you pass ALL CI checks (including the pre-commit CI check).**
+
+To setup pre-commit, start by confirming that its installed by running:
+```
+pre-commit --version
+```
+If this fails, you'll need to install pre-commit by running ``pip install pre-commit``. Then, run
+```
+pre-commit install
+```
+in the folder containing ``.pre-commit-config.yaml`` file. Now pre-commit will run automatically on every ``git commit``!
 
 ## Citing the project
 
