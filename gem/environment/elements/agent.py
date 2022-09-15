@@ -171,6 +171,7 @@ class Agent:
             world[attempted_locaton_1, attempted_locaton_2, 0] = self
             new_locaton_1 = attempted_locaton_1
             new_locaton_2 = attempted_locaton_2
+
         else:
             if isinstance(
                 world[attempted_locaton_1, attempted_locaton_2, 0], Wall
@@ -178,6 +179,7 @@ class Agent:
                 reward = -0.1
 
         next_state = models[self.policy].pov(world, new_locaton_1, new_locaton_2, self)
+        self.reward += reward
 
         return world, reward, next_state, done, (new_locaton_1, new_locaton_2, 0)
 

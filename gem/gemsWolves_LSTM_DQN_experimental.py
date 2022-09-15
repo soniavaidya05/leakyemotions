@@ -121,6 +121,7 @@ def run_game(
                     env.world[newLocation].replay.append(
                         (state, action, reward, next_state, done)
                     )
+
                     if env.world[newLocation].kind == "agent":
                         game_points[0] = game_points[0] + reward
                     if env.world[newLocation].kind == "wolf":
