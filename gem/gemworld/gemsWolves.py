@@ -182,9 +182,7 @@ class WolfsAndGems:
             if going for this, the pov statement needs to know about location rather than separate
             i and j variables
             """
-            state = models[holdObject.policy].pov(
-                self.world, location[0], location[1], holdObject
-            )
+            state = models[holdObject.policy].pov(self.world, location, holdObject)
             action = models[holdObject.policy].take_action([state, epsilon])
 
         if holdObject.has_transitions == True:

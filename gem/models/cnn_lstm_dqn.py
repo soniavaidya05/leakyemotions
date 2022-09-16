@@ -81,7 +81,7 @@ class Model_CNN_LSTM_DQN:
         self.replay = deque([], maxlen=replaySize)
         self.sm = nn.Softmax(dim=1)
 
-    def pov(self, world, i, j, holdObject):
+    def pov(self, world, location, holdObject):
         """
         Creates outputs of a single frame, and also a multiple image sequence
         TODO: (1) need to get createInput and createInput2 into one function
@@ -91,13 +91,13 @@ class Model_CNN_LSTM_DQN:
         TODO: check to make sure this is right
         TODO: get rid of the holdObject input throughout the code
         """
-        # holdObject = world[i, j, 0]
+
         previous_state = holdObject.replay[-1][0]
         current_state = previous_state.clone()
 
         current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
 
-        img = agent_visualfield(world, (i, j), holdObject.vision)
+        img = agent_visualfield(world, location, holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         state_now = input.unsqueeze(0)
 

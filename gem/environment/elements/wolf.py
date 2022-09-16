@@ -102,7 +102,9 @@ class Wolf:
                 #    )
                 world[attempted_locaton_1, attempted_locaton_2, 0] = DeadAgent()
 
-        next_state = models[self.policy].pov(world, new_locaton_1, new_locaton_2, self)
+        new_location = (new_locaton_1, new_locaton_2, 0)
+
+        next_state = models[self.policy].pov(world, new_location, self)
         self.reward += reward
 
-        return world, reward, next_state, done, (new_locaton_1, new_locaton_2, 0)
+        return world, reward, next_state, done, new_location
