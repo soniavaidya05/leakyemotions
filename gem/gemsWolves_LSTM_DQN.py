@@ -86,9 +86,10 @@ def run_game(
             wolf1p=0.01,
         )
         for i, j in find_moveables(env.world):
+            location = (i, j, 0)  # fix the function
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[i, j, 0].init_replay(3)
+            env.world[location].init_replay(3)
 
         while done == 0:
             """
@@ -111,12 +112,13 @@ def run_game(
                 """
                 Reset the rewards for the trial to be zero for all agents
                 """
-                env.world[i, j, 0].reward = 0
+                location = (i, j, 0)
+                env.world[location].reward = 0
 
             for i, j in agentList:
                 k = 0  # this is what needs to be generalized so all functions make i, j, k
                 location = (i, j, k)
-                if env.world[i, j, 0].static != 1:
+                if env.world[location].static != 1:
 
                     (
                         state,

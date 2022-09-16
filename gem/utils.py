@@ -12,6 +12,7 @@ def one_hot(N, pos, val=1):
 
 
 def find_moveables(world):
+    # needs to be rewriien to return location (i, j, k)
     moveList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
@@ -21,6 +22,7 @@ def find_moveables(world):
 
 
 def find_trainables(world):
+    # needs to be rewriien to return location (i, j, k)
     trainList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
@@ -31,6 +33,7 @@ def find_trainables(world):
 
 # we will want to have a single "find" script that takes as input what you are looking for and finds those objects
 def find_agents_tag(world):
+    # needs to be rewriien to return location (i, j, k)
     print(
         "the find_agents_tag function will be deleted soon. Please update to find_instance"
     )
@@ -43,6 +46,7 @@ def find_agents_tag(world):
 
 
 def find_agents(world):
+    # needs to be rewriien to return location (i, j, k)
     agentList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
@@ -52,6 +56,7 @@ def find_agents(world):
 
 
 def find_instance(world, kind):
+    # needs to be rewriien to return location (i, j, k)
     instList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
