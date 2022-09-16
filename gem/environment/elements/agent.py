@@ -109,12 +109,12 @@ class Agent:
                 world[attempted_locaton_1, attempted_locaton_2, 0], Wall
             ):  # Replacing comparison with string 'kind'
                 reward = -0.1
-        new_location = (new_locaton_1, new_locaton_2, 0)
+        new_loc = (new_locaton_1, new_locaton_2, 0)
 
-        next_state = models[self.policy].pov(world, new_location, self)
+        next_state = models[self.policy].pov(world, new_loc, self)
         self.reward += reward
 
-        return world, reward, next_state, done, new_location
+        return world, reward, next_state, done, new_loc
 
 
 class DeadAgent:

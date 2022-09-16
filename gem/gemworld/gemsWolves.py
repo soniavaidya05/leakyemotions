@@ -194,7 +194,7 @@ class WolfsAndGems:
                 reward,
                 next_state,
                 done,
-                newLocation,
+                new_loc,
             ) = holdObject.transition(self.world, models, action, loc)
         else:
             reward = 0
@@ -202,4 +202,4 @@ class WolfsAndGems:
 
         additional_output = []
 
-        return state, action, reward, next_state, done, newLocation, additional_output
+        return state, action, reward, next_state, done, new_loc, additional_output

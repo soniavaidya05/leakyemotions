@@ -122,17 +122,17 @@ def run_game(
                         reward,
                         next_state,
                         done,
-                        newLocation,
+                        new_loc,
                         info,
                     ) = env.step(models, loc, epsilon)
 
-                    env.world[newLocation].replay.append(
+                    env.world[new_loc].replay.append(
                         (state, action, reward, next_state, done)
                     )
 
-                    if env.world[newLocation].kind == "agent":
+                    if env.world[new_loc].kind == "agent":
                         game_points[0] = game_points[0] + reward
-                    if env.world[newLocation].kind == "wolf":
+                    if env.world[new_loc].kind == "wolf":
                         game_points[1] = game_points[1] + reward
 
             # determine whether the game is finished (either max length or all agents are dead)
