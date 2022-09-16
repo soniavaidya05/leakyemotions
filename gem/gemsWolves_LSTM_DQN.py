@@ -114,7 +114,8 @@ def run_game(
                 env.world[i, j, 0].reward = 0
 
             for i, j in agentList:
-
+                k = 0  # this is what needs to be generalized so all functions make i, j, k
+                location = (i, j, k)
                 if env.world[i, j, 0].static != 1:
 
                     (
@@ -125,7 +126,7 @@ def run_game(
                         done,
                         newLocation,
                         info,
-                    ) = env.stepSingle(models, (i, j, 0), epsilon)
+                    ) = env.stepSingle(models, location, epsilon)
 
                     env.world[newLocation].replay.append(
                         (state, action, reward, next_state, done)
