@@ -1,6 +1,6 @@
 from gem.DQN_utils import make_video, save_models
 
-from gemsWolves_LSTM_DQN import run_game, create_models
+from oldFiles.gemsWolves_LSTM_DQN import run_game, create_models
 
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
@@ -25,11 +25,6 @@ run_params = (
     [0.2, 20000, 50],
 )
 
-run_params = (
-    [0.6, 10000, 35],
-    [0.2, 10000, 35],
-    [0.2, 20000, 50],
-)
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):

@@ -14,8 +14,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from DQN_utils import save_models, load_models, make_video
 
-import random
-
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
 
@@ -104,36 +102,8 @@ def run_game(
                         models[mods].model1.state_dict()
                     )
 
-            agentList = find_moveables(env.world)
-            random.shuffle(agentList)
-
-            for i, j in agentList:
-                """
-                Reset the rewards for the trial to be zero for all agents
-                """
-                env.world[i, j, 0].reward = 0
-
-            for i, j in agentList:
-
-                if env.world[i, j, 0].static != 1:
-
-                    (
-                        state,
-                        action,
-                        reward,
-                        next_state,
-                        done,
-                        newLocation,
-                        additional_output,
-                    ) = env.stepSingle(models, (i, j, 0), epsilon)
-                    env.world[newLocation].replay.append(
-                        (state, action, reward, next_state, done)
-                    )
-
-                    if env.world[newLocation].kind == "agent":
-                        game_points[0] = game_points[0] + reward
-                    if env.world[newLocation].kind == "wolf":
-                        game_points[1] = game_points[1] + reward
+            # take one step of the game for all agents
+            game_points = env.step(models, game_points, epsilon)
 
             # determine whether the game is finished (either max length or all agents are dead)
             if withinturn > max_turns or len(find_agents(env.world)) == 0:
@@ -176,14 +146,7 @@ def run_game(
 
         if epoch % 100 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
-            print(
-                epoch,
-                withinturn,
-                round(game_points[0]),
-                round(game_points[1]),
-                losses,
-                epsilon,
-            )
+            print(epoch, withinturn, game_points, losses, epsilon)
             game_points = [0, 0]
             losses = 0
     return models, env, turn, epsilon
@@ -211,6 +174,7 @@ run_params = (
     [0.2, 20000, 50],
 )
 
+
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
     models, env, turn, epsilon = run_game(
@@ -221,7 +185,7 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(models, save_dir, "newWolvesAndAgents_experimental" + str(modRun))
+    save_models(models, save_dir, "newWolvesAndAgents2" + str(modRun))
 
 
-make_video("test_new_experimental", save_dir, models, 20, env)
+make_video("test_new2", save_dir, models, 20, env)
