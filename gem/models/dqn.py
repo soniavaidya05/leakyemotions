@@ -127,12 +127,12 @@ class ModelDQN:
         """
         self.model2.load_state_dict(self.model1.state_dict())
 
-    def transfer_memories(self, world, i, j, extra_reward=True):
+    def transfer_memories(self, world, loc, extra_reward=True):
         """
         Transfer the events from agent memory to model replay
         """
 
-        exp = world[i, j, 0].replay[-1]
+        exp = world[loc].replay[-1]
         self.replay.append(exp)
         if extra_reward == True and abs(exp[2]) > 9:
             for _ in range(5):

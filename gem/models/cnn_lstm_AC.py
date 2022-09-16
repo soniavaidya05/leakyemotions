@@ -180,7 +180,7 @@ class Model_CNN_LSTM_AC:
         """
         pass
 
-    def transfer_memories(self, world, i, j, extra_reward=True, seqLength=5):
+    def transfer_memories(self, world, loc, extra_reward=True, seqLength=5):
         """
         Transfer the indiviu=dual memories to the model
         TODO: A second function is written below because the inputs for
@@ -189,7 +189,7 @@ class Model_CNN_LSTM_AC:
         """
         pass
 
-    def transfer_memories_AC(self, world, i, j):
+    def transfer_memories_AC(self, world, loc):
         """
         Transfer the indiviu=dual memories to the model
         TODO: A second function is written below because the inputs for
@@ -197,9 +197,9 @@ class Model_CNN_LSTM_AC:
               code that one generic set of functions will work
         TODO: Gamma should be passed into this model rather than being predefined
         """
-        rewards = world[i, j, 0].AC_reward.flip(dims=(0,)).view(-1)
-        logprobs = world[i, j, 0].AC_logprob.flip(dims=(0,)).view(-1)
-        values = world[i, j, 0].AC_value.flip(dims=(0,)).view(-1)
+        rewards = world[loc].AC_reward.flip(dims=(0,)).view(-1)
+        logprobs = world[loc].AC_logprob.flip(dims=(0,)).view(-1)
+        values = world[loc].AC_value.flip(dims=(0,)).view(-1)
 
         gamma = 0.8
         # gamma = 0.95

@@ -55,7 +55,7 @@ class Agent:
         models[
             world[attempted_locaton_1, attempted_locaton_2, 0].policy
         ].transfer_memories(
-            world, attempted_locaton_1, attempted_locaton_2, extra_reward=True
+            world, (attempted_locaton_1, attempted_locaton_2, 0), extra_reward=True
         )
 
         # this can only be used it seems if all agents have a different id

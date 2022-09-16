@@ -151,7 +151,7 @@ class WolfsAndGems:
             self.world[i, 0, 0] = Wall()
             self.world[i, height - 1, 0] = Wall()
 
-    def step(self, models, location, epsilon=0.85):
+    def step(self, models, loc, epsilon=0.85):
         """
         This is an example script for an alternative step function
         It does not account for the fact that an agent can die before
@@ -170,7 +170,6 @@ class WolfsAndGems:
             env.WorldUpdate()
 
         """
-        loc = location[0], location[1], location[2]
         holdObject = self.world[loc]
 
         if holdObject.static != 1:
@@ -182,7 +181,7 @@ class WolfsAndGems:
             if going for this, the pov statement needs to know about location rather than separate
             i and j variables
             """
-            state = models[holdObject.policy].pov(self.world, location, holdObject)
+            state = models[holdObject.policy].pov(self.world, loc, holdObject)
             action = models[holdObject.policy].take_action([state, epsilon])
 
         if holdObject.has_transitions == True:
@@ -196,7 +195,7 @@ class WolfsAndGems:
                 next_state,
                 done,
                 newLocation,
-            ) = holdObject.transition(self.world, models, action, location)
+            ) = holdObject.transition(self.world, models, action, loc)
         else:
             reward = 0
             next_state = state

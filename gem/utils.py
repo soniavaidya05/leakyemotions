@@ -18,7 +18,7 @@ def find_moveables(world):
         for j in range(world.shape[1]):
             for k in range(world.shape[2]):
                 if world[i, j, k].static == 0:
-                    moveList.append([i, j, k])
+                    moveList.append((i, j, k))
     return moveList
 
 
@@ -29,7 +29,7 @@ def find_trainables(world):
         for j in range(world.shape[1]):
             for k in range(world.shape[2]):
                 if world[i, j, k].trainable == 1:
-                    trainList.append([i, j, k])
+                    trainList.append((i, j, k))
     return trainList
 
 
@@ -43,7 +43,7 @@ def find_agents_tag(world):
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
             if world[i, j, 0].kind == "TagAgent":
-                agentList.append(world[i, j, 0])
+                agentList.append((i, j, 0))
     return agentList
 
 
@@ -54,7 +54,7 @@ def find_agents(world):
         for j in range(world.shape[1]):
             for k in range(world.shape[2]):
                 if world[i, j, k].kind == "agent":
-                    agentList.append([i, j, k])
+                    agentList.append((i, j, k))
     return agentList
 
 
@@ -64,7 +64,7 @@ def find_instance(world, kind):
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
             if world[i, j, 0].kind == kind:
-                instList.append([i, j, 0])
+                instList.append((i, j, 0))
     return instList
 
 
@@ -164,8 +164,7 @@ def number_memories(modelNum, models):
 def update_memories(models, world, expList, done, end_update=True):
     # update the reward and last state after all have moved
     # changed to holdObject to see if this fixes the failure of updating last memory
-    for location in expList:
-        loc = location[0], location[1], location[2]
+    for loc in expList:
         # location = (i, j, 0)
         holdObject = world[loc]
         exp = holdObject.replay[-1]
@@ -175,7 +174,7 @@ def update_memories(models, world, expList, done, end_update=True):
         if end_update == False:
             exp = (exp[0], exp[1], holdObject.reward, exp[3], lastdone)
         if end_update == True:
-            input2 = models[holdObject.policy].pov(world, location, holdObject)
+            input2 = models[holdObject.policy].pov(world, loc, holdObject)
             exp = (exp[0], exp[1], holdObject.reward, input2, lastdone)
         world[loc].replay[-1] = exp
     return world
@@ -183,20 +182,19 @@ def update_memories(models, world, expList, done, end_update=True):
 
 def transfer_world_memories(models, world, expList, extra_reward=True):
     # transfer the events from agent memory to model replay
-    for location in expList:
-        loc = location[0], location[1], location[2]
+    for loc in expList:
         # this moves the specific form of the replay memory into the model class
         # where it can be setup exactly for the model
-        models[world[loc].policy].transfer_memories(world, location, extra_reward=True)
+        models[world[loc].policy].transfer_memories(world, loc, extra_reward=True)
     return models
 
 
 def transfer_memories(models, world, expList, extra_reward=True):
     # transfer the events from agent memory to model replay
-    for i, j in expList:
-        exp = world[i, j, 0].replay[-1]
-        models[world[i, j, 0].policy].replay.append(exp)
+    for loc in expList:
+        exp = world[loc].replay[-1]
+        models[world[loc].policy].replay.append(exp)
         if extra_reward == True and abs(exp[2]) > 9:
             for _ in range(5):
-                models[world[i, j, 0].policy].replay.append(exp)
+                models[world[loc].policy].replay.append(exp)
     return models
