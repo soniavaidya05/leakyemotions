@@ -160,13 +160,14 @@ class Model_CNN_LSTM_DQN:
         """
         self.model2.load_state_dict(self.model1.state_dict())
 
-    def transfer_memories(self, world, i, j, extra_reward=True, seqLength=4):
+    def transfer_memories(self, world, location, extra_reward=True, seqLength=4):
         """
         Transfer the indiviu=dual memories to the model
         TODO: We need to have a single version that works for both DQN and
               Actor-criric models (or other types as well)
         """
-        exp = world[i, j, 0].replay[-1]
+        loc = location[0], location[1], location[2]
+        exp = world[loc].replay[-1]
         self.replay.append(exp)
         if extra_reward == True and abs(exp[2]) > 9:
             for _ in range(5):

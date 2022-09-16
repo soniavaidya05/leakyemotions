@@ -170,8 +170,8 @@ class WolfsAndGems:
             env.WorldUpdate()
 
         """
-
-        holdObject = self.world[location]
+        loc = location[0], location[1], location[2]
+        holdObject = self.world[loc]
 
         if holdObject.static != 1:
             """

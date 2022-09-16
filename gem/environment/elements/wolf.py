@@ -90,7 +90,9 @@ class Wolf:
                 models[
                     world[attempted_locaton_1, attempted_locaton_2, 0].policy
                 ].transfer_memories(
-                    world, attempted_locaton_1, attempted_locaton_2, extra_reward=True
+                    world,
+                    [attempted_locaton_1, attempted_locaton_2, 0],
+                    extra_reward=True,
                 )
 
                 # world = world[attempted_locaton_1, attempted_locaton_2, 0].died(
