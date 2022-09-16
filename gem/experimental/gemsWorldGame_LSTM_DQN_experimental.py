@@ -67,8 +67,8 @@ def playGame(
         withinturn = 0
 
         moveList = find_moveables(env.world)
-        for i, j in moveList:
-            env.world[i, j, 0].init_replay(5)
+        for location in moveList:
+            env.world[location].init_replay(5)
 
         while done == 0:
 
@@ -93,13 +93,13 @@ def playGame(
                     # models[mods].updateQ
 
             moveList = find_moveables(env.world)
-            for i, j in moveList:
+            for location in moveList:
                 # reset the rewards for the trial to be zero for all agents
-                env.world[i, j, 0].reward = 0
+                env.world[location].reward = 0
             random.shuffle(moveList)
 
             for i, j in moveList:
-                holdObject = env.world[i, j, 0]
+                holdObject = env.world[location]
 
                 if holdObject.static != 1:
 

@@ -16,9 +16,9 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
     ims = []
     env.reset_env(world_size, world_size)
     done = 0
-    for i, j in find_moveables(env.world):
+    for location in find_moveables(env.world):
         # reset the memories for all agents
-        env.world[i, j, 0].init_replay(3)
+        env.world[location].init_replay(3)
     game_points = [0, 0]
     for _ in range(num):
         image = create_world_image(env.world)
@@ -61,9 +61,9 @@ def make_video(filename, save_dir, models, world_size, env):
 
 def replay_view(memoryNum, agentNumber, env):
     agentList = find_moveables(env.world)
-    i, j = agentList[agentNumber]
+    location = agentList[agentNumber]
 
-    Obj = env.world[i, j, 0]
+    Obj = env.world[location]
 
     state = Obj.replay[memoryNum][0]
     next_state = Obj.replay[memoryNum][3]

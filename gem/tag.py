@@ -77,9 +77,9 @@ def createTagWorld(world_size, agentp=0.05):
     # reward = 0
     # done = 0
     all_agents = find_moveables(world)
-    for i, j in all_agents:
-        agent = world[i, j, 0]
-        img = agent_visualfield(world, (i, j), agent.vision)
+    for location in all_agents:
+        agent = world[location]
+        img = agent_visualfield(world, location, agent.vision)
         current_state = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         next_state = current_state
         action = random.randint(0, 3)
@@ -151,15 +151,15 @@ def playGame(models, world_size=15, epochs=200000, maxEpochs=100, epsilon=0.9):
                     # models[mods].updateQ
 
             moveList = find_moveables(world)
-            for i, j in moveList:
+            for location in moveList:
                 # reset the rewards for the trial to be zero for all agents
-                world[i, j, 0].reward = 0
+                world[location].reward = 0
             random.shuffle(moveList)
 
-            for i, j in moveList:
-                holdObject = world[i, j, 0]
+            for location in moveList:
+                holdObject = world[location]
 
-                img = agent_visualfield(world, (i, j), holdObject.vision)
+                img = agent_visualfield(world, location, holdObject.vision)
 
                 input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
                 if holdObject.static != 1:
@@ -227,10 +227,10 @@ def watchAgame(world, models, maxEpochs):
         moveList = find_moveables(world)
         random.shuffle(moveList)
 
-        for i, j in moveList:
-            holdObject = world[i, j, 0]
+        for location in moveList:
+            holdObject = world[location]
 
-            img = agent_visualfield(world, (i, j), holdObject.vision)
+            img = agent_visualfield(world, location, holdObject.vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             if holdObject.static != 1:
                 action = models[holdObject.policy].take_action([input, 0.1])

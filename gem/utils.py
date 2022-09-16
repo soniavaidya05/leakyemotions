@@ -15,9 +15,10 @@ def find_moveables(world):
     # needs to be rewriien to return location (i, j, k)
     moveList = []
     for i in range(world.shape[0]):
-        for j in range(world.shape[0]):
-            if world[i, j, 0].static == 0:
-                moveList.append([i, j])
+        for j in range(world.shape[1]):
+            for k in range(world.shape[2]):
+                if world[i, j, k].static == 0:
+                    moveList.append([i, j, k])
     return moveList
 
 
@@ -49,9 +50,10 @@ def find_agents(world):
     # needs to be rewriien to return location (i, j, k)
     agentList = []
     for i in range(world.shape[0]):
-        for j in range(world.shape[0]):
-            if world[i, j, 0].kind == "agent":
-                agentList.append(world[i, j, 0])
+        for j in range(world.shape[1]):
+            for k in range(world.shape[2]):
+                if world[i, j, k].kind == "agent":
+                    agentList.append([i, j, k])
     return agentList
 
 
@@ -61,7 +63,7 @@ def find_instance(world, kind):
     for i in range(world.shape[0]):
         for j in range(world.shape[0]):
             if world[i, j, 0].kind == kind:
-                instList.append(world[i, j, 0])
+                instList.append([i, j, 0])
     return instList
 
 
@@ -161,9 +163,10 @@ def number_memories(modelNum, models):
 def update_memories(models, world, expList, done, end_update=True):
     # update the reward and last state after all have moved
     # changed to holdObject to see if this fixes the failure of updating last memory
-    for i, j in expList:
-        location = (i, j, 0)
-        holdObject = world[location]
+    for location in expList:
+        loc = location[0], location[1], location[2]
+        # location = (i, j, 0)
+        holdObject = world[loc]
         exp = holdObject.replay[-1]
         lastdone = exp[4]
         if done == 1:
@@ -173,16 +176,17 @@ def update_memories(models, world, expList, done, end_update=True):
         if end_update == True:
             input2 = models[holdObject.policy].pov(world, location, holdObject)
             exp = (exp[0], exp[1], holdObject.reward, input2, lastdone)
-        world[i, j, 0].replay[-1] = exp
+        world[loc].replay[-1] = exp
     return world
 
 
 def transfer_world_memories(models, world, expList, extra_reward=True):
     # transfer the events from agent memory to model replay
-    for i, j in expList:
+    for location in expList:
+        loc = location[0], location[1], location[2]
         # this moves the specific form of the replay memory into the model class
         # where it can be setup exactly for the model
-        models[world[i, j, 0].policy].transfer_memories(world, i, j, extra_reward=True)
+        models[world[loc].policy].transfer_memories(world, location, extra_reward=True)
     return models
 
 

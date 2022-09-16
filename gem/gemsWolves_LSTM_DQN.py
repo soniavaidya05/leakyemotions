@@ -85,11 +85,11 @@ def run_game(
             gem2p=0.02,
             wolf1p=0.01,
         )
-        for i, j in find_moveables(env.world):
-            location = (i, j, 0)  # fix the function
+        for location in find_moveables(env.world):
+            loc = location[0], location[1], location[2]
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[location].init_replay(3)
+            env.world[loc].init_replay(3)
 
         while done == 0:
             """
@@ -108,17 +108,17 @@ def run_game(
             agentList = find_moveables(env.world)
             random.shuffle(agentList)
 
-            for i, j in agentList:
+            for location in agentList:
+                loc = location[0], location[1], location[2]
                 """
                 Reset the rewards for the trial to be zero for all agents
                 """
-                location = (i, j, 0)
-                env.world[location].reward = 0
+                env.world[loc].reward = 0
 
-            for i, j in agentList:
+            for location in agentList:
+                loc = location[0], location[1], location[2]
                 k = 0  # this is what needs to be generalized so all functions make i, j, k
-                location = (i, j, k)
-                if env.world[location].static != 1:
+                if env.world[loc].static != 1:
 
                     (
                         state,

@@ -70,12 +70,12 @@ def playGame(
         withinturn = 0
 
         moveList = find_moveables(env.world)
-        for i, j in moveList:
+        for location in moveList:
             # reset the memories for all agents
-            env.world[i, j, 0].init_replay(5)
-            env.world[i, j, 0].AC_logprob = torch.tensor([])
-            env.world[i, j, 0].AC_value = torch.tensor([])
-            env.world[i, j, 0].AC_reward = torch.tensor([])
+            env.world[location].init_replay(5)
+            env.world[location].AC_logprob = torch.tensor([])
+            env.world[location].AC_value = torch.tensor([])
+            env.world[location].AC_reward = torch.tensor([])
 
         for mod in range(len(models)):
             """
@@ -108,9 +108,9 @@ def playGame(
                     models[mods].updateQ
 
             moveList = find_moveables(env.world)
-            for i, j in moveList:
+            for location in moveList:
                 # reset the rewards for the trial to be zero for all agents
-                env.world[i, j, 0].reward = 0
+                env.world[location].reward = 0
             random.shuffle(moveList)
 
             for i, j in moveList:
@@ -118,8 +118,8 @@ def playGame(
 
                 if holdObject.static != 1:
 
-                    inputs = models[holdObject.policy].createInput2(
-                        env.world, i, j, holdObject, 2
+                    inputs = models[holdObject.policy].pov(
+                        env.world, location, holdObject, 2
                     )
                     input, combined_input = inputs
 
@@ -172,11 +172,11 @@ def playGame(
 
                 expList = find_moveables(env.world)
                 env.world = update_memories(models, env.world, expList, end_update=True)
-                for i, j in expList:
-                    env.world[i, j, 0].AC_reward = torch.concat(
+                for location in expList:
+                    env.world[location].AC_reward = torch.concat(
                         [
-                            env.world[i, j, 0].AC_reward,
-                            torch.tensor(env.world[i, j, 0].reward)
+                            env.world[location].AC_reward,
+                            torch.tensor(env.world[location].reward)
                             .float()
                             .reshape(1, 1),
                         ]
@@ -188,8 +188,10 @@ def playGame(
             # TODO: just like above this needs to be changed to find_trainables because deadAgents have memories
             #       that need to be learned
 
-            for i, j in expList:
-                models[env.world[i, j, 0].policy].transfer_memories_AC(env.world, i, j)
+            for location in expList:
+                models[env.world[i, j, 0].policy].transfer_memories_AC(
+                    env.world, location
+                )
 
             for mod in range(len(models)):
                 if len(models[mod].rewards) > 0:
