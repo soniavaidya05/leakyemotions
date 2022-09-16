@@ -66,13 +66,11 @@ def find_instance(world, kind):
 
 
 def update_epsilon(epsilon, turn, epoch):
+    # TODO, this goes down way too fast when turn is low
+    # so, fast updatee mean that epsilon goes down faster than it should
     if epsilon > 0.1:
         epsilon -= 1 / (turn)
 
-    if epsilon > 0.2:
-        if epoch > 1000 and epoch % 10000 == 0:
-            epsilon -= 0.1
-    # print("new epsilon", epsilon)
     return epsilon
 
 
