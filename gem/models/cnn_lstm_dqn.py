@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from models.memory import Memory
+# from models.memory import Memory
 from models.perception import agent_visualfield
 
 

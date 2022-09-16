@@ -28,7 +28,8 @@ class Agent:
         Fills in blank images for the LSTM before game play.
         Impicitly defines the number of sequences that the LSTM will be trained on.
         """
-        image = torch.zeros(1, numberMemories, 3, 9, 9).float()
+        pov_size = 9
+        image = torch.zeros(1, numberMemories, 3, pov_size, pov_size).float()
         exp = (image, 0, 0, image, 0)
         self.replay.append(exp)
 
@@ -65,76 +66,7 @@ class Agent:
         self.static = 1
         self.has_transitions = False
 
-    def transition(
-        self,
-        action,
-        world,
-        models,
-        i,
-        j,
-        game_points,
-        done,
-        input,
-        update_experience_buffer=True,
-        ModelType="DQN",
-    ):
-        """
-        Sets the rules for how the agent moves and interacts with the world.
-        All immplications must be written here for how the object interacts with the other objects.
-        """
-
-        new_locaton_1 = i
-        new_locaton_2 = j
-
-        # this should not be needed below, but getting errors
-        # it is possible that this is fixed now with the
-        # other changes that have been made
-        attempted_locaton_1 = i
-        attempted_locaton_2 = j
-
-        reward = 0
-
-        if action == 0:
-            attempted_locaton_1 = i - 1
-            attempted_locaton_2 = j
-
-        if action == 1:
-            attempted_locaton_1 = i + 1
-            attempted_locaton_2 = j
-
-        if action == 2:
-            attempted_locaton_1 = i
-            attempted_locaton_2 = j - 1
-
-        if action == 3:
-            attempted_locaton_1 = i
-            attempted_locaton_2 = j + 1
-
-        if world[attempted_locaton_1, attempted_locaton_2, 0].passable == 1:
-            world[i, j, 0] = EmptyObject()
-            reward = world[attempted_locaton_1, attempted_locaton_2, 0].value
-            world[attempted_locaton_1, attempted_locaton_2, 0] = self
-            new_locaton_1 = attempted_locaton_1
-            new_locaton_2 = attempted_locaton_2
-            game_points[0] = game_points[0] + reward
-        else:
-            if isinstance(
-                world[attempted_locaton_1, attempted_locaton_2, 0], Wall
-            ):  # Replacing comparison with string 'kind'
-                reward = -0.1
-
-        if update_experience_buffer == True:
-            """
-            Put the transition into the experience buffer
-            """
-            input2 = models[self.policy].pov(world, new_locaton_1, new_locaton_2, self)
-            exp = (input, action, reward, input2, done)
-            self.replay.append(exp)
-            self.reward += reward
-
-        return world, models, game_points
-
-    def transitionSingle(self, world, models, action, location):
+    def transition(self, world, models, action, location):
         i, j, k = location
         done = 0
 

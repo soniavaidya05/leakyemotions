@@ -151,47 +151,7 @@ class WolfsAndGems:
             self.world[i, 0, 0] = Wall()
             self.world[i, height - 1, 0] = Wall()
 
-    def step(self, models, game_points, epsilon=0.85, done=0):
-        """
-        Every agent takes a step
-        """
-        moveList = find_moveables(self.world)
-        random.shuffle(moveList)
-
-        for i, j in moveList:
-            """
-            Reset the rewards for the trial to be zero for all agents
-            """
-            self.world[i, j, 0].reward = 0
-
-        for i, j in moveList:
-
-            holdObject = self.world[i, j, 0]
-
-            if holdObject.static != 1:
-                """
-                This is where the agent will make a decision
-                """
-                input = models[holdObject.policy].pov(self.world, i, j, holdObject)
-                action = models[holdObject.policy].take_action([input, epsilon])
-
-            if holdObject.has_transitions == True:
-                """
-                Updates the world given an action
-                """
-                self.world, models, game_points = holdObject.transition(
-                    action,
-                    self.world,
-                    models,
-                    i,
-                    j,
-                    game_points,
-                    done,
-                    input,
-                )
-        return game_points
-
-    def stepSingle(self, models, location, epsilon=0.85):
+    def step(self, models, location, epsilon=0.85):
         """
         This is an example script for an alternative step function
         It does not account for the fact that an agent can die before
@@ -238,7 +198,7 @@ class WolfsAndGems:
                 next_state,
                 done,
                 newLocation,
-            ) = holdObject.transitionSingle(self.world, models, action, location)
+            ) = holdObject.transition(self.world, models, action, location)
         else:
             reward = 0
             next_state = state
