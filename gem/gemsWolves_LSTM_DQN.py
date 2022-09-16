@@ -114,7 +114,6 @@ def run_game(
                 env.world[loc].reward = 0
 
             for loc in agentList:
-                k = 0  # this is what needs to be generalized so all functions make i, j, k
                 if env.world[loc].static != 1:
 
                     (
