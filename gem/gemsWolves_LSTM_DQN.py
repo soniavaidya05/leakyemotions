@@ -124,7 +124,7 @@ def run_game(
                         next_state,
                         done,
                         newLocation,
-                        additional_output,
+                        info,
                     ) = env.stepSingle(models, (i, j, 0), epsilon)
 
                     env.world[newLocation].replay.append(
