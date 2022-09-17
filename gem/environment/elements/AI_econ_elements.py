@@ -79,13 +79,12 @@ class EmptyObject(Element):
         self.wood = 0
 
     def transition(self, world, models, action, location):
-        generate_value = random.random.choice([0, 1, 2], p=[0.8, 0.1, 0.1])
-        if generate_value == 0:
+        generate_value = np.random.choice([0, 1, 2], p=[0.95, 0.025, 0.025])
+        if generate_value == 1:
             world[location] = Wood()
-        elif generate_value == 1:
+        if generate_value == 2:
             world[location] = Stone()
-        else:
-            world[location] = House()
+
         reward = 0
         next_state = 0
         done = 0
@@ -188,7 +187,7 @@ class Agent:
                 move_to[3] = 0
 
             move_to = move_to / np.sum(move_to)
-            movement = random.random.choice([0, 1, 2, 3], p=move_to)
+            movement = np.random.choice([0, 1, 2, 3], p=move_to)
 
             if movement == 0:
                 attempted_locaton_1 = i + 1
@@ -207,7 +206,7 @@ class Agent:
                 attempted_locaton_2,
                 attempted_locaton_3,
             )
-            if self.stone > 0 and self.wood > 0 and sum(move_to) > 0:
+            if self.stone > 0 and self.wood > 0 and np.sum(move_to) > 0:
                 print("built a house!!")
                 reward = 10
                 self.stone -= 1

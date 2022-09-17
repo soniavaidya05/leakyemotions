@@ -140,6 +140,17 @@ def run_game(
 
             # note that with the current setup, the world is not generating new wood and stone
             # we will need to consider where to add the transitions that do not have movement or neural networks
+            regenList = []
+            for i in range(env.world.shape[0]):
+                for j in range(env.world.shape[1]):
+                    for k in range(env.world.shape[2]):
+                        if env.world[i, j, k].kind == "empty":
+                            regenList.append((i, j, k))
+
+            for loc in regenList:
+                env.world, reward, next_state, done, new_loc = env.world[
+                    loc
+                ].transition(env.world, models, 0, loc)
 
             # determine whether the game is finished (either max length or all agents are dead)
             if withinturn > max_turns or len(find_agents(env.world)) == 0:
@@ -206,14 +217,14 @@ save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 models = create_models()
 
 run_params = (
-    [0.9, 1000, 5],
-    [0.8, 5000, 5],
-    [0.7, 5000, 5],
-    [0.2, 5000, 5],
-    [0.8, 10000, 25],
-    [0.6, 10000, 35],
-    [0.2, 10000, 35],
-    [0.2, 20000, 50],
+    [0.9, 1000, 25],
+    [0.8, 5000, 25],
+    [0.7, 5000, 25],
+    [0.2, 5000, 25],
+    [0.8, 10000, 50],
+    [0.6, 10000, 50],
+    [0.2, 10000, 50],
+    [0.2, 20000, 100],
 )
 
 # the version below needs to have the keys from above in it
@@ -229,4 +240,4 @@ for modRun in range(len(run_params)):
     save_models(models, save_dir, "AI_econ_test1" + str(modRun))
 
 
-make_video("AI_econ_test1", save_dir, models, 20, env)
+make_video("AI_econ_test1", save_dir, models, 50, env)
