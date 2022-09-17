@@ -138,6 +138,9 @@ def run_game(
                     if env.world[new_loc].kind == "agent":
                         game_points[0] = game_points[0] + reward
 
+            # note that with the current setup, the world is not generating new wood and stone
+            # we will need to consider where to add the transitions that do not have movement or neural networks
+
             # determine whether the game is finished (either max length or all agents are dead)
             if withinturn > max_turns or len(find_agents(env.world)) == 0:
                 done = 1
