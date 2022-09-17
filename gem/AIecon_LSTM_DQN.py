@@ -240,4 +240,4 @@ for modRun in range(len(run_params)):
     save_models(models, save_dir, "AI_econ_test1" + str(modRun))
 
 
-make_video("AI_econ_test1", save_dir, models, 50, env)
+make_video("AI_econ_test1", save_dir, models, 30, env)

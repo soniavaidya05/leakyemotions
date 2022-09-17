@@ -2,7 +2,7 @@ from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
 from game_utils import create_world, create_world_image
 import matplotlib.animation as animation
-
+import random
 import pickle
 
 from gem.utils import (
@@ -24,7 +24,32 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
         image = create_world_image(env.world)
         im = plt.imshow(image, animated=True)
         ims.append([im])
-        game_points = env.step(models, game_points, 0.1)
+
+        agentList = find_moveables(env.world)
+        random.shuffle(agentList)
+
+        for loc in agentList:
+            if env.world[loc].static != 1:
+
+                (
+                    state,
+                    action,
+                    reward,
+                    next_state,
+                    done,
+                    new_loc,
+                    info,
+                ) = env.step(models, loc, 0.2)
+
+                env.world[new_loc].replay.append(
+                    (state, action, reward, next_state, done)
+                )
+
+                if env.world[new_loc].kind == "agent":
+                    game_points[0] = game_points[0] + reward
+                if env.world[new_loc].kind == "wolf":
+                    game_points[1] = game_points[1] + reward
+
         env.world = update_memories(
             models, env.world, find_moveables(env.world), done, end_update=False
         )
@@ -120,8 +145,8 @@ def replay_view_model(memoryNum, modelNumber, models):
 def create_data(env, models, epochs, world_size):
     game_points = [0, 0]
     env.reset_env(world_size, world_size)
-    for i, j in find_moveables(env.world):
-        env.world[i, j, 0].init_replay(3)
+    for i, j, k in find_moveables(env.world):
+        env.world[i, j, k].init_replay(3)
     for _ in range(epochs):
         game_points = env.step(models, game_points)
     return env

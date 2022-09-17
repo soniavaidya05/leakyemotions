@@ -155,6 +155,11 @@ class Agent:
         )
 
         if action < 4:
+
+            if isinstance(world[attempted_location], EmptyObject):
+                world[attempted_location] = self
+                new_loc = attempted_location
+
             if isinstance(world[attempted_location], Wall):
                 reward = -0.1
 
