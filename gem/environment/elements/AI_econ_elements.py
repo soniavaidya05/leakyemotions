@@ -180,18 +180,26 @@ class Agent:
             move_to = np.array([1, 1, 1, 1])
             if world[i + 1, j, k] != EmptyObject():
                 move_to[0] = 0
-                attempted_locaton_1 = i + 1
-                attempted_locaton_2 = j
             if world[i - 1, j, k] != EmptyObject():
                 move_to[1] = 0
-                attempted_locaton_1 = i - 1
-                attempted_locaton_2 = j
             if world[i, j - 1, k] != EmptyObject():
                 move_to[2] = 0
-                attempted_locaton_1 = i
-                attempted_locaton_2 = j - 1
             if world[i, j + 1, k] != EmptyObject():
                 move_to[3] = 0
+
+            move_to = move_to / np.sum(move_to)
+            movement = random.random.choice([0, 1, 2, 3], p=move_to)
+
+            if movement == 0:
+                attempted_locaton_1 = i + 1
+                attempted_locaton_2 = j
+            if movement == 1:
+                attempted_locaton_1 = i - 1
+                attempted_locaton_2 = j
+            if movement == 2:
+                attempted_locaton_1 = i
+                attempted_locaton_2 = j - 1
+            if movement == 3:
                 attempted_locaton_1 = i
                 attempted_locaton_2 = j + 1
             attempted_location = (
@@ -200,6 +208,7 @@ class Agent:
                 attempted_locaton_3,
             )
             if self.stone > 0 and self.wood > 0 and sum(move_to) > 0:
+                print("built a house!!")
                 reward = 10
                 self.stone -= 1
                 self.wood -= 1
