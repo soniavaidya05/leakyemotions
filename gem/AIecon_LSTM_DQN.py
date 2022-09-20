@@ -33,7 +33,7 @@ def create_models():
     in this function. Below should fully set up the NN in a flexible way for the studies
     """
     models = []
-    models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 650, 75, 30, 5))  # agent model
+    models.append(Model_CNN_LSTM_DQN(10, 0.0001, 1000, 1300, 150, 30, 5))  # agent model
     # models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 2570, 150, 30, 4))  # wolf model
     return models
 
@@ -97,6 +97,7 @@ def run_game(
             env.world[loc].reward = 0
             env.world[loc].wood = 0
             env.world[loc].stone = 0
+            env.world[loc].labour = 100
 
         while done == 0:
             """
@@ -111,6 +112,15 @@ def run_game(
                     models[mods].model2.load_state_dict(
                         models[mods].model1.state_dict()
                     )
+
+            agentList = find_moveables(env.world)
+            for loc in agentList:
+                if env.world[loc].labour < 0:
+                    env.world[loc].static = 1
+                    env.world[loc].trainable = 0
+                    env.world[loc].has_transitions = False
+
+            # note, we need to set it up so that once an agent runs out of labour, it can't move
 
             agentList = find_moveables(env.world)
             random.shuffle(agentList)

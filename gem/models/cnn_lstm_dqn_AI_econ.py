@@ -13,7 +13,7 @@ class CNN_CLD(nn.Module):
     def __init__(self, numFilters):
         super(CNN_CLD, self).__init__()
         self.conv_layer1 = nn.Conv2d(
-            in_channels=8, out_channels=numFilters, kernel_size=1
+            in_channels=9, out_channels=numFilters, kernel_size=1
         )
         self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
 

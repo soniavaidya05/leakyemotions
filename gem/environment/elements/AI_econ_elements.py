@@ -113,6 +113,7 @@ class Agent:
         self.stone = 0
         self.wood = 0
         self.deterministic = 0  # whether the object is deterministic
+        self.labour = 0
 
     def init_replay(self, numberMemories):
         """
@@ -120,7 +121,7 @@ class Agent:
         Impicitly defines the number of sequences that the LSTM will be trained on.
         """
         pov_size = 9
-        visual_depth = 3 + 3 + 2
+        visual_depth = 3 + 3 + 3
         image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
         exp = (image, 0, 0, image, 0)
         self.replay.append(exp)
@@ -142,18 +143,22 @@ class Agent:
         if action == 0:
             attempted_locaton_1 = i - 1
             attempted_locaton_2 = j
+            self.labour -= 0.21
 
         if action == 1:
             attempted_locaton_1 = i + 1
             attempted_locaton_2 = j
+            self.labour -= 0.21
 
         if action == 2:
             attempted_locaton_1 = i
             attempted_locaton_2 = j - 1
+            self.labour -= 0.21
 
         if action == 3:
             attempted_locaton_1 = i
             attempted_locaton_2 = j + 1
+            self.labour -= 0.21
 
         attempted_location_l0 = (
             attempted_locaton_1,
@@ -168,7 +173,7 @@ class Agent:
         )
 
         if action < 3.5:
-
+            self.labour -= 2.1
             if isinstance(world[attempted_location_l1], Agent):
                 reward = -0.1
 
@@ -217,7 +222,11 @@ class Agent:
                     succeed_house = 1
 
         next_state = models[self.policy].pov(
-            world, new_loc, self, inventory=[self.stone, self.wood], layers=[0, 1]
+            world,
+            new_loc,
+            self,
+            inventory=[self.stone, self.wood, self.labour],
+            layers=[0, 1],
         )
         self.reward += reward
 

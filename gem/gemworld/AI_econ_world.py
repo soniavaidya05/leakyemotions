@@ -184,7 +184,7 @@ class AI_Econ:
                 self.world,
                 loc,
                 holdObject,
-                inventory=[holdObject.stone, holdObject.wood],
+                inventory=[holdObject.stone, holdObject.wood, holdObject.labour],
                 layers=[0, 1],
             )
             action = models[holdObject.policy].take_action([state, epsilon])
