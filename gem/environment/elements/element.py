@@ -1,20 +1,20 @@
 from abc import ABC
 
-class Element(ABC):
 
+class Element(ABC):
     def __init__(self):
-        
-        self.appearence = None # how to display this agent
-        self.vision = None # visual radius
-        self.policy = None # policy function or model
-        self.value = None # reward given to another agent
-        self.reward = None # reward received on this trial
+
+        self.appearence = None  # how to display this agent
+        self.vision = None  # visual radius
+        self.policy = None  # policy function or model
+        self.value = None  # reward given to another agent
+        self.reward = None  # reward received on this trial
         self.static = True  # whether the object gets to take actions or not
         self.passable = False  # whether the object blocks movement
         self.trainable = False  # whether there is a network to be optimized
         self.has_transitions = False
-        
-        
+
+
 class EmptyObject:
 
     kind = "empty"  # class variable shared by all instances
@@ -47,3 +47,4 @@ class Wall:
         self.passable = 0  # you can't walk through a wall
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
+        self.deterministic = 0  # whether the object is deterministic

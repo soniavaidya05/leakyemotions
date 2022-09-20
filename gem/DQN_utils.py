@@ -54,6 +54,18 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
             models, env.world, find_moveables(env.world), done, end_update=False
         )
 
+        # note that with the current setup, the world is not generating new wood and stone
+        # we will need to consider where to add the transitions that do not have movement or neural networks
+        regenList = []
+        for i in range(env.world.shape[0]):
+            for j in range(env.world.shape[1]):
+                for k in range(env.world.shape[2]):
+                    if env.world[i, j, k].deterministic == 1:
+                        regenList.append((i, j, k))
+
+        for loc in regenList:
+            env.world = env.world[loc].transition(env.world, loc)
+
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
     ani.save(filename, writer="PillowWriter", fps=2)
 
@@ -111,6 +123,7 @@ def replay_view(memoryNum, agentNumber, env):
     plt.subplot(1, 2, 2)
     plt.imshow(imageNext)
     plt.show()
+    print(Obj.replay[memoryNum][1], Obj.replay[memoryNum][2], Obj.replay[memoryNum][4])
 
 
 def replay_view_model(memoryNum, modelNumber, models):

@@ -4,8 +4,8 @@ from gem.environment.elements.AI_econ_elements import (
     Stone,
     House,
     EmptyObject,
+    Wall,
 )
-from gem.environment.elements.element import Wall
 import numpy as np
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ class AI_Econ:
         self,
         height=30,
         width=30,
-        layers=1,
+        layers=2,
         defaultObject=EmptyObject(),
         wood1p=0.04,
         stone1p=0.04,
@@ -36,9 +36,9 @@ class AI_Econ:
         self.create_world(self.height, self.width, self.layers)
         self.init_elements()
         self.populate(self.wood1p, self.stone1p)
-        self.insert_walls(self.height, self.width)
+        self.insert_walls(self.height, self.width, self.layers)
 
-    def create_world(self, height=30, width=30, layers=1):
+    def create_world(self, height=30, width=30, layers=2):
         """
         Creates a world of the specified size with a default object
         """
@@ -50,7 +50,7 @@ class AI_Econ:
         """
         self.create_world(height, width, layers)
         self.populate(wood1p, stone1p)
-        self.insert_walls(height, width)
+        self.insert_walls(height, width, layers)
 
     def plot(self, layer):  # is this defined in the master?
         """
@@ -85,10 +85,13 @@ class AI_Econ:
         moveList = []
         for i in range(self.world.shape[0]):
             for j in range(self.world.shape[1]):
-                if self.world[i, j, 0].static == 0:
-                    moveList.append([i, j])
+                if self.world[i, j, layer].static == 0:
+                    moveList.append([i, j, layer])
 
-        img = agent_visualfield(self.world, (moveList[0][0], moveList[0][1]), k=4)
+        if len(moveList) > 0:
+            img = agent_visualfield(self.world, moveList[0], k=4)
+        else:
+            img = image
 
         plt.subplot(1, 2, 1)
         plt.imshow(image)
@@ -118,32 +121,34 @@ class AI_Econ:
                     self.world[i, j, 0] = Stone()
 
         self.world[
-            round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
+            round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 1
         ] = Agent(0)
         self.world[
             round(self.world.shape[0] / 2) + 1,
             round(self.world.shape[1] / 2) - 1,
-            0,
+            1,
         ] = Agent(0)
 
-    def insert_walls(self, height, width):
+    def insert_walls(self, height, width, layers):
         """
         Inserts walls into the world.
         Assumes that the world is square - fixme.
         """
-        for i in range(height):
-            self.world[0, i, 0] = Wall()
-            self.world[height - 1, i, 0] = Wall()
-            self.world[i, 0, 0] = Wall()
-            self.world[i, height - 1, 0] = Wall()
+        for layer in range(layers):
 
-        # this is a hack to get to look like AI economist
-        for i in range(8):
-            self.world[14, i, 0] = Wall()
-            self.world[i, 14, 0] = Wall()
-        for i in range(8):
-            self.world[14, height - i - 1, 0] = Wall()
-            self.world[height - i - 1, 14, 0] = Wall()
+            for i in range(height):
+                self.world[0, i, layer] = Wall()
+                self.world[height - 1, i, layer] = Wall()
+                self.world[i, 0, layer] = Wall()
+                self.world[i, height - 1, layer] = Wall()
+
+            # this is a hack to get to look like AI economist
+            for i in range(8):
+                self.world[14, i, layer] = Wall()
+                self.world[i, 14, layer] = Wall()
+            for i in range(8):
+                self.world[14, height - i - 1, layer] = Wall()
+                self.world[height - i - 1, 14, layer] = Wall()
 
     def step(self, models, loc, epsilon=0.85):
         """
@@ -175,7 +180,13 @@ class AI_Econ:
             if going for this, the pov statement needs to know about location rather than separate
             i and j variables
             """
-            state = models[holdObject.policy].pov(self.world, loc, holdObject)
+            state = models[holdObject.policy].pov(
+                self.world,
+                loc,
+                holdObject,
+                inventory=[holdObject.stone, holdObject.wood],
+                layers=[0, 1],
+            )
             action = models[holdObject.policy].take_action([state, epsilon])
 
         if holdObject.has_transitions == True:

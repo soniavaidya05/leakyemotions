@@ -5,12 +5,8 @@ import numpy as np
 def agent_visualfield(world, location, k=4, wall_app=[153.0, 51.0, 102.0]):
     """
     Create an agent visual field of size (2k + 1, 2k + 1) pixels
-    Layer = location[2] and layer in the else are added to this function
     """
-    if len(location) > 2:
-        layer = location[2]
-    else:
-        layer = 0
+    layer = location[2]
 
     bounds = (location[0] - k, location[0] + k, location[1] - k, location[1] + k)
     # instantiate image

@@ -11,9 +11,9 @@ from gem.environment.elements.AI_econ_elements import (
     Stone,
     House,
     EmptyObject,
+    Wall,
 )
-from gem.environment.elements.element import Wall
-from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
+from models.cnn_lstm_dqn_AI_econ import Model_CNN_LSTM_DQN
 from gemworld.AI_econ_world import AI_Econ
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -34,13 +34,13 @@ def create_models():
     """
     models = []
     models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 650, 75, 30, 5))  # agent model
-    models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 2570, 150, 30, 4))  # wolf model
+    # models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 2570, 150, 30, 4))  # wolf model
     return models
 
 
 world_size = 30
 
-trainable_models = [0, 1]
+trainable_models = [0]
 sync_freq = 500
 modelUpdate_freq = 25
 epsilon = 0.99
@@ -51,7 +51,7 @@ models = create_models()
 env = AI_Econ(
     height=world_size,
     width=world_size,
-    layers=1,
+    layers=2,
     defaultObject=EmptyObject(),
     wood1p=0.04,
     stone1p=0.04,
@@ -86,7 +86,7 @@ def run_game(
         env.reset_env(
             height=world_size,
             width=world_size,
-            layers=1,
+            layers=2,
             wood1p=0.04,
             stone1p=0.04,
         )
@@ -94,6 +94,9 @@ def run_game(
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
             env.world[loc].init_replay(3)
+            env.world[loc].reward = 0
+            env.world[loc].wood = 0
+            env.world[loc].stone = 0
 
         while done == 0:
             """
@@ -144,13 +147,11 @@ def run_game(
             for i in range(env.world.shape[0]):
                 for j in range(env.world.shape[1]):
                     for k in range(env.world.shape[2]):
-                        if env.world[i, j, k].kind == "empty":
+                        if env.world[i, j, k].deterministic == 1:
                             regenList.append((i, j, k))
 
             for loc in regenList:
-                env.world, reward, next_state, done, new_loc = env.world[
-                    loc
-                ].transition(env.world, models, 0, loc)
+                env.world = env.world[loc].transition(env.world, loc)
 
             # determine whether the game is finished (either max length or all agents are dead)
             if withinturn > max_turns or len(find_agents(env.world)) == 0:
@@ -163,7 +164,7 @@ def run_game(
                 """
                 # this updates the last memory to be the final state of the game board
                 env.world = update_memories(
-                    models, env.world, find_moveables(env.world), done, end_update=True
+                    models, env.world, find_moveables(env.world), done, end_update=False
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved
@@ -217,15 +218,17 @@ save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 models = create_models()
 
 run_params = (
-    [0.9, 1000, 25],
-    [0.8, 5000, 25],
-    [0.7, 5000, 25],
-    [0.2, 5000, 25],
-    [0.8, 10000, 50],
-    [0.6, 10000, 50],
-    [0.2, 10000, 50],
+    [0.9, 1000, 15],
+    [0.8, 5000, 15],
+    [0.7, 5000, 15],
+    [0.2, 5000, 15],
+    [0.8, 10000, 25],
+    [0.7, 10000, 25],
+    [0.2, 10000, 25],
+    [0.2, 20000, 50],
     [0.2, 20000, 100],
 )
+
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
@@ -237,7 +240,14 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(models, save_dir, "AI_econ_test1" + str(modRun))
+    save_models(models, save_dir, "AI_econ_test2" + str(modRun))
 
 
 make_video("AI_econ_test1", save_dir, models, 30, env)
+
+
+# questions?
+# 1) how to get the model to know states? in the cnn or added to MLP
+# 2) move the agents to layer 2?
+# 3) do we really need to have 50 output nodes? Can we have something that is \
+#   distributional instead?
