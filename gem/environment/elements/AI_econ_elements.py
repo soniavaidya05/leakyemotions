@@ -206,12 +206,15 @@ class Agent:
             #   be on two different layers. So an agent and a house can be on
             #   the same i, j, rather than having to have the agent jump off
 
+            # note, you should not be able to build on top of another house
+            reward = -0.1
             if self.stone > 0 and self.wood > 0:
-                reward = 100
-                self.stone -= 1
-                self.wood -= 1
-                world[location[0], location[1], 0] = House()
-                succeed_house = 1
+                if isinstance(world[location[0], location[1], 0], EmptyObject):
+                    reward = 100
+                    self.stone -= 1
+                    self.wood -= 1
+                    world[location[0], location[1], 0] = House()
+                    succeed_house = 1
 
         next_state = models[self.policy].pov(
             world, new_loc, self, inventory=[self.stone, self.wood], layers=[0, 1]
