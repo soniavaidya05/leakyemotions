@@ -10,10 +10,10 @@ from models.perception import agent_visualfield
 
 
 class CNN_CLD(nn.Module):
-    def __init__(self, numFilters):
+    def __init__(self, in_channels, num_filters):
         super(CNN_CLD, self).__init__()
         self.conv_layer1 = nn.Conv2d(
-            in_channels=9, out_channels=numFilters, kernel_size=1
+            in_channels=in_channels, out_channels=num_filters, kernel_size=1
         )
         self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
 
@@ -30,7 +30,8 @@ class CNN_CLD(nn.Module):
 class Combine_CLD(nn.Module):
     def __init__(
         self,
-        numFilters,
+        in_channels,
+        num_filters,
         insize,
         hidsize1,
         hidsize2,
@@ -39,7 +40,7 @@ class Combine_CLD(nn.Module):
         batch_first=True,
     ):
         super(Combine_CLD, self).__init__()
-        self.cnn = CNN_CLD(numFilters)
+        self.cnn = CNN_CLD(in_channels, num_filters)
         self.rnn = nn.LSTM(
             input_size=insize,
             hidden_size=hidsize1,
@@ -70,10 +71,24 @@ class Model_CNN_LSTM_DQN:
 
     kind = "cnn_lstm_dqn"  # class variable shared by all instances
 
-    def __init__(self, numFilters, lr, replaySize, insize, hidsize1, hidsize2, outsize):
+    def __init__(
+        self,
+        in_channels,
+        num_filters,
+        lr,
+        replaySize,
+        insize,
+        hidsize1,
+        hidsize2,
+        outsize,
+    ):
         self.modeltype = "cnn_lstm_dqn"
-        self.model1 = Combine_CLD(numFilters, insize, hidsize1, hidsize2, outsize)
-        self.model2 = Combine_CLD(numFilters, insize, hidsize1, hidsize2, outsize)
+        self.model1 = Combine_CLD(
+            in_channels, num_filters, insize, hidsize1, hidsize2, outsize
+        )
+        self.model2 = Combine_CLD(
+            in_channels, num_filters, insize, hidsize1, hidsize2, outsize
+        )
         self.optimizer = torch.optim.Adam(
             self.model1.parameters(), lr=lr, weight_decay=0.01
         )

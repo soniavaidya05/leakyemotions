@@ -33,7 +33,9 @@ def create_models():
     in this function. Below should fully set up the NN in a flexible way for the studies
     """
     models = []
-    models.append(Model_CNN_LSTM_DQN(10, 0.0001, 1000, 1300, 150, 30, 5))  # agent model
+    models.append(
+        Model_CNN_LSTM_DQN(9, 10, 0.0001, 2000, 1300, 150, 30, 5)
+    )  # agent model
     # models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 2570, 150, 30, 4))  # wolf model
     return models
 
