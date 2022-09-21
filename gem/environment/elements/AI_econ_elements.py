@@ -125,6 +125,7 @@ class Agent:
         """
         Takes an action and returns a new location
         """
+        new_location = location
         if action == 0:
             new_location = (location[0] - 1, location[1], location[2])
         if action == 1:
