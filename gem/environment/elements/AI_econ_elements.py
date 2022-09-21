@@ -143,10 +143,9 @@ class Agent:
         done = 0
         reward = 0
         new_loc = location
-        attempted_locaton = location
+        attempted_locaton = self.movement(action, location)
 
         if action in [0, 1, 2, 3]:
-            attempted_locaton = self.movement(action, location)
             attempted_location_l0 = (attempted_locaton[0], attempted_locaton[1], 0)
             attempted_location_l1 = (attempted_locaton[0], attempted_locaton[1], 1)
 
