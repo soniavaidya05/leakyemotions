@@ -195,6 +195,7 @@ class Agent:
                     reward = 10
                     self.wood += 1
                     world[attempted_location_l1] = self
+                    world[attempted_location_l0] = EmptyObject()
                     world[location] = EmptyObject()
                     new_loc = attempted_location_l1
 
@@ -202,6 +203,7 @@ class Agent:
                     reward = 10
                     self.stone += 1
                     world[attempted_location_l1] = self
+                    world[attempted_location_l0] = EmptyObject()
                     world[location] = EmptyObject()
                     new_loc = attempted_location_l1
 

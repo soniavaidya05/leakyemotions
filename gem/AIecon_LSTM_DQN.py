@@ -187,14 +187,14 @@ def run_game(
                 Train the neural networks within a eposide at rate of modelUpdate_freq
                 """
                 for mods in trainable_models:
-                    loss = models[mods].training(150, 0.9)
+                    loss = models[mods].training(256, 0.9)
                     losses = losses + loss.detach().numpy()
 
         for mods in trainable_models:
             """
             Train the neural networks at the end of eac epoch
             """
-            loss = models[mods].training(150, 0.9)
+            loss = models[mods].training(256, 0.9)
             losses = losses + loss.detach().numpy()
 
         updateEps = False

@@ -135,16 +135,25 @@ class Model_CNN_LSTM_DQN:
             action = np.random.choice(np.arange(len(p)), p=p)
         return action
 
-    def training(self, batch_size, gamma):
+    def training(self, batch_size, gamma, priority_replay=True):
         """
         DQN batch learning
         """
 
         loss = torch.tensor(0.0)
 
-        if len(self.replay) > batch_size:
+        # note, there may be a ratio of priority replay to random replay that could be ideal
 
-            minibatch = random.sample(self.replay, batch_size)
+        if len(self.replay) > batch_size:
+            if priority_replay == False:
+                minibatch = random.sample(self.replay, batch_size)
+            if priority_replay == True:
+                losses = self.surprise(self.replay, gamma)
+                sample_indices, importance_normalized = self.priority_sample(
+                    losses, sample_size=256, alpha_scaling=0.7, offset=0.1
+                )
+                minibatch = [self.replay[i] for i in sample_indices]
+
             state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
             action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
             reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch])
@@ -161,10 +170,66 @@ class Model_CNN_LSTM_DQN:
             X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
 
             self.optimizer.zero_grad()
-            loss = self.loss_fn(X, Y.detach())
+            if priority_replay == False:
+                loss = self.loss_fn(X, Y.detach())
+            if priority_replay == True:
+                # loss = (X - Y.detach()) ** 2 * importance_normalized
+                # loss = torch.mean(loss)
+                loss = self.loss_fn(X, Y.detach())
             loss.backward()
             self.optimizer.step()
         return loss
+
+    def surprise(self, replay, gamma):
+        """
+        DQN priority surprise
+        """
+
+        state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in replay])
+        action_batch = torch.Tensor([a for (s1, a, r, s2, d) in replay])
+        reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in replay])
+        state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in replay])
+        done_batch = torch.Tensor([d for (s1, a, r, s2, d) in replay])
+
+        Q1 = self.model1(state1_batch)
+        with torch.no_grad():
+            Q2 = self.model2(state2_batch)
+
+        Y = reward_batch + gamma * ((1 - done_batch) * torch.max(Q2.detach(), dim=1)[0])
+        X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
+        # or, just compute here for every element?
+
+        losses = (X.detach() - Y.detach()) ** 2
+
+        # should the normalization be done here? or later in the processing
+
+        return losses
+
+    def priority_sample(
+        self, replay_loss, sample_size=150, alpha_scaling=0.7, offset=0.1
+    ):
+        """
+        normalize the DQN priority surprise
+        """
+        replay_loss = np.asarray(replay_loss) + offset
+        sample_probs = abs(replay_loss**alpha_scaling) / np.sum(
+            abs(replay_loss**alpha_scaling)
+        )
+
+        importance = 1 / len(replay_loss) * 1 / sample_probs
+        importance_normalized = importance / max(importance)
+
+        sample_indices = random.choices(
+            range(len(replay_loss)), k=sample_size, weights=sample_probs
+        )
+
+        importance = 1 / len(replay_loss) * 1 / sample_probs[sample_indices]
+        importance_normalized = importance / max(importance)
+
+        # the importance normalized is needed in the training function
+        # I'm not sure what it does yet, so it is just here
+
+        return sample_indices, importance_normalized
 
     def updateQ(self):
         """
