@@ -93,26 +93,21 @@ class EmptyObject(Element):
 
 class Agent:
 
-    # whole thing needs to be reconsidered because element interactions
-    # are in different layers
-
     kind = "agent"  # class variable shared by all instances
 
     def __init__(self, model):
-        self.health = 10  # for the agents, this is how hungry they are
         self.appearence = [0.0, 0.0, 255.0]  # agents are blue
         self.vision = 4  # agents can see three radius around them
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
-        self.value = 0  # agents have no value
         self.reward = 0  # how much reward this agent has collected
         self.static = 0  # whether the object gets to take actions or not
         self.passable = 0  # whether the object blocks movement
         self.trainable = 1  # whether there is a network to be optimized
         self.replay = deque([], maxlen=100)  # we should read in these maxlens
         self.has_transitions = True
+        self.deterministic = 0  # whether the object is deterministic
         self.stone = 0
         self.wood = 0
-        self.deterministic = 0  # whether the object is deterministic
         self.labour = 0
 
     def init_replay(self, numberMemories):
@@ -126,93 +121,68 @@ class Agent:
         exp = (image, 0, 0, image, 0)
         self.replay.append(exp)
 
-    def transition(self, world, models, action, location):
-        i, j, k = location
-        done = 0
-        new_loc = location
-
-        # given that motion is in nearly all models, we should have a function
-        #   that computes location and attempted location
-
-        attempted_locaton_1 = i
-        attempted_locaton_2 = j
-        attempted_locaton_3 = k
-
-        reward = 0
-
+    def movement(action, location):
+        """
+        Takes an action and returns a new location
+        """
         if action == 0:
-            attempted_locaton_1 = i - 1
-            attempted_locaton_2 = j
-            self.labour -= 0.21
-
+            new_location = (location[0] - 1, location[1], location[2])
         if action == 1:
-            attempted_locaton_1 = i + 1
-            attempted_locaton_2 = j
-            self.labour -= 0.21
-
+            new_location = (location[0] + 1, location[1], location[2])
         if action == 2:
-            attempted_locaton_1 = i
-            attempted_locaton_2 = j - 1
-            self.labour -= 0.21
-
+            new_location = (location[0], location[1] - 1, location[2])
         if action == 3:
-            attempted_locaton_1 = i
-            attempted_locaton_2 = j + 1
-            self.labour -= 0.21
+            new_location = (location[0], location[1] + 1, location[2])
+        return new_location
 
-        attempted_location_l0 = (
-            attempted_locaton_1,
-            attempted_locaton_2,
-            0,
-        )
+    def transition(self, world, models, action, location):
+        """
+        Changes the world based on the action taken
+        """
+        done = 0
+        reward = 0
+        new_loc = location
+        attempted_locaton = location
 
-        attempted_location_l1 = (
-            attempted_locaton_1,
-            attempted_locaton_2,
-            1,
-        )
+        if action in [0, 1, 2, 3]:
+            attempted_locaton = self.movement(action, location)
+            attempted_location_l0 = (attempted_locaton[0], attempted_locaton[1], 0)
+            attempted_location_l1 = (attempted_locaton[0], attempted_locaton[1], 1)
 
-        if action < 3.5:
             self.labour -= 2.1
             if isinstance(world[attempted_location_l1], Agent):
                 reward = -0.1
 
-            else:
-                if isinstance(world[attempted_location_l0], EmptyObject):
-                    world[attempted_location_l1] = self
-                    new_loc = attempted_location_l1
-                    world[location] = EmptyObject()
+            if isinstance(world[attempted_location_l0], EmptyObject):
+                world[attempted_location_l1] = self
+                new_loc = attempted_location_l1
+                world[location] = EmptyObject()
 
-                if isinstance(world[attempted_location_l0], Wall):
-                    reward = -0.1
+            if isinstance(world[attempted_location_l0], Wall):
+                reward = -0.1
 
-                if isinstance(world[attempted_location_l0], House):
-                    reward = -0.1
+            if isinstance(world[attempted_location_l0], House):
+                reward = -0.1
 
-                if isinstance(world[attempted_location_l0], Wood):
-                    # once this works, we need to set the reward to be 0 for collecting
-                    # labour costs need to be implimented
-                    reward = 10
-                    self.wood += 1
-                    world[attempted_location_l1] = self
-                    world[attempted_location_l0] = EmptyObject()
-                    world[location] = EmptyObject()
-                    new_loc = attempted_location_l1
+            if isinstance(world[attempted_location_l0], Wood):
+                # once this works, we need to set the reward to be 0 for collecting
+                # labour costs need to be implimented
+                reward = 10
+                self.wood += 1
+                world[attempted_location_l1] = self
+                world[attempted_location_l0] = EmptyObject()
+                world[location] = EmptyObject()
+                new_loc = attempted_location_l1
 
-                if isinstance(world[attempted_location_l0], Stone):
-                    reward = 10
-                    self.stone += 1
-                    world[attempted_location_l1] = self
-                    world[attempted_location_l0] = EmptyObject()
-                    world[location] = EmptyObject()
-                    new_loc = attempted_location_l1
+            if isinstance(world[attempted_location_l0], Stone):
+                reward = 10
+                self.stone += 1
+                world[attempted_location_l1] = self
+                world[attempted_location_l0] = EmptyObject()
+                world[location] = EmptyObject()
+                new_loc = attempted_location_l1
 
         if action == 4:
-            # this is a hack and needs to be better conceptualized
-            # solution is likely to have the agents and the elements (wood, stone, houses)
-            #   be on two different layers. So an agent and a house can be on
-            #   the same i, j, rather than having to have the agent jump off
-
             # note, you should not be able to build on top of another house
             reward = -0.1
             if self.stone > 0 and self.wood > 0:
@@ -221,7 +191,6 @@ class Agent:
                     self.stone -= 1
                     self.wood -= 1
                     world[location[0], location[1], 0] = House()
-                    succeed_house = 1
 
         next_state = models[self.policy].pov(
             world,
