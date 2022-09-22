@@ -31,24 +31,24 @@ class Combine_CLD(nn.Module):
     def __init__(
         self,
         numFilters,
-        insize,
-        hidsize1,
-        hidsize2,
-        outsize,
+        in_size,
+        hid_size1,
+        hid_size2,
+        out_size,
         n_layers=2,
         batch_first=True,
     ):
         super(Combine_CLD, self).__init__()
         self.cnn = CNN_CLD(numFilters)
         self.rnn = nn.LSTM(
-            input_size=insize,
-            hidden_size=hidsize1,
+            input_size=in_size,
+            hidden_size=hid_size1,
             num_layers=n_layers,
             batch_first=True,
         )
-        self.l1 = nn.Linear(hidsize1, hidsize1)
-        self.l2 = nn.Linear(hidsize1, hidsize2)
-        self.l3 = nn.Linear(hidsize2, outsize)
+        self.l1 = nn.Linear(hid_size1, hid_size1)
+        self.l2 = nn.Linear(hid_size1, hid_size2)
+        self.l3 = nn.Linear(hid_size2, out_size)
         self.dropout = nn.Dropout(0.15)
 
     def forward(self, x):
@@ -70,15 +70,17 @@ class Model_CNN_LSTM_DQN:
 
     kind = "cnn_lstm_dqn"  # class variable shared by all instances
 
-    def __init__(self, numFilters, lr, replaySize, insize, hidsize1, hidsize2, outsize):
+    def __init__(
+        self, numFilters, lr, replay_size, in_size, hid_size1, hid_size2, out_size
+    ):
         self.modeltype = "cnn_lstm_dqn"
-        self.model1 = Combine_CLD(numFilters, insize, hidsize1, hidsize2, outsize)
-        self.model2 = Combine_CLD(numFilters, insize, hidsize1, hidsize2, outsize)
+        self.model1 = Combine_CLD(numFilters, in_size, hid_size1, hid_size2, out_size)
+        self.model2 = Combine_CLD(numFilters, in_size, hid_size1, hid_size2, out_size)
         self.optimizer = torch.optim.Adam(
             self.model1.parameters(), lr=lr, weight_decay=0.01
         )
         self.loss_fn = nn.MSELoss()
-        self.replay = deque([], maxlen=replaySize)
+        self.replay = deque([], maxlen=replay_size)
         self.sm = nn.Softmax(dim=1)
 
     def pov(self, world, location, holdObject):

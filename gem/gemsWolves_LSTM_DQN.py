@@ -32,11 +32,11 @@ def create_models():
             in_channels=3,
             num_filters=5,
             lr=0.0001,
-            replaySize=2048,
-            insize=650,
-            hidsize1=75,
-            hidsize2=30,
-            outsize=4,
+            replay_size=2048,
+            in_size=650,
+            hid_size1=75,
+            hid_size2=30,
+            out_size=4,
         )
     )  # agent model
 
@@ -45,11 +45,11 @@ def create_models():
             in_channels=3,
             num_filters=5,
             lr=0.0001,
-            replaySize=2048,
-            insize=2570,
-            hidsize1=150,
-            hidsize2=30,
-            outsize=4,
+            replay_size=2048,
+            in_size=2570,
+            hid_size1=150,
+            hid_size2=30,
+            out_size=4,
         )
     )  # wolf model
     return models

@@ -31,26 +31,26 @@ class Combine_CLD_AC(nn.Module):
     def __init__(
         self,
         numFilters,
-        insize,
-        hidsize1,
-        hidsize2,
-        outsize,
+        in_size,
+        hid_size1,
+        hid_size2,
+        out_size,
         n_layers=1,
         batch_first=True,
     ):
         super(Combine_CLD_AC, self).__init__()
         self.cnn = CNN_CLD(numFilters)
         self.rnn = nn.LSTM(
-            input_size=insize,
-            hidden_size=hidsize1,
+            input_size=in_size,
+            hidden_size=hid_size1,
             num_layers=n_layers,
             batch_first=True,
         )
-        self.l1 = nn.Linear(hidsize1, hidsize1)
-        self.l2 = nn.Linear(hidsize1, hidsize2)
+        self.l1 = nn.Linear(hid_size1, hid_size1)
+        self.l2 = nn.Linear(hid_size1, hid_size2)
 
-        self.actor_lin1 = nn.Linear(hidsize2, outsize)
-        self.l3 = nn.Linear(hidsize2, 25)
+        self.actor_lin1 = nn.Linear(hid_size2, out_size)
+        self.l3 = nn.Linear(hid_size2, 25)
         self.critic_lin1 = nn.Linear(25, 1)
         self.dropout = nn.Dropout(0.15)
 
@@ -83,15 +83,21 @@ class Model_CNN_LSTM_AC:
 
     kind = "cnn_lstm_AC"  # class variable shared by all instances
 
-    def __init__(self, numFilters, lr, replaySize, insize, hidsize1, hidsize2, outsize):
+    def __init__(
+        self, numFilters, lr, replay_size, in_size, hid_size1, hid_size2, out_size
+    ):
         self.modeltype = "cnn_lstm_ac"
-        self.model1 = Combine_CLD_AC(numFilters, insize, hidsize1, hidsize2, outsize)
-        self.model2 = Combine_CLD_AC(numFilters, insize, hidsize1, hidsize2, outsize)
+        self.model1 = Combine_CLD_AC(
+            numFilters, in_size, hid_size1, hid_size2, out_size
+        )
+        self.model2 = Combine_CLD_AC(
+            numFilters, in_size, hid_size1, hid_size2, out_size
+        )
         self.optimizer = torch.optim.Adam(
             self.model1.parameters(), lr=lr, weight_decay=0.01
         )
         self.loss_fn = nn.MSELoss()
-        self.replay = deque([], maxlen=replaySize)
+        self.replay = deque([], maxlen=replay_size)
         self.sm = nn.Softmax(dim=1)
         self.values = []
         self.logprobs = []

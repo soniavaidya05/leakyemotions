@@ -15,11 +15,11 @@ class ModelClassPlayer:
 
     kind = "humanPlayer"  # class variable shared by all instances
 
-    def __init__(self, actionSpace, replaySize):
+    def __init__(self, actionSpace, replay_size):
         self.modeltype = "humanPlayer"
         self.actionSpace = actionSpace
         self.inputType = "keyboard"
-        self.replay = deque([], maxlen=replaySize)
+        self.replay = deque([], maxlen=replay_size)
 
     def take_action(self, params):
         """

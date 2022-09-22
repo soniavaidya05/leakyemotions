@@ -10,15 +10,15 @@ from models.perception import agent_visualfield
 
 
 class DQN(nn.Module):
-    def __init__(self, numFilters, insize, hidsize1, hidsize2, outsize):
+    def __init__(self, numFilters, in_size, hid_size1, hid_size2, out_size):
         super(DQN, self).__init__()
         self.conv_layer1 = nn.Conv2d(
             in_channels=3, out_channels=numFilters, kernel_size=1
         )
-        self.l2 = nn.Linear(insize, hidsize1)
-        self.l3 = nn.Linear(hidsize1, hidsize1)
-        self.l4 = nn.Linear(hidsize1, hidsize2)
-        self.l5 = nn.Linear(hidsize2, outsize)
+        self.l2 = nn.Linear(in_size, hid_size1)
+        self.l3 = nn.Linear(hid_size1, hid_size1)
+        self.l4 = nn.Linear(hid_size1, hid_size2)
+        self.l5 = nn.Linear(hid_size2, out_size)
         self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
         self.conv_bn = nn.BatchNorm2d(5)
         self.dropout = nn.Dropout(0.15)
@@ -47,15 +47,17 @@ class ModelDQN:
 
     kind = "double_dqn"  # class variable shared by all instances
 
-    def __init__(self, numFilters, lr, replaySize, insize, hidsize1, hidsize2, outsize):
+    def __init__(
+        self, numFilters, lr, replay_size, in_size, hid_size1, hid_size2, out_size
+    ):
         self.modeltype = "double_dqn"
-        self.model1 = DQN(numFilters, insize, hidsize1, hidsize2, outsize)
-        self.model2 = DQN(numFilters, insize, hidsize1, hidsize2, outsize)
+        self.model1 = DQN(numFilters, in_size, hid_size1, hid_size2, out_size)
+        self.model2 = DQN(numFilters, in_size, hid_size1, hid_size2, out_size)
         self.optimizer = torch.optim.Adam(
             self.model1.parameters(), lr=lr, weight_decay=0.01
         )
         self.loss_fn = nn.MSELoss()
-        self.replay = deque([], maxlen=replaySize)
+        self.replay = deque([], maxlen=replay_size)
         self.sm = nn.Softmax(dim=1)
 
     def createInput(self, world, i, j, holdObject, numImages=-1):

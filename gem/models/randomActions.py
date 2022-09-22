@@ -10,11 +10,11 @@ class ModelRandomAction:
 
     kind = "randomAction"  # class variable shared by all instances
 
-    def __init__(self, replaySize, outsize):
+    def __init__(self, replay_size, out_size):
 
-        self.replay = deque([], maxlen=replaySize)
+        self.replay = deque([], maxlen=replay_size)
         self.sm = nn.Softmax(dim=1)
-        self.actionSpace = outsize
+        self.actionSpace = out_size
 
     def take_action(self, params):
         inp, epsilon = params
