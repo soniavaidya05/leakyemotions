@@ -163,3 +163,87 @@ def create_data(env, models, epochs, world_size):
     for _ in range(epochs):
         game_points = env.step(models, game_points)
     return env
+
+
+def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
+    fig = plt.figure()
+    ims = []
+    env.reset_env(world_size, world_size, layers=2)
+    done = 0
+    for location in find_moveables(env.world):
+        # reset the memories for all agents
+        env.world[location].init_replay(3)
+    game_points = [0, 0]
+    for _ in range(num):
+        image1 = create_world_image(env.world, layers=0)
+        image2 = create_world_image(env.world, layers=1)
+
+        for i in range(30):
+            for j in range(30):
+                R, G, B = image2[i, j]
+                if R == 0 and G == 0 and B == 255:
+                    image1[i, j][0] = R
+                    image1[i, j][1] = G
+                    image1[i, j][2] = B
+
+        im = plt.imshow(image1, animated=True)
+        ims.append([im])
+
+        agentList = find_moveables(env.world)
+        random.shuffle(agentList)
+
+        for loc in agentList:
+            if env.world[loc].static != 1:
+
+                (
+                    state,
+                    action,
+                    reward,
+                    next_state,
+                    done,
+                    new_loc,
+                    info,
+                ) = env.step(models, loc, 0.2)
+
+                env.world[new_loc].replay.append(
+                    (state, action, reward, next_state, done)
+                )
+
+                if env.world[new_loc].kind == "agent":
+                    game_points[0] = game_points[0] + reward
+                if env.world[new_loc].kind == "wolf":
+                    game_points[1] = game_points[1] + reward
+
+        env.world = update_memories(
+            models, env.world, find_moveables(env.world), done, end_update=False
+        )
+
+        # note that with the current setup, the world is not generating new wood and stone
+        # we will need to consider where to add the transitions that do not have movement or neural networks
+        regenList = []
+        for i in range(env.world.shape[0]):
+            for j in range(env.world.shape[1]):
+                for k in range(env.world.shape[2]):
+                    if env.world[i, j, k].deterministic == 1:
+                        regenList.append((i, j, k))
+
+        for loc in regenList:
+            env.world = env.world[loc].transition(env.world, loc)
+
+    ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
+    ani.save(filename, writer="PillowWriter", fps=2)
+
+
+def make_video2(filename, save_dir, models, world_size, env):
+    epoch = 10000
+    for video_num in range(5):
+        vfilename = (
+            save_dir
+            + filename
+            + "_replayVid_"
+            + str(epoch)
+            + "_"
+            + str(video_num)
+            + ".gif"
+        )
+        create_video2(models, world_size, 100, env, filename=vfilename)

@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
-from DQN_utils import save_models, load_models, make_video
+from DQN_utils import save_models, load_models, make_video2
 
 import random
 
@@ -166,9 +166,9 @@ def run_game(
             regenList = []
             for i in range(env.world.shape[0]):
                 for j in range(env.world.shape[1]):
-                    for k in range(env.world.shape[2]):
-                        if env.world[i, j, k].deterministic == 1:
-                            regenList.append((i, j, k))
+                    # for k in range(env.world.shape[2]): # only the layer 0 should regenerate
+                    if env.world[i, j, 0].deterministic == 1:
+                        regenList.append((i, j, 0))
 
             for loc in regenList:
                 env.world = env.world[loc].transition(env.world, loc)
@@ -261,13 +261,4 @@ for modRun in range(len(run_params)):
         max_turns=run_params[modRun][2],
     )
     save_models(models, save_dir, "AI_econ_test2" + str(modRun))
-
-
-make_video("AI_econ_test1", save_dir, models, 30, env)
-
-
-# questions?
-# 1) how to get the model to know states? in the cnn or added to MLP
-# 2) move the agents to layer 2?
-# 3) do we really need to have 50 output nodes? Can we have something that is \
-#   distributional instead?
+    make_video2("AI_econ_test1" + str(modRun), save_dir, models, 30, env)

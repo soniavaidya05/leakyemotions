@@ -150,7 +150,7 @@ class Model_CNN_LSTM_DQN:
             action = np.random.choice(np.arange(len(p)), p=p)
         return action
 
-    def training(self, batch_size, gamma, priority_replay=True):
+    def training(self, batch_size, gamma, priority_replay=False):
         """
         DQN batch learning
         """
@@ -188,8 +188,12 @@ class Model_CNN_LSTM_DQN:
             if priority_replay == False:
                 loss = self.loss_fn(X, Y.detach())
             if priority_replay == True:
-                loss = (X - Y.detach()) ** 2 * torch.Tensor(importance_normalized)
-                loss = torch.mean(loss)
+                replay_stable = 0
+                if replay_stable == 0:
+                    loss = self.loss_fn(X, Y.detach())
+                if replay_stable == 1:
+                    loss = (X - Y.detach()) ** 2 * torch.Tensor(importance_normalized)
+                    loss = torch.mean(loss)
             loss.backward()
             self.optimizer.step()
         return loss
