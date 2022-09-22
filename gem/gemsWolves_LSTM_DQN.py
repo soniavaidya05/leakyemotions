@@ -6,7 +6,7 @@ from gem.utils import (
     find_agents,
 )
 from gem.environment.elements.element import EmptyObject, Wall
-from models.cnn_lstm_dqn_AI_econ import Model_CNN_LSTM_DQN
+from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
 from gemworld.gemsWolves import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb

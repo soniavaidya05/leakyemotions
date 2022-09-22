@@ -19,7 +19,7 @@ from gem.environment.elements.element import EmptyObject, Wall
 # from models.memory import Memory
 # from models.dqn import DQN, modelDQN
 # from models.randomActions import modelRandomAction
-from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
+from models.cnn_lstm_dqn_noPriority import model_CNN_LSTM_DQN
 
 from gemworld.gemsWolves import WolfsAndGems
 

@@ -12,7 +12,7 @@ from utils import (
 from models.memory import Memory
 from models.dqn import DQN, modelDQN
 from models.randomActions import modelRandomAction
-from models.cnn_lstm_dqn import model_CNN_LSTM_DQN
+from models.cnn_lstm_dqn_noPriority import model_CNN_LSTM_DQN
 
 from models.perception import agent_visualfield
 
