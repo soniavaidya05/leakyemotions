@@ -34,9 +34,17 @@ def create_models():
     """
     models = []
     models.append(
-        Model_CNN_LSTM_DQN(9, 10, 0.0001, 2000, 1300, 150, 30, 5)
+        Model_CNN_LSTM_DQN(
+            in_channels=9,
+            num_filters=10,
+            lr=0.0001,
+            replay_size=2048,
+            in_size=1300,
+            hid_size1=150,
+            hid_size2=30,
+            out_size=5,
+        )
     )  # agent model
-    # models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 2570, 150, 30, 4))  # wolf model
     return models
 
 
