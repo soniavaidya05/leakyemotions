@@ -34,77 +34,55 @@ class Wolf:
         exp = (image, 0, 0, image, 0)
         self.replay.append(exp)
 
-    def transition(self, world, models, action, location):
-        i, j, k = location
-        done = 0
-
-        new_locaton_1 = i
-        new_locaton_2 = j
-
-        # this should not be needed below, but getting errors
-        # it is possible that this is fixed now with the
-        # other changes that have been made
-        attempted_locaton_1 = i
-        attempted_locaton_2 = j
-
-        reward = 0
-
+    def movement(self, action, location):
+        """
+        Takes an action and returns a new location
+        """
+        new_location = location
         if action == 0:
-            attempted_locaton_1 = i - 1
-            attempted_locaton_2 = j
-
+            new_location = (location[0] - 1, location[1], location[2])
         if action == 1:
-            attempted_locaton_1 = i + 1
-            attempted_locaton_2 = j
-
+            new_location = (location[0] + 1, location[1], location[2])
         if action == 2:
-            attempted_locaton_1 = i
-            attempted_locaton_2 = j - 1
-
+            new_location = (location[0], location[1] - 1, location[2])
         if action == 3:
-            attempted_locaton_1 = i
-            attempted_locaton_2 = j + 1
+            new_location = (location[0], location[1] + 1, location[2])
+        return new_location
 
-        if world[attempted_locaton_1, attempted_locaton_2, 0].passable == 1:
-            world[i, j, 0] = EmptyObject()
-            world[attempted_locaton_1, attempted_locaton_2, 0] = self
-            new_locaton_1 = attempted_locaton_1
-            new_locaton_2 = attempted_locaton_2
+    def transition(self, world, models, action, location):
+        """
+        Changes the world based on the action taken
+        """
+        done = 0
+        reward = 0
+        new_loc = location
+        attempted_locaton = self.movement(action, location)
+
+        if world[attempted_locaton].passable == 1:
+            world[location] = EmptyObject()
+            world[attempted_locaton] = self
+            new_loc = attempted_locaton
             reward = 0
+
         else:
-            if isinstance(world[attempted_locaton_1, attempted_locaton_2, 0], Wall):
+            if isinstance(world[attempted_locaton], Wall):
                 reward = -0.1
-            if isinstance(world[attempted_locaton_1, attempted_locaton_2, 0], Agent):
+            if isinstance(world[attempted_locaton], Agent):
                 """
                 If the wolf and the agent are in the same location, the agent dies.
                 In addition to giving the wolf a reward, the agent also gets a punishment.
                 TODO: This needs to be updated to be in the Agent class rather than here
+                TODO: the agent.died() function is not working properly
                 """
                 reward = 10
-
-                # TODO: the died function is not working properly
-
-                exp = world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1]
+                exp = world[attempted_locaton].replay[-1]
                 exp = (exp[0], exp[1], -25, exp[3], 1)
-                world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1] = exp
-                models[
-                    world[attempted_locaton_1, attempted_locaton_2, 0].policy
-                ].transfer_memories(
-                    world,
-                    (attempted_locaton_1, attempted_locaton_2, 0),
-                    extra_reward=True,
+                world[attempted_locaton].replay[-1] = exp
+                models[world[attempted_locaton].policy].transfer_memories(
+                    world, attempted_locaton, extra_reward=True
                 )
 
-                # world = world[attempted_locaton_1, attempted_locaton_2, 0].died(
-                #        models,
-                #        world,
-                #        attempted_locaton_1,
-                #        attempted_locaton_2,
-                #        extra_reward=True,
-                #    )
-                world[attempted_locaton_1, attempted_locaton_2, 0] = DeadAgent()
-
-        new_loc = (new_locaton_1, new_locaton_2, 0)
+                world[attempted_locaton] = DeadAgent()
 
         next_state = models[self.policy].pov(world, new_loc, self)
         self.reward += reward

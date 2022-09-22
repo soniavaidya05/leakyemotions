@@ -6,7 +6,7 @@ from gem.utils import (
     find_agents,
 )
 from gem.environment.elements.element import EmptyObject, Wall
-from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
+from models.cnn_lstm_dqn_AI_econ import Model_CNN_LSTM_DQN
 from gemworld.gemsWolves import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -25,9 +25,33 @@ def create_models():
     Should also set up so that the number of hidden laters can be added to dynamically
     in this function. Below should fully set up the NN in a flexible way for the studies
     """
+
     models = []
-    models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 650, 75, 30, 4))  # agent model
-    models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 2570, 150, 30, 4))  # wolf model
+    models.append(
+        Model_CNN_LSTM_DQN(
+            in_channels=3,
+            num_filters=5,
+            lr=0.0001,
+            replaySize=2048,
+            insize=650,
+            hidsize1=75,
+            hidsize2=30,
+            outsize=4,
+        )
+    )  # agent model
+
+    models.append(
+        Model_CNN_LSTM_DQN(
+            in_channels=3,
+            num_filters=5,
+            lr=0.0001,
+            replaySize=2048,
+            insize=2570,
+            hidsize1=150,
+            hidsize2=30,
+            outsize=4,
+        )
+    )  # wolf model
     return models
 
 
@@ -159,7 +183,7 @@ def run_game(
                 Train the neural networks within a eposide at rate of modelUpdate_freq
                 """
                 for mods in trainable_models:
-                    loss = models[mods].training(150, 0.9)
+                    loss = models[mods].training(256, 0.9)
                     losses = losses + loss.detach().numpy()
 
         for mods in trainable_models:
@@ -221,7 +245,7 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(models, save_dir, "newWolvesAndAgents_experimental" + str(modRun))
+    save_models(models, save_dir, "newWolvesAndAgents_priority" + str(modRun))
 
 
-make_video("test_new_experimental", save_dir, models, 20, env)
+make_video("test_new_priority", save_dir, models, 20, env)

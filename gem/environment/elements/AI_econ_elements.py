@@ -121,7 +121,7 @@ class Agent:
         exp = (image, 0, 0, image, 0)
         self.replay.append(exp)
 
-    def movement(action, location):
+    def movement(self, action, location):
         """
         Takes an action and returns a new location
         """
@@ -191,6 +191,21 @@ class Agent:
                     self.stone -= 1
                     self.wood -= 1
                     world[location[0], location[1], 0] = House()
+
+        if action == 5:  # bid wood
+            pass
+
+        if action == 6:  # bid stone
+            pass
+
+        if action == 7:  # sell wood
+            pass
+
+        if action == 8:  # sell stone
+            pass
+
+        if action == 9:  # do nothing
+            pass
 
         next_state = models[self.policy].pov(
             world,

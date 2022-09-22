@@ -66,50 +66,41 @@ class Agent:
         self.static = 1
         self.has_transitions = False
 
-    def transition(self, world, models, action, location):
-        i, j, k = location
-        done = 0
-
-        new_locaton_1 = i
-        new_locaton_2 = j
-
-        # this should not be needed below, but getting errors
-        # it is possible that this is fixed now with the
-        # other changes that have been made
-        attempted_locaton_1 = i
-        attempted_locaton_2 = j
-
-        reward = 0
-
+    def movement(self, action, location):
+        """
+        Takes an action and returns a new location
+        """
+        new_location = location
         if action == 0:
-            attempted_locaton_1 = i - 1
-            attempted_locaton_2 = j
-
+            new_location = (location[0] - 1, location[1], location[2])
         if action == 1:
-            attempted_locaton_1 = i + 1
-            attempted_locaton_2 = j
-
+            new_location = (location[0] + 1, location[1], location[2])
         if action == 2:
-            attempted_locaton_1 = i
-            attempted_locaton_2 = j - 1
-
+            new_location = (location[0], location[1] - 1, location[2])
         if action == 3:
-            attempted_locaton_1 = i
-            attempted_locaton_2 = j + 1
+            new_location = (location[0], location[1] + 1, location[2])
+        return new_location
 
-        if world[attempted_locaton_1, attempted_locaton_2, 0].passable == 1:
-            world[i, j, 0] = EmptyObject()
-            reward = world[attempted_locaton_1, attempted_locaton_2, 0].value
-            world[attempted_locaton_1, attempted_locaton_2, 0] = self
-            new_locaton_1 = attempted_locaton_1
-            new_locaton_2 = attempted_locaton_2
+    def transition(self, world, models, action, location):
+        """
+        Changes the world based on the action taken
+        """
+        done = 0
+        reward = 0
+        new_loc = location
+        attempted_locaton = self.movement(action, location)
+
+        if world[attempted_locaton].passable == 1:
+            world[location] = EmptyObject()
+            reward = world[attempted_locaton].value
+            world[attempted_locaton] = self
+            new_loc = attempted_locaton
 
         else:
             if isinstance(
-                world[attempted_locaton_1, attempted_locaton_2, 0], Wall
+                world[attempted_locaton], Wall
             ):  # Replacing comparison with string 'kind'
                 reward = -0.1
-        new_loc = (new_locaton_1, new_locaton_2, 0)
 
         next_state = models[self.policy].pov(world, new_loc, self)
         self.reward += reward
