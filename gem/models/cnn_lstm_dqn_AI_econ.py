@@ -188,9 +188,8 @@ class Model_CNN_LSTM_DQN:
             if priority_replay == False:
                 loss = self.loss_fn(X, Y.detach())
             if priority_replay == True:
-                # loss = (X - Y.detach()) ** 2 * importance_normalized
-                # loss = torch.mean(loss)
-                loss = self.loss_fn(X, Y.detach())
+                loss = (X - Y.detach()) ** 2 * torch.Tensor(importance_normalized)
+                loss = torch.mean(loss)
             loss.backward()
             self.optimizer.step()
         return loss
