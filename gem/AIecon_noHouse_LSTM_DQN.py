@@ -36,13 +36,13 @@ def create_models():
     models.append(
         Model_CNN_LSTM_DQN(
             in_channels=9,
-            num_filters=10,
+            num_filters=7,
             lr=0.0001,
-            replay_size=2048,
-            in_size=1300,
+            replay_size=1024,
+            in_size=910,
             hid_size1=150,
             hid_size2=30,
-            out_size=5,
+            out_size=4,  # if 5, then builds houses
         )
     )  # agent model
     return models
@@ -196,7 +196,7 @@ def run_game(
 
                 # transfer the events for each agent into the appropriate model after all have moved
                 models = transfer_world_memories(
-                    models, env.world, find_moveables(env.world), extra_reward=False
+                    models, env.world, find_moveables(env.world)
                 )
 
             if withinturn % modelUpdate_freq == 0:
@@ -204,7 +204,7 @@ def run_game(
                 Train the neural networks within a eposide at rate of modelUpdate_freq
                 """
                 for mods in trainable_models:
-                    loss = models[mods].training(256, 0.9)
+                    loss = models[mods].training(128, 0.9)
                     losses = losses + loss.detach().numpy()
 
         for mods in trainable_models:
@@ -267,5 +267,5 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(models, save_dir, "AI_econ_test2" + str(modRun))
-    make_video2("AI_econ_test1" + str(modRun), save_dir, models, 30, env)
+    save_models(models, save_dir, "AI_econ_noHouse" + str(modRun))
+    make_video2("AI_econ_noHouse" + str(modRun), save_dir, models, 30, env)

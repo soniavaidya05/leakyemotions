@@ -197,6 +197,6 @@ def transfer_memories(models, world, expList, extra_reward=True):
         exp = world[loc].replay[-1]
         models[world[loc].policy].replay.append(exp)
         if extra_reward == True and abs(exp[2]) > 9:
-            for _ in range(5):
+            for _ in range(2):
                 models[world[loc].policy].replay.append(exp)
     return models

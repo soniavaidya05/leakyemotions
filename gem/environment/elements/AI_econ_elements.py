@@ -150,6 +150,10 @@ class Agent:
             attempted_location_l1 = (attempted_locaton[0], attempted_locaton[1], 1)
 
             self.labour -= 2.1
+
+            if isinstance(world[attempted_location_l0], Agent):
+                reward = -0.1
+
             if isinstance(world[attempted_location_l1], Agent):
                 reward = -0.1
 
