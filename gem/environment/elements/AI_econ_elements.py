@@ -151,10 +151,15 @@ class Agent:
 
             self.labour -= 2.1
 
+            # below is repeated code because agents keep going on top of each other
+            # and deleting each other.
             if isinstance(world[attempted_location_l0], Agent):
                 reward = -0.1
 
             if isinstance(world[attempted_location_l1], Agent):
+                reward = -0.1
+
+            if isinstance(world[attempted_locaton], Agent):
                 reward = -0.1
 
             if isinstance(world[attempted_location_l0], EmptyObject):
