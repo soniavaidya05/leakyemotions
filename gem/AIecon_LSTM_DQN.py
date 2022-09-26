@@ -267,5 +267,9 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(models, save_dir, "AI_econ_test2" + str(modRun))
-    make_video2("AI_econ_test1" + str(modRun), save_dir, models, 30, env)
+    save_models(models, save_dir, "AI_econ_PER" + str(modRun))
+    make_video2("AI_econ_PER" + str(modRun), save_dir, models, 30, env)
+
+
+# models = load_models(save_dir, "AI_econ_test28")
+# make_video2("test_new_priority", save_dir, models, 30, env)

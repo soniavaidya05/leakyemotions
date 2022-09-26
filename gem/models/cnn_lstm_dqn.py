@@ -95,6 +95,13 @@ class Model_CNN_LSTM_DQN:
         self.loss_fn = nn.MSELoss()
         self.replay = deque([], maxlen=replay_size)
         self.sm = nn.Softmax(dim=1)
+        self.alpha = 0.6
+        self.beta = 0.4  # 0.2
+        self.max_beta = 1  # 0.4
+        self.offset = 0.01
+        # self.beta_increment_per_sampling = 0.0001
+        # 1 - self.beta / expected training steps to learn
+        self.beta_increment_per_sampling = (1 - 0.4) / 100000
 
     def pov(self, world, location, holdObject, inventory=[], layers=[0]):
         """
@@ -150,7 +157,7 @@ class Model_CNN_LSTM_DQN:
             action = np.random.choice(np.arange(len(p)), p=p)
         return action
 
-    def training(self, batch_size, gamma, priority_replay=False):
+    def training(self, batch_size, gamma, priority_replay=True):
         """
         DQN batch learning
         """
@@ -165,7 +172,8 @@ class Model_CNN_LSTM_DQN:
             if priority_replay == True:
                 losses = self.surprise(self.replay, gamma)
                 sample_indices, importance_normalized = self.priority_sample(
-                    losses, sample_size=256, alpha_scaling=0.7, offset=0.1
+                    losses,
+                    sample_size=256,
                 )
                 minibatch = [self.replay[i] for i in sample_indices]
 
@@ -188,12 +196,14 @@ class Model_CNN_LSTM_DQN:
             if priority_replay == False:
                 loss = self.loss_fn(X, Y.detach())
             if priority_replay == True:
-                replay_stable = 0
+                replay_stable = 1
                 if replay_stable == 0:
                     loss = self.loss_fn(X, Y.detach())
                 if replay_stable == 1:
-                    loss = (X - Y.detach()) ** 2 * torch.Tensor(importance_normalized)
-                    loss = torch.mean(loss)
+                    loss = (
+                        torch.FloatTensor(importance_normalized)
+                        * ((X - Y.detach()) ** 2)
+                    ).mean()
             loss.backward()
             self.optimizer.step()
         return loss
@@ -215,34 +225,36 @@ class Model_CNN_LSTM_DQN:
 
         Y = reward_batch + gamma * ((1 - done_batch) * torch.max(Q2.detach(), dim=1)[0])
         X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
-        # or, just compute here for every element?
 
-        losses = (X.detach() - Y.detach()) ** 2
-
-        # should the normalization be done here? or later in the processing
+        losses = (X.detach() - Y.detach()).abs()
 
         return losses
 
     def priority_sample(
-        self, replay_loss, sample_size=150, alpha_scaling=0.7, offset=0.1
+        self,
+        replay_loss,
+        sample_size=150,
     ):
         """
         normalize the DQN priority surprise
         """
-        replay_loss = np.asarray(replay_loss) + offset
-        sample_probs = abs(replay_loss**alpha_scaling) / np.sum(
-            abs(replay_loss**alpha_scaling)
+        replay_loss = np.asarray(replay_loss) + self.offset
+        sample_probs = abs(replay_loss**self.alpha) / np.sum(
+            abs(replay_loss**self.alpha)
         )
-
-        importance = 1 / len(replay_loss) * 1 / sample_probs
-        importance_normalized = importance / max(importance)
 
         sample_indices = random.choices(
             range(len(replay_loss)), k=sample_size, weights=sample_probs
         )
 
-        importance = 1 / len(replay_loss) * 1 / sample_probs[sample_indices]
+        importance = (
+            (1 / len(replay_loss)) * (1 / sample_probs[sample_indices])
+        ) ** self.beta
         importance_normalized = importance / max(importance)
+
+        self.beta = np.min(
+            [self.max_beta, self.beta + self.beta_increment_per_sampling]
+        )
 
         # the importance normalized is needed in the training function
         # I'm not sure what it does yet, so it is just here

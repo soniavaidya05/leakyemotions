@@ -245,7 +245,7 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(models, save_dir, "newWolvesAndAgents_priority" + str(modRun))
+    save_models(models, save_dir, "newWolvesAndAgents_priority_beta_max1" + str(modRun))
 
 
-make_video("test_new_priority", save_dir, models, 20, env)
+make_video("test_new_priority_beta_max1", save_dir, models, 20, env)
