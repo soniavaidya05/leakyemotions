@@ -22,6 +22,7 @@ class Wolf:
         self.trainable = 1  # whether there is a network to be optimized
         self.replay = deque([], maxlen=5)  # we should read in these maxlens
         self.has_transitions = True
+        self.deterministic = 0
 
     # init is now for LSTM, may need to have a toggle for LSTM of not
     def init_replay(self, numberMemories):
@@ -31,7 +32,7 @@ class Wolf:
         """
         pov_size = 17
         image = torch.zeros(1, numberMemories, 3, pov_size, pov_size).float()
-        exp = (image, 0, 0, image, 0)
+        exp = (0.1, (image, 0, 0, image, 0))
         self.replay.append(exp)
 
     def movement(self, action, location):
@@ -76,7 +77,7 @@ class Wolf:
                 """
                 reward = 10
                 exp = world[attempted_locaton].replay[-1]
-                exp = (exp[0], exp[1], -25, exp[3], 1)
+                exp = exp[0], (exp[1][0], exp[1][1], -25, exp[1][3], 1)
                 world[attempted_locaton].replay[-1] = exp
                 models[world[attempted_locaton].policy].transfer_memories(
                     world, attempted_locaton, extra_reward=True

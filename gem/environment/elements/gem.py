@@ -1,5 +1,6 @@
 from gem.environment.elements.element import Element
 
+
 class Gem(Element):
 
     kind = "gem"  # class variable shared by all instances
@@ -16,3 +17,4 @@ class Gem(Element):
         self.passable = 1  # whether the object blocks movement
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
+        self.deterministic = 0

@@ -22,6 +22,7 @@ class Agent:
         self.replay = deque([], maxlen=100)  # we should read in these maxlens
         self.has_transitions = True
         self.just_died = False
+        self.deterministic = 0
 
     def init_replay(self, numberMemories):
         """
@@ -30,7 +31,7 @@ class Agent:
         """
         pov_size = 9
         image = torch.zeros(1, numberMemories, 3, pov_size, pov_size).float()
-        exp = (image, 0, 0, image, 0)
+        exp = (0.1, (image, 0, 0, image, 0))
         self.replay.append(exp)
 
     def died(

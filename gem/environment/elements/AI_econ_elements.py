@@ -118,7 +118,7 @@ class Agent:
         pov_size = 9
         visual_depth = 3 + 3 + 3
         image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
-        exp = (image, 0, 0, image, 0)
+        exp = 1, (image, 0, 0, image, 0)
         self.replay.append(exp)
 
     def movement(self, action, location):

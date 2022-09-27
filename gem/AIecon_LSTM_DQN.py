@@ -38,7 +38,7 @@ def create_models():
             in_channels=9,
             num_filters=10,
             lr=0.0001,
-            replay_size=2048,
+            replay_size=4096,
             in_size=1300,
             hid_size1=150,
             hid_size2=30,
@@ -161,9 +161,15 @@ def run_game(
                         info,
                     ) = env.step(models, loc, epsilon)
 
-                    env.world[new_loc].replay.append(
-                        (state, action, reward, next_state, done)
+                    exp = models[env.world[new_loc].policy].max_priority, (
+                        state,
+                        action,
+                        reward,
+                        next_state,
+                        done,
                     )
+
+                    env.world[new_loc].replay.append(exp)
 
                     if env.world[new_loc].kind == "agent":
                         game_points[0] = game_points[0] + reward

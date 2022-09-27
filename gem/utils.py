@@ -170,14 +170,14 @@ def update_memories(models, world, expList, done, end_update=True):
         # location = (i, j, 0)
         holdObject = world[loc]
         exp = holdObject.replay[-1]
-        lastdone = exp[4]
+        lastdone = exp[1][4]
         if done == 1:
             lastdone = 1
         if end_update == False:
-            exp = (exp[0], exp[1], holdObject.reward, exp[3], lastdone)
+            exp = exp[0], (exp[1][0], exp[1][1], holdObject.reward, exp[1][3], lastdone)
         if end_update == True:
             input2 = models[holdObject.policy].pov(world, loc, holdObject)
-            exp = (exp[0], exp[1], holdObject.reward, input2, lastdone)
+            exp = exp[0], (exp[1][0], exp[1][1], holdObject.reward, input2, lastdone)
         world[loc].replay[-1] = exp
     return world
 
@@ -196,7 +196,7 @@ def transfer_memories(models, world, expList, extra_reward=True):
     for loc in expList:
         exp = world[loc].replay[-1]
         models[world[loc].policy].replay.append(exp)
-        if extra_reward == True and abs(exp[2]) > 9:
+        if extra_reward == True and abs(exp[1][2]) > 3:
             for _ in range(2):
                 models[world[loc].policy].replay.append(exp)
     return models

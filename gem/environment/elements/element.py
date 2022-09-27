@@ -30,6 +30,7 @@ class EmptyObject:
         self.passable = 1  # whether the object blocks movement
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
+        self.deterministic = 0
 
 
 class Wall:

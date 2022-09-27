@@ -32,7 +32,7 @@ def create_models():
             in_channels=3,
             num_filters=5,
             lr=0.0001,
-            replay_size=2048,
+            replay_size=4096,
             in_size=650,
             hid_size1=75,
             hid_size2=30,
@@ -45,7 +45,7 @@ def create_models():
             in_channels=3,
             num_filters=5,
             lr=0.0001,
-            replay_size=2048,
+            replay_size=4096,
             in_size=2570,
             hid_size1=150,
             hid_size2=30,
@@ -59,7 +59,7 @@ world_size = 15
 
 trainable_models = [0, 1]
 sync_freq = 500
-modelUpdate_freq = 25
+modelUpdate_freq = 4  # 25
 epsilon = 0.99
 
 turn = 1
@@ -150,9 +150,20 @@ def run_game(
                         info,
                     ) = env.step(models, loc, epsilon)
 
-                    env.world[new_loc].replay.append(
-                        (state, action, reward, next_state, done)
+                    # these can be included on one replay
+
+                    exp = (
+                        models[env.world[new_loc].policy].max_priority,
+                        (
+                            state,
+                            action,
+                            reward,
+                            next_state,
+                            done,
+                        ),
                     )
+
+                    env.world[new_loc].replay.append(exp)
 
                     if env.world[new_loc].kind == "agent":
                         game_points[0] = game_points[0] + reward
@@ -190,7 +201,7 @@ def run_game(
             """
             Train the neural networks at the end of eac epoch
             """
-            loss = models[mods].training(150, 0.9)
+            loss = models[mods].training(256, 0.9)
             losses = losses + loss.detach().numpy()
 
         updateEps = False
@@ -245,7 +256,11 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(models, save_dir, "newWolvesAndAgents_priority_beta_max1" + str(modRun))
+    save_models(
+        models,
+        save_dir,
+        "WolvesGems_PER_att_sync4" + str(modRun),
+    )
 
 
-make_video("test_new_priority_beta_max1", save_dir, models, 20, env)
+make_video("WolvesGems_PER_att_sync4", save_dir, models, 20, env)

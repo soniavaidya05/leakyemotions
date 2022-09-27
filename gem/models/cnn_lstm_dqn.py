@@ -94,14 +94,14 @@ class Model_CNN_LSTM_DQN:
         )
         self.loss_fn = nn.MSELoss()
         self.replay = deque([], maxlen=replay_size)
+        self.priorities = deque([], maxlen=replay_size)
         self.sm = nn.Softmax(dim=1)
         self.alpha = 0.6
         self.beta = 0.4  # 0.2
         self.max_beta = 1  # 0.4
         self.offset = 0.01
-        # self.beta_increment_per_sampling = 0.0001
-        # 1 - self.beta / expected training steps to learn
-        self.beta_increment_per_sampling = (1 - 0.4) / 100000
+        self.beta_increment_per_sampling = 0.0001
+        self.max_priority = 1.0
 
     def pov(self, world, location, holdObject, inventory=[], layers=[0]):
         """
@@ -109,7 +109,7 @@ class Model_CNN_LSTM_DQN:
         TODO: get rid of the holdObject input throughout the code
         """
 
-        previous_state = holdObject.replay[-1][0]
+        previous_state = holdObject.replay[-1][1][0]
         current_state = previous_state.clone()
 
         current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
@@ -170,12 +170,13 @@ class Model_CNN_LSTM_DQN:
             if priority_replay == False:
                 minibatch = random.sample(self.replay, batch_size)
             if priority_replay == True:
-                losses = self.surprise(self.replay, gamma)
                 sample_indices, importance_normalized = self.priority_sample(
-                    losses,
                     sample_size=256,
                 )
                 minibatch = [self.replay[i] for i in sample_indices]
+                errors = self.surprise(minibatch, gamma)
+                for i, e in zip(sample_indices, errors):
+                    self.priorities[i] = abs(e) + self.offset
 
             state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
             action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
@@ -212,7 +213,6 @@ class Model_CNN_LSTM_DQN:
         """
         DQN priority surprise
         """
-
         state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in replay])
         action_batch = torch.Tensor([a for (s1, a, r, s2, d) in replay])
         reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in replay])
@@ -226,38 +226,42 @@ class Model_CNN_LSTM_DQN:
         Y = reward_batch + gamma * ((1 - done_batch) * torch.max(Q2.detach(), dim=1)[0])
         X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
 
-        losses = (X.detach() - Y.detach()).abs()
+        losses = (X.detach() - Y.detach()).abs().numpy()
+
+        # self.max_priority = max(self.max_priority, max(losses))
+        # we probably don't want this the highest value that it has ever been
+        # I feel like this makes more sense, in that it is getting the recent
+        # priority experiences max to know how much error there is presently
+
+        ave_priority_loss = (max(losses) + self.max_priority) / 2
+
+        self.max_priority = max(max(losses), ave_priority_loss)
 
         return losses
 
     def priority_sample(
         self,
-        replay_loss,
-        sample_size=150,
+        sample_size=256,
     ):
         """
         normalize the DQN priority surprise
         """
-        replay_loss = np.asarray(replay_loss) + self.offset
-        sample_probs = abs(replay_loss**self.alpha) / np.sum(
-            abs(replay_loss**self.alpha)
-        )
+
+        td_loss = np.asarray(self.priorities) + self.offset
+        sample_probs = abs(td_loss**self.alpha) / np.sum(abs(td_loss**self.alpha))
 
         sample_indices = random.choices(
-            range(len(replay_loss)), k=sample_size, weights=sample_probs
+            range(len(td_loss)), k=sample_size, weights=sample_probs
         )
 
         importance = (
-            (1 / len(replay_loss)) * (1 / sample_probs[sample_indices])
+            (1 / len(td_loss)) * (1 / sample_probs[sample_indices])
         ) ** self.beta
         importance_normalized = importance / max(importance)
 
         self.beta = np.min(
             [self.max_beta, self.beta + self.beta_increment_per_sampling]
         )
-
-        # the importance normalized is needed in the training function
-        # I'm not sure what it does yet, so it is just here
 
         return sample_indices, importance_normalized
 
@@ -274,7 +278,8 @@ class Model_CNN_LSTM_DQN:
               Actor-criric models (or other types as well)
         """
         exp = world[loc].replay[-1]
-        self.replay.append(exp)
-        if extra_reward == True and abs(exp[2]) > 9:
-            for _ in range(5):
-                self.replay.append(exp)
+        self.priorities.append(exp[0])
+        self.replay.append(exp[1])
+        if extra_reward == True and abs(exp[1][2]) > 9:
+            for _ in range(3):
+                self.replay.append(exp[1])

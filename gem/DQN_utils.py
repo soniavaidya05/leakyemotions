@@ -41,17 +41,8 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
                     info,
                 ) = env.step(models, loc, 0.2)
 
-                env.world[new_loc].replay.append(
-                    (state, action, reward, next_state, done)
-                )
-
-                if env.world[new_loc].kind == "agent":
-                    game_points[0] = game_points[0] + reward
-                if env.world[new_loc].kind == "wolf":
-                    game_points[1] = game_points[1] + reward
-
         env.world = update_memories(
-            models, env.world, find_moveables(env.world), done, end_update=False
+            models, env.world, find_moveables(env.world), done, end_update=True
         )
 
         # note that with the current setup, the world is not generating new wood and stone
