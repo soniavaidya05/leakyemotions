@@ -16,7 +16,7 @@ from DQN_utils import save_models, load_models, make_video
 
 import random
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 
 
 def create_models():
@@ -204,10 +204,11 @@ def run_game(
             loss = models[mods].training(256, 0.9)
             losses = losses + loss.detach().numpy()
 
-        updateEps = False
+        updateEps = True
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
         if updateEps == True:
-            epsilon = update_epsilon(epsilon, turn, epoch)
+            #epsilon = update_epsilon(epsilon, turn, epoch)
+            epsilon = max(epsilon - .000025, .2)
 
         if epoch % 100 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
@@ -236,15 +237,12 @@ save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 models = create_models()
 
 run_params = (
-    [0.9, 10000, 35],
-    [0.85, 10000, 35],
-    [0.8, 15000, 35],
-    [0.75, 10000, 35],
-    [0.6, 15000, 35],
-    [0.2, 25000, 35],
-    [0.2, 20000, 50],
-    [0.2, 20000, 50],
-    [0.2, 20000, 50],
+    [0.98, 10000, 35],
+    [0.6, 10000, 35],
+    [0.2, 10000, 35],
+    [0.2, 10000, 35],
+    [0.2, 10000, 35],
+    [0.2, 10000, 35],
 )
 
 # the version below needs to have the keys from above in it
@@ -260,8 +258,8 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_att_sync4_noCur" + str(modRun),
+        "WolvesGems_PER_att_sync4_noCur_newEp_" + str(modRun),
     )
     make_video(
-        "WolvesGems_PER_att_sync4_noCur_" + str(modRun), save_dir, models, 20, env
+        "WolvesGems_PER_att_sync4_noCur_newEp_" + str(modRun), save_dir, models, 20, env
     )
