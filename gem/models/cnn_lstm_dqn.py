@@ -104,7 +104,7 @@ class Model_CNN_LSTM_DQN:
         self.beta_increment_per_sampling = 0.0001
         self.max_priority = 1.0
 
-    def pov(self, world, location, holdObject, inventory=[], layers=[0], device=None):
+    def pov(self, world, location, holdObject, inventory=[], layers=[0]):
         """
         Creates outputs of a single frame, and also a multiple image sequence
         TODO: get rid of the holdObject input throughout the code
@@ -138,9 +138,6 @@ class Model_CNN_LSTM_DQN:
 
         current_state[:, -1, :, :, :] = state_now
 
-        # transfer current_state to device
-        if device:
-            current_state = current_state.to(device)
         return current_state
 
     def take_action(self, params):

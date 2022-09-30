@@ -181,8 +181,10 @@ class WolfsAndGems:
             if going for this, the pov statement needs to know about location rather than separate
             i and j variables
             """
-            state = models[holdObject.policy].pov(self.world, loc, holdObject, device=device)
-            action = models[holdObject.policy].take_action([state, epsilon])
+            state = models[holdObject.policy].pov(self.world, loc, holdObject)
+            if device is not None:
+                state_on_dev = state.to(device)
+            action = models[holdObject.policy].take_action([state_on_dev, epsilon])
 
         if holdObject.has_transitions == True:
             """
