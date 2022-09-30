@@ -81,6 +81,7 @@ class Model_CNN_LSTM_DQN:
         hid_size1,
         hid_size2,
         out_size,
+        priority_replay=True,
     ):
         self.modeltype = "cnn_lstm_dqn"
         self.model1 = Combine_CLD(
@@ -157,7 +158,7 @@ class Model_CNN_LSTM_DQN:
             action = np.random.choice(np.arange(len(p)), p=p)
         return action
 
-    def training(self, batch_size, gamma, priority_replay=True):
+    def training(self, batch_size, gamma):
         """
         DQN batch learning
         """
@@ -167,9 +168,9 @@ class Model_CNN_LSTM_DQN:
         # note, there may be a ratio of priority replay to random replay that could be ideal
 
         if len(self.replay) > batch_size:
-            if priority_replay == False:
+            if self.priority_replay == False:
                 minibatch = random.sample(self.replay, batch_size)
-            if priority_replay == True:
+            if self.priority_replay == True:
                 sample_indices, importance_normalized = self.priority_sample(
                     sample_size=256,
                 )
@@ -194,13 +195,13 @@ class Model_CNN_LSTM_DQN:
             X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
 
             self.optimizer.zero_grad()
-            if priority_replay == False:
+            if self.priority_replay == False:
                 loss = self.loss_fn(X, Y.detach())
-            if priority_replay == True:
+            if self.priority_replay == True:
                 replay_stable = 1
-                if replay_stable == 0:
-                    loss = self.loss_fn(X, Y.detach())
                 if replay_stable == 1:
+                    loss = self.loss_fn(X, Y.detach())
+                if replay_stable == 0:
                     loss = (
                         torch.FloatTensor(importance_normalized)
                         * ((X - Y.detach()) ** 2)

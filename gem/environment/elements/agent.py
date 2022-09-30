@@ -128,3 +128,4 @@ class DeadAgent:
         self.trainable = 0  # whether there is a network to be optimized
         self.replay = deque([], maxlen=5)
         self.has_transitions = False
+        self.deterministic = 0

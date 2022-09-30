@@ -16,7 +16,7 @@ from DQN_utils import save_models, load_models, make_video
 
 import random
 
-save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
 
 def create_models():
@@ -55,11 +55,11 @@ def create_models():
     return models
 
 
-world_size = 30
+world_size = 15
 
 trainable_models = [0, 1]
 sync_freq = 500
-modelUpdate_freq = 4  # 25
+modelUpdate_freq = 25
 epsilon = 0.99
 
 turn = 1
@@ -194,21 +194,22 @@ def run_game(
                 Train the neural networks within a eposide at rate of modelUpdate_freq
                 """
                 for mods in trainable_models:
-                    loss = models[mods].training(256, 0.9)
+                    loss = models[mods].training(128, 0.9)
                     losses = losses + loss.detach().numpy()
 
         for mods in trainable_models:
             """
             Train the neural networks at the end of eac epoch
+            reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
             loss = models[mods].training(256, 0.9)
             losses = losses + loss.detach().numpy()
 
-        updateEps = True
+        updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
         if updateEps == True:
-            #epsilon = update_epsilon(epsilon, turn, epoch)
-            epsilon = max(epsilon - .000025, .2)
+            # epsilon = update_epsilon(epsilon, turn, epoch)
+            epsilon = max(epsilon - 0.00003, 0.2)
 
         if epoch % 100 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
@@ -237,12 +238,14 @@ save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 models = create_models()
 
 run_params = (
-    [0.98, 10000, 35],
+    [0.9, 1000, 5],
+    [0.8, 5000, 5],
+    [0.7, 5000, 5],
+    [0.2, 5000, 5],
+    [0.8, 10000, 25],
     [0.6, 10000, 35],
     [0.2, 10000, 35],
-    [0.2, 10000, 35],
-    [0.2, 10000, 35],
-    [0.2, 10000, 35],
+    [0.2, 20000, 50],
 )
 
 # the version below needs to have the keys from above in it
