@@ -1,3 +1,4 @@
+from tkinter.tix import Tree
 from gem.utils import (
     update_epsilon,
     update_memories,
@@ -37,6 +38,7 @@ def create_models():
             hid_size1=75,
             hid_size2=30,
             out_size=4,
+            priority_replay=True,
         )
     )  # agent model
 
@@ -50,6 +52,7 @@ def create_models():
             hid_size1=150,
             hid_size2=30,
             out_size=4,
+            priority_replay=True,
         )
     )  # wolf model
     return models
