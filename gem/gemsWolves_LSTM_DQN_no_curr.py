@@ -264,8 +264,12 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_att_sync4_noCur_newEp_" + str(modRun),
+        "WolvesGems_PER_att_sync4_noCur_newEp_BETA04_" + str(modRun),
     )
     make_video(
-        "WolvesGems_PER_att_sync4_noCur_newEp_" + str(modRun), save_dir, models, 20, env
+        "WolvesGems_PER_att_sync4_noCur_newEp_BETA04_" + str(modRun),
+        save_dir,
+        models,
+        20,
+        env,
     )

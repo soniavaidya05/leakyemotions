@@ -98,11 +98,12 @@ class Model_CNN_LSTM_DQN:
         self.priorities = deque([], maxlen=replay_size)
         self.sm = nn.Softmax(dim=1)
         self.alpha = 0.6
-        self.beta = 0.4  # 0.2
-        self.max_beta = 1  # 0.4
+        self.beta = 0.3  # 0.4
+        self.max_beta = 1
         self.offset = 0.01
-        self.beta_increment_per_sampling = 0.0001
+        self.beta_increment_per_sampling = 0.0000  # 0.0001
         self.max_priority = 1.0
+        self.priority_replay = priority_replay
 
     def pov(self, world, location, holdObject, inventory=[], layers=[0]):
         """
@@ -198,10 +199,11 @@ class Model_CNN_LSTM_DQN:
             if self.priority_replay == False:
                 loss = self.loss_fn(X, Y.detach())
             if self.priority_replay == True:
-                replay_stable = 1
+                replay_stable = 0
                 if replay_stable == 1:
                     loss = self.loss_fn(X, Y.detach())
                 if replay_stable == 0:
+                    # compute this twice!
                     loss = (
                         torch.FloatTensor(importance_normalized)
                         * ((X - Y.detach()) ** 2)
