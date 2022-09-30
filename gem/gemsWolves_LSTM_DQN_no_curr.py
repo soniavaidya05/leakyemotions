@@ -11,6 +11,7 @@ from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
 from gemworld.gemsWolves import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from DQN_utils import save_models, load_models, make_video
@@ -18,6 +19,9 @@ from DQN_utils import save_models, load_models, make_video
 import random
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+
+# choose device
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def create_models():
@@ -55,6 +59,11 @@ def create_models():
             priority_replay=True,
         )
     )  # wolf model
+
+    # convert to device
+    for model in models:
+        model = model.to(device)
+
     return models
 
 
@@ -151,7 +160,7 @@ def run_game(
                         done,
                         new_loc,
                         info,
-                    ) = env.step(models, loc, epsilon)
+                    ) = env.step(models, loc, epsilon, device=device)
 
                     # these can be included on one replay
 
@@ -189,7 +198,7 @@ def run_game(
 
                 # transfer the events for each agent into the appropriate model after all have moved
                 models = transfer_world_memories(
-                    models, env.world, find_moveables(env.world)
+                    models, env.world, find_moveables(env.world), device
                 )
 
             if withinturn % modelUpdate_freq == 0:

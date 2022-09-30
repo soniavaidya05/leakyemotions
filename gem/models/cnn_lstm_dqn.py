@@ -104,7 +104,7 @@ class Model_CNN_LSTM_DQN:
         self.beta_increment_per_sampling = 0.0001
         self.max_priority = 1.0
 
-    def pov(self, world, location, holdObject, inventory=[], layers=[0]):
+    def pov(self, world, location, holdObject, inventory=[], layers=[0], device=None):
         """
         Creates outputs of a single frame, and also a multiple image sequence
         TODO: get rid of the holdObject input throughout the code
@@ -138,6 +138,9 @@ class Model_CNN_LSTM_DQN:
 
         current_state[:, -1, :, :, :] = state_now
 
+        # transfer current_state to device
+        if device:
+            current_state = current_state.to(device)
         return current_state
 
     def take_action(self, params):
@@ -272,13 +275,16 @@ class Model_CNN_LSTM_DQN:
         """
         self.model2.load_state_dict(self.model1.state_dict())
 
-    def transfer_memories(self, world, loc, extra_reward=True, seqLength=4):
+    def transfer_memories(self, world, loc, device, extra_reward=True, seqLength=4):
         """
         Transfer the indiviu=dual memories to the model
         TODO: We need to have a single version that works for both DQN and
               Actor-criric models (or other types as well)
         """
         exp = world[loc].replay[-1]
+        # Convert exp to tensor and transfer to device
+        exp = [torch.tensor(e).to(device) for e in exp]
+
         self.priorities.append(exp[0])
         self.replay.append(exp[1])
         if extra_reward == True and abs(exp[1][2]) > 9:
