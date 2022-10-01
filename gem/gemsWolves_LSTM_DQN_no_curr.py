@@ -18,7 +18,7 @@ from DQN_utils import save_models, load_models, make_video
 
 import random
 
-apple_m1 = True
+apple_m1 = False
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
