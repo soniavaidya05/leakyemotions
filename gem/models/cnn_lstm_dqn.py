@@ -299,6 +299,6 @@ class Model_CNN_LSTM_DQN:
 
         self.priorities.append(exp[0])
         self.replay.append(exp[1])
-        if extra_reward == True and abs(exp[1][2]) > 9:
+        if extra_reward == True and abs(exp[1][2].cpu()) > 9:
             for _ in range(3):
                 self.replay.append(exp[1])
