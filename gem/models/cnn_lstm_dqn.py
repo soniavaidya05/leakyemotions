@@ -288,12 +288,14 @@ class Model_CNN_LSTM_DQN:
         # below is a hack at the moment
         # just typing in what the error message says to do
 
-        e0_0 = torch.tensor(exp[0]).clone().detach().to(self.device)
-        e1_0 = torch.tensor(exp[1][0]).clone().detach().to(self.device)
-        e1_1 = torch.tensor(exp[1][1]).clone().detach().to(self.device)
-        e1_2 = torch.tensor(exp[1][2]).clone().detach().to(self.device)
-        e1_3 = torch.tensor(exp[1][3]).clone().detach().to(self.device)
-        e1_4 = torch.tensor(exp[1][4]).clone().detach().to(self.device)
+        # e0_0 = torch.tensor(exp[0]).clone().detach().to(self.device)
+        e0_0 = torch.tensor(exp[0]).to(self.device)
+        e1_1 = torch.tensor(exp[1][1]).to(self.device)
+        e1_2 = torch.tensor(exp[1][2]).to(self.device)
+        e1_4 = torch.tensor(exp[1][4]).to(self.device)
+
+        e1_0 = exp[1][0].to(self.device)
+        e1_3 = exp[1][3].to(self.device)
 
         exp = e0_0, (e1_0, e1_1, e1_2, e1_3, e1_4)
 
