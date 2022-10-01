@@ -18,7 +18,7 @@ from DQN_utils import save_models, load_models, make_video
 
 import random
 
-apple_m1 = False
+apple_m1 = True
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
@@ -256,9 +256,11 @@ models = create_models()
 # convert to device
 for model in range(len(models)):
     models[model].model1.to(device)
+    models[model].model2.to(device)
 
 
 run_params = (
+    [0.9, 50000, 5],
     [0.9, 1000, 5],
     [0.8, 5000, 5],
     [0.7, 5000, 5],
