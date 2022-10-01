@@ -38,7 +38,7 @@ def create_models():
             hid_size1=75,
             hid_size2=30,
             out_size=4,
-            priority_replay=True,
+            priority_replay=False,
         )
     )  # agent model
 
@@ -52,7 +52,7 @@ def create_models():
             hid_size1=150,
             hid_size2=30,
             out_size=4,
-            priority_replay=True,
+            priority_replay=False,
         )
     )  # wolf model
     return models
@@ -264,10 +264,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_att_sync4_noCur_newEp_BETA04_" + str(modRun),
+        "WolvesGems_PER_att_sync4_noCur_noPER_" + str(modRun),
     )
     make_video(
-        "WolvesGems_PER_att_sync4_noCur_newEp_BETA04_" + str(modRun),
+        "WolvesGems_PER_att_sync4_noCur_noPER_" + str(modRun),
         save_dir,
         models,
         20,
