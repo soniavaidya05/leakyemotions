@@ -18,10 +18,16 @@ from DQN_utils import save_models, load_models, make_video
 
 import random
 
+apple_m1 = True
+
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
 # choose device
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+if apple_m1 == True:
+    device = torch.device("mps")
+print(device)
 
 
 def create_models():
@@ -42,7 +48,7 @@ def create_models():
             hid_size1=75,
             hid_size2=30,
             out_size=4,
-            priority_replay=True,
+            priority_replay=False,
         )
     )  # agent model
 
@@ -56,13 +62,9 @@ def create_models():
             hid_size1=150,
             hid_size2=30,
             out_size=4,
-            priority_replay=True,
+            priority_replay=False,
         )
     )  # wolf model
-
-    # convert to device
-    for model in models:
-        model = model.to(device)
 
     return models
 
@@ -249,15 +251,20 @@ save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
 models = create_models()
 
+# convert to device
+for model in range(len(models)):
+    models[model].model1.to(device)
+
+
 run_params = (
     [0.9, 1000, 5],
-    [0.8, 5000, 5],
-    [0.7, 5000, 5],
-    [0.2, 5000, 5],
-    [0.8, 10000, 25],
-    [0.6, 10000, 35],
-    [0.2, 10000, 35],
-    [0.2, 20000, 50],
+    # [0.8, 5000, 5],
+    # [0.7, 5000, 5],
+    # [0.2, 5000, 5],
+    # [0.8, 10000, 25],
+    # [0.6, 10000, 35],
+    # [0.2, 10000, 35],
+    # [0.2, 20000, 50],
 )
 
 # the version below needs to have the keys from above in it
@@ -273,8 +280,6 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_att_sync4_noCur_newEp_" + str(modRun),
+        "WolvesGems_tensor" + str(modRun),
     )
-    make_video(
-        "WolvesGems_PER_att_sync4_noCur_newEp_" + str(modRun), save_dir, models, 20, env
-    )
+    make_video("WolvesGems_tensor" + str(modRun), save_dir, models, 20, env)

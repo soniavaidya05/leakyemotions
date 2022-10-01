@@ -182,12 +182,12 @@ def update_memories(models, world, expList, done, end_update=True):
     return world
 
 
-def transfer_world_memories(models, world, expList, device, extra_reward=True):
+def transfer_world_memories(models, world, expList, extra_reward=True):
     # transfer the events from agent memory to model replay
     for loc in expList:
         # this moves the specific form of the replay memory into the model class
         # where it can be setup exactly for the model
-        models[world[loc].policy].transfer_memories(world, loc, device, extra_reward=True)
+        models[world[loc].policy].transfer_memories(world, loc, extra_reward=True)
     return models
 
 
