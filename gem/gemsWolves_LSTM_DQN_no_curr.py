@@ -18,15 +18,16 @@ from DQN_utils import save_models, load_models, make_video
 
 import random
 
-apple_m1 = False
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-if apple_m1 == True:
-    device = torch.device("mps")
+# if torch.backends.mps.is_available():
+#    device = torch.device("mps")
+
+
 print(device)
 
 
@@ -128,7 +129,7 @@ def run_game(
         for loc in find_moveables(env.world):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[loc].init_replay(3)
+            env.world[loc].init_replay(3, device=device)
 
         while done == 0:
             """
@@ -168,8 +169,16 @@ def run_game(
 
                     # these can be included on one replay
 
+                    priority_value = torch.tensor(
+                        models[env.world[new_loc].policy].max_priority
+                    )
+                    # rewards = reward
+                    # reward = torch.tensor(reward).float()
+                    # action = torch.tensor(action).float()
+                    # done = torch.tensor(done).float()
+
                     exp = (
-                        models[env.world[new_loc].policy].max_priority,
+                        priority_value,
                         (
                             state,
                             action,
@@ -260,8 +269,6 @@ for model in range(len(models)):
 
 
 run_params = (
-    [0.9, 50000, 5],
-    [0.9, 1000, 5],
     [0.8, 5000, 5],
     [0.7, 5000, 5],
     [0.2, 5000, 5],
@@ -281,9 +288,9 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(
-        models,
-        save_dir,
-        "WolvesGems_tensor" + str(modRun),
-    )
-    make_video("WolvesGems_tensor" + str(modRun), save_dir, models, 20, env)
+    # save_models(
+    #    models,
+    #    save_dir,
+    #    "WolvesGems_tensor" + str(modRun),
+    # )
+    # make_video("WolvesGems_tensor" + str(modRun), save_dir, models, 20, env)

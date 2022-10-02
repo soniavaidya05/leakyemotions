@@ -183,10 +183,14 @@ class Model_CNN_LSTM_DQN:
                     self.priorities[i] = abs(e) + self.offset
 
             state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
-            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
-            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch])
+            action_batch = torch.tensor([a for (s1, a, r, s2, d) in minibatch])
+            reward_batch = torch.tensor([r for (s1, a, r, s2, d) in minibatch])
             state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
-            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch])
+            done_batch = torch.tensor([d for (s1, a, r, s2, d) in minibatch])
+
+            reward_batch = reward_batch.to(self.device)
+            action_batch = action_batch.to(self.device)
+            done_batch = done_batch.to(self.device)
 
             Q1 = self.model1(state1_batch)
             with torch.no_grad():
@@ -218,10 +222,14 @@ class Model_CNN_LSTM_DQN:
         DQN priority surprise
         """
         state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in replay])
-        action_batch = torch.Tensor([a for (s1, a, r, s2, d) in replay])
-        reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in replay])
+        action_batch = torch.tensor([a for (s1, a, r, s2, d) in replay])
+        reward_batch = torch.tensor([r for (s1, a, r, s2, d) in replay])
         state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in replay])
-        done_batch = torch.Tensor([d for (s1, a, r, s2, d) in replay])
+        done_batch = torch.tensor([d for (s1, a, r, s2, d) in replay])
+
+        reward_batch = reward_batch.to(self.device)
+        action_batch = action_batch.to(self.device)
+        done_batch = done_batch.to(self.device)
 
         Q1 = self.model1(state1_batch)
         with torch.no_grad():
@@ -282,15 +290,18 @@ class Model_CNN_LSTM_DQN:
               Actor-criric models (or other types as well)
         """
         exp = world[loc].replay[-1]
+        use_extra = False
+        if extra_reward and exp[1][2] > 9:
+            use_extra = True
         # Convert exp to tensor and transfer to device
         # exp = [torch.tensor(e).to(device) for e in exp]
 
         # below is a hack at the moment
         # just typing in what the error message says to do
 
-        # e0_0 = torch.tensor(exp[0]).clone().detach().to(self.device)
-        e0_0 = torch.tensor(exp[0]).to(self.device)
+        e0_0 = exp[0].to(self.device)
         e1_1 = torch.tensor(exp[1][1]).to(self.device)
+
         e1_2 = torch.tensor(exp[1][2]).to(self.device)
         e1_4 = torch.tensor(exp[1][4]).to(self.device)
 
@@ -301,6 +312,7 @@ class Model_CNN_LSTM_DQN:
 
         self.priorities.append(exp[0])
         self.replay.append(exp[1])
-        if extra_reward == True and abs(exp[1][2].cpu()) > 9:
+        if use_extra:
             for _ in range(3):
+                self.priorities.append(exp[0])
                 self.replay.append(exp[1])

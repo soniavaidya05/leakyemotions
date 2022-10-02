@@ -24,14 +24,16 @@ class Agent:
         self.just_died = False
         self.deterministic = 0
 
-    def init_replay(self, numberMemories):
+    def init_replay(self, numberMemories, device="cpu"):
         """
         Fills in blank images for the LSTM before game play.
         Impicitly defines the number of sequences that the LSTM will be trained on.
         """
         pov_size = 9
         image = torch.zeros(1, numberMemories, 3, pov_size, pov_size).float()
-        exp = (0.1, (image, 0, 0, image, 0))
+        priority = torch.tensor(0.1)
+        blank = torch.tensor(0.0)
+        exp = (priority, (image, blank, blank, image, blank))
         self.replay.append(exp)
 
     def died(
