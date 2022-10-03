@@ -98,10 +98,10 @@ class Model_CNN_LSTM_DQN:
         self.priorities = deque([], maxlen=replay_size)
         self.sm = nn.Softmax(dim=1)
         self.alpha = 0.6
-        self.beta = 0.3  # 0.4
+        self.beta = 0.4  # 0.4
         self.max_beta = 1
         self.offset = 0.01
-        self.beta_increment_per_sampling = 0.0000  # 0.0001
+        self.beta_increment_per_sampling = 0.0001  # 0.0001
         self.max_priority = 1.0
         self.priority_replay = priority_replay
 
@@ -274,7 +274,7 @@ class Model_CNN_LSTM_DQN:
         """
         self.model2.load_state_dict(self.model1.state_dict())
 
-    def transfer_memories(self, world, loc, extra_reward=True, seqLength=4):
+    def transfer_memories(self, world, loc, extra_reward=True, seqLength=3):
         """
         Transfer the indiviu=dual memories to the model
         TODO: We need to have a single version that works for both DQN and
@@ -284,5 +284,6 @@ class Model_CNN_LSTM_DQN:
         self.priorities.append(exp[0])
         self.replay.append(exp[1])
         if extra_reward == True and abs(exp[1][2]) > 9:
-            for _ in range(3):
+            for _ in range(seqLength):
+                self.priorities.append(exp[0])
                 self.replay.append(exp[1])

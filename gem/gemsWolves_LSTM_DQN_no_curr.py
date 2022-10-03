@@ -17,8 +17,8 @@ from DQN_utils import save_models, load_models, make_video
 
 import random
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-
+#save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 
 def create_models():
     """
@@ -38,7 +38,7 @@ def create_models():
             hid_size1=75,
             hid_size2=30,
             out_size=4,
-            priority_replay=False,
+            priority_replay=True,
         )
     )  # agent model
 
@@ -52,7 +52,7 @@ def create_models():
             hid_size1=150,
             hid_size2=30,
             out_size=4,
-            priority_replay=False,
+            priority_replay=True,
         )
     )  # wolf model
     return models
@@ -229,8 +229,6 @@ def run_game(
     return models, env, turn, epsilon
 
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-
 # needs a dictionary with the following keys:
 # turn, trainable_models, sync_freq, modelUpdate_freq
 
@@ -264,10 +262,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_att_sync4_noCur_noPER_" + str(modRun),
+        "WolvesGems_PER_Oct3_" + str(modRun),
     )
     make_video(
-        "WolvesGems_PER_att_sync4_noCur_noPER_" + str(modRun),
+        "WolvesGems_PER_Oct3_" + str(modRun),
         save_dir,
         models,
         20,

@@ -186,7 +186,7 @@ class Model_CNN_LSTM_AC:
         """
         pass
 
-    def transfer_memories(self, world, loc, extra_reward=True, seqLength=5):
+    def transfer_memories(self, world, loc, extra_reward=True, seqLength=3):
         """
         Transfer the indiviu=dual memories to the model
         TODO: A second function is written below because the inputs for
