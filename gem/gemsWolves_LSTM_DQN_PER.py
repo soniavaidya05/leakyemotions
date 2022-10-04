@@ -144,7 +144,7 @@ def run_game(
                 env.world[loc].reward = 0
 
             for loc in agentList:
-                if env.world[loc].action_type != "static":
+                if env.world[loc].kind != "deadAgent":
 
                     (
                         state,
@@ -190,12 +190,16 @@ def run_game(
                 """
                 # this updates the last memory to be the final state of the game board
                 env.world = update_memories(
-                    models, env.world, find_moveables(env.world), done, end_update=True
+                    models,
+                    env.world,
+                    find_instance(env.world, "neural_network"),
+                    done,
+                    end_update=True,
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved
                 models = transfer_world_memories(
-                    models, env.world, find_moveables(env.world)
+                    models, env.world, find_instance(env.world, "neural_network")
                 )
 
             if withinturn % modelUpdate_freq == 0:
@@ -268,10 +272,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_att_sync4_noCur_PER_elu" + str(modRun),
+        "WolvesGems_PER_att_sync4_noCur_PER_elu_Importance" + str(modRun),
     )
     make_video(
-        "WolvesGems_PER_att_sync4_noCur_PER_elu" + str(modRun),
+        "WolvesGems_PER_att_sync4_noCur_PER_elu_Importance" + str(modRun),
         save_dir,
         models,
         20,

@@ -16,13 +16,10 @@ class Agent:
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.value = 0  # agents have no value
         self.reward = 0  # how much reward this agent has collected
-        self.static = 0  # whether the object gets to take actions or not
         self.passable = 0  # whether the object blocks movement
         self.trainable = 1  # whether there is a network to be optimized
         self.episode_memory = deque([], maxlen=100)  # we should read in these maxlens
         self.has_transitions = True
-        self.just_died = False
-        self.deterministic = 0
         self.action_type = "neural_network"
 
     def init_replay(self, numberMemories):

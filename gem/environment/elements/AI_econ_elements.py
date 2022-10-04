@@ -23,6 +23,7 @@ class Wood(Element):
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
         self.deterministic = 0  # whether the object is deterministic
+        self.action_type = "static"
 
 
 class Stone(Element):
@@ -42,6 +43,7 @@ class Stone(Element):
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
         self.deterministic = 0  # whether the object is deterministic
+        self.action_type = "static"
 
 
 class House(Element):
@@ -61,6 +63,7 @@ class House(Element):
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
         self.deterministic = 0  # whether the object is deterministic
+        self.action_type = "static"
 
 
 class EmptyObject(Element):
@@ -81,6 +84,7 @@ class EmptyObject(Element):
         self.has_transitions = False
         self.stone = 0
         self.wood = 0
+        self.action_type = "deterministic"
 
     def transition(self, world, location):
         generate_value = np.random.choice([0, 1, 2], p=[0.9999, 0.00005, 0.00005])
@@ -109,6 +113,7 @@ class Agent:
         self.stone = 0
         self.wood = 0
         self.labour = 0
+        self.action_type = "neural_network"
 
     def init_replay(self, numberMemories):
         """
@@ -244,3 +249,4 @@ class Wall:
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
         self.deterministic = 0  # whether the object is deterministic
+        self.action_type = "static"

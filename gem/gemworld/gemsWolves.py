@@ -8,9 +8,7 @@ import matplotlib.pyplot as plt
 from models.perception import agent_visualfield
 import random
 
-from utils import (
-    find_moveables,
-)
+from utils import find_moveables, find_instance
 
 
 class WolfsAndGems:
@@ -82,13 +80,9 @@ class WolfsAndGems:
         """
         image = self.plot(layer)
 
-        moveList = []
-        for i in range(self.world.shape[0]):
-            for j in range(self.world.shape[1]):
-                if self.world[i, j, 0].static == 0:
-                    moveList.append([i, j])
+        moveList = find_instance(self.world, "neural_network")
 
-        img = agent_visualfield(self.world, (moveList[0][0], moveList[0][1]), k=4)
+        img = agent_visualfield(self.world, moveList[0], k=4)
 
         plt.subplot(1, 2, 1)
         plt.imshow(image)
@@ -172,7 +166,7 @@ class WolfsAndGems:
         """
         holdObject = self.world[loc]
 
-        if holdObject.static != 1:
+        if holdObject.kind != "deadAgent":
             """
             This is where the agent will make a decision
             If done this way, the pov statement may be about to be part of the action
