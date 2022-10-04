@@ -18,3 +18,4 @@ class Gem(Element):
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
         self.deterministic = 0
+        self.action_type = "static"

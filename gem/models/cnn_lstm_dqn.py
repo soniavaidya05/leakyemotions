@@ -19,7 +19,7 @@ class CNN_CLD(nn.Module):
 
     def forward(self, x):
         x = x / 255  # note, a better normalization should be applied
-        y1 = F.relu(self.conv_layer1(x))
+        y1 = F.elu(self.conv_layer1(x))
         y2 = self.avg_pool(y1)  # ave pool is intentional (like a count)
         y2 = torch.flatten(y2, 1)
         y1 = torch.flatten(y1, 1)
@@ -60,8 +60,8 @@ class Combine_CLD(nn.Module):
 
         r_out, (h_n, h_c) = self.rnn(r_in)
 
-        y = F.relu(self.l1(r_out[:, -1, :]))
-        y = F.relu(self.l2(y))
+        y = F.elu(self.l1(r_out[:, -1, :]))
+        y = F.elu(self.l2(y))
         y = self.l3(y)
 
         return y
@@ -199,7 +199,7 @@ class Model_CNN_LSTM_DQN:
             if self.priority_replay == False:
                 loss = self.loss_fn(X, Y.detach())
             if self.priority_replay == True:
-                replay_stable = 0
+                replay_stable = 1
                 if replay_stable == 1:
                     loss = self.loss_fn(X, Y.detach())
                 if replay_stable == 0:
@@ -285,4 +285,5 @@ class Model_CNN_LSTM_DQN:
         self.replay.append(exp[1])
         if extra_reward == True and abs(exp[1][2]) > 9:
             for _ in range(3):
+                self.priorities.append(exp[0])
                 self.replay.append(exp[1])

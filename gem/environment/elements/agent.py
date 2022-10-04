@@ -23,6 +23,7 @@ class Agent:
         self.has_transitions = True
         self.just_died = False
         self.deterministic = 0
+        self.action_type = "neural_network"
 
     def init_replay(self, numberMemories):
         """
@@ -129,3 +130,4 @@ class DeadAgent:
         self.replay = deque([], maxlen=5)
         self.has_transitions = False
         self.deterministic = 0
+        self.action_type = "static"

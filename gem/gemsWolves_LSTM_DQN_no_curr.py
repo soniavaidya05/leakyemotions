@@ -1,10 +1,11 @@
-from tkinter.tix import Tree
+# from tkinter.tix import Tree
 from gem.utils import (
     update_epsilon,
     update_memories,
     find_moveables,
     transfer_world_memories,
     find_agents,
+    find_instance,
 )
 from gem.environment.elements.element import EmptyObject, Wall
 from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
@@ -112,7 +113,7 @@ def run_game(
             gem2p=0.02,
             wolf1p=0.01,
         )
-        for loc in find_moveables(env.world):
+        for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
             env.world[loc].init_replay(3)
@@ -131,7 +132,8 @@ def run_game(
                         models[mods].model1.state_dict()
                     )
 
-            agentList = find_moveables(env.world)
+            agentList = find_instance(env.world, "neural_network")
+
             random.shuffle(agentList)
 
             for loc in agentList:
@@ -141,7 +143,7 @@ def run_game(
                 env.world[loc].reward = 0
 
             for loc in agentList:
-                if env.world[loc].static != 1:
+                if env.world[loc].action_type != "static":
 
                     (
                         state,
@@ -174,7 +176,10 @@ def run_game(
                         game_points[1] = game_points[1] + reward
 
             # determine whether the game is finished (either max length or all agents are dead)
-            if withinturn > max_turns or len(find_agents(env.world)) == 0:
+            if (
+                withinturn > max_turns
+                or len(find_instance(env.world, "neural_network")) == 0
+            ):
                 done = 1
 
             if len(trainable_models) > 0:
@@ -264,10 +269,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_att_sync4_noCur_noPER_" + str(modRun),
+        "WolvesGems_PER_att_sync4_noCur_PER_elu" + str(modRun),
     )
     make_video(
-        "WolvesGems_PER_att_sync4_noCur_noPER_" + str(modRun),
+        "WolvesGems_PER_att_sync4_noCur_PER_elu" + str(modRun),
         save_dir,
         models,
         20,

@@ -31,6 +31,7 @@ class EmptyObject:
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
         self.deterministic = 0
+        self.action_type = "static"
 
 
 class Wall:
@@ -49,3 +50,4 @@ class Wall:
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
         self.deterministic = 0  # whether the object is deterministic
+        self.action_type = "static"  # rays disappear after one turn

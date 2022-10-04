@@ -62,9 +62,10 @@ def find_instance(world, kind):
     # needs to be rewriien to return location (i, j, k)
     instList = []
     for i in range(world.shape[0]):
-        for j in range(world.shape[0]):
-            if world[i, j, 0].kind == kind:
-                instList.append((i, j, 0))
+        for j in range(world.shape[1]):
+            for k in range(world.shape[2]):
+                if world[i, j, k].action_type == kind:
+                    instList.append((i, j, k))
     return instList
 
 

@@ -13,3 +13,4 @@ class BlastRay:
         self.passable = 1  # you can't walk through a ray without being blasted
         self.trainable = 0  # rays do not learn
         self.has_transitions = False
+        self.action_type = "disappearing"  # rays disappear after one turn

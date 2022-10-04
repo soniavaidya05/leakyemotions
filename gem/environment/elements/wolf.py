@@ -23,6 +23,7 @@ class Wolf:
         self.replay = deque([], maxlen=5)  # we should read in these maxlens
         self.has_transitions = True
         self.deterministic = 0
+        self.action_type = "neural_network"
 
     # init is now for LSTM, may need to have a toggle for LSTM of not
     def init_replay(self, numberMemories):
