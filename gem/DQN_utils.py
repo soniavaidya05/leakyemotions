@@ -6,6 +6,7 @@ import random
 import pickle
 
 from gem.utils import (
+    find_instance,
     update_memories,
     find_moveables,
 )
@@ -29,7 +30,7 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
         random.shuffle(agentList)
 
         for loc in agentList:
-            if env.world[loc].static != 1:
+            if env.world[loc].action_type == "neural_network":
 
                 (
                     state,
@@ -42,7 +43,11 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
                 ) = env.step(models, loc, 0.2)
 
         env.world = update_memories(
-            models, env.world, find_moveables(env.world), done, end_update=True
+            models,
+            env.world,
+            find_instance(env.world, "neural_network"),
+            done,
+            end_update=True,
         )
 
         # note that with the current setup, the world is not generating new wood and stone
@@ -184,7 +189,7 @@ def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
         random.shuffle(agentList)
 
         for loc in agentList:
-            if env.world[loc].static != 1:
+            if env.world[loc].action_type == "neural_network":
 
                 (
                     state,
@@ -206,17 +211,16 @@ def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
                     game_points[1] = game_points[1] + reward
 
         env.world = update_memories(
-            models, env.world, find_moveables(env.world), done, end_update=False
+            models,
+            env.world,
+            find_instance(env.world, "neural_network"),
+            done,
+            end_update=False,
         )
 
         # note that with the current setup, the world is not generating new wood and stone
         # we will need to consider where to add the transitions that do not have movement or neural networks
-        regenList = []
-        for i in range(env.world.shape[0]):
-            for j in range(env.world.shape[1]):
-                for k in range(env.world.shape[2]):
-                    if env.world[i, j, k].deterministic == 1:
-                        regenList.append((i, j, k))
+        regenList = find_instance(env.world, "deterministic")
 
         for loc in regenList:
             env.world = env.world[loc].transition(env.world, loc)
