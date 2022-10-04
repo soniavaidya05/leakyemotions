@@ -104,6 +104,7 @@ class Model_CNN_LSTM_DQN:
         self.sm = nn.Softmax(dim=1)
         self.max_priority = 1.0
         self.PER_replay = Memory(replay_size)
+        self.priority_replay = priority_replay
 
     def pov(self, world, location, holdObject, inventory=[], layers=[0]):
         """
@@ -168,7 +169,7 @@ class Model_CNN_LSTM_DQN:
 
         # note, there may be a ratio of priority replay to random replay that could be ideal
         # need to figure out how to get current_replay_size
-        current_replay_size = 25
+        current_replay_size = batch_size + 1
 
         if current_replay_size > batch_size:
             if self.priority_replay == False:
@@ -200,7 +201,7 @@ class Model_CNN_LSTM_DQN:
             # update priority
             for i in range(len(errors)):
                 idx = idxs[i]
-                self.memory.update(idx, errors[i])
+                self.PER_replay.update(idx, errors[i])
 
             self.optimizer.zero_grad()
             if self.priority_replay == False:
