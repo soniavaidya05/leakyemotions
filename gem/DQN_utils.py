@@ -17,7 +17,7 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
     ims = []
     env.reset_env(world_size, world_size)
     done = 0
-    for location in find_moveables(env.world):
+    for location in find_instance(env.world, "neural_network"):
         # reset the memories for all agents
         env.world[location].init_replay(3)
     game_points = [0, 0]
@@ -52,12 +52,7 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
 
         # note that with the current setup, the world is not generating new wood and stone
         # we will need to consider where to add the transitions that do not have movement or neural networks
-        regenList = []
-        for i in range(env.world.shape[0]):
-            for j in range(env.world.shape[1]):
-                for k in range(env.world.shape[2]):
-                    if env.world[i, j, k].deterministic == 1:
-                        regenList.append((i, j, k))
+        regenList = find_instance(env.world, "deterministic")
 
         for loc in regenList:
             env.world = env.world[loc].transition(env.world, loc)
@@ -154,7 +149,7 @@ def replay_view_model(memoryNum, modelNumber, models):
 def create_data(env, models, epochs, world_size):
     game_points = [0, 0]
     env.reset_env(world_size, world_size)
-    for i, j, k in find_moveables(env.world):
+    for i, j, k in find_instance(env.world, "neural_network"):
         env.world[i, j, k].init_replay(3)
     for _ in range(epochs):
         game_points = env.step(models, game_points)
@@ -166,7 +161,7 @@ def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
     ims = []
     env.reset_env(world_size, world_size, layers=2)
     done = 0
-    for location in find_moveables(env.world):
+    for location in find_instance(env.world, "neural_network"):
         # reset the memories for all agents
         env.world[location].init_replay(3)
     game_points = [0, 0]
@@ -185,7 +180,7 @@ def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
         im = plt.imshow(image1, animated=True)
         ims.append([im])
 
-        agentList = find_moveables(env.world)
+        agentList = find_instance(env.world, "neural_network")
         random.shuffle(agentList)
 
         for loc in agentList:
