@@ -212,16 +212,8 @@ class Model_CNN_LSTM_DQN:
             self.model1.parameters(), lr=lr, weight_decay=0.01
         )
         self.loss_fn = nn.MSELoss()
-        self.replay = deque([], maxlen=replay_size)
-        self.priorities = deque([], maxlen=replay_size)
         self.sm = nn.Softmax(dim=1)
-        self.alpha = 0.6
-        self.beta = 0.3  # 0.4
-        self.max_beta = 1
-        self.offset = 0.01
-        self.beta_increment_per_sampling = 0.0000  # 0.0001
         self.max_priority = 1.0
-        self.priority_replay = priority_replay
         self.PER_replay = Memory(replay_size)
 
     def pov(self, world, location, holdObject, inventory=[], layers=[0]):
@@ -286,9 +278,12 @@ class Model_CNN_LSTM_DQN:
         loss = torch.tensor(0.0)
 
         # note, there may be a ratio of priority replay to random replay that could be ideal
+        # need to figure out how to get current_replay_size
+        current_replay_size = 25
 
-        if len(self.replay) > batch_size:
+        if current_replay_size > batch_size:
             if self.priority_replay == False:
+                # this needs to be rewritten to work without priority replay
                 minibatch = random.sample(self.replay, batch_size)
             if self.priority_replay == True:
                 minibatch, idxs, is_weight = self.PER_replay.sample(batch_size)
@@ -309,6 +304,9 @@ class Model_CNN_LSTM_DQN:
             X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
 
             errors = torch.abs(Y - X).data.numpy()
+
+            # there should be better ways of doing the following
+            self.max_priority = np.max(errors)
 
             # update priority
             for i in range(len(errors)):
