@@ -13,7 +13,7 @@ from gem.environment.elements.AI_econ_elements import (
     EmptyObject,
     Wall,
 )
-from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
+from models.cnn_lstm_dqn_PER import Model_CNN_LSTM_DQN
 from gemworld.AI_econ_world import AI_Econ
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -169,7 +169,7 @@ def run_game(
                         done,
                     )
 
-                    env.world[new_loc].replay.append(exp)
+                    env.world[new_loc].episode_memory.append(exp)
 
                     if env.world[new_loc].kind == "agent":
                         game_points[0] = game_points[0] + reward

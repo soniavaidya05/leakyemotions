@@ -19,7 +19,7 @@ class Agent:
         self.static = 0  # whether the object gets to take actions or not
         self.passable = 0  # whether the object blocks movement
         self.trainable = 1  # whether there is a network to be optimized
-        self.replay = deque([], maxlen=100)  # we should read in these maxlens
+        self.episode_memory = deque([], maxlen=100)  # we should read in these maxlens
         self.has_transitions = True
         self.just_died = False
         self.deterministic = 0
@@ -33,7 +33,7 @@ class Agent:
         pov_size = 9
         image = torch.zeros(1, numberMemories, 3, pov_size, pov_size).float()
         exp = (0.1, (image, 0, 0, image, 0))
-        self.replay.append(exp)
+        self.episode_memory.append(exp)
 
     def died(
         self, models, world, attempted_locaton_1, attempted_locaton_2, extra_reward=True
@@ -43,8 +43,8 @@ class Agent:
         death. This is to encourage the agent to not die.
         TODO: this is failing at the moment. Need to fix.
         """
-        lastexp = world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1]
-        world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1] = (
+        lastexp = world[attempted_locaton_1, attempted_locaton_2, 0].episode_memory[-1]
+        world[attempted_locaton_1, attempted_locaton_2, 0].episode_memory[-1] = (
             lastexp[0],
             lastexp[1],
             -25,
@@ -127,7 +127,7 @@ class DeadAgent:
         self.static = 1  # whether the object gets to take actions or not (starts as 0, then goes to 1)
         self.passable = 0  # whether the object blocks movement
         self.trainable = 0  # whether there is a network to be optimized
-        self.replay = deque([], maxlen=5)
+        self.episode_memory = deque([], maxlen=5)
         self.has_transitions = False
         self.deterministic = 0
         self.action_type = "static"

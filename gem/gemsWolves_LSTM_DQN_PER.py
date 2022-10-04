@@ -169,7 +169,7 @@ def run_game(
                         ),
                     )
 
-                    env.world[new_loc].replay.append(exp)
+                    env.world[new_loc].episode_memory.append(exp)
 
                     if env.world[new_loc].kind == "agent":
                         game_points[0] = game_points[0] + reward

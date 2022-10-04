@@ -170,7 +170,7 @@ def update_memories(models, world, expList, done, end_update=True):
     for loc in expList:
         # location = (i, j, 0)
         holdObject = world[loc]
-        exp = holdObject.replay[-1]
+        exp = holdObject.episode_memory[-1]
         lastdone = exp[1][4]
         if done == 1:
             lastdone = 1
@@ -179,7 +179,7 @@ def update_memories(models, world, expList, done, end_update=True):
         if end_update == True:
             input2 = models[holdObject.policy].pov(world, loc, holdObject)
             exp = exp[0], (exp[1][0], exp[1][1], holdObject.reward, input2, lastdone)
-        world[loc].replay[-1] = exp
+        world[loc].episode_memory[-1] = exp
     return world
 
 

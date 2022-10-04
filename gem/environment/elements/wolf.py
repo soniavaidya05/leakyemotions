@@ -20,7 +20,7 @@ class Wolf:
         self.static = 0  # whether the object gets to take actions or not
         self.passable = 0  # whether the object blocks movement
         self.trainable = 1  # whether there is a network to be optimized
-        self.replay = deque([], maxlen=5)  # we should read in these maxlens
+        self.episode_memory = deque([], maxlen=5)  # we should read in these maxlens
         self.has_transitions = True
         self.deterministic = 0
         self.action_type = "neural_network"
@@ -34,7 +34,7 @@ class Wolf:
         pov_size = 17
         image = torch.zeros(1, numberMemories, 3, pov_size, pov_size).float()
         exp = (0.1, (image, 0, 0, image, 0))
-        self.replay.append(exp)
+        self.episode_memory.append(exp)
 
     def movement(self, action, location):
         """
@@ -77,9 +77,9 @@ class Wolf:
                 TODO: the agent.died() function is not working properly
                 """
                 reward = 10
-                exp = world[attempted_locaton].replay[-1]
+                exp = world[attempted_locaton].episode_memory[-1]
                 exp = exp[0], (exp[1][0], exp[1][1], -25, exp[1][3], 1)
-                world[attempted_locaton].replay[-1] = exp
+                world[attempted_locaton].episode_memory[-1] = exp
                 models[world[attempted_locaton].policy].transfer_memories(
                     world, attempted_locaton, extra_reward=True
                 )

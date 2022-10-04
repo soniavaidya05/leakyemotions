@@ -112,7 +112,7 @@ class Model_CNN_LSTM_DQN:
         TODO: get rid of the holdObject input throughout the code
         """
 
-        previous_state = holdObject.replay[-1][1][0]
+        previous_state = holdObject.episode_memory[-1][1][0]
         current_state = previous_state.clone()
 
         current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
@@ -233,7 +233,7 @@ class Model_CNN_LSTM_DQN:
         TODO: We need to have a single version that works for both DQN and
               Actor-criric models (or other types as well)
         """
-        exp = world[loc].replay[-1]
+        exp = world[loc].episode_memory[-1]
         self.PER_replay.add(exp[0], exp[1])
         if extra_reward == True and abs(exp[1][2]) > 9:
             for _ in range(seqLength):

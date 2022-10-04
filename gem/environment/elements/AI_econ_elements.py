@@ -103,7 +103,7 @@ class Agent:
         self.static = 0  # whether the object gets to take actions or not
         self.passable = 0  # whether the object blocks movement
         self.trainable = 1  # whether there is a network to be optimized
-        self.replay = deque([], maxlen=100)  # we should read in these maxlens
+        self.episode_memory = deque([], maxlen=100)  # we should read in these maxlens
         self.has_transitions = True
         self.deterministic = 0  # whether the object is deterministic
         self.stone = 0
@@ -119,7 +119,7 @@ class Agent:
         visual_depth = 3 + 3 + 3
         image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
         exp = 1, (image, 0, 0, image, 0)
-        self.replay.append(exp)
+        self.episode_memory.append(exp)
 
     def movement(self, action, location):
         """
