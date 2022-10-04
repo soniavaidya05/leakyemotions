@@ -18,8 +18,8 @@ from DQN_utils import save_models, load_models, make_video
 
 import random
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-
+#save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 
 def create_models():
     """
@@ -234,8 +234,6 @@ def run_game(
     return models, env, turn, epsilon
 
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-
 # needs a dictionary with the following keys:
 # turn, trainable_models, sync_freq, modelUpdate_freq
 
@@ -269,10 +267,17 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
+<<<<<<< HEAD:gem/gemsWolves_LSTM_DQN_PER.py
         "WolvesGems_PER_att_sync4_noCur_PER_elu" + str(modRun),
     )
     make_video(
         "WolvesGems_PER_att_sync4_noCur_PER_elu" + str(modRun),
+=======
+        "WolvesGems_PER_Oct3_" + str(modRun),
+    )
+    make_video(
+        "WolvesGems_PER_Oct3_" + str(modRun),
+>>>>>>> ade4740a2d478222effb1f4c456a6d7cc86be55a:gem/gemsWolves_LSTM_DQN_no_curr.py
         save_dir,
         models,
         20,
