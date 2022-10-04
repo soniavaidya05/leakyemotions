@@ -8,7 +8,7 @@ from gem.utils import (
     find_instance,
 )
 from gem.environment.elements.element import EmptyObject, Wall
-from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
+from models.cnn_lstm_dqn_PER import Model_CNN_LSTM_DQN
 from gemworld.gemsWolves import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -39,7 +39,7 @@ def create_models():
             hid_size1=75,
             hid_size2=30,
             out_size=4,
-            priority_replay=False,
+            priority_replay=True,
         )
     )  # agent model
 
@@ -53,7 +53,7 @@ def create_models():
             hid_size1=150,
             hid_size2=30,
             out_size=4,
-            priority_replay=False,
+            priority_replay=True,
         )
     )  # wolf model
     return models
