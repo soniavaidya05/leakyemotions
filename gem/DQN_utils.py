@@ -26,7 +26,7 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
         im = plt.imshow(image, animated=True)
         ims.append([im])
 
-        agentList = find_moveables(env.world)
+        agentList = find_instance(env.world, "neural_network")
         random.shuffle(agentList)
 
         for loc in agentList:
@@ -93,7 +93,7 @@ def make_video(filename, save_dir, models, world_size, env):
 
 
 def replay_view(memoryNum, agentNumber, env):
-    agentList = find_moveables(env.world)
+    agentList = find_instance(env.world, "neural_network")
     location = agentList[agentNumber]
 
     Obj = env.world[location]
