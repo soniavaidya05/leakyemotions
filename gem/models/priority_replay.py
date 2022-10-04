@@ -1,9 +1,5 @@
 import random
 import numpy as np
-from collections import deque
-
-
-# from SumTree import SumTree
 
 
 class SumTree:
@@ -11,8 +7,8 @@ class SumTree:
 
     def __init__(self, capacity):
         self.capacity = capacity
-        self.tree = numpy.zeros(2 * capacity - 1)
-        self.data = numpy.zeros(capacity, dtype=object)
+        self.tree = np.zeros(2 * capacity - 1)
+        self.data = np.zeros(capacity, dtype=object)
         self.n_entries = 0
 
     # update to the root node
@@ -70,14 +66,15 @@ class SumTree:
 
 
 class Memory:  # stored as ( s, a, r, s_ ) in SumTree
-    e = 0.01
-    a = 0.6
-    beta = 0.4
-    beta_increment_per_sampling = 0.001
-
-    def __init__(self, capacity):
+    def __init__(
+        self, capacity, e=0.01, a=0.06, beta=0.4, beta_increment_per_sampling=0.0001
+    ):
         self.tree = SumTree(capacity)
         self.capacity = capacity
+        self.e = e
+        self.a = a
+        self.beta = beta
+        self.beta_increment_per_sampling = beta_increment_per_sampling
 
     def _get_priority(self, error):
         return (np.abs(error) + self.e) ** self.a

@@ -18,8 +18,8 @@ from DQN_utils import save_models, load_models, make_video
 
 import random
 
-# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 
 
 def create_models():
