@@ -284,10 +284,6 @@ class Model_CNN_LSTM_DQN:
         self.priorities.append(exp[0])
         self.replay.append(exp[1])
         if extra_reward == True and abs(exp[1][2]) > 9:
-<<<<<<< HEAD
-            for _ in range(3):
-=======
             for _ in range(seqLength):
->>>>>>> ade4740a2d478222effb1f4c456a6d7cc86be55a
                 self.priorities.append(exp[0])
                 self.replay.append(exp[1])
