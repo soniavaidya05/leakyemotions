@@ -235,14 +235,9 @@ models = create_models()
 
 run_params = (
     [0.9, 10000, 50],
-    [0.2, 1000, 50],
     [0.8, 10000, 50],
-    [0.2, 1000, 50],
     [0.7, 10000, 50],
-    [0.2, 10000, 50],
-    [0.2, 10000, 50],
-    [0.2, 10000, 50],
-    [0.2, 10000, 50],
+    [0.6, 10000, 50],
     [0.2, 10000, 50],
     [0.2, 10000, 50],
 )
@@ -262,10 +257,10 @@ for modRun in range(len(run_params)):
         save_dir,
         "taxi_cab_" + str(modRun),
     )
-    # make_video(
-    #    "taxi_cab_" + str(modRun),
-    #    save_dir,
-    #    models,
-    #    10,
-    #    env,
-    # )
+    make_video(
+        "taxi_cab_" + str(modRun),
+        save_dir,
+        models,
+        10,
+        env,
+    )

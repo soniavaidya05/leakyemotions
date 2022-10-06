@@ -42,7 +42,7 @@ class Passenger:
         self.appearence = (255, 0, 0)  # passengers are red
         self.passable = 1  # whether the object blocks movement
         self.action_type = "static"
-        self.desired_location = self.select_desired_location(world)
+        self.select_desired_location(world)
 
     def select_desired_location(self, world):
         """
