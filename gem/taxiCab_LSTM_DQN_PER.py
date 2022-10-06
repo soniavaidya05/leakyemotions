@@ -7,9 +7,14 @@ from gem.utils import (
     find_agents,
     find_instance,
 )
-from gem.environment.elements.element import EmptyObject, Wall
+from gem.environment.elements.taxiCab_elements import (
+    TaxiCab,
+    EmptyObject,
+    Wall,
+    Passenger,
+)
 from models.cnn_lstm_dqn_PER import Model_CNN_LSTM_DQN
-from gemworld.gemsWolves import WolfsAndGems
+from gemworld.taxiCab import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -42,27 +47,13 @@ def create_models():
             out_size=4,
             priority_replay=False,
         )
-    )  # agent model
-
-    models.append(
-        Model_CNN_LSTM_DQN(
-            in_channels=3,
-            num_filters=5,
-            lr=0.0001,
-            replay_size=2048,
-            in_size=2570,
-            hid_size1=150,
-            hid_size2=30,
-            out_size=4,
-            priority_replay=False,
-        )
-    )  # wolf model
+    )  # taxi model
     return models
 
 
-world_size = 15
+world_size = 10
 
-trainable_models = [0, 1]
+trainable_models = [0]
 sync_freq = 500
 modelUpdate_freq = 25
 epsilon = 0.99
@@ -70,14 +61,11 @@ epsilon = 0.99
 turn = 1
 
 models = create_models()
-env = WolfsAndGems(
+env = TaxiCabEnv(
     height=world_size,
     width=world_size,
     layers=1,
     defaultObject=EmptyObject(),
-    gem1p=0.03,
-    gem2p=0.02,
-    wolf1p=0.01,
 )
 env.game_test()
 
@@ -110,9 +98,6 @@ def run_game(
             height=world_size,
             width=world_size,
             layers=1,
-            gem1p=0.03,
-            gem2p=0.02,
-            wolf1p=0.01,
         )
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
@@ -171,7 +156,7 @@ def run_game(
 
                     env.world[new_loc].episode_memory.append(exp)
 
-                    if env.world[new_loc].kind == "agent":
+                    if env.world[new_loc].kind == "taxi_cab":
                         game_points[0] = game_points[0] + reward
                     if env.world[new_loc].kind == "wolf":
                         game_points[1] = game_points[1] + reward
@@ -180,6 +165,7 @@ def run_game(
             if (
                 withinturn > max_turns
                 or len(find_instance(env.world, "neural_network")) == 0
+                or reward > 0
             ):
                 done = 1
 
@@ -230,7 +216,6 @@ def run_game(
                 epoch,
                 withinturn,
                 round(game_points[0]),
-                round(game_points[1]),
                 losses,
                 epsilon,
             )
@@ -249,14 +234,17 @@ def run_game(
 models = create_models()
 
 run_params = (
-    [0.9, 1000, 5],
-    [0.8, 5000, 5],
-    [0.7, 5000, 5],
-    [0.2, 5000, 5],
-    [0.8, 10000, 25],
-    [0.6, 10000, 35],
-    [0.2, 10000, 35],
-    [0.2, 20000, 50],
+    [0.9, 10000, 50],
+    [0.2, 1000, 50],
+    [0.8, 10000, 50],
+    [0.2, 1000, 50],
+    [0.7, 10000, 50],
+    [0.2, 10000, 50],
+    [0.2, 10000, 50],
+    [0.2, 10000, 50],
+    [0.2, 10000, 50],
+    [0.2, 10000, 50],
+    [0.2, 10000, 50],
 )
 
 # the version below needs to have the keys from above in it
@@ -272,12 +260,12 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_att_sync4_noPER_relu" + str(modRun),
+        "taxi_cab_" + str(modRun),
     )
-    make_video(
-        "WolvesGems_PER_att_sync4_noPER_relu" + str(modRun),
-        save_dir,
-        models,
-        20,
-        env,
-    )
+    # make_video(
+    #    "taxi_cab_" + str(modRun),
+    #    save_dir,
+    #    models,
+    #    10,
+    #    env,
+    # )

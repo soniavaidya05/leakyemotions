@@ -26,7 +26,7 @@ class CNN_CLD(nn.Module):
 
     def forward(self, x):
         x = x / 255  # note, a better normalization should be applied
-        y1 = F.elu(self.conv_layer1(x))
+        y1 = F.relu(self.conv_layer1(x))
         y2 = self.avg_pool(y1)  # ave pool is intentional (like a count)
         y2 = torch.flatten(y2, 1)
         y1 = torch.flatten(y1, 1)
@@ -67,8 +67,8 @@ class Combine_CLD(nn.Module):
 
         r_out, (h_n, h_c) = self.rnn(r_in)
 
-        y = F.elu(self.l1(r_out[:, -1, :]))
-        y = F.elu(self.l2(y))
+        y = F.relu(self.l1(r_out[:, -1, :]))
+        y = F.relu(self.l2(y))
         y = self.l3(y)
 
         return y
@@ -102,9 +102,25 @@ class Model_CNN_LSTM_DQN:
         )
         self.loss_fn = nn.MSELoss()
         self.sm = nn.Softmax(dim=1)
-        self.max_priority = 1.0
-        self.PER_replay = Memory(replay_size)
         self.priority_replay = priority_replay
+        if priority_replay == True:
+            self.max_priority = 1.0
+            self.PER_replay = Memory(
+                replay_size,
+                e=0.01,
+                a=0.06,  # set this to 0 for uniform sampling (check these numbers)
+                beta=0.4,  # set this to 0 for uniform sampling (check these numbers)
+                beta_increment_per_sampling=0.0001,  # set this to 0 for uniform sampling (check these numbers)
+            )
+        if priority_replay == False:
+            self.max_priority = 1.0
+            self.PER_replay = Memory(
+                replay_size,
+                e=0.01,
+                a=0,  # set this to 0 for uniform sampling (check these numbers)
+                beta=0,  # set this to 0 for uniform sampling (check these numbers)
+                beta_increment_per_sampling=0,  # set this to 0 for uniform sampling (check these numbers)
+            )
 
     def pov(self, world, location, holdObject, inventory=[], layers=[0]):
         """
@@ -172,11 +188,11 @@ class Model_CNN_LSTM_DQN:
         current_replay_size = batch_size + 1
 
         if current_replay_size > batch_size:
-            if self.priority_replay == False:
-                # this needs to be rewritten to work without priority replay
-                minibatch = random.sample(self.replay, batch_size)
-            if self.priority_replay == True:
-                minibatch, idxs, is_weight = self.PER_replay.sample(batch_size)
+            # if self.priority_replay == False:
+            #    # this needs to be rewritten to work without priority replay
+            #    minibatch = random.sample(self.replay, batch_size)
+            # if self.priority_replay == True:
+            minibatch, idxs, is_weight = self.PER_replay.sample(batch_size)
 
             state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
             action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
