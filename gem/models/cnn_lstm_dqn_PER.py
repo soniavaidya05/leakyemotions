@@ -167,7 +167,7 @@ class Model_CNN_LSTM_DQN:
 
         inp, epsilon = params
         Q = self.model1(inp)
-        p = self.sm(Q).detach().numpy()[0]
+        p = self.sm(Q).cpu().detach().numpy()[0]
 
         if epsilon > 0.3:
             if random.random() < epsilon:
@@ -258,13 +258,18 @@ class Model_CNN_LSTM_DQN:
             torch.tensor(exp[0]).to(self.device),
             (
                 exp[1][0].to(self.device),
-                torch.tensor(exp[1][1]).to(self.device),
-                torch.tensor(exp[1][2]).to(self.device),
+                torch.tensor(exp[1][1]).float().to(self.device),
+                torch.tensor(exp[1][2]).float().to(self.device),
                 exp[1][3].to(self.device),
-                torch.tensor(exp[1][4]).to(self.device),
+                torch.tensor(exp[1][4]).float().to(self.device),
             ),
         )
+        print("exp 0 0: ", exp[0])
+        print("exp 1 1: ", exp[1][1])
+        print("exp 1 2: ", exp[1][2])
+        print("exp 1 4: ", exp[1][4])
         self.PER_replay.add(exp[0], exp[1])
+        print("got here 5")
         if extra_reward == True and abs(high_reward) > 9:
             for _ in range(seqLength):
                 self.PER_replay.add(exp[0], exp[1])

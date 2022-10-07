@@ -148,9 +148,11 @@ class TaxiCabEnv:
         """
         This is an example script for an  step function
         """
+
         if self.world[loc].action_type == "neural_network":
 
             holdObject = self.world[loc]
+            device = models[holdObject.policy].device
             state = models[holdObject.policy].pov(
                 self.world,
                 loc,
@@ -158,7 +160,7 @@ class TaxiCabEnv:
                 inventory=[holdObject.has_passenger],
                 layers=[0],
             )
-            action = models[holdObject.policy].take_action([state, epsilon])
+            action = models[holdObject.policy].take_action([state.to(device), epsilon])
             """
             Updates the world given an action
             """

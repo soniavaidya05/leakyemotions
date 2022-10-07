@@ -30,8 +30,8 @@ save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# if torch.backends.mps.is_available():
-#    device = torch.device("mps")
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
 
 print(device)
 
@@ -54,7 +54,7 @@ def create_models():
             hid_size1=75,
             hid_size2=30,
             out_size=4,
-            priority_replay=False,
+            priority_replay=True,
             device=device,
         )
     )  # taxi model
@@ -67,7 +67,7 @@ def create_models():
     return models
 
 
-world_size = 12
+world_size = 10
 
 trainable_models = [0]
 sync_freq = 500
@@ -278,7 +278,7 @@ for modRun in range(len(run_params)):
         "taxi_cab2_" + str(modRun),
         save_dir,
         models,
-        12,
+        10,
         env,
         end_update=False,
     )
