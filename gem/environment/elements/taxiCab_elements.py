@@ -146,6 +146,7 @@ class TaxiCab:
                 world[location] = EmptyObject()
                 self.has_passenger = 1
                 world[self.driving_location] = Destination()
+                reward = -1
 
             if isinstance(world[attempted_locaton], Destination):
                 reward = 25
