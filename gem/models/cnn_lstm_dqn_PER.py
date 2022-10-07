@@ -173,7 +173,7 @@ class Model_CNN_LSTM_DQN:
             if random.random() < epsilon:
                 action = np.random.randint(0, len(p))
             else:
-                action = np.argmax(Q.detach().numpy())
+                action = np.argmax(Q.detach().cpu().numpy())
         else:
             action = np.random.choice(np.arange(len(p)), p=p)
         return action
@@ -182,7 +182,6 @@ class Model_CNN_LSTM_DQN:
         """
         DQN batch learning
         """
-
         loss = torch.tensor(0.0)
 
         # note, there may be a ratio of priority replay to random replay that could be ideal
@@ -190,6 +189,7 @@ class Model_CNN_LSTM_DQN:
         current_replay_size = batch_size + 1
 
         if current_replay_size > batch_size:
+
             # if self.priority_replay == False:
             #    # this needs to be rewritten to work without priority replay
             #    minibatch = random.sample(self.replay, batch_size)
@@ -197,10 +197,16 @@ class Model_CNN_LSTM_DQN:
             minibatch, idxs, is_weight = self.PER_replay.sample(batch_size)
 
             state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
-            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
-            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch])
+            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch]).to(
+                self.device
+            )
+            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch]).to(
+                self.device
+            )
             state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
-            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch])
+            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch]).to(
+                self.device
+            )
 
             Q1 = self.model1(state1_batch)
             with torch.no_grad():
@@ -209,12 +215,15 @@ class Model_CNN_LSTM_DQN:
             Y = reward_batch + gamma * (
                 (1 - done_batch) * torch.max(Q2.detach(), dim=1)[0]
             )
+
             X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
 
-            errors = torch.abs(Y - X).data.numpy()
+            errors = torch.abs(Y - X).data.cpu().numpy()
+            print(errors)
 
             # there should be better ways of doing the following
             self.max_priority = np.max(errors)
+            print(self.max_priority)
 
             # update priority
             for i in range(len(errors)):
@@ -253,9 +262,10 @@ class Model_CNN_LSTM_DQN:
         """
         exp = world[loc].episode_memory[-1]
         high_reward = exp[1][2]
+
         # move experience to the gpu if available
         exp = (
-            torch.tensor(exp[0]).to(self.device),
+            exp[0],
             (
                 exp[1][0].to(self.device),
                 torch.tensor(exp[1][1]).float().to(self.device),
@@ -264,12 +274,8 @@ class Model_CNN_LSTM_DQN:
                 torch.tensor(exp[1][4]).float().to(self.device),
             ),
         )
-        print("exp 0 0: ", exp[0])
-        print("exp 1 1: ", exp[1][1])
-        print("exp 1 2: ", exp[1][2])
-        print("exp 1 4: ", exp[1][4])
+
         self.PER_replay.add(exp[0], exp[1])
-        print("got here 5")
         if extra_reward == True and abs(high_reward) > 9:
             for _ in range(seqLength):
                 self.PER_replay.add(exp[0], exp[1])
