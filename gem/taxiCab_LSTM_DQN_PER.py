@@ -33,6 +33,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # if torch.backends.mps.is_available():
 #    device = torch.device("mps")
 
+print(device)
+
 
 def create_models():
     """
@@ -65,7 +67,7 @@ def create_models():
     return models
 
 
-world_size = 8
+world_size = 12
 
 trainable_models = [0]
 sync_freq = 500
@@ -250,16 +252,11 @@ models = create_models()
 
 run_params = (
     [0.9, 20000, 100],
-    [0.8, 20000, 100],
-    [0.7, 20000, 100],
-    [0.6, 20000, 100],
-    [0.2, 20000, 100],
-    [0.2, 20000, 100],
-    [0.4, 20000, 100],
-    [0.31, 20000, 100],
-    [0.2, 20000, 100],
-    [0.2, 20000, 100],
-    [0.2, 20000, 100],
+    [0.8, 5000, 100],
+    [0.7, 5000, 100],
+    [0.6, 5000, 100],
+    [0.2, 5000, 100],
+    [0.2, 10000, 100],
 )
 
 # the version below needs to have the keys from above in it
@@ -281,7 +278,7 @@ for modRun in range(len(run_params)):
         "taxi_cab2_" + str(modRun),
         save_dir,
         models,
-        8,
+        12,
         env,
         end_update=False,
     )
