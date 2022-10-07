@@ -219,11 +219,9 @@ class Model_CNN_LSTM_DQN:
             X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
 
             errors = torch.abs(Y - X).data.cpu().numpy()
-            print(errors)
 
             # there should be better ways of doing the following
             self.max_priority = np.max(errors)
-            print(self.max_priority)
 
             # update priority
             for i in range(len(errors)):
@@ -241,11 +239,13 @@ class Model_CNN_LSTM_DQN:
                     loss = (
                         torch.FloatTensor(is_weight).to(self.device) * F.mse_loss(Y, X)
                     ).mean()
+                    print("loss: ", loss)
                     # compute this twice!
                     # loss = (
                     #    torch.FloatTensor(is_weight)
                     #    * ((X - Y.detach()) ** 2)
                     # ).mean()
+            # the step below is where the M1 chip fails
             loss.backward()
             self.optimizer.step()
         return loss
