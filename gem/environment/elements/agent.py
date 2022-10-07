@@ -80,7 +80,7 @@ class Agent:
             new_location = (location[0], location[1] + 1, location[2])
         return new_location
 
-    def transition(self, world, models, action, location):
+    def transition(self, env, models, action, location):
         """
         Changes the world based on the action taken
         """
@@ -89,22 +89,22 @@ class Agent:
         new_loc = location
         attempted_locaton = self.movement(action, location)
 
-        if world[attempted_locaton].passable == 1:
-            world[location] = EmptyObject()
-            reward = world[attempted_locaton].value
-            world[attempted_locaton] = self
+        if env.world[attempted_locaton].passable == 1:
+            env.world[location] = EmptyObject()
+            reward = env.world[attempted_locaton].value
+            env.world[attempted_locaton] = self
             new_loc = attempted_locaton
 
         else:
             if isinstance(
-                world[attempted_locaton], Wall
+                env.world[attempted_locaton], Wall
             ):  # Replacing comparison with string 'kind'
                 reward = -0.1
 
-        next_state = models[self.policy].pov(world, new_loc, self)
+        next_state = models[self.policy].pov(env.world, new_loc, self)
         self.reward += reward
 
-        return world, reward, next_state, done, new_loc
+        return env.world, reward, next_state, done, new_loc
 
 
 class DeadAgent:

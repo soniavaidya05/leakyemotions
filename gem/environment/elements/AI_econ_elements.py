@@ -141,7 +141,7 @@ class Agent:
             new_location = (location[0], location[1] + 1, location[2])
         return new_location
 
-    def transition(self, world, models, action, location):
+    def transition(self, env, models, action, location):
         """
         Changes the world based on the action taken
         """
@@ -158,53 +158,53 @@ class Agent:
 
             # below is repeated code because agents keep going on top of each other
             # and deleting each other.
-            if isinstance(world[attempted_location_l0], Agent):
+            if isinstance(env.world[attempted_location_l0], Agent):
                 reward = -0.1
 
-            if isinstance(world[attempted_location_l1], Agent):
+            if isinstance(env.world[attempted_location_l1], Agent):
                 reward = -0.1
 
-            if isinstance(world[attempted_locaton], Agent):
+            if isinstance(env.world[attempted_locaton], Agent):
                 reward = -0.1
 
-            if isinstance(world[attempted_location_l0], EmptyObject):
-                world[attempted_location_l1] = self
+            if isinstance(env.world[attempted_location_l0], EmptyObject):
+                env.world[attempted_location_l1] = self
                 new_loc = attempted_location_l1
-                world[location] = EmptyObject()
+                env.world[location] = EmptyObject()
 
-            if isinstance(world[attempted_location_l0], Wall):
+            if isinstance(env.world[attempted_location_l0], Wall):
                 reward = -0.1
 
-            if isinstance(world[attempted_location_l0], House):
+            if isinstance(env.world[attempted_location_l0], House):
                 reward = -0.1
 
-            if isinstance(world[attempted_location_l0], Wood):
+            if isinstance(env.world[attempted_location_l0], Wood):
                 # once this works, we need to set the reward to be 0 for collecting
                 # labour costs need to be implimented
                 reward = 10
                 self.wood += 1
-                world[attempted_location_l1] = self
-                world[attempted_location_l0] = EmptyObject()
-                world[location] = EmptyObject()
+                env.world[attempted_location_l1] = self
+                env.world[attempted_location_l0] = EmptyObject()
+                env.world[location] = EmptyObject()
                 new_loc = attempted_location_l1
 
-            if isinstance(world[attempted_location_l0], Stone):
+            if isinstance(env.world[attempted_location_l0], Stone):
                 reward = 10
                 self.stone += 1
-                world[attempted_location_l1] = self
-                world[attempted_location_l0] = EmptyObject()
-                world[location] = EmptyObject()
+                env.world[attempted_location_l1] = self
+                env.world[attempted_location_l0] = EmptyObject()
+                env.world[location] = EmptyObject()
                 new_loc = attempted_location_l1
 
         if action == 4:
             # note, you should not be able to build on top of another house
             reward = -0.1
             if self.stone > 0 and self.wood > 0:
-                if isinstance(world[location[0], location[1], 0], EmptyObject):
+                if isinstance(env.world[location[0], location[1], 0], EmptyObject):
                     reward = 100
                     self.stone -= 1
                     self.wood -= 1
-                    world[location[0], location[1], 0] = House()
+                    env.world[location[0], location[1], 0] = House()
 
         if action == 5:  # bid wood
             pass
@@ -222,7 +222,7 @@ class Agent:
             pass
 
         next_state = models[self.policy].pov(
-            world,
+            env.world,
             new_loc,
             self,
             inventory=[self.stone, self.wood, self.labour],
@@ -230,7 +230,7 @@ class Agent:
         )
         self.reward += reward
 
-        return world, reward, next_state, done, new_loc
+        return env.world, reward, next_state, done, new_loc
 
 
 class Wall:

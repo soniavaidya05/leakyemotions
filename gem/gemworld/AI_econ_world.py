@@ -200,7 +200,7 @@ class AI_Econ:
                 next_state,
                 done,
                 new_loc,
-            ) = holdObject.transition(self.world, models, action, loc)
+            ) = holdObject.transition(self, models, action, loc)
         else:
             reward = 0
             next_state = state

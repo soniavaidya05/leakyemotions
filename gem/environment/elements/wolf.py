@@ -51,7 +51,7 @@ class Wolf:
             new_location = (location[0], location[1] + 1, location[2])
         return new_location
 
-    def transition(self, world, models, action, location):
+    def transition(self, env, models, action, location):
         """
         Changes the world based on the action taken
         """
@@ -60,16 +60,16 @@ class Wolf:
         new_loc = location
         attempted_locaton = self.movement(action, location)
 
-        if world[attempted_locaton].passable == 1:
-            world[location] = EmptyObject()
-            world[attempted_locaton] = self
+        if env.world[attempted_locaton].passable == 1:
+            env.world[location] = EmptyObject()
+            env.world[attempted_locaton] = self
             new_loc = attempted_locaton
             reward = 0
 
         else:
-            if isinstance(world[attempted_locaton], Wall):
+            if isinstance(env.world[attempted_locaton], Wall):
                 reward = -0.1
-            if isinstance(world[attempted_locaton], Agent):
+            if isinstance(env.world[attempted_locaton], Agent):
                 """
                 If the wolf and the agent are in the same location, the agent dies.
                 In addition to giving the wolf a reward, the agent also gets a punishment.
@@ -77,16 +77,16 @@ class Wolf:
                 TODO: the agent.died() function is not working properly
                 """
                 reward = 10
-                exp = world[attempted_locaton].episode_memory[-1]
+                exp = env.world[attempted_locaton].episode_memory[-1]
                 exp = exp[0], (exp[1][0], exp[1][1], -25, exp[1][3], 1)
-                world[attempted_locaton].episode_memory[-1] = exp
-                models[world[attempted_locaton].policy].transfer_memories(
-                    world, attempted_locaton, extra_reward=True
+                env.world[attempted_locaton].episode_memory[-1] = exp
+                models[env.world[attempted_locaton].policy].transfer_memories(
+                    env.world, attempted_locaton, extra_reward=True
                 )
 
-                world[attempted_locaton] = DeadAgent()
+                env.world[attempted_locaton] = DeadAgent()
 
-        next_state = models[self.policy].pov(world, new_loc, self)
+        next_state = models[self.policy].pov(env.world, new_loc, self)
         self.reward += reward
 
-        return world, reward, next_state, done, new_loc
+        return env.world, reward, next_state, done, new_loc
