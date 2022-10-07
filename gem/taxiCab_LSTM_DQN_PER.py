@@ -165,7 +165,7 @@ def run_game(
             if (
                 withinturn > max_turns
                 or len(find_instance(env.world, "neural_network")) == 0
-                or reward > 0
+                # or reward > 0
             ):
                 done = 1
 

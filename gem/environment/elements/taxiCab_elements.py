@@ -155,6 +155,10 @@ class TaxiCab:
                 new_loc = attempted_locaton
                 self.has_passenger = 0
 
+                # found a problem. transition may need to have the
+                # whole environment passed to it if we want an action
+                # to trigger an environment change (like spawn passenger)
+
         # the section below is probably the one that people
         # will have the most confusion about, since it is
         # using two features of Gem that we haven't talked about yet.
