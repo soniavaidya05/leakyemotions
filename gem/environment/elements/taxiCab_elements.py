@@ -97,7 +97,7 @@ class TaxiCab:
         """
         # pov_size = (self.vision * 2) - 1
         pov_size = 9
-        visual_depth = 3  # change this to be 6 when we add the second layer of the task
+        visual_depth = 4  # change this to be 6 when we add the second layer of the task
         image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
         exp = 1, (image, 0, 0, image, 0)
         self.episode_memory.append(exp)
@@ -167,8 +167,8 @@ class TaxiCab:
             world,
             new_loc,
             self,
-            # inventory=[self.has_passenger],
-            # layers=[0, 1],
+            inventory=[self.has_passenger],
+            layers=[0],
         )
         self.reward += reward
 

@@ -12,7 +12,9 @@ from gem.utils import (
 )
 
 
-def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
+def create_video(
+    models, world_size, num, env, filename="unnamed_video.gif", end_update=True
+):
     fig = plt.figure()
     ims = []
     env.reset_env(world_size, world_size)
@@ -47,7 +49,7 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
             env.world,
             find_instance(env.world, "neural_network"),
             done,
-            end_update=True,
+            end_update=end_update,
         )
 
         # note that with the current setup, the world is not generating new wood and stone
@@ -72,7 +74,7 @@ def load_models(save_dir, filename):
     return model
 
 
-def make_video(filename, save_dir, models, world_size, env):
+def make_video(filename, save_dir, models, world_size, env, end_update=True):
     epoch = 10000
     for video_num in range(5):
         vfilename = (
@@ -84,7 +86,9 @@ def make_video(filename, save_dir, models, world_size, env):
             + str(video_num)
             + ".gif"
         )
-        create_video(models, world_size, 100, env, filename=vfilename)
+        create_video(
+            models, world_size, 100, env, filename=vfilename, end_update=end_update
+        )
 
 
 def replay_view(memoryNum, agentNumber, env):

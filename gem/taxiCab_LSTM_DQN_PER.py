@@ -37,10 +37,10 @@ def create_models():
     models = []
     models.append(
         Model_CNN_LSTM_DQN(
-            in_channels=3,
+            in_channels=4,
             num_filters=5,
             lr=0.0001,
-            replay_size=2048,
+            replay_size=1024,  # 2048
             in_size=650,
             hid_size1=75,
             hid_size2=30,
@@ -51,7 +51,7 @@ def create_models():
     return models
 
 
-world_size = 10
+world_size = 8
 
 trainable_models = [0]
 sync_freq = 500
@@ -158,8 +158,8 @@ def run_game(
 
                     if env.world[new_loc].kind == "taxi_cab":
                         game_points[0] = game_points[0] + reward
-                    if env.world[new_loc].kind == "wolf":
-                        game_points[1] = game_points[1] + reward
+                    if env.world[new_loc].kind == "taxi_cab" and reward > 20:
+                        game_points[1] = game_points[1] + 1
 
             # determine whether the game is finished (either max length or all agents are dead)
             if (
@@ -180,7 +180,7 @@ def run_game(
                     env.world,
                     find_instance(env.world, "neural_network"),
                     done,
-                    end_update=True,
+                    end_update=False,  # the end update fails with non standard inputs. this needs to be fixed
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved
@@ -216,6 +216,7 @@ def run_game(
                 epoch,
                 withinturn,
                 round(game_points[0]),
+                round(game_points[1]),
                 losses,
                 epsilon,
             )
@@ -234,12 +235,17 @@ def run_game(
 models = create_models()
 
 run_params = (
-    [0.9, 10000, 50],
-    [0.8, 10000, 50],
-    [0.7, 10000, 50],
-    [0.6, 10000, 50],
-    [0.2, 10000, 50],
-    [0.2, 10000, 50],
+    [0.9, 20000, 100],
+    [0.8, 20000, 100],
+    [0.7, 20000, 100],
+    [0.6, 20000, 100],
+    [0.2, 20000, 100],
+    [0.2, 20000, 100],
+    [0.4, 20000, 100],
+    [0.31, 20000, 100],
+    [0.2, 20000, 100],
+    [0.2, 20000, 100],
+    [0.2, 20000, 100],
 )
 
 # the version below needs to have the keys from above in it
@@ -255,12 +261,13 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "taxi_cab_" + str(modRun),
+        "taxi_cab2_" + str(modRun),
     )
     make_video(
-        "taxi_cab_" + str(modRun),
+        "taxi_cab2_" + str(modRun),
         save_dir,
         models,
-        10,
+        8,
         env,
+        end_update=False,
     )

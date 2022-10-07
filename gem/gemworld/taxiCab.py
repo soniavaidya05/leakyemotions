@@ -95,14 +95,44 @@ class TaxiCabEnv:
         taxi_start = (taxi_cab_start1, taxi_cab_start2, 0)
         self.world[taxi_start] = TaxiCab(0)
 
-        valid = False
-        while not valid:
-            loc1 = random.randint(1, self.world.shape[0] - 2)
-            loc2 = random.randint(1, self.world.shape[1] - 2)
-            passenger_start = (loc1, loc2, 0)
-            if taxi_start != passenger_start:
-                valid = True
+        curriculum = True
+        if curriculum == False:
+            valid = False
+            while not valid:
+                loc1 = random.randint(1, self.world.shape[0] - 2)
+                loc2 = random.randint(1, self.world.shape[1] - 2)
+                passenger_start = (loc1, loc2, 0)
+                if taxi_start != passenger_start:
+                    valid = True
+                    self.world[passenger_start] = Passenger(self.world)
+
+        if curriculum == True:
+            counter_balance = np.random.choice([0, 1])
+            if counter_balance == 0:
+                location = np.random.choice([0, 1, 2, 3])
+                if location == 0:
+                    loc1 = taxi_cab_start1 + 1
+                    loc2 = taxi_cab_start2
+                if location == 1:
+                    loc1 = taxi_cab_start1 - 1
+                    loc2 = taxi_cab_start2
+                if location == 2:
+                    loc1 = taxi_cab_start1
+                    loc2 = taxi_cab_start2 + 1
+                if location == 3:
+                    loc1 = taxi_cab_start1
+                    loc2 = taxi_cab_start2 - 1
+                passenger_start = (loc1, loc2, 0)
                 self.world[passenger_start] = Passenger(self.world)
+            if counter_balance == 1:
+                valid = False
+                while not valid:
+                    loc1 = random.randint(1, self.world.shape[0] - 2)
+                    loc2 = random.randint(1, self.world.shape[1] - 2)
+                    passenger_start = (loc1, loc2, 0)
+                    if taxi_start != passenger_start:
+                        valid = True
+                        self.world[passenger_start] = Passenger(self.world)
 
     def insert_walls(self, height, width):
         """
@@ -122,9 +152,14 @@ class TaxiCabEnv:
         if self.world[loc].action_type == "neural_network":
 
             holdObject = self.world[loc]
-            state = models[holdObject.policy].pov(self.world, loc, holdObject)
+            state = models[holdObject.policy].pov(
+                self.world,
+                loc,
+                holdObject,
+                inventory=[holdObject.has_passenger],
+                layers=[0],
+            )
             action = models[holdObject.policy].take_action([state, epsilon])
-
             """
             Updates the world given an action
             """
