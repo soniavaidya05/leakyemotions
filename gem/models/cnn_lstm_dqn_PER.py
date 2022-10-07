@@ -89,6 +89,7 @@ class Model_CNN_LSTM_DQN:
         hid_size2,
         out_size,
         priority_replay=True,
+        device="cpu",
     ):
         self.modeltype = "cnn_lstm_dqn"
         self.model1 = Combine_CLD(
@@ -121,6 +122,7 @@ class Model_CNN_LSTM_DQN:
                 beta=0,  # set this to 0 for uniform sampling (check these numbers)
                 beta_increment_per_sampling=0,  # set this to 0 for uniform sampling (check these numbers)
             )
+        self.device = device
 
     def pov(self, world, location, holdObject, inventory=[], layers=[0]):
         """
@@ -250,7 +252,19 @@ class Model_CNN_LSTM_DQN:
               Actor-criric models (or other types as well)
         """
         exp = world[loc].episode_memory[-1]
+        high_reward = exp[1][2]
+        # move experience to the gpu if available
+        exp = (
+            torch.tensor(exp[0]).to(self.device),
+            (
+                exp[1][0].to(self.device),
+                torch.tensor(exp[1][1]).to(self.device),
+                torch.tensor(exp[1][2]).to(self.device),
+                exp[1][3].to(self.device),
+                torch.tensor(exp[1][4]).to(self.device),
+            ),
+        )
         self.PER_replay.add(exp[0], exp[1])
-        if extra_reward == True and abs(exp[1][2]) > 9:
+        if extra_reward == True and abs(high_reward) > 9:
             for _ in range(seqLength):
                 self.PER_replay.add(exp[0], exp[1])

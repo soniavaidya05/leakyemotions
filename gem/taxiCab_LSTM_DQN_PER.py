@@ -20,11 +20,18 @@ from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
 from DQN_utils import save_models, load_models, make_video
+import torch
 
 import random
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+
+# choose device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# if torch.backends.mps.is_available():
+#    device = torch.device("mps")
 
 
 def create_models():
@@ -46,8 +53,15 @@ def create_models():
             hid_size2=30,
             out_size=4,
             priority_replay=False,
+            device=device,
         )
     )  # taxi model
+
+    # convert to device
+    for model in range(len(models)):
+        models[model].model1.to(device)
+        models[model].model2.to(device)
+
     return models
 
 
@@ -165,7 +179,7 @@ def run_game(
             if (
                 withinturn > max_turns
                 or len(find_instance(env.world, "neural_network")) == 0
-                or reward > 0
+                # or reward > 0
             ):
                 done = 1
 

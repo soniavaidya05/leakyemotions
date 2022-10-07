@@ -117,7 +117,7 @@ class TaxiCab:
             new_location = (location[0], location[1] + 1, location[2])
         return new_location
 
-    def transition(self, world, models, action, location):
+    def transition(self, env, models, action, location):
         """
         Changes the world based on the action taken
         """
@@ -128,44 +128,36 @@ class TaxiCab:
 
         if action in [0, 1, 2, 3]:
 
-            if isinstance(world[attempted_locaton], TaxiCab):
+            if isinstance(env.world[attempted_locaton], TaxiCab):
                 reward = -2
 
-            if isinstance(world[attempted_locaton], Wall):
+            if isinstance(env.world[attempted_locaton], Wall):
                 reward = -2
 
-            if isinstance(world[attempted_locaton], EmptyObject):
-                world[attempted_locaton] = self
+            if isinstance(env.world[attempted_locaton], EmptyObject):
+                env.world[attempted_locaton] = self
                 new_loc = attempted_locaton
-                world[location] = EmptyObject()
+                env.world[location] = EmptyObject()
 
-            if isinstance(world[attempted_locaton], Passenger):
-                self.driving_location = world[attempted_locaton].desired_location
-                world[attempted_locaton] = self
+            if isinstance(env.world[attempted_locaton], Passenger):
+                self.driving_location = env.world[attempted_locaton].desired_location
+                env.world[attempted_locaton] = self
                 new_loc = attempted_locaton
-                world[location] = EmptyObject()
+                env.world[location] = EmptyObject()
                 self.has_passenger = 1
-                world[self.driving_location] = Destination()
+                env.world[self.driving_location] = Destination()
                 reward = -1
 
-            if isinstance(world[attempted_locaton], Destination):
+            if isinstance(env.world[attempted_locaton], Destination):
                 reward = 25
-                world[attempted_locaton] = self
-                world[location] = EmptyObject()
+                env.world[attempted_locaton] = self
+                env.world[location] = EmptyObject()
                 new_loc = attempted_locaton
                 self.has_passenger = 0
-
-        # the section below is probably the one that people
-        # will have the most confusion about, since it is
-        # using two features of Gem that we haven't talked about yet.
-        # nameely, the inventory which is additional things that
-        # can be added to a CNN (here it is whether a person is in the car)
-        # and layers, which is by default just zero, but since I liked the idea
-        # of the high and low res version of the world, we are going to need
-        # to call both of them.
+                env.spawn_passenger()
 
         next_state = models[self.policy].pov(
-            world,
+            env.world,
             new_loc,
             self,
             inventory=[self.has_passenger],
@@ -173,4 +165,4 @@ class TaxiCab:
         )
         self.reward += reward
 
-        return world, reward, next_state, done, new_loc
+        return env.world, reward, next_state, done, new_loc
