@@ -97,14 +97,7 @@ class TaxiCabEnv:
 
         curriculum = True
         if curriculum == False:
-            valid = False
-            while not valid:
-                loc1 = random.randint(1, self.world.shape[0] - 2)
-                loc2 = random.randint(1, self.world.shape[1] - 2)
-                passenger_start = (loc1, loc2, 0)
-                if taxi_start != passenger_start:
-                    valid = True
-                    self.world[passenger_start] = Passenger(self.world)
+            self.spawn_passenger()
 
         if curriculum == True:
             counter_balance = np.random.choice([0, 1])
@@ -125,14 +118,7 @@ class TaxiCabEnv:
                 passenger_start = (loc1, loc2, 0)
                 self.world[passenger_start] = Passenger(self.world)
             if counter_balance == 1:
-                valid = False
-                while not valid:
-                    loc1 = random.randint(1, self.world.shape[0] - 2)
-                    loc2 = random.randint(1, self.world.shape[1] - 2)
-                    passenger_start = (loc1, loc2, 0)
-                    if taxi_start != passenger_start:
-                        valid = True
-                        self.world[passenger_start] = Passenger(self.world)
+                self.spawn_passenger()
 
     def spawn_passenger(self):
         """
