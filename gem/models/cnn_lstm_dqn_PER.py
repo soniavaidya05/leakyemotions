@@ -234,11 +234,13 @@ class Model_CNN_LSTM_DQN:
             if self.priority_replay == False:
                 loss = self.loss_fn(X, Y.detach())
             if self.priority_replay == True:
-                replay_stable = 1
+                replay_stable = 0
                 if replay_stable == 1:
                     loss = self.loss_fn(X, Y.detach())
                 if replay_stable == 0:
-                    loss = (torch.FloatTensor(is_weight) * F.mse_loss(Y, X)).mean()
+                    loss = (
+                        torch.FloatTensor(is_weight).to(self.device) * F.mse_loss(Y, X)
+                    ).mean()
                     # compute this twice!
                     # loss = (
                     #    torch.FloatTensor(is_weight)
