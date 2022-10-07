@@ -134,6 +134,19 @@ class TaxiCabEnv:
                         valid = True
                         self.world[passenger_start] = Passenger(self.world)
 
+    def spawn_passenger(self):
+        """
+        Spawns a passenger in a random location
+        """
+        valid = False
+        while not valid:
+            loc1 = random.randint(1, self.world.shape[0] - 2)
+            loc2 = random.randint(1, self.world.shape[1] - 2)
+            passenger_start = (loc1, loc2, 0)
+            if self.world[passenger_start] == self.emptyObject:
+                valid = True
+                self.world[passenger_start] = Passenger(self.world)
+
     def insert_walls(self, height, width):
         """
         Inserts walls into the world.
