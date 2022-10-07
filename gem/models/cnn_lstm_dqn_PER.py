@@ -239,7 +239,6 @@ class Model_CNN_LSTM_DQN:
                     loss = (
                         torch.FloatTensor(is_weight).to(self.device) * F.mse_loss(Y, X)
                     ).mean()
-                    print("loss: ", loss)
                     # compute this twice!
                     # loss = (
                     #    torch.FloatTensor(is_weight)
