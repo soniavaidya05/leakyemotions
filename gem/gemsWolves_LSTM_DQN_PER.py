@@ -17,9 +17,16 @@ import torch.nn.functional as F
 from DQN_utils import save_models, load_models, make_video
 
 import random
+import torch
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+
+# choose device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# if torch.backends.mps.is_available():
+#    device = torch.device("mps")
 
 
 def create_models():
@@ -41,6 +48,7 @@ def create_models():
             hid_size2=30,
             out_size=4,
             priority_replay=False,
+            device=device,
         )
     )  # agent model
 
@@ -55,8 +63,15 @@ def create_models():
             hid_size2=30,
             out_size=4,
             priority_replay=False,
+            device=device,
         )
     )  # wolf model
+
+    # convert to device
+    for model in range(len(models)):
+        models[model].model1.to(device)
+        models[model].model2.to(device)
+
     return models
 
 
