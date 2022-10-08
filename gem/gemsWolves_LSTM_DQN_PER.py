@@ -25,8 +25,8 @@ save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# if torch.backends.mps.is_available():
-#    device = torch.device("mps")
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
 
 
 def create_models():

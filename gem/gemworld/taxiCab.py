@@ -34,7 +34,11 @@ class TaxiCabEnv:
         """
         Creates a world of the specified size with a default object
         """
-        self.world = np.full((height, width, layers), self.defaultObject)
+        self.world = np.full((height, width, layers), EmptyObject())
+        for i in range(height):
+            for j in range(width):
+                for k in range(layers):
+                    self.world[i, j, k] = EmptyObject()
 
     def reset_env(self, height=10, width=10, layers=1):
         """
@@ -54,9 +58,9 @@ class TaxiCabEnv:
 
         for i in range(self.world.shape[0]):
             for j in range(self.world.shape[1]):
-                image_r[i, j] = self.world[i, j, layer].appearence[0]
-                image_g[i, j] = self.world[i, j, layer].appearence[1]
-                image_b[i, j] = self.world[i, j, layer].appearence[2]
+                image_r[i, j] = self.world[i, j, layer].appearance[0]
+                image_g[i, j] = self.world[i, j, layer].appearance[1]
+                image_b[i, j] = self.world[i, j, layer].appearance[2]
 
         image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
         return image
@@ -95,12 +99,12 @@ class TaxiCabEnv:
         taxi_start = (taxi_cab_start1, taxi_cab_start2, 0)
         self.world[taxi_start] = TaxiCab(0)
 
-        curriculum = False
+        curriculum = True
         if curriculum == False:
             self.spawn_passenger()
 
         if curriculum == True:
-            counter_balance = np.random.choice([0, 1, 1, 1, 1])
+            counter_balance = np.random.choice([0, 1, 1])
             if counter_balance == 0:
                 location = np.random.choice([0, 1, 2, 3])
                 if location == 0:

@@ -11,7 +11,7 @@ class Agent:
 
     def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
-        self.appearence = [0.0, 0.0, 255.0]  # agents are blue
+        self.appearance = [0.0, 0.0, 255.0]  # agents are blue
         self.vision = 4  # agents can see three radius around them
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.value = 0  # agents have no value
@@ -59,7 +59,7 @@ class Agent:
 
         # this can only be used it seems if all agents have a different id
         self.kind = "deadAgent"  # label the agents death
-        self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
+        self.appearance = [130.0, 130.0, 130.0]  # dead agents are grey
         self.trainable = 0  # whether there is a network to be optimized
         self.just_died = True
         self.static = 1
@@ -116,7 +116,7 @@ class DeadAgent:
 
     def __init__(self):
         self.health = 10  # for the agents, this is how hungry they are
-        self.appearence = [130.0, 130.0, 130.0]  # agents are blue
+        self.appearance = [130.0, 130.0, 130.0]  # agents are blue
         self.vision = 4  # agents can see three radius around them
         self.policy = "NA"  # agent model here.
         self.value = 0  # agents have no value

@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from gem.environment.elements.element import Wall
 from gem.environment.elements.element import EmptyObject
+import random
 
 
 class Wall:
@@ -12,7 +13,7 @@ class Wall:
     kind = "wall"  # class variable shared by all instances
 
     def __init__(self):
-        self.appearence = [153.0, 51.0, 102.0]  # walls are purple
+        self.appearance = [50.0, 50.0, 50.0]  # walls are purple
         self.passable = 0  # you can't walk through a wall
         self.action_type = "static"
 
@@ -22,15 +23,23 @@ class EmptyObject:
     kind = "empty"  # class variable shared by all instances
 
     def __init__(self):
-        self.appearence = [0.0, 0.0, 0.0]  # empty is well, blank
+        self.appearance = [0.0, 0.0, 0.0]  # empty is well, blank
         self.passable = 1  # whether the object blocks movement
-        self.action_type = "static"
+        self.action_type = "empty"
+        self.change_appearance(0.1)
 
     def transition(self, world, location):
         generate_value = np.random.choice([0, 1], p=[0.9999, 0.0001])
         if generate_value == 1:
             world[location] = Passenger()
         return world
+
+    def change_appearance(self, scaling):
+        self.appearance = [
+            random.random() * scaling,
+            random.random() * scaling,
+            random.random() * scaling,
+        ]
 
 
 class Passenger:
@@ -39,10 +48,17 @@ class Passenger:
 
     def __init__(self, world):
         super().__init__()
-        self.appearence = (255, 0, 0)  # passengers are red
+        self.appearance = (255.0, 0.0, 0.0)  # passengers are red
         self.passable = 1  # whether the object blocks movement
         self.action_type = "static"
         self.select_desired_location(world)
+        self.change_appearance(1)
+
+    def change_appearance(self, scaling, max_value=255.0):
+        R = min((random.random() * scaling + 235.0), max_value)
+        G = min((random.random() * scaling + 0.0), max_value)
+        B = min((random.random() * scaling + 0.0), max_value)
+        self.appearance = [R, G, B]
 
     def select_desired_location(self, world):
         """
@@ -70,7 +86,7 @@ class Destination:
 
     def __init__(self):
         super().__init__()
-        self.appearence = (0, 255, 0)  # destination is green
+        self.appearance = (0.0, 255.0, 0.0)  # destination is green
         self.passable = 1  # whether the object blocks movement
         self.action_type = "static"
 
@@ -81,7 +97,7 @@ class TaxiCab:
 
     def __init__(self, model):
         super().__init__()
-        self.appearence = (255, 225, 0)  # taxi is yellow
+        self.appearance = (255.0, 225.0, 0.0)  # taxi is yellow
         self.passable = 0  # whether the object blocks movement
         self.action_type = "neural_network"
         self.episode_memory = deque([], maxlen=10)  # we should read in these maxlens
@@ -144,7 +160,7 @@ class TaxiCab:
                 env.world[attempted_locaton] = self
                 new_loc = attempted_locaton
                 env.world[location] = EmptyObject()
-                self.has_passenger = 1
+                self.has_passenger = 255
                 env.world[self.driving_location] = Destination()
                 reward = -1
 

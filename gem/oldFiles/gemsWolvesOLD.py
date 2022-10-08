@@ -58,9 +58,9 @@ class WolfsAndGems:
 
         for i in range(self.world.shape[0]):
             for j in range(self.world.shape[1]):
-                image_r[i, j] = self.world[i, j, layer].appearence[0]
-                image_g[i, j] = self.world[i, j, layer].appearence[1]
-                image_b[i, j] = self.world[i, j, layer].appearence[2]
+                image_r[i, j] = self.world[i, j, layer].appearance[0]
+                image_g[i, j] = self.world[i, j, layer].appearance[1]
+                image_b[i, j] = self.world[i, j, layer].appearance[2]
 
         image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
         return image

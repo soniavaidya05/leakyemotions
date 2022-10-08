@@ -12,7 +12,7 @@ class Wolf:
 
     def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
-        self.appearence = [255.0, 0.0, 0.0]  # agents are red
+        self.appearance = [255.0, 0.0, 0.0]  # agents are red
         self.vision = 8  # agents can see three radius around them
         self.policy = model  # gems do not do anything
         self.value = 0  # agents have no value

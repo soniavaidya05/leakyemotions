@@ -54,7 +54,7 @@ def create_models():
             hid_size1=75,
             hid_size2=30,
             out_size=4,
-            priority_replay=True,
+            priority_replay=False,
             device=device,
         )
     )  # taxi model
@@ -81,8 +81,9 @@ env = TaxiCabEnv(
     height=world_size,
     width=world_size,
     layers=1,
-    defaultObject=EmptyObject(),
+    defaultObject=EmptyObject,
 )
+
 env.game_test()
 
 
@@ -93,6 +94,7 @@ def run_game(
     epsilon,
     epochs=10000,
     max_turns=100,
+    world_size=10,
 ):
     """
     This is the main loop of the game
@@ -115,6 +117,7 @@ def run_game(
             width=world_size,
             layers=1,
         )
+
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
@@ -251,12 +254,16 @@ def run_game(
 models = create_models()
 
 run_params = (
-    [0.9, 20000, 100],
-    [0.8, 5000, 100],
-    [0.7, 5000, 100],
-    [0.6, 5000, 100],
-    [0.2, 5000, 100],
-    [0.2, 10000, 100],
+    [0.9, 20000, 100, 6],
+    [0.8, 20000, 100, 6],
+    [0.8, 20000, 100, 8],
+    [0.7, 10000, 100, 8],
+    [0.7, 10000, 100, 10],
+    [0.6, 20000, 100, 10],
+    [0.2, 10000, 100, 10],
+    [0.2, 10000, 100, 10],
+    [0.2, 10000, 100, 10],
+    [0.2, 10000, 100, 15],
 )
 
 # the version below needs to have the keys from above in it
@@ -272,13 +279,13 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "taxi_cab2_" + str(modRun),
+        "taxi_cab2_randRGB_noPER" + str(modRun),
     )
     make_video(
-        "taxi_cab2_" + str(modRun),
+        "taxi_cab2_randRGB_noPER" + str(modRun),
         save_dir,
         models,
-        10,
+        run_params[modRun][3],
         env,
         end_update=False,
     )

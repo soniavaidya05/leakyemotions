@@ -23,9 +23,9 @@ def create_world_image(world, layers=0):
 
     for i in range(world.shape[0]):
         for j in range(world.shape[1]):
-            image_r[i, j] = world[i, j, layers].appearence[0]
-            image_g[i, j] = world[i, j, layers].appearence[1]
-            image_b[i, j] = world[i, j, layers].appearence[2]
+            image_r[i, j] = world[i, j, layers].appearance[0]
+            image_g[i, j] = world[i, j, layers].appearance[1]
+            image_b[i, j] = world[i, j, layers].appearance[2]
 
     image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
     return image

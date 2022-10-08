@@ -4,7 +4,7 @@ from abc import ABC
 class Element(ABC):
     def __init__(self):
 
-        self.appearence = None  # how to display this agent
+        self.appearance = None  # how to display this agent
         self.vision = None  # visual radius
         self.policy = None  # policy function or model
         self.value = None  # reward given to another agent
@@ -21,7 +21,7 @@ class EmptyObject:
 
     def __init__(self):
         self.health = 0  # empty stuff is basically empty
-        self.appearence = [0.0, 0.0, 0.0]  # empty is well, blank
+        self.appearance = [0.0, 0.0, 0.0]  # empty is well, blank
         self.vision = 1  # empty stuff is basically empty
         self.policy = "NA"  # empty stuff is basically empty
         self.value = 0  # empty stuff is basically empty
@@ -40,7 +40,7 @@ class Wall:
 
     def __init__(self):
         self.health = 0  # wall stuff is basically empty
-        self.appearence = [153.0, 51.0, 102.0]  # walls are purple
+        self.appearance = [153.0, 51.0, 102.0]  # walls are purple
         self.vision = 0  # wall stuff is basically empty
         self.policy = "NA"  # walls do not do anything
         self.value = 0  # wall stuff is basically empty

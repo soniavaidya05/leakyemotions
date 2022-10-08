@@ -13,7 +13,7 @@ class Wood(Element):
     def __init__(self):
         super().__init__()
         self.health = 1  # for the wood, whether it has been mined or not
-        self.appearence = (60, 225, 45)  # wood is brown
+        self.appearance = (60, 225, 45)  # wood is brown
         self.vision = 1  # gems can see one radius around them
         self.policy = "NA"  # gems do not do anything
         self.value = 0  # the value of this wood
@@ -33,7 +33,7 @@ class Stone(Element):
     def __init__(self):
         super().__init__()
         self.health = 1  # for the stone, whether it has been mined or not
-        self.appearence = (116, 120, 121)  # stone is grey
+        self.appearance = (116, 120, 121)  # stone is grey
         self.vision = 1  # gems can see one radius around them
         self.policy = "NA"  # gems do not do anything
         self.value = 10  # the value of this stone
@@ -53,7 +53,7 @@ class House(Element):
     def __init__(self):
         super().__init__()
         self.health = 1  # for the stone, whether it has been mined or not
-        self.appearence = (225, 0, 0)  # houses are red
+        self.appearance = (225, 0, 0)  # houses are red
         self.vision = 1  # gems can see one radius around them
         self.policy = "NA"  # gems do not do anything
         self.value = 10  # the value of this stone
@@ -72,7 +72,7 @@ class EmptyObject(Element):
 
     def __init__(self):
         self.health = 0  # empty stuff is basically empty
-        self.appearence = [0.0, 0.0, 0.0]  # empty is well, blank
+        self.appearance = [0.0, 0.0, 0.0]  # empty is well, blank
         self.vision = 1  # empty stuff is basically empty
         self.policy = "NA"  # empty stuff is basically empty
         self.value = 0  # empty stuff is basically empty
@@ -100,7 +100,7 @@ class Agent:
     kind = "agent"  # class variable shared by all instances
 
     def __init__(self, model):
-        self.appearence = [0.0, 0.0, 255.0]  # agents are blue
+        self.appearance = [0.0, 0.0, 255.0]  # agents are blue
         self.vision = 4  # agents can see three radius around them
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.reward = 0  # how much reward this agent has collected
@@ -239,7 +239,7 @@ class Wall:
 
     def __init__(self):
         self.health = 0  # wall stuff is basically empty
-        self.appearence = [153.0, 51.0, 102.0]  # walls are purple
+        self.appearance = [153.0, 51.0, 102.0]  # walls are purple
         self.vision = 0  # wall stuff is basically empty
         self.policy = "NA"  # walls do not do anything
         self.value = 0  # wall stuff is basically empty

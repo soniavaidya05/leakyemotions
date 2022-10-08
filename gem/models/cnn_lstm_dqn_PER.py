@@ -232,7 +232,7 @@ class Model_CNN_LSTM_DQN:
             if self.priority_replay == False:
                 loss = self.loss_fn(X, Y.detach())
             if self.priority_replay == True:
-                replay_stable = 0
+                replay_stable = 1
                 if replay_stable == 1:
                     loss = self.loss_fn(X, Y.detach())
                 if replay_stable == 0:
