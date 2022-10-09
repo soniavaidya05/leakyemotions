@@ -47,12 +47,12 @@ def create_models():
     models.append(
         Model_CNN_LSTM_DQN(
             in_channels=4,
-            num_filters=10,
+            num_filters=5,
             lr=0.0001,
             replay_size=1024,  # 2048
-            in_size=1300,  # 650
-            hid_size1=250,  # 75
-            hid_size2=100,  # 30
+            in_size=650,  # 650
+            hid_size1=75,  # 75
+            hid_size2=30,  # 30
             out_size=4,
             priority_replay=False,
             device=device,
@@ -223,11 +223,11 @@ def run_game(
             loss = models[mods].training(256, 0.9)
             losses = losses + loss.detach().numpy()
 
-        updateEps = False
+        updateEps = True
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
         if updateEps == True:
             # epsilon = update_epsilon(epsilon, turn, epoch)
-            epsilon = max(epsilon - 0.00003, 0.2)
+            epsilon = max(epsilon - (0.1 / epochs), 0.2)
 
         if epoch % 100 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
@@ -238,6 +238,7 @@ def run_game(
                 round(game_points[1]),
                 losses,
                 epsilon,
+                world_size,
             )
             game_points = [0, 0]
             losses = 0
@@ -254,16 +255,13 @@ def run_game(
 models = create_models()
 
 run_params = (
+    [0.99, 10000, 100, 8],
     [0.9, 10000, 100, 8],
     [0.8, 10000, 100, 8],
     [0.7, 10000, 100, 8],
     [0.6, 10000, 100, 8],
     [0.5, 10000, 100, 8],
     [0.2, 20000, 100, 8],
-    [0.7, 10000, 100, 10],
-    [0.6, 10000, 100, 10],
-    [0.5, 10000, 100, 10],
-    [0.2, 20000, 100, 10],
 )
 
 # the version below needs to have the keys from above in it
@@ -280,10 +278,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "taxi_cab2_RGB_" + str(modRun),
+        "taxi_cab_basic_" + str(modRun),
     )
     make_video(
-        "taxi_cab2_RGB_" + str(modRun),
+        "taxi_cab_basic" + str(modRun),
         save_dir,
         models,
         run_params[modRun][3],

@@ -26,7 +26,7 @@ class EmptyObject:
         self.appearance = [0.0, 0.0, 0.0]  # empty is well, blank
         self.passable = 1  # whether the object blocks movement
         self.action_type = "empty"
-        self.change_appearance(0.1)
+        # self.change_appearance(0.05)
 
     def transition(self, world, location):
         generate_value = np.random.choice([0, 1], p=[0.9999, 0.0001])
@@ -52,7 +52,7 @@ class Passenger:
         self.passable = 1  # whether the object blocks movement
         self.action_type = "static"
         self.select_desired_location(world)
-        self.change_appearance(1)
+        # self.change_appearance(1)
 
     def change_appearance(self, scaling, max_value=255.0):
         R = min((random.random() * scaling + 235.0), max_value)
