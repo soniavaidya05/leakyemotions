@@ -110,7 +110,7 @@ class Model_CNN_LSTM_DQN:
                 replay_size,
                 e=0.01,
                 a=0.06,  # set this to 0 for uniform sampling (check these numbers)
-                beta=0.4,  # set this to 0 for uniform sampling (check these numbers)
+                beta=0.4,  # 0.4, set this to 0 for uniform sampling (check these numbers)
                 beta_increment_per_sampling=0.0001,  # set this to 0 for uniform sampling (check these numbers)
             )
         if priority_replay == False:
@@ -232,18 +232,18 @@ class Model_CNN_LSTM_DQN:
             if self.priority_replay == False:
                 loss = self.loss_fn(X, Y.detach())
             if self.priority_replay == True:
-                replay_stable = 1
+                replay_stable = 0
                 if replay_stable == 1:
                     loss = self.loss_fn(X, Y.detach())
                 if replay_stable == 0:
-                    loss = (
-                        torch.FloatTensor(is_weight).to(self.device) * F.mse_loss(Y, X)
-                    ).mean()
-                    # compute this twice!
                     # loss = (
-                    #    torch.FloatTensor(is_weight)
-                    #    * ((X - Y.detach()) ** 2)
+                    #    torch.FloatTensor(is_weight).to(self.device) * F.mse_loss(Y, X)
                     # ).mean()
+                    # compute this twice!
+                    loss = (
+                        torch.FloatTensor(is_weight).to(self.device)
+                        * ((X - Y.detach()) ** 2)
+                    ).mean()
             # the step below is where the M1 chip fails
             loss.backward()
             self.optimizer.step()
