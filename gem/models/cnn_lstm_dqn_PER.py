@@ -184,29 +184,23 @@ class Model_CNN_LSTM_DQN:
         """
         loss = torch.tensor(0.0)
 
-        # note, there may be a ratio of priority replay to random replay that could be ideal
-        # need to figure out how to get current_replay_size
         current_replay_size = batch_size + 1
 
         if current_replay_size > batch_size:
 
-            # if self.priority_replay == False:
-            #    # this needs to be rewritten to work without priority replay
-            #    minibatch = random.sample(self.replay, batch_size)
-            # if self.priority_replay == True:
+            # note, rewrite to be a min of batch_size or current_replay_size
+            # need to figure out how to get current_replay_size
             minibatch, idxs, is_weight = self.PER_replay.sample(batch_size)
 
+            # the do(device) below should not be necessary
+            # but on mps, action, reward, and done are being bounced back to the cpu
+            # currently removed for a test on CUDA
+
             state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
-            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch]).to(
-                self.device
-            )
-            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch]).to(
-                self.device
-            )
+            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
+            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch])
             state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
-            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch]).to(
-                self.device
-            )
+            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch])
 
             Q1 = self.model1(state1_batch)
             with torch.no_grad():
