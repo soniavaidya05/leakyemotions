@@ -35,6 +35,12 @@ class CNN_CLD(nn.Module):
 
 
 class Combine_CLD(nn.Module):
+    """
+    TODO: need to be able to have an input for non CNN layers to add additional inputs to the model
+            likely requires an MLP before the LSTM where the CNN and the additional
+            inputs are concatenated
+    """
+
     def __init__(
         self,
         in_channels,
@@ -128,6 +134,7 @@ class Model_CNN_LSTM_DQN:
         """
         Creates outputs of a single frame, and also a multiple image sequence
         TODO: get rid of the holdObject input throughout the code
+        TODO: to get better flexibility, this code should be moved to env
         """
 
         previous_state = holdObject.episode_memory[-1][1][0]
