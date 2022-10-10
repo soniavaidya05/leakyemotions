@@ -255,12 +255,19 @@ def run_game(
 models = create_models()
 
 run_params = (
+    [0.99, 10, 100, 8],
     [0.99, 10000, 100, 8],
     [0.9, 10000, 100, 8],
     [0.8, 10000, 100, 8],
     [0.7, 10000, 100, 8],
     [0.6, 10000, 100, 8],
     [0.5, 10000, 100, 8],
+    [0.2, 20000, 100, 8],
+    [0.5, 40000, 100, 8],
+    [0.2, 40000, 100, 8],
+    [0.2, 20000, 100, 8],
+    [0.2, 20000, 100, 8],
+    [0.2, 20000, 100, 8],
     [0.2, 20000, 100, 8],
 )
 
@@ -278,10 +285,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "taxi_cab_basic_" + str(modRun),
+        "taxi_cab_vbasic_" + str(modRun),
     )
     make_video(
-        "taxi_cab_basic" + str(modRun),
+        "taxi_cab_vbasic" + str(modRun),
         save_dir,
         models,
         run_params[modRun][3],
