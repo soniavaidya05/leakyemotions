@@ -229,7 +229,7 @@ def run_game(
                 """
                 for mods in trainable_models:
                     loss = models[mods].training(128, 0.9)
-                    losses = losses + loss.detach().numpy()
+                    losses = losses + loss.detach().cpu().numpy()
 
         for mods in trainable_models:
             """
@@ -237,7 +237,7 @@ def run_game(
             reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
             loss = models[mods].training(256, 0.9)
-            losses = losses + loss.detach().numpy()
+            losses = losses + loss.detach().cpu().numpy()
 
         updateEps = True
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized

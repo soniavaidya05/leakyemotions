@@ -227,14 +227,14 @@ def run_game(
                 """
                 for mods in trainable_models:
                     loss = models[mods].training(256, 0.9)
-                    losses = losses + loss.detach().numpy()
+                    losses = losses + loss.detach().cpu().numpy()
 
         for mods in trainable_models:
             """
             Train the neural networks at the end of eac epoch
             """
             loss = models[mods].training(256, 0.9)
-            losses = losses + loss.detach().numpy()
+            losses = losses + loss.detach().cpu().numpy()
 
         updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized

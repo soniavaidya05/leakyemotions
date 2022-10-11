@@ -204,10 +204,10 @@ class Model_CNN_LSTM_DQN:
             # currently removed for a test on CUDA
 
             state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
-            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
-            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch])
+            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch]).to(self.device)
+            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch]).to(self.device)
             state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
-            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch])
+            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch]).to(self.device)
 
             Q1 = self.model1(state1_batch)
             with torch.no_grad():

@@ -159,7 +159,7 @@ def playGame(
                 if withinturn % modelUpdate_freq == 0:
                     for mods in trainable_models:
                         loss = models[mods].training(300, 0.9)
-                        losses = losses + loss.detach().numpy()
+                        losses = losses + loss.detach().cpu().numpy()
 
         # epdate epsilon to move from mostly random to greedy choices for action with time
         epsilon = update_epsilon(epsilon, turn, epoch)
