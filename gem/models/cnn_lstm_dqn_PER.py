@@ -115,7 +115,7 @@ class Model_CNN_LSTM_DQN:
             self.PER_replay = Memory(
                 replay_size,
                 e=0.01,
-                a=0.06,  # set this to 0 for uniform sampling (check these numbers)
+                a=0.6,  # set this to 0 for uniform sampling (check these numbers)
                 beta=0.4,  # 0.4, set this to 0 for uniform sampling (check these numbers)
                 beta_increment_per_sampling=0.0001,  # set this to 0 for uniform sampling (check these numbers)
             )
