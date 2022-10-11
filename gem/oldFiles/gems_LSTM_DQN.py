@@ -126,7 +126,7 @@ def runGame(
             if len(trainable_models) > 0:
                 # transfer the events for each agent into the appropriate model after all have moved
                 env.world = update_memories(
-                    models, env.world, find_moveables(env.world), done, end_update=False
+                    env, find_moveables(env.world), done, end_update=False
                 )
                 models = transfer_world_memories(
                     models, env.world, find_moveables(env.world)

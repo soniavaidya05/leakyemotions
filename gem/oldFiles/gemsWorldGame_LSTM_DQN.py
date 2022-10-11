@@ -146,7 +146,7 @@ def playGame(
             if trainModels == True:
                 # transfer the events for each agent into the appropriate model after all have moved
                 expList = find_moveables(env.world)
-                env.world = update_memories(models, env.world, expList, end_update=True)
+                env.world = update_memories(env, expList, end_update=True)
 
                 # expList = find_moveables(world)
                 modelType = "DQN"

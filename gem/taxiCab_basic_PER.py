@@ -24,9 +24,9 @@ import torch
 
 import random
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -195,8 +195,7 @@ def run_game(
                 """
                 # this updates the last memory to be the final state of the game board
                 env.world = update_memories(
-                    models,
-                    env.world,
+                    env,
                     find_instance(env.world, "neural_network"),
                     done,
                     end_update=False,  # the end update fails with non standard inputs. this needs to be fixed

@@ -45,8 +45,7 @@ def create_video(
                 ) = env.step(models, loc, 0.2)
 
         env.world = update_memories(
-            models,
-            env.world,
+            env,
             find_instance(env.world, "neural_network"),
             done,
             end_update=end_update,
@@ -210,8 +209,7 @@ def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
                     game_points[1] = game_points[1] + reward
 
         env.world = update_memories(
-            models,
-            env.world,
+            env,
             find_instance(env.world, "neural_network"),
             done,
             end_update=False,

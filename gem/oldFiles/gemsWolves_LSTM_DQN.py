@@ -184,7 +184,7 @@ def run_game(
                 """
                 # this updates the last memory to be the final state of the game board
                 env.world = update_memories(
-                    models, env.world, find_moveables(env.world), done, end_update=True
+                    env, find_moveables(env.world), done, end_update=True
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved

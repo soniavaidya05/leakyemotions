@@ -212,8 +212,7 @@ def run_game(
                 """
                 # this updates the last memory to be the final state of the game board
                 env.world = update_memories(
-                    models,
-                    env.world,
+                    env,
                     find_instance(env.world, "neural_network"),
                     done,
                     end_update=False,  # the end update fails with non standard inputs. this needs to be fixed
