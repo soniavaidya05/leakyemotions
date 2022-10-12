@@ -19,8 +19,9 @@ from DQN_utils import save_models, load_models, make_video
 import random
 import torch
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -41,13 +42,13 @@ def create_models():
         Model_CNN_LSTM_DQN(
             in_channels=3,
             num_filters=5,
-            lr=0.0001,
+            lr=0.001,
             replay_size=2048,
             in_size=650,
             hid_size1=75,
             hid_size2=30,
             out_size=4,
-            priority_replay=False,
+            priority_replay=True,
             device=device,
         )
     )  # agent model
@@ -56,7 +57,7 @@ def create_models():
         Model_CNN_LSTM_DQN(
             in_channels=3,
             num_filters=5,
-            lr=0.0001,
+            lr=0.001,
             replay_size=2048,
             in_size=2570,
             hid_size1=150,
@@ -286,10 +287,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_att_sync4_noPER_relu" + str(modRun),
+        "WolvesGems_PER_" + str(modRun),
     )
     make_video(
-        "WolvesGems_PER_att_sync4_noPER_relu" + str(modRun),
+        "WolvesGems_PER_" + str(modRun),
         save_dir,
         models,
         20,

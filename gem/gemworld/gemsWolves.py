@@ -9,7 +9,7 @@ from models.perception import agent_visualfield
 import random
 
 from utils import find_moveables, find_instance
-
+import torch
 
 class WolfsAndGems:
     def __init__(
@@ -90,6 +90,44 @@ class WolfsAndGems:
         plt.imshow(img)
         plt.show()
 
+        
+    def pov(self, location, inventory=[], layers=[0]):
+        """
+        Creates outputs of a single frame, and also a multiple image sequence
+        TODO: get rid of the holdObject input throughout the code
+        TODO: to get better flexibility, this code should be moved to env
+        """
+        
+        previous_state = self.world[location].episode_memory[-1][1][0]
+        current_state = previous_state.clone()
+
+        current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
+
+        state_now = torch.tensor([])
+        for layer in layers:
+            """
+            Loops through each layer to get full visual field
+            """
+            loc = (location[0], location[1], layer)
+            img = agent_visualfield(self.world, loc, self.world[location].vision)
+            input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+            state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
+
+        if len(inventory) > 0:
+            """
+            Loops through each additional piece of information and places into one layer
+            """
+            inventory_var = torch.tensor([])
+            for item in range(len(inventory)):
+                tmp = (current_state[:, -1, -1, :, :] * 0) + inventory[item]
+                inventory_var = torch.cat((inventory_var, tmp), dim=0)
+            inventory_var = inventory_var.unsqueeze(0).unsqueeze(0)
+            state_now = torch.cat((state_now, inventory_var), dim=2)
+
+        current_state[:, -1, :, :, :] = state_now
+
+        return current_state
+
     def populate(self, gem1p=0.115, gem2p=0.06, wolf1p=0.005):
         """
         Populates the game board with elements
@@ -165,6 +203,9 @@ class WolfsAndGems:
 
         """
         holdObject = self.world[loc]
+        device = models[holdObject.policy].device
+        
+
 
         if holdObject.kind != "deadAgent":
             """
@@ -176,7 +217,7 @@ class WolfsAndGems:
             i and j variables
             """
             state = models[holdObject.policy].pov(self.world, loc, holdObject)
-            action = models[holdObject.policy].take_action([state, epsilon])
+            action = models[holdObject.policy].take_action([state.to(device), epsilon])
 
         if holdObject.has_transitions == True:
             """
