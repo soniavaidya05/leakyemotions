@@ -126,6 +126,23 @@ class TaxiCabEnv:
 
         return current_state
 
+    def pov_noCNN(self, location, lstm_input):
+        """
+        This is being used as a scratch area thinking about non-CNN inputs to the models
+        we may concat these inputs into a model that can use both scalars and CNNs
+        For example, we should be able to have this read in whether a passenger is in the taxi
+        """
+        
+        previous_state = self.world[location].episode_memory[-1][1][0]
+        current_state = previous_state.clone()
+
+        current_state[:, 0:-1, :] = previous_state[:, 1:, :]
+
+        state_now = torch.tensor(lstm_input).unsqueeze(0).unsqueeze(0)
+        current_state[:, -1, :] = state_now
+
+        return current_state
+
     def populate(self):
         """
         Populates the game board with elements

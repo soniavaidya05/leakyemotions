@@ -10,7 +10,7 @@ from gem.utils import (
     update_memories,
     find_moveables,
 )
-
+import torch
 
 def create_video(
     models, world_size, num, env, filename="unnamed_video.gif", end_update=True
@@ -60,6 +60,19 @@ def create_video(
 
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
     ani.save(filename, writer="PillowWriter", fps=2)
+
+def get_TD_error(models, policy, device, state, action, reward, next_state, done, gamma = 0.95, offset = 0.0001):
+    Q1 = models[policy].model1(state.to(device))
+    with torch.no_grad():
+        Q2 = models[policy].model2(next_state.to(device))
+    Y = reward + gamma * ((1 - done) * torch.max(Q2.detach(), dim=1)[0])
+
+    X = Q1.detach()[0][action]
+
+    error = torch.abs(Y - X).data.cpu().numpy()
+    error = error + offset
+    return error
+
 
 
 def save_models(models, save_dir, filename):

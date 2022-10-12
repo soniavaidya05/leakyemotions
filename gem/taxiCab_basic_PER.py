@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
-from DQN_utils import save_models, load_models, make_video
+from DQN_utils import get_TD_error, save_models, load_models, make_video
 import torch
 
 import random
@@ -35,7 +35,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print(device)
 
-
 def create_models():
     """
     Should make the sequence length of the LSTM part of the model and an input here
@@ -48,7 +47,7 @@ def create_models():
         Model_CNN_LSTM_DQN(
             in_channels=4,
             num_filters=5,
-            lr=0.0001,
+            lr=0.001,
             replay_size=1024,  # 2048
             in_size=650,  # 650
             hid_size1=75,  # 75
@@ -149,6 +148,7 @@ def run_game(
 
             for loc in agentList:
                 if env.world[loc].kind != "deadAgent":
+                    policy = env.world[loc].policy
 
                     (
                         state,
@@ -160,10 +160,19 @@ def run_game(
                         info,
                     ) = env.step(models, loc, epsilon)
 
-                    # these can be included on one replay
+                    """
+                    There are two ways (at least) setting up default priority
+                    This should be cleaned up once we have tested them all fully
+                    """
+
+                    TD_online = True
+                    if TD_online == False:
+                        error = models[policy].max_priority
+                    if TD_online == True:
+                        error = get_TD_error(models, policy, device, state, action, reward, next_state, done)
 
                     exp = (
-                        models[env.world[new_loc].policy].max_priority,
+                        error,
                         (
                             state,
                             action,
@@ -216,7 +225,7 @@ def run_game(
 
         for mods in trainable_models:
             """
-            Train the neural networks at the end of eac epoch
+            Train the neural networks at the end of each epoch
             reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
             loss = models[mods].training(256, 0.9)

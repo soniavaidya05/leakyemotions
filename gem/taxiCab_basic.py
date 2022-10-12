@@ -29,7 +29,7 @@ import random
 save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # if torch.backends.mps.is_available():
 #    device = torch.device("mps")
@@ -50,7 +50,7 @@ def create_models():
         Model_CNN_LSTM_DQN(
             in_channels=4,
             num_filters=5,
-            lr=0.0001,
+            lr=0.001,
             replay_size=1024,  # 2048
             in_size=650,  # 650
             hid_size1=75,  # 75

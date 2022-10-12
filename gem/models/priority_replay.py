@@ -34,6 +34,9 @@ class SumTree:
         else:
             return self._retrieve(right, s - self.tree[left])
 
+    def _number_memories(self):
+        return self.n_entries
+
     def total(self):
         return self.tree[0]
 
@@ -111,3 +114,6 @@ class Memory:  # stored as ( s, a, r, s_ ) in SumTree
     def update(self, idx, error):
         p = self._get_priority(error)
         self.tree.update(idx, p)
+
+    def number_memories(self):
+        return self.tree._number_memories()
