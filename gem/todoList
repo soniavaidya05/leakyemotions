@@ -1,0 +1,57 @@
+------------------------------
+Version 0.1.0
+This as it stands may be almost ready for push to main branch
+gemsWolves_LSTM_DQN.py is current game. 
+
+1) remove phantom code (scripts that no longer are used, imports that are not needed)
+2) Fix update epsilon code to be more general. Might need to have a new equation that fits all variants
+3) run_wolves_gems.py started, but needs to be completed
+
+------------------------------
+Version 0.1.1
+Things that need to be done
+
+1) need to add priority replay. This is critical for sparse environments, and many
+    of projects are comparing to this gold standard
+2) need to send some of this to GPUs to get some speed up. This is very CPU intensive
+    but getting savings where we can will be important, especially with the integrated
+    M1 chips
+3) need to make new environments and test generalization
+4) need to include proper comments and use named variables in function calls
+5) need to make the neural networks slightly more flexible. At the moment, we will keep
+    CNN input, LSTM, Fully connected, double DQN. But, number of layers, etc. should
+    be slightly more flexible
+6) create documentation and example tutorials
+7) change all the varables and functions to be in current python conventions (shon says there is script for this)
+8) move the agent replay memory update in the wolf transitions into the agent.died() [the memory transfer can happen before the agent.kind turns into a deadAgent)
+    this will likely be needed in tag as well
+    
+    def died(self, models, world, attempted_locaton_1, attempted_locaton_2, extra_reward=True):
+        lastexp = self.replay[-1]
+        self.replay[-1] = (lastexp[0], lastexp[1], -25, lastexp[3], 1)
+        models[self.policy].transfer_memories(world, attempted_locaton_1, attempted_locaton_2, extra_reward=True)
+        self.kind = "deadAgent"  # label the agents death
+        self.appearance = [130.0, 130.0, 130.0]  # dead agents are grey
+        self.trainable = 0  # whether there is a network to be optimized
+        self.static = 1
+
+        NOTE: this is attempted as version 0 and 1 in wolf.py, but the agent.died is not working properly. This needs to be looked at.
+        
+ 9) this is a big question. Currently env.step() does everyone. Requires a bunch of inputs and arbitrary outputs. Alternatively, we can loop through the steps for each 
+    agent. So, like (this is not real code, but the idea)
+    
+      for agent in range(len(agentList)):
+        state, action, reward, next_step, done, params = env.step(agent)
+        agent.updateReplay(state, action, reward, next_step, done) # for DQN
+      updateMemories(allAgents) # puts the last state into the replay
+      models.train
+      
+      The params could have the extra stuff, like Value and logprobs if an actor critic model
+      This could allow the game to look more like openAI gym
+
+      A test version of this has been created in gemsWorld_LSTM_DQN_experimental.py
+        It uses env.stepSingle and agent.transitionsSingle instead of env.step and agent.transitions
+      
+10) throughout, need to change i, j, 0 to location which is i, j, k (or height, width, layer)
+    so that when we have more layers, the code still works
+        
