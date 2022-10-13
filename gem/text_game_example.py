@@ -115,15 +115,16 @@ done = 0
 approaches = [0,0]
 losses = 0
 
+alien_type, appearence, cooperation = generate_alien()
+appearence = torch.tensor(appearence).float().unsqueeze(0).to(device)
 for epoch in range(10000000):
-    alien_type, appearence, cooperation = generate_alien()
-    appearence = torch.tensor(appearence).float().unsqueeze(0).to(device)
+
 
     action = models[0].take_action([appearence, .1])
     state = appearence
     next_state = appearence
     if action == 0:
-        reward = 0
+        reward = cooperation * -1
     if action == 1:
         reward = cooperation
 
@@ -132,11 +133,14 @@ for epoch in range(10000000):
     if turn == max_turns:
         done = True
 
+    alien_type, appearence, cooperation = generate_alien()
+    appearence = torch.tensor(appearence).float().unsqueeze(0).to(device)
+
     exp = [1, (
         state,
         action,
         reward,
-        next_state,
+        appearence,
         done,
     )]
 
