@@ -159,9 +159,9 @@ for epoch in range(10000000):
 
     models[0].PER_replay.add(exp[0], exp[1])
          
-    if epoch % modelUpdate_freq == 0:
-        loss = models[0].training(256, 0.9)
-        losses = losses + loss.detach().cpu().numpy()
+
+    loss = models[0].training(256, 0.9)
+    losses = losses + loss.detach().cpu().numpy()
 
     if epoch % 5000 == 0:
         print("epoch:" , epoch, "loss: ",losses/5000, "approaches: ", approaches)
