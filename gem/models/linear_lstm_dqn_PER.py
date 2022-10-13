@@ -16,25 +16,7 @@ from collections import deque
 from models.priority_replay import Memory, SumTree
 
 
-class CNN_CLD(nn.Module):
-    def __init__(self, in_channels, num_filters):
-        super(CNN_CLD, self).__init__()
-        self.conv_layer1 = nn.Conv2d(
-            in_channels=in_channels, out_channels=num_filters, kernel_size=1
-        )
-        self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
-
-    def forward(self, x):
-        x = x / 255  # note, a better normalization should be applied
-        y1 = F.relu(self.conv_layer1(x))
-        y2 = self.avg_pool(y1)  # ave pool is intentional (like a count)
-        y2 = torch.flatten(y2, 1)
-        y1 = torch.flatten(y1, 1)
-        y = torch.cat((y1, y2), 1)
-        return y
-
-
-class Combine_CLD(nn.Module):
+class LSTM_DQN(nn.Module):
     """
     TODO: need to be able to have an input for non CNN layers to add additional inputs to the model
             likely requires an MLP before the LSTM where the CNN and the additional
@@ -43,8 +25,6 @@ class Combine_CLD(nn.Module):
 
     def __init__(
         self,
-        in_channels,
-        num_filters,
         in_size,
         hid_size1,
         hid_size2,
@@ -52,8 +32,7 @@ class Combine_CLD(nn.Module):
         n_layers=2,
         batch_first=True,
     ):
-        super(Combine_CLD, self).__init__()
-        self.cnn = CNN_CLD(in_channels, num_filters)
+        super(LSTM_DQN, self).__init__()
         self.rnn = nn.LSTM(
             input_size=in_size,
             hidden_size=hid_size1,
@@ -67,24 +46,14 @@ class Combine_CLD(nn.Module):
 
     def forward(self, x):
         """
-        TODO: check the shapes below. These are from the print
-        c_in.shape:  torch.Size([3, 4, 9, 9])
-        c_out.shape:  torch.Size([3, 650])
-        r_in.shape:  torch.Size([1, 3, 650])
-        r_out.shape:  torch.Size([1, 3, 75])
+        TODO: check the shapes below. 
         """
-
-        batch_size, timesteps, C, H, W = x.size()
-        c_in = x.view(batch_size * timesteps, C, H, W)
-        #print("c_in.shape: ", c_in.shape)
-        c_out = self.cnn(c_in)
-        #print("c_out.shape: ", c_out.shape)
-        r_in = c_out.view(batch_size, timesteps, -1)
+        r_in = x
         #print("r_in.shape: ", r_in.shape)
         r_out, (h_n, h_c) = self.rnn(r_in)
         #print("r_out.shape: ", r_out.shape)
-
-        y = F.relu(self.l1(r_out[:, -1, :]))
+        #y = F.relu(self.l1(r_out[:, -1, :]))
+        y = F.relu(self.l1(r_out))
         #print("y.shape: ", y.shape)
         y = F.relu(self.l2(y))
         y = self.l3(y)
@@ -92,14 +61,12 @@ class Combine_CLD(nn.Module):
         return y
 
 
-class Model_CNN_LSTM_DQN:
+class Model_linear_LSTM_DQN:
 
-    kind = "cnn_lstm_dqn"  # class variable shared by all instances
+    kind = "linear_lstm_dqn"  # class variable shared by all instances
 
     def __init__(
         self,
-        in_channels,
-        num_filters,
         lr,
         replay_size,
         in_size,
@@ -109,12 +76,12 @@ class Model_CNN_LSTM_DQN:
         priority_replay=True,
         device="cpu",
     ):
-        self.modeltype = "cnn_lstm_dqn"
-        self.model1 = Combine_CLD(
-            in_channels, num_filters, in_size, hid_size1, hid_size2, out_size
+        self.modeltype = "linear_lstm_dqn"
+        self.model1 = LSTM_DQN(
+            in_size, hid_size1, hid_size2, out_size
         )
-        self.model2 = Combine_CLD(
-            in_channels, num_filters, in_size, hid_size1, hid_size2, out_size
+        self.model2 = LSTM_DQN(
+            in_size, hid_size1, hid_size2, out_size
         )
         self.optimizer = torch.optim.Adam(
             self.model1.parameters(), lr=lr, weight_decay=0.01
@@ -142,39 +109,17 @@ class Model_CNN_LSTM_DQN:
             )
         self.device = device
 
-    def pov(self, world, location, holdObject, inventory=[], layers=[0]):
+    def pov(self, world, location, holdObject, inventory=[]):
         """
-        Creates outputs of a single frame, and also a multiple image sequence
-        TODO: get rid of the holdObject input throughout the code
-        TODO: to get better flexibility, this code should be moved to env
+        TODO: rewrite pov to simply take in a vector
         """
 
         previous_state = holdObject.episode_memory[-1][1][0]
         current_state = previous_state.clone()
 
-        current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
+        current_state[:, 0:-1, :] = previous_state[:, 1:, :]
 
-        state_now = torch.tensor([])
-        for layer in layers:
-            """
-            Loops through each layer to get full visual field
-            """
-            loc = (location[0], location[1], layer)
-            img = agent_visualfield(world, loc, holdObject.vision)
-            input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
-            state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
-
-        if len(inventory) > 0:
-            """
-            Loops through each additional piece of information and places into one layer
-            """
-            inventory_var = torch.tensor([])
-            for item in range(len(inventory)):
-                tmp = (current_state[:, -1, -1, :, :] * 0) + inventory[item]
-                inventory_var = torch.cat((inventory_var, tmp), dim=0)
-            inventory_var = inventory_var.unsqueeze(0).unsqueeze(0)
-            state_now = torch.cat((state_now, inventory_var), dim=2)
-
+        state_now = torch.tensor(inventory).float()
         current_state[:, -1, :, :, :] = state_now
 
         return current_state
