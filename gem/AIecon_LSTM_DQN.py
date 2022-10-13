@@ -3,7 +3,7 @@ from gem.utils import (
     update_memories,
     find_moveables,
     transfer_world_memories,
-    find_agents,
+    find_instance,
 )
 from gem.environment.elements.AI_econ_elements import (
     Agent,
@@ -25,7 +25,9 @@ import torch
 
 import random
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -33,6 +35,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if torch.backends.mps.is_available():
     device = torch.device("mps")
 
+print(device)
 
 def create_models():
     """
@@ -45,13 +48,13 @@ def create_models():
         Model_CNN_LSTM_DQN(
             in_channels=9,
             num_filters=10,
-            lr=0.0001,
+            lr=0.001,
             replay_size=4096,
             in_size=1300,
             hid_size1=150,
             hid_size2=30,
             out_size=5,
-            priority_replay=False,
+            priority_replay=True,
             device=device,
         )
     )  # agent model
@@ -116,7 +119,7 @@ def run_game(
             wood1p=0.04,
             stone1p=0.04,
         )
-        for loc in find_moveables(env.world):
+        for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
             env.world[loc].init_replay(3)
@@ -143,7 +146,7 @@ def run_game(
             if use_labour == True:
                 # if using labour, then the agents will only be able to move if they have labour
                 # this is a way to make the agents more conservative
-                agentList = find_moveables(env.world)
+                agentList = find_instance(env.world, "neural_network")
                 for loc in agentList:
                     if env.world[loc].labour < 0:
                         env.world[loc].static = 1
@@ -152,7 +155,7 @@ def run_game(
 
             # note, we need to set it up so that once an agent runs out of labour, it can't move
 
-            agentList = find_moveables(env.world)
+            agentList = find_instance(env.world, "neural_network")
             for loc in agentList:
                 # reset reward for the turn
                 env.world[loc].reward = 0
@@ -192,18 +195,13 @@ def run_game(
 
             # note that with the current setup, the world is not generating new wood and stone
             # we will need to consider where to add the transitions that do not have movement or neural networks
-            regenList = []
-            for i in range(env.world.shape[0]):
-                for j in range(env.world.shape[1]):
-                    # for k in range(env.world.shape[2]): # only the layer 0 should regenerate
-                    if env.world[i, j, 0].deterministic == 1:
-                        regenList.append((i, j, 0))
+            regenList = find_instance(env.world, "deterministic")
 
             for loc in regenList:
                 env.world = env.world[loc].transition(env.world, loc)
 
             # determine whether the game is finished (either max length or all agents are dead)
-            if withinturn > max_turns or len(find_agents(env.world)) == 0:
+            if withinturn > max_turns or len(find_instance(env.world, "neural_network")) == 0:
                 done = 1
 
             if len(trainable_models) > 0:
@@ -213,7 +211,7 @@ def run_game(
                 """
                 # this updates the last memory to be the final state of the game board
                 env.world = update_memories(
-                    models, env.world, find_moveables(env.world), done, end_update=False
+                    env, find_moveables(env.world), done, end_update=False
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved
@@ -255,13 +253,6 @@ def run_game(
     return models, env, turn, epsilon
 
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-
-# needs a dictionary with the following keys:
-# turn, trainable_models, sync_freq, modelUpdate_freq
-
-# below needs to be written
-# env, epsilon, params = setup_game(world_size=15)
 
 
 models = create_models()

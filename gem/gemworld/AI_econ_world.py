@@ -170,6 +170,7 @@ class AI_Econ:
 
         """
         holdObject = self.world[loc]
+        device = models[holdObject.policy].device
 
         if holdObject.static != 1:
             """
@@ -187,7 +188,7 @@ class AI_Econ:
                 inventory=[holdObject.stone, holdObject.wood, holdObject.labour],
                 layers=[0, 1],
             )
-            action = models[holdObject.policy].take_action([state, epsilon])
+            action = models[holdObject.policy].take_action([state.to(device), epsilon])
 
         if holdObject.has_transitions == True:
             """
