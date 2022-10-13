@@ -54,7 +54,7 @@ def create_models():
             hid_size1=150,
             hid_size2=30,
             out_size=5,
-            priority_replay=True,
+            priority_replay=False,
             device=device,
         )
     )  # agent model
@@ -258,6 +258,7 @@ def run_game(
 models = create_models()
 
 run_params = (
+    [0.9, 10, 15],
     [0.9, 1000, 15],
     [0.8, 5000, 15],
     [0.7, 5000, 15],
