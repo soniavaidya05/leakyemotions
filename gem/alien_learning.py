@@ -68,7 +68,7 @@ for epoch in range(20000):
 
 
     if epoch % 100 == 0:
-        print("epoch:" , epoch, "loss: ",losses/5000, "approaches: ", approaches)
+        print("epoch:" , epoch, "loss: ",losses/100, "approaches (good, bad): ", approaches)
         approaches = [0,0]
         losses = 0
 
