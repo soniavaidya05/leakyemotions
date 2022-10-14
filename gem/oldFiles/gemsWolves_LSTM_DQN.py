@@ -184,7 +184,7 @@ def run_game(
                 """
                 # this updates the last memory to be the final state of the game board
                 env.world = update_memories(
-                    models, env.world, find_moveables(env.world), done, end_update=True
+                    env, find_moveables(env.world), done, end_update=True
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved
@@ -198,7 +198,7 @@ def run_game(
                 """
                 for mods in trainable_models:
                     loss = models[mods].training(128, 0.9)
-                    losses = losses + loss.detach().numpy()
+                    losses = losses + loss.detach().cpu().numpy()
 
         for mods in trainable_models:
             """
@@ -206,7 +206,7 @@ def run_game(
             reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
             loss = models[mods].training(256, 0.9)
-            losses = losses + loss.detach().numpy()
+            losses = losses + loss.detach().cpu().numpy()
 
         updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized

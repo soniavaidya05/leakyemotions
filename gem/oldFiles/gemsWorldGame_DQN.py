@@ -130,7 +130,7 @@ def playGame(
             if trainModels == True:
                 # transfer the events for each agent into the appropriate model after all have moved
                 expList = find_moveables(env.world)
-                env.world = update_memories(models, env.world, expList, end_update=True)
+                env.world = update_memories(env, expList, end_update=True)
 
                 models = transfer_world_memories(models, env.world, expList)
 
@@ -138,7 +138,7 @@ def playGame(
                 if withinturn % modelUpdate_freq == 0:
                     for mods in trainable_models:
                         loss = models[mods].training(150, 0.9)
-                        losses = losses + loss.detach().numpy()
+                        losses = losses + loss.detach().cpu().numpy()
 
         # epdate epsilon to move from mostly random to greedy choices for action with time
         epsilon = update_epsilon(epsilon, turn, epoch)

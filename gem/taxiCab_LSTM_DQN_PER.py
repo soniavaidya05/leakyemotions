@@ -20,11 +20,20 @@ from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
 from DQN_utils import save_models, load_models, make_video
+import torch
 
 import random
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+
+# choose device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# if torch.backends.mps.is_available():
+#    device = torch.device("mps")
+
+print(device)
 
 
 def create_models():
@@ -38,20 +47,27 @@ def create_models():
     models.append(
         Model_CNN_LSTM_DQN(
             in_channels=4,
-            num_filters=5,
+            num_filters=10,
             lr=0.0001,
             replay_size=1024,  # 2048
-            in_size=650,
-            hid_size1=75,
-            hid_size2=30,
+            in_size=1300,  # 650
+            hid_size1=250,  # 75
+            hid_size2=100,  # 30
             out_size=4,
             priority_replay=False,
+            device=device,
         )
     )  # taxi model
+
+    # convert to device
+    for model in range(len(models)):
+        models[model].model1.to(device)
+        models[model].model2.to(device)
+
     return models
 
 
-world_size = 8
+world_size = 10
 
 trainable_models = [0]
 sync_freq = 500
@@ -65,8 +81,9 @@ env = TaxiCabEnv(
     height=world_size,
     width=world_size,
     layers=1,
-    defaultObject=EmptyObject(),
+    defaultObject=EmptyObject,
 )
+
 env.game_test()
 
 
@@ -77,6 +94,7 @@ def run_game(
     epsilon,
     epochs=10000,
     max_turns=100,
+    world_size=10,
 ):
     """
     This is the main loop of the game
@@ -99,6 +117,7 @@ def run_game(
             width=world_size,
             layers=1,
         )
+
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
@@ -176,8 +195,7 @@ def run_game(
                 """
                 # this updates the last memory to be the final state of the game board
                 env.world = update_memories(
-                    models,
-                    env.world,
+                    env,
                     find_instance(env.world, "neural_network"),
                     done,
                     end_update=False,  # the end update fails with non standard inputs. this needs to be fixed
@@ -194,7 +212,7 @@ def run_game(
                 """
                 for mods in trainable_models:
                     loss = models[mods].training(128, 0.9)
-                    losses = losses + loss.detach().numpy()
+                    losses = losses + loss.detach().cpu().numpy()
 
         for mods in trainable_models:
             """
@@ -202,7 +220,7 @@ def run_game(
             reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
             loss = models[mods].training(256, 0.9)
-            losses = losses + loss.detach().numpy()
+            losses = losses + loss.detach().cpu().numpy()
 
         updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
@@ -235,17 +253,16 @@ def run_game(
 models = create_models()
 
 run_params = (
-    [0.9, 20000, 100],
-    [0.8, 20000, 100],
-    [0.7, 20000, 100],
-    [0.6, 20000, 100],
-    [0.2, 20000, 100],
-    [0.2, 20000, 100],
-    [0.4, 20000, 100],
-    [0.31, 20000, 100],
-    [0.2, 20000, 100],
-    [0.2, 20000, 100],
-    [0.2, 20000, 100],
+    [0.9, 10000, 100, 8],
+    [0.8, 10000, 100, 8],
+    [0.7, 10000, 100, 8],
+    [0.6, 10000, 100, 8],
+    [0.5, 10000, 100, 8],
+    [0.2, 20000, 100, 8],
+    [0.7, 10000, 100, 10],
+    [0.6, 10000, 100, 10],
+    [0.5, 10000, 100, 10],
+    [0.2, 20000, 100, 10],
 )
 
 # the version below needs to have the keys from above in it
@@ -254,20 +271,21 @@ for modRun in range(len(run_params)):
         models,
         env,
         turn,
-        run_params[modRun][0],
+        epsilon=run_params[modRun][0],
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
+        world_size=run_params[modRun][3],
     )
     save_models(
         models,
         save_dir,
-        "taxi_cab2_" + str(modRun),
+        "taxi_cab2_RGB_" + str(modRun),
     )
     make_video(
-        "taxi_cab2_" + str(modRun),
+        "taxi_cab2_RGB_" + str(modRun),
         save_dir,
         models,
-        8,
+        run_params[modRun][3],
         env,
         end_update=False,
     )

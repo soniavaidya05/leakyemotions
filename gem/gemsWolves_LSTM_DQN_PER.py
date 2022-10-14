@@ -17,9 +17,17 @@ import torch.nn.functional as F
 from DQN_utils import save_models, load_models, make_video
 
 import random
+import torch
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+
+# choose device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
 
 
 def create_models():
@@ -34,13 +42,14 @@ def create_models():
         Model_CNN_LSTM_DQN(
             in_channels=3,
             num_filters=5,
-            lr=0.0001,
+            lr=0.001,
             replay_size=2048,
             in_size=650,
             hid_size1=75,
             hid_size2=30,
             out_size=4,
-            priority_replay=False,
+            priority_replay=True,
+            device=device,
         )
     )  # agent model
 
@@ -48,15 +57,22 @@ def create_models():
         Model_CNN_LSTM_DQN(
             in_channels=3,
             num_filters=5,
-            lr=0.0001,
+            lr=0.001,
             replay_size=2048,
             in_size=2570,
             hid_size1=150,
             hid_size2=30,
             out_size=4,
             priority_replay=False,
+            device=device,
         )
     )  # wolf model
+
+    # convert to device
+    for model in range(len(models)):
+        models[model].model1.to(device)
+        models[model].model2.to(device)
+
     return models
 
 
@@ -190,8 +206,7 @@ def run_game(
                 """
                 # this updates the last memory to be the final state of the game board
                 env.world = update_memories(
-                    models,
-                    env.world,
+                    env,
                     find_instance(env.world, "neural_network"),
                     done,
                     end_update=True,
@@ -208,7 +223,7 @@ def run_game(
                 """
                 for mods in trainable_models:
                     loss = models[mods].training(128, 0.9)
-                    losses = losses + loss.detach().numpy()
+                    losses = losses + loss.detach().cpu().numpy()
 
         for mods in trainable_models:
             """
@@ -216,7 +231,7 @@ def run_game(
             reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
             loss = models[mods].training(256, 0.9)
-            losses = losses + loss.detach().numpy()
+            losses = losses + loss.detach().cpu().numpy()
 
         updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
@@ -272,10 +287,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_att_sync4_noPER_relu" + str(modRun),
+        "WolvesGems_PER_" + str(modRun),
     )
     make_video(
-        "WolvesGems_PER_att_sync4_noPER_relu" + str(modRun),
+        "WolvesGems_PER_" + str(modRun),
         save_dir,
         models,
         20,

@@ -164,23 +164,23 @@ def number_memories(modelNum, models):
         print("Memory ", e, " is ", epLength, " long.")
 
 
-def update_memories(models, world, expList, done, end_update=True):
+def update_memories(env, expList, done, end_update=True):
     # update the reward and last state after all have moved
     # changed to holdObject to see if this fixes the failure of updating last memory
     for loc in expList:
         # location = (i, j, 0)
-        holdObject = world[loc]
-        exp = holdObject.episode_memory[-1]
+        #holdObject = env.world[loc]
+        exp = env.world[loc].episode_memory[-1]
         lastdone = exp[1][4]
         if done == 1:
             lastdone = 1
         if end_update == False:
-            exp = exp[0], (exp[1][0], exp[1][1], holdObject.reward, exp[1][3], lastdone)
+            exp = exp[0], (exp[1][0], exp[1][1], env.world[loc].reward, exp[1][3], lastdone)
         if end_update == True:
-            input2 = models[holdObject.policy].pov(world, loc, holdObject)
-            exp = exp[0], (exp[1][0], exp[1][1], holdObject.reward, input2, lastdone)
-        world[loc].episode_memory[-1] = exp
-    return world
+            input2 = env.pov(loc)
+            exp = exp[0], (exp[1][0], exp[1][1], env.world[loc].reward, input2, lastdone)
+        env.world[loc].episode_memory[-1] = exp
+    return env.world
 
 
 def transfer_world_memories(models, world, expList, extra_reward=True):

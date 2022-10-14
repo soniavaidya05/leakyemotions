@@ -9,13 +9,6 @@ import numpy as np
 from models.perception import agent_visualfield
 
 
-import random
-import numpy as np
-from collections import deque
-
-from models.priority_replay import Memory, SumTree
-
-
 class CNN_CLD(nn.Module):
     def __init__(self, in_channels, num_filters):
         super(CNN_CLD, self).__init__()
@@ -35,12 +28,6 @@ class CNN_CLD(nn.Module):
 
 
 class Combine_CLD(nn.Module):
-    """
-    TODO: need to be able to have an input for non CNN layers to add additional inputs to the model
-            likely requires an MLP before the LSTM where the CNN and the additional
-            inputs are concatenated
-    """
-
     def __init__(
         self,
         in_channels,
@@ -60,27 +47,21 @@ class Combine_CLD(nn.Module):
             num_layers=n_layers,
             batch_first=True,
         )
-        self.l1 = nn.Linear(hid_size1, hid_size1) # right here?
+        self.l1 = nn.Linear(hid_size1, hid_size1)
         self.l2 = nn.Linear(hid_size1, hid_size2)
         self.l3 = nn.Linear(hid_size2, out_size)
         self.dropout = nn.Dropout(0.15)
 
     def forward(self, x):
-        """
-        TODO: check the shapes below. These are from the print
-        c_in.shape:  torch.Size([3, 4, 9, 9])
-        c_out.shape:  torch.Size([3, 650])
-        r_in.shape:  torch.Size([1, 3, 650])
-        r_out.shape:  torch.Size([1, 3, 75])
-        """
-
         batch_size, timesteps, C, H, W = x.size()
         c_in = x.view(batch_size * timesteps, C, H, W)
         c_out = self.cnn(c_in)
         r_in = c_out.view(batch_size, timesteps, -1)
+
         r_out, (h_n, h_c) = self.rnn(r_in)
-        y = F.relu(self.l1(r_out[:, -1, :])) # what is this was lr = .001
-        y = F.relu(self.l2(y)) # and this is lr = .0011 (a small bit more)
+
+        y = F.relu(self.l1(r_out[:, -1, :]))
+        y = F.relu(self.l2(y))
         y = self.l3(y)
 
         return y
@@ -100,8 +81,6 @@ class Model_CNN_LSTM_DQN:
         hid_size1,
         hid_size2,
         out_size,
-        priority_replay=True,
-        device="cpu",
     ):
         self.modeltype = "cnn_lstm_dqn"
         self.model1 = Combine_CLD(
@@ -114,36 +93,23 @@ class Model_CNN_LSTM_DQN:
             self.model1.parameters(), lr=lr, weight_decay=0.01
         )
         self.loss_fn = nn.MSELoss()
+        self.replay = deque([], maxlen=replay_size)
+        self.priorities = deque([], maxlen=replay_size)
         self.sm = nn.Softmax(dim=1)
-        self.priority_replay = priority_replay
-        if priority_replay == True:
-            self.max_priority = 1.0
-            self.PER_replay = Memory(
-                replay_size,
-                e=0.01,
-                a=0.6,  # set this to 0 for uniform sampling (check these numbers)
-                beta=0.4,  # 0.4, set this to 0 for uniform sampling (check these numbers)
-                beta_increment_per_sampling=0.0001,  # set this to 0 for uniform sampling (check these numbers)
-            )
-        if priority_replay == False:
-            self.max_priority = 1.0
-            self.PER_replay = Memory(
-                replay_size,
-                e=0.01,
-                a=0,  # set this to 0 for uniform sampling (check these numbers)
-                beta=0,  # set this to 0 for uniform sampling (check these numbers)
-                beta_increment_per_sampling=0,  # set this to 0 for uniform sampling (check these numbers)
-            )
-        self.device = device
+        self.alpha = 0.6
+        self.beta = 0.4  # 0.2
+        self.max_beta = 1  # 0.4
+        self.offset = 0.01
+        self.beta_increment_per_sampling = 0.0001
+        self.max_priority = 1.0
 
     def pov(self, world, location, holdObject, inventory=[], layers=[0]):
         """
         Creates outputs of a single frame, and also a multiple image sequence
         TODO: get rid of the holdObject input throughout the code
-        TODO: to get better flexibility, this code should be moved to env
         """
 
-        previous_state = holdObject.episode_memory[-1][1][0]
+        previous_state = holdObject.replay[-1][1][0]
         current_state = previous_state.clone()
 
         current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
@@ -180,40 +146,43 @@ class Model_CNN_LSTM_DQN:
 
         inp, epsilon = params
         Q = self.model1(inp)
-        p = self.sm(Q).cpu().detach().numpy()[0]
+        p = self.sm(Q).detach().numpy()[0]
 
         if epsilon > 0.3:
             if random.random() < epsilon:
                 action = np.random.randint(0, len(p))
             else:
-                action = np.argmax(Q.detach().cpu().numpy())
+                action = np.argmax(Q.detach().numpy())
         else:
             action = np.random.choice(np.arange(len(p)), p=p)
         return action
 
-    def training(self, batch_size, gamma):
+    def training(self, batch_size, gamma, priority_replay=True):
         """
         DQN batch learning
         """
+
         loss = torch.tensor(0.0)
 
-        current_replay_size = batch_size + 1
+        # note, there may be a ratio of priority replay to random replay that could be ideal
 
-        if current_replay_size > batch_size:
-
-            # note, rewrite to be a min of batch_size or current_replay_size
-            # need to figure out how to get current_replay_size
-            minibatch, idxs, is_weight = self.PER_replay.sample(batch_size)
-
-            # the do(device) below should not be necessary
-            # but on mps, action, reward, and done are being bounced back to the cpu
-            # currently removed for a test on CUDA
+        if len(self.replay) > batch_size:
+            if priority_replay == False:
+                minibatch = random.sample(self.replay, batch_size)
+            if priority_replay == True:
+                sample_indices, importance_normalized = self.priority_sample(
+                    sample_size=256,
+                )
+                minibatch = [self.replay[i] for i in sample_indices]
+                errors = self.surprise(minibatch, gamma)
+                for i, e in zip(sample_indices, errors):
+                    self.priorities[i] = abs(e) + self.offset
 
             state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
-            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch]).to(self.device)
-            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch]).to(self.device)
+            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
+            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch])
             state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
-            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch]).to(self.device)
+            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch])
 
             Q1 = self.model1(state1_batch)
             with torch.no_grad():
@@ -222,39 +191,79 @@ class Model_CNN_LSTM_DQN:
             Y = reward_batch + gamma * (
                 (1 - done_batch) * torch.max(Q2.detach(), dim=1)[0]
             )
-
             X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
 
-            errors = torch.abs(Y - X).data.cpu().numpy()
-
-            # there should be better ways of doing the following
-            self.max_priority = np.max(errors)
-
-            # update priority
-            for i in range(len(errors)):
-                idx = idxs[i]
-                self.PER_replay.update(idx, errors[i])
-
             self.optimizer.zero_grad()
-            if self.priority_replay == False:
+            if priority_replay == False:
                 loss = self.loss_fn(X, Y.detach())
-            if self.priority_replay == True:
-                replay_stable = 0
-                if replay_stable == 1:
-                    loss = self.loss_fn(X, Y.detach())
+            if priority_replay == True:
+                replay_stable = 1
                 if replay_stable == 0:
-                    # loss = (
-                    #    torch.FloatTensor(is_weight).to(self.device) * F.mse_loss(Y, X)
-                    # ).mean()
-                    # compute this twice!
+                    loss = self.loss_fn(X, Y.detach())
+                if replay_stable == 1:
                     loss = (
-                        torch.FloatTensor(is_weight).to(self.device)
+                        torch.FloatTensor(importance_normalized)
                         * ((X - Y.detach()) ** 2)
                     ).mean()
-            # the step below is where the M1 chip fails
             loss.backward()
             self.optimizer.step()
         return loss
+
+    def surprise(self, replay, gamma):
+        """
+        DQN priority surprise
+        """
+        state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in replay])
+        action_batch = torch.Tensor([a for (s1, a, r, s2, d) in replay])
+        reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in replay])
+        state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in replay])
+        done_batch = torch.Tensor([d for (s1, a, r, s2, d) in replay])
+
+        Q1 = self.model1(state1_batch)
+        with torch.no_grad():
+            Q2 = self.model2(state2_batch)
+
+        Y = reward_batch + gamma * ((1 - done_batch) * torch.max(Q2.detach(), dim=1)[0])
+        X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
+
+        losses = (X.detach() - Y.detach()).abs().numpy()
+
+        # self.max_priority = max(self.max_priority, max(losses))
+        # we probably don't want this the highest value that it has ever been
+        # I feel like this makes more sense, in that it is getting the recent
+        # priority experiences max to know how much error there is presently
+
+        ave_priority_loss = (max(losses) + self.max_priority) / 2
+
+        self.max_priority = max(max(losses), ave_priority_loss)
+
+        return losses
+
+    def priority_sample(
+        self,
+        sample_size=256,
+    ):
+        """
+        normalize the DQN priority surprise
+        """
+
+        td_loss = np.asarray(self.priorities) + self.offset
+        sample_probs = abs(td_loss**self.alpha) / np.sum(abs(td_loss**self.alpha))
+
+        sample_indices = random.choices(
+            range(len(td_loss)), k=sample_size, weights=sample_probs
+        )
+
+        importance = (
+            (1 / len(td_loss)) * (1 / sample_probs[sample_indices])
+        ) ** self.beta
+        importance_normalized = importance / max(importance)
+
+        self.beta = np.min(
+            [self.max_beta, self.beta + self.beta_increment_per_sampling]
+        )
+
+        return sample_indices, importance_normalized
 
     def updateQ(self):
         """
@@ -268,22 +277,9 @@ class Model_CNN_LSTM_DQN:
         TODO: We need to have a single version that works for both DQN and
               Actor-criric models (or other types as well)
         """
-        exp = world[loc].episode_memory[-1]
-        high_reward = exp[1][2]
-
-        # move experience to the gpu if available
-        exp = (
-            exp[0],
-            (
-                exp[1][0].to(self.device),
-                torch.tensor(exp[1][1]).float().to(self.device),
-                torch.tensor(exp[1][2]).float().to(self.device),
-                exp[1][3].to(self.device),
-                torch.tensor(exp[1][4]).float().to(self.device),
-            ),
-        )
-
-        self.PER_replay.add(exp[0], exp[1])
-        if extra_reward == True and abs(high_reward) > 9:
-            for _ in range(seqLength):
-                self.PER_replay.add(exp[0], exp[1])
+        exp = world[loc].replay[-1]
+        self.priorities.append(exp[0])
+        self.replay.append(exp[1])
+        if extra_reward == True and abs(exp[1][2]) > 9:
+            for _ in range(3):
+                self.replay.append(exp[1])

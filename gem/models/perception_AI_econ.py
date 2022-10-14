@@ -24,9 +24,9 @@ def agent_visualfield(world, location, k=4, wall_app=[153.0, 51.0, 102.0]):
                 image_g[i - bounds[0], j - bounds[2]] = wall_app[1]
                 image_b[i - bounds[0], j - bounds[2]] = wall_app[2]
             else:
-                image_r[i - bounds[0], j - bounds[2]] = world[i, j, layer].appearence[0]
-                image_g[i - bounds[0], j - bounds[2]] = world[i, j, layer].appearence[1]
-                image_b[i - bounds[0], j - bounds[2]] = world[i, j, layer].appearence[2]
+                image_r[i - bounds[0], j - bounds[2]] = world[i, j, layer].appearance[0]
+                image_g[i - bounds[0], j - bounds[2]] = world[i, j, layer].appearance[1]
+                image_b[i - bounds[0], j - bounds[2]] = world[i, j, layer].appearance[2]
 
     image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
     return image

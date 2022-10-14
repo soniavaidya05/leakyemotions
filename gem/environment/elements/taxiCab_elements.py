@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from gem.environment.elements.element import Wall
 from gem.environment.elements.element import EmptyObject
+import random
 
 
 class Wall:
@@ -12,7 +13,7 @@ class Wall:
     kind = "wall"  # class variable shared by all instances
 
     def __init__(self):
-        self.appearence = [153.0, 51.0, 102.0]  # walls are purple
+        self.appearance = [50.0, 50.0, 50.0]  # walls are purple
         self.passable = 0  # you can't walk through a wall
         self.action_type = "static"
 
@@ -22,15 +23,23 @@ class EmptyObject:
     kind = "empty"  # class variable shared by all instances
 
     def __init__(self):
-        self.appearence = [0.0, 0.0, 0.0]  # empty is well, blank
+        self.appearance = [0.0, 0.0, 0.0]  # empty is well, blank
         self.passable = 1  # whether the object blocks movement
-        self.action_type = "static"
+        self.action_type = "empty"
+        # self.change_appearance(0.05)
 
     def transition(self, world, location):
         generate_value = np.random.choice([0, 1], p=[0.9999, 0.0001])
         if generate_value == 1:
             world[location] = Passenger()
         return world
+
+    def change_appearance(self, scaling):
+        self.appearance = [
+            random.random() * scaling,
+            random.random() * scaling,
+            random.random() * scaling,
+        ]
 
 
 class Passenger:
@@ -39,10 +48,17 @@ class Passenger:
 
     def __init__(self, world):
         super().__init__()
-        self.appearence = (255, 0, 0)  # passengers are red
+        self.appearance = (255.0, 0.0, 0.0)  # passengers are red
         self.passable = 1  # whether the object blocks movement
         self.action_type = "static"
         self.select_desired_location(world)
+        # self.change_appearance(1)
+
+    def change_appearance(self, scaling, max_value=255.0):
+        R = min((random.random() * scaling + 235.0), max_value)
+        G = min((random.random() * scaling + 0.0), max_value)
+        B = min((random.random() * scaling + 0.0), max_value)
+        self.appearance = [R, G, B]
 
     def select_desired_location(self, world):
         """
@@ -70,7 +86,7 @@ class Destination:
 
     def __init__(self):
         super().__init__()
-        self.appearence = (0, 255, 0)  # destination is green
+        self.appearance = (0.0, 255.0, 0.0)  # destination is green
         self.passable = 1  # whether the object blocks movement
         self.action_type = "static"
 
@@ -81,7 +97,7 @@ class TaxiCab:
 
     def __init__(self, model):
         super().__init__()
-        self.appearence = (255, 225, 0)  # taxi is yellow
+        self.appearance = (255.0, 225.0, 0.0)  # taxi is yellow
         self.passable = 0  # whether the object blocks movement
         self.action_type = "neural_network"
         self.episode_memory = deque([], maxlen=10)  # we should read in these maxlens
@@ -117,7 +133,7 @@ class TaxiCab:
             new_location = (location[0], location[1] + 1, location[2])
         return new_location
 
-    def transition(self, world, models, action, location):
+    def transition(self, env, models, action, location):
         """
         Changes the world based on the action taken
         """
@@ -128,32 +144,33 @@ class TaxiCab:
 
         if action in [0, 1, 2, 3]:
 
-            if isinstance(world[attempted_locaton], TaxiCab):
+            if isinstance(env.world[attempted_locaton], TaxiCab):
                 reward = -2
 
-            if isinstance(world[attempted_locaton], Wall):
+            if isinstance(env.world[attempted_locaton], Wall):
                 reward = -2
 
-            if isinstance(world[attempted_locaton], EmptyObject):
-                world[attempted_locaton] = self
+            if isinstance(env.world[attempted_locaton], EmptyObject):
+                env.world[attempted_locaton] = self
                 new_loc = attempted_locaton
-                world[location] = EmptyObject()
+                env.world[location] = EmptyObject()
 
-            if isinstance(world[attempted_locaton], Passenger):
-                self.driving_location = world[attempted_locaton].desired_location
-                world[attempted_locaton] = self
+            if isinstance(env.world[attempted_locaton], Passenger):
+                self.driving_location = env.world[attempted_locaton].desired_location
+                env.world[attempted_locaton] = self
                 new_loc = attempted_locaton
-                world[location] = EmptyObject()
-                self.has_passenger = 1
-                world[self.driving_location] = Destination()
+                env.world[location] = EmptyObject()
+                self.has_passenger = 255
+                env.world[self.driving_location] = Destination()
                 reward = -1
 
-            if isinstance(world[attempted_locaton], Destination):
+            if isinstance(env.world[attempted_locaton], Destination):
                 reward = 25
-                world[attempted_locaton] = self
-                world[location] = EmptyObject()
+                env.world[attempted_locaton] = self
+                env.world[location] = EmptyObject()
                 new_loc = attempted_locaton
                 self.has_passenger = 0
+                env.spawn_passenger()
 
                 # found a problem. transition may need to have the
                 # whole environment passed to it if we want an action
@@ -169,7 +186,7 @@ class TaxiCab:
         # to call both of them.
 
         next_state = models[self.policy].pov(
-            world,
+            env.world,
             new_loc,
             self,
             inventory=[self.has_passenger],
@@ -177,4 +194,4 @@ class TaxiCab:
         )
         self.reward += reward
 
-        return world, reward, next_state, done, new_loc
+        return env.world, reward, next_state, done, new_loc

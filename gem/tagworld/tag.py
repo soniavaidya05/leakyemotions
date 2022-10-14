@@ -198,7 +198,7 @@ def playGame(models, world_size=15, epochs=200000, maxEpochs=100, epsilon=0.9):
         # only train at the end of the game, and train each of the models that are in the model list
         for mod in range(len(models)):
             loss = models[mod].training(150, 0.9)
-            losses = losses + loss.detach().numpy()
+            losses = losses + loss.detach().cpu().numpy()
 
         if epoch % 100 == 0:
             print(epoch, totalRewards, losses, epsilon)
