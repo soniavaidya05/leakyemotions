@@ -36,7 +36,7 @@ class Wolf:
         priority = torch.tensor(0.1)
         blank = torch.tensor(0.0)
         exp = (priority, (image, blank, blank, image, blank))
-        self.replay.append(exp)
+        self.episode_memory.append(exp)
 
     def movement(self, action, location):
         """

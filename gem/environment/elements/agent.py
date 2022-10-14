@@ -32,7 +32,7 @@ class Agent:
         priority = torch.tensor(0.1)
         blank = torch.tensor(0.0)
         exp = (priority, (image, blank, blank, image, blank))
-        self.replay.append(exp)
+        self.episode_memory.append(exp)
 
     def died(
         self, models, world, attempted_locaton_1, attempted_locaton_2, extra_reward=True
