@@ -26,15 +26,17 @@ class Wolf:
         self.action_type = "neural_network"
 
     # init is now for LSTM, may need to have a toggle for LSTM of not
-    def init_replay(self, numberMemories):
+    def init_replay(self, numberMemories, device="cpu"):
         """
         Fills in blank images for the LSTM before game play.
         Impicitly defines the number of sequences that the LSTM will be trained on.
         """
         pov_size = 17
         image = torch.zeros(1, numberMemories, 3, pov_size, pov_size).float()
-        exp = (0.1, (image, 0, 0, image, 0))
-        self.episode_memory.append(exp)
+        priority = torch.tensor(0.1)
+        blank = torch.tensor(0.0)
+        exp = (priority, (image, blank, blank, image, blank))
+        self.replay.append(exp)
 
     def movement(self, action, location):
         """
@@ -77,11 +79,17 @@ class Wolf:
                 TODO: the agent.died() function is not working properly
                 """
                 reward = 10
-                exp = env.world[attempted_locaton].episode_memory[-1]
-                exp = exp[0], (exp[1][0], exp[1][1], -25, exp[1][3], 1)
-                env.world[attempted_locaton].episode_memory[-1] = exp
-                models[env.world[attempted_locaton].policy].transfer_memories(
-                    env.world, attempted_locaton, extra_reward=True
+                exp = world[attempted_locaton].replay[-1]
+                exp = exp[0], (
+                    exp[1][0],
+                    exp[1][1],
+                    torch.tensor(-25),
+                    exp[1][3],
+                    torch.tensor(1),
+                )
+                world[attempted_locaton].replay[-1] = exp
+                models[world[attempted_locaton].policy].transfer_memories(
+                    world, attempted_locaton, extra_reward=True
                 )
 
                 env.world[attempted_locaton] = DeadAgent()

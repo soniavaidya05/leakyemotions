@@ -10,13 +10,24 @@ from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
 from gemworld.gemsWolves import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from DQN_utils import save_models, load_models, make_video
 
 import random
 
+
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+
+# choose device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# if torch.backends.mps.is_available():
+#    device = torch.device("mps")
+
+
+print(device)
 
 
 def create_models():
@@ -37,6 +48,8 @@ def create_models():
             hid_size1=75,
             hid_size2=30,
             out_size=4,
+            priority_replay=False,
+            device=device,
         )
     )  # agent model
 
@@ -50,8 +63,11 @@ def create_models():
             hid_size1=150,
             hid_size2=30,
             out_size=4,
+            priority_replay=False,
+            device=device,
         )
     )  # wolf model
+
     return models
 
 
@@ -112,7 +128,7 @@ def run_game(
         for loc in find_moveables(env.world):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[loc].init_replay(3)
+            env.world[loc].init_replay(3, device=device)
 
         while done == 0:
             """
@@ -148,12 +164,20 @@ def run_game(
                         done,
                         new_loc,
                         info,
-                    ) = env.step(models, loc, epsilon)
+                    ) = env.step(models, loc, epsilon, device=device)
 
                     # these can be included on one replay
 
+                    priority_value = torch.tensor(
+                        models[env.world[new_loc].policy].max_priority
+                    )
+                    # rewards = reward
+                    # reward = torch.tensor(reward).float()
+                    # action = torch.tensor(action).float()
+                    # done = torch.tensor(done).float()
+
                     exp = (
-                        models[env.world[new_loc].policy].max_priority,
+                        priority_value,
                         (
                             state,
                             action,
@@ -186,7 +210,7 @@ def run_game(
 
                 # transfer the events for each agent into the appropriate model after all have moved
                 models = transfer_world_memories(
-                    models, env.world, find_moveables(env.world)
+                    models, env.world, find_moveables(env.world), device
                 )
 
             if withinturn % modelUpdate_freq == 0:
@@ -235,15 +259,19 @@ save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
 models = create_models()
 
+# convert to device
+for model in range(len(models)):
+    models[model].model1.to(device)
+    models[model].model2.to(device)
+
+
 run_params = (
-    [0.9, 10000, 35],
-    [0.85, 10000, 35],
-    [0.8, 15000, 35],
-    [0.75, 10000, 35],
-    [0.6, 15000, 35],
-    [0.2, 25000, 35],
-    [0.2, 20000, 50],
-    [0.2, 20000, 50],
+    [0.8, 5000, 5],
+    [0.7, 5000, 5],
+    [0.2, 5000, 5],
+    [0.8, 10000, 25],
+    [0.6, 10000, 35],
+    [0.2, 10000, 35],
     [0.2, 20000, 50],
 )
 
@@ -257,11 +285,9 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(
-        models,
-        save_dir,
-        "WolvesGems_PER_att_sync4_noCur" + str(modRun),
-    )
-    make_video(
-        "WolvesGems_PER_att_sync4_noCur_" + str(modRun), save_dir, models, 20, env
-    )
+    # save_models(
+    #    models,
+    #    save_dir,
+    #    "WolvesGems_tensor" + str(modRun),
+    # )
+    # make_video("WolvesGems_tensor" + str(modRun), save_dir, models, 20, env)

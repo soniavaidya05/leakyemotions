@@ -192,12 +192,12 @@ def transfer_world_memories(models, world, expList, extra_reward=True):
     return models
 
 
-def transfer_memories(models, world, expList, extra_reward=True):
-    # transfer the events from agent memory to model replay
-    for loc in expList:
-        exp = world[loc].replay[-1]
-        models[world[loc].policy].replay.append(exp)
-        if extra_reward == True and abs(exp[1][2]) > 3:
-            for _ in range(2):
-                models[world[loc].policy].replay.append(exp)
-    return models
+# def transfer_memories(models, world, expList, extra_reward=True):
+#     # transfer the events from agent memory to model replay
+#     for loc in expList:
+#         exp = world[loc].replay[-1]
+#         models[world[loc].policy].replay.append(exp)
+#         if extra_reward == True and abs(exp[1][2]) > 3:
+#             for _ in range(2):
+#                 models[world[loc].policy].replay.append(exp)
+#     return models

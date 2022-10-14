@@ -81,6 +81,8 @@ class Model_CNN_LSTM_DQN:
         hid_size1,
         hid_size2,
         out_size,
+        priority_replay=True,
+        device="cpu",
     ):
         self.modeltype = "cnn_lstm_dqn"
         self.model1 = Combine_CLD(
@@ -102,6 +104,8 @@ class Model_CNN_LSTM_DQN:
         self.offset = 0.01
         self.beta_increment_per_sampling = 0.0001
         self.max_priority = 1.0
+        self.priority_replay = priority_replay
+        self.device = device
 
     def pov(self, world, location, holdObject, inventory=[], layers=[0]):
         """
@@ -146,13 +150,13 @@ class Model_CNN_LSTM_DQN:
 
         inp, epsilon = params
         Q = self.model1(inp)
-        p = self.sm(Q).detach().numpy()[0]
+        p = self.sm(Q).detach().cpu().numpy()[0]
 
         if epsilon > 0.3:
             if random.random() < epsilon:
                 action = np.random.randint(0, len(p))
             else:
-                action = np.argmax(Q.detach().numpy())
+                action = np.argmax(Q.detach().cpu().numpy())
         else:
             action = np.random.choice(np.arange(len(p)), p=p)
         return action
@@ -179,10 +183,14 @@ class Model_CNN_LSTM_DQN:
                     self.priorities[i] = abs(e) + self.offset
 
             state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
-            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
-            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch])
+            action_batch = torch.tensor([a for (s1, a, r, s2, d) in minibatch])
+            reward_batch = torch.tensor([r for (s1, a, r, s2, d) in minibatch])
             state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
-            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch])
+            done_batch = torch.tensor([d for (s1, a, r, s2, d) in minibatch])
+
+            reward_batch = reward_batch.to(self.device)
+            action_batch = action_batch.to(self.device)
+            done_batch = done_batch.to(self.device)
 
             Q1 = self.model1(state1_batch)
             with torch.no_grad():
@@ -214,10 +222,14 @@ class Model_CNN_LSTM_DQN:
         DQN priority surprise
         """
         state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in replay])
-        action_batch = torch.Tensor([a for (s1, a, r, s2, d) in replay])
-        reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in replay])
+        action_batch = torch.tensor([a for (s1, a, r, s2, d) in replay])
+        reward_batch = torch.tensor([r for (s1, a, r, s2, d) in replay])
         state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in replay])
-        done_batch = torch.Tensor([d for (s1, a, r, s2, d) in replay])
+        done_batch = torch.tensor([d for (s1, a, r, s2, d) in replay])
+
+        reward_batch = reward_batch.to(self.device)
+        action_batch = action_batch.to(self.device)
+        done_batch = done_batch.to(self.device)
 
         Q1 = self.model1(state1_batch)
         with torch.no_grad():
@@ -278,8 +290,29 @@ class Model_CNN_LSTM_DQN:
               Actor-criric models (or other types as well)
         """
         exp = world[loc].replay[-1]
+        use_extra = False
+        if extra_reward and exp[1][2] > 9:
+            use_extra = True
+        # Convert exp to tensor and transfer to device
+        # exp = [torch.tensor(e).to(device) for e in exp]
+
+        # below is a hack at the moment
+        # just typing in what the error message says to do
+
+        e0_0 = exp[0].to(self.device)
+        e1_1 = torch.tensor(exp[1][1]).to(self.device)
+
+        e1_2 = torch.tensor(exp[1][2]).to(self.device)
+        e1_4 = torch.tensor(exp[1][4]).to(self.device)
+
+        e1_0 = exp[1][0].to(self.device)
+        e1_3 = exp[1][3].to(self.device)
+
+        exp = e0_0, (e1_0, e1_1, e1_2, e1_3, e1_4)
+
         self.priorities.append(exp[0])
         self.replay.append(exp[1])
-        if extra_reward == True and abs(exp[1][2]) > 9:
+        if use_extra:
             for _ in range(3):
+                self.priorities.append(exp[0])
                 self.replay.append(exp[1])
