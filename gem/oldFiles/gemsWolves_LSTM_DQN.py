@@ -1,3 +1,4 @@
+# from tkinter.tix import Tree
 from gem.utils import (
     update_epsilon,
     update_memories,
@@ -6,13 +7,15 @@ from gem.utils import (
     find_agents,
 )
 from gem.environment.elements.element import EmptyObject, Wall
-from models.cnn_lstm_dqn_noPriority import Model_CNN_LSTM_DQN
+from models.cnn_lstm_dqn import Model_CNN_LSTM_DQN
 from gemworld.gemsWolves import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
 from DQN_utils import save_models, load_models, make_video
+
+import random
 
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
@@ -23,9 +26,35 @@ def create_models():
     Should also set up so that the number of hidden laters can be added to dynamically
     in this function. Below should fully set up the NN in a flexible way for the studies
     """
+
     models = []
-    models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 650, 75, 30, 4))  # agent model
-    models.append(Model_CNN_LSTM_DQN(5, 0.0001, 1000, 2570, 150, 30, 4))  # wolf model
+    models.append(
+        Model_CNN_LSTM_DQN(
+            in_channels=3,
+            num_filters=5,
+            lr=0.0001,
+            replay_size=4096,
+            in_size=650,
+            hid_size1=75,
+            hid_size2=30,
+            out_size=4,
+            priority_replay=False,
+        )
+    )  # agent model
+
+    models.append(
+        Model_CNN_LSTM_DQN(
+            in_channels=3,
+            num_filters=5,
+            lr=0.0001,
+            replay_size=4096,
+            in_size=2570,
+            hid_size1=150,
+            hid_size2=30,
+            out_size=4,
+            priority_replay=False,
+        )
+    )  # wolf model
     return models
 
 
@@ -83,10 +112,10 @@ def run_game(
             gem2p=0.02,
             wolf1p=0.01,
         )
-        for i, j in find_moveables(env.world):
+        for loc in find_moveables(env.world):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[i, j, 0].init_replay(3)
+            env.world[loc].init_replay(3)
 
         while done == 0:
             """
@@ -102,8 +131,47 @@ def run_game(
                         models[mods].model1.state_dict()
                     )
 
-            # take one step of the game for all agents
-            game_points = env.step(models, game_points, epsilon)
+            agentList = find_moveables(env.world)
+            random.shuffle(agentList)
+
+            for loc in agentList:
+                """
+                Reset the rewards for the trial to be zero for all agents
+                """
+                env.world[loc].reward = 0
+
+            for loc in agentList:
+                if env.world[loc].static != 1:
+
+                    (
+                        state,
+                        action,
+                        reward,
+                        next_state,
+                        done,
+                        new_loc,
+                        info,
+                    ) = env.step(models, loc, epsilon)
+
+                    # these can be included on one replay
+
+                    exp = (
+                        models[env.world[new_loc].policy].max_priority,
+                        (
+                            state,
+                            action,
+                            reward,
+                            next_state,
+                            done,
+                        ),
+                    )
+
+                    env.world[new_loc].replay.append(exp)
+
+                    if env.world[new_loc].kind == "agent":
+                        game_points[0] = game_points[0] + reward
+                    if env.world[new_loc].kind == "wolf":
+                        game_points[1] = game_points[1] + reward
 
             # determine whether the game is finished (either max length or all agents are dead)
             if withinturn > max_turns or len(find_agents(env.world)) == 0:
@@ -116,7 +184,7 @@ def run_game(
                 """
                 # this updates the last memory to be the final state of the game board
                 env.world = update_memories(
-                    models, env.world, find_moveables(env.world), done, end_update=True
+                    env, find_moveables(env.world), done, end_update=True
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved
@@ -129,24 +197,33 @@ def run_game(
                 Train the neural networks within a eposide at rate of modelUpdate_freq
                 """
                 for mods in trainable_models:
-                    loss = models[mods].training(150, 0.9)
-                    losses = losses + loss.detach().numpy()
+                    loss = models[mods].training(128, 0.9)
+                    losses = losses + loss.detach().cpu().numpy()
 
         for mods in trainable_models:
             """
             Train the neural networks at the end of eac epoch
+            reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
-            loss = models[mods].training(150, 0.9)
-            losses = losses + loss.detach().numpy()
+            loss = models[mods].training(256, 0.9)
+            losses = losses + loss.detach().cpu().numpy()
 
         updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
         if updateEps == True:
-            epsilon = update_epsilon(epsilon, turn, epoch)
+            # epsilon = update_epsilon(epsilon, turn, epoch)
+            epsilon = max(epsilon - 0.00003, 0.2)
 
         if epoch % 100 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
-            print(epoch, withinturn, game_points, losses, epsilon)
+            print(
+                epoch,
+                withinturn,
+                round(game_points[0]),
+                round(game_points[1]),
+                losses,
+                epsilon,
+            )
             game_points = [0, 0]
             losses = 0
     return models, env, turn, epsilon
@@ -174,7 +251,6 @@ run_params = (
     [0.2, 20000, 50],
 )
 
-
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
     models, env, turn, epsilon = run_game(
@@ -185,7 +261,15 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(models, save_dir, "newWolvesAndAgents2" + str(modRun))
-
-
-make_video("test_new2", save_dir, models, 20, env)
+    save_models(
+        models,
+        save_dir,
+        "WolvesGems_PER_att_sync4_noCur_PER_elu" + str(modRun),
+    )
+    make_video(
+        "WolvesGems_PER_att_sync4_noCur_PER_elu" + str(modRun),
+        save_dir,
+        models,
+        20,
+        env,
+    )

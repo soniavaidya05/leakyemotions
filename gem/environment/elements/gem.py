@@ -8,7 +8,7 @@ class Gem(Element):
     def __init__(self, value, color):
         super().__init__()
         self.health = 1  # for the gen, whether it has been mined or not
-        self.appearence = color  # gems are green
+        self.appearance = color  # gems are green
         self.vision = 1  # gems can see one radius around them
         self.policy = "NA"  # gems do not do anything
         self.value = value  # the value of this gem
@@ -18,3 +18,4 @@ class Gem(Element):
         self.trainable = 0  # whether there is a network to be optimized
         self.has_transitions = False
         self.deterministic = 0
+        self.action_type = "static"

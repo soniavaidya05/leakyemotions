@@ -6,17 +6,20 @@ import random
 import pickle
 
 from gem.utils import (
+    find_instance,
     update_memories,
     find_moveables,
 )
+import torch
 
-
-def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
+def create_video(
+    models, world_size, num, env, filename="unnamed_video.gif", end_update=True
+):
     fig = plt.figure()
     ims = []
     env.reset_env(world_size, world_size)
     done = 0
-    for location in find_moveables(env.world):
+    for location in find_instance(env.world, "neural_network"):
         # reset the memories for all agents
         env.world[location].init_replay(3)
     game_points = [0, 0]
@@ -25,11 +28,11 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
         im = plt.imshow(image, animated=True)
         ims.append([im])
 
-        agentList = find_moveables(env.world)
+        agentList = find_instance(env.world, "neural_network")
         random.shuffle(agentList)
 
         for loc in agentList:
-            if env.world[loc].static != 1:
+            if env.world[loc].action_type == "neural_network":
 
                 (
                     state,
@@ -42,23 +45,34 @@ def create_video(models, world_size, num, env, filename="unnamed_video.gif"):
                 ) = env.step(models, loc, 0.2)
 
         env.world = update_memories(
-            models, env.world, find_moveables(env.world), done, end_update=True
+            env,
+            find_instance(env.world, "neural_network"),
+            done,
+            end_update=end_update,
         )
 
         # note that with the current setup, the world is not generating new wood and stone
         # we will need to consider where to add the transitions that do not have movement or neural networks
-        regenList = []
-        for i in range(env.world.shape[0]):
-            for j in range(env.world.shape[1]):
-                for k in range(env.world.shape[2]):
-                    if env.world[i, j, k].deterministic == 1:
-                        regenList.append((i, j, k))
+        regenList = find_instance(env.world, "deterministic")
 
         for loc in regenList:
             env.world = env.world[loc].transition(env.world, loc)
 
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
     ani.save(filename, writer="PillowWriter", fps=2)
+
+def get_TD_error(models, policy, device, state, action, reward, next_state, done, gamma = 0.95, offset = 0.0001):
+    Q1 = models[policy].model1(state.to(device))
+    with torch.no_grad():
+        Q2 = models[policy].model2(next_state.to(device))
+    Y = reward + gamma * ((1 - done) * torch.max(Q2.detach(), dim=1)[0])
+
+    X = Q1.detach()[0][action]
+
+    error = torch.abs(Y - X).data.cpu().numpy()
+    error = error + offset
+    return error
+
 
 
 def save_models(models, save_dir, filename):
@@ -72,7 +86,7 @@ def load_models(save_dir, filename):
     return model
 
 
-def make_video(filename, save_dir, models, world_size, env):
+def make_video(filename, save_dir, models, world_size, env, end_update=True):
     epoch = 10000
     for video_num in range(5):
         vfilename = (
@@ -84,11 +98,13 @@ def make_video(filename, save_dir, models, world_size, env):
             + str(video_num)
             + ".gif"
         )
-        create_video(models, world_size, 100, env, filename=vfilename)
+        create_video(
+            models, world_size, 100, env, filename=vfilename, end_update=end_update
+        )
 
 
 def replay_view(memoryNum, agentNumber, env):
-    agentList = find_moveables(env.world)
+    agentList = find_instance(env.world, "neural_network")
     location = agentList[agentNumber]
 
     Obj = env.world[location]
@@ -149,7 +165,7 @@ def replay_view_model(memoryNum, modelNumber, models):
 def create_data(env, models, epochs, world_size):
     game_points = [0, 0]
     env.reset_env(world_size, world_size)
-    for i, j, k in find_moveables(env.world):
+    for i, j, k in find_instance(env.world, "neural_network"):
         env.world[i, j, k].init_replay(3)
     for _ in range(epochs):
         game_points = env.step(models, game_points)
@@ -161,7 +177,7 @@ def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
     ims = []
     env.reset_env(world_size, world_size, layers=2)
     done = 0
-    for location in find_moveables(env.world):
+    for location in find_instance(env.world, "neural_network"):
         # reset the memories for all agents
         env.world[location].init_replay(3)
     game_points = [0, 0]
@@ -180,11 +196,11 @@ def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
         im = plt.imshow(image1, animated=True)
         ims.append([im])
 
-        agentList = find_moveables(env.world)
+        agentList = find_instance(env.world, "neural_network")
         random.shuffle(agentList)
 
         for loc in agentList:
-            if env.world[loc].static != 1:
+            if env.world[loc].action_type == "neural_network":
 
                 (
                     state,
@@ -196,27 +212,25 @@ def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
                     info,
                 ) = env.step(models, loc, 0.2)
 
-                env.world[new_loc].replay.append(
-                    (state, action, reward, next_state, done)
-                )
+                #env.world[new_loc].replay.append(
+                #    (state, action, reward, next_state, done)
+                #)
+                #
+                #if env.world[new_loc].kind == "agent":
+                #    game_points[0] = game_points[0] + reward
+                #if env.world[new_loc].kind == "wolf":
+                #    game_points[1] = game_points[1] + reward
 
-                if env.world[new_loc].kind == "agent":
-                    game_points[0] = game_points[0] + reward
-                if env.world[new_loc].kind == "wolf":
-                    game_points[1] = game_points[1] + reward
-
-        env.world = update_memories(
-            models, env.world, find_moveables(env.world), done, end_update=False
-        )
+        #env.world = update_memories(
+        #    env,
+        #    find_instance(env.world, "neural_network"),
+        #    done,
+        #    end_update=False,
+        #)
 
         # note that with the current setup, the world is not generating new wood and stone
         # we will need to consider where to add the transitions that do not have movement or neural networks
-        regenList = []
-        for i in range(env.world.shape[0]):
-            for j in range(env.world.shape[1]):
-                for k in range(env.world.shape[2]):
-                    if env.world[i, j, k].deterministic == 1:
-                        regenList.append((i, j, k))
+        regenList = find_instance(env.world, "deterministic")
 
         for loc in regenList:
             env.world = env.world[loc].transition(env.world, loc)

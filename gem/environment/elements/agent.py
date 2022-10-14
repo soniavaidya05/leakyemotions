@@ -11,18 +11,16 @@ class Agent:
 
     def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
-        self.appearence = [0.0, 0.0, 255.0]  # agents are blue
+        self.appearance = [0.0, 0.0, 255.0]  # agents are blue
         self.vision = 4  # agents can see three radius around them
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.value = 0  # agents have no value
         self.reward = 0  # how much reward this agent has collected
-        self.static = 0  # whether the object gets to take actions or not
         self.passable = 0  # whether the object blocks movement
         self.trainable = 1  # whether there is a network to be optimized
-        self.replay = deque([], maxlen=100)  # we should read in these maxlens
+        self.episode_memory = deque([], maxlen=100)  # we should read in these maxlens
         self.has_transitions = True
-        self.just_died = False
-        self.deterministic = 0
+        self.action_type = "neural_network"
 
     def init_replay(self, numberMemories, device="cpu"):
         """
@@ -44,8 +42,8 @@ class Agent:
         death. This is to encourage the agent to not die.
         TODO: this is failing at the moment. Need to fix.
         """
-        lastexp = world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1]
-        world[attempted_locaton_1, attempted_locaton_2, 0].replay[-1] = (
+        lastexp = world[attempted_locaton_1, attempted_locaton_2, 0].episode_memory[-1]
+        world[attempted_locaton_1, attempted_locaton_2, 0].episode_memory[-1] = (
             lastexp[0],
             lastexp[1],
             -25,
@@ -63,7 +61,7 @@ class Agent:
 
         # this can only be used it seems if all agents have a different id
         self.kind = "deadAgent"  # label the agents death
-        self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
+        self.appearance = [130.0, 130.0, 130.0]  # dead agents are grey
         self.trainable = 0  # whether there is a network to be optimized
         self.just_died = True
         self.static = 1
@@ -84,7 +82,7 @@ class Agent:
             new_location = (location[0], location[1] + 1, location[2])
         return new_location
 
-    def transition(self, world, models, action, location):
+    def transition(self, env, models, action, location):
         """
         Changes the world based on the action taken
         """
@@ -93,22 +91,22 @@ class Agent:
         new_loc = location
         attempted_locaton = self.movement(action, location)
 
-        if world[attempted_locaton].passable == 1:
-            world[location] = EmptyObject()
-            reward = world[attempted_locaton].value
-            world[attempted_locaton] = self
+        if env.world[attempted_locaton].passable == 1:
+            env.world[location] = EmptyObject()
+            reward = env.world[attempted_locaton].value
+            env.world[attempted_locaton] = self
             new_loc = attempted_locaton
 
         else:
             if isinstance(
-                world[attempted_locaton], Wall
+                env.world[attempted_locaton], Wall
             ):  # Replacing comparison with string 'kind'
                 reward = -0.1
 
-        next_state = models[self.policy].pov(world, new_loc, self)
+        next_state = models[self.policy].pov(env.world, new_loc, self)
         self.reward += reward
 
-        return world, reward, next_state, done, new_loc
+        return env.world, reward, next_state, done, new_loc
 
 
 class DeadAgent:
@@ -120,7 +118,7 @@ class DeadAgent:
 
     def __init__(self):
         self.health = 10  # for the agents, this is how hungry they are
-        self.appearence = [130.0, 130.0, 130.0]  # agents are blue
+        self.appearance = [130.0, 130.0, 130.0]  # agents are blue
         self.vision = 4  # agents can see three radius around them
         self.policy = "NA"  # agent model here.
         self.value = 0  # agents have no value
@@ -128,6 +126,7 @@ class DeadAgent:
         self.static = 1  # whether the object gets to take actions or not (starts as 0, then goes to 1)
         self.passable = 0  # whether the object blocks movement
         self.trainable = 0  # whether there is a network to be optimized
-        self.replay = deque([], maxlen=5)
+        self.episode_memory = deque([], maxlen=5)
         self.has_transitions = False
         self.deterministic = 0
+        self.action_type = "static"

@@ -62,9 +62,9 @@ class AI_Econ:
 
         for i in range(self.world.shape[0]):
             for j in range(self.world.shape[1]):
-                image_r[i, j] = self.world[i, j, layer].appearence[0]
-                image_g[i, j] = self.world[i, j, layer].appearence[1]
-                image_b[i, j] = self.world[i, j, layer].appearence[2]
+                image_r[i, j] = self.world[i, j, layer].appearance[0]
+                image_g[i, j] = self.world[i, j, layer].appearance[1]
+                image_b[i, j] = self.world[i, j, layer].appearance[2]
 
         image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
         return image
@@ -170,6 +170,7 @@ class AI_Econ:
 
         """
         holdObject = self.world[loc]
+        device = models[holdObject.policy].device
 
         if holdObject.static != 1:
             """
@@ -187,7 +188,7 @@ class AI_Econ:
                 inventory=[holdObject.stone, holdObject.wood, holdObject.labour],
                 layers=[0, 1],
             )
-            action = models[holdObject.policy].take_action([state, epsilon])
+            action = models[holdObject.policy].take_action([state.to(device), epsilon])
 
         if holdObject.has_transitions == True:
             """
@@ -200,7 +201,7 @@ class AI_Econ:
                 next_state,
                 done,
                 new_loc,
-            ) = holdObject.transition(self.world, models, action, loc)
+            ) = holdObject.transition(self, models, action, loc)
         else:
             reward = 0
             next_state = state

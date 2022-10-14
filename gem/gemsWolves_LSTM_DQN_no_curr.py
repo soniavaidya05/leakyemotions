@@ -1,4 +1,3 @@
-from tkinter.tix import Tree
 from gem.utils import (
     update_epsilon,
     update_memories,
@@ -72,11 +71,11 @@ def create_models():
     return models
 
 
-world_size = 15
+world_size = 30
 
 trainable_models = [0, 1]
 sync_freq = 500
-modelUpdate_freq = 25
+modelUpdate_freq = 4  # 25
 epsilon = 0.99
 
 turn = 1
@@ -219,13 +218,12 @@ def run_game(
                 Train the neural networks within a eposide at rate of modelUpdate_freq
                 """
                 for mods in trainable_models:
-                    loss = models[mods].training(128, 0.9)
+                    loss = models[mods].training(256, 0.9)
                     losses = losses + loss.detach().numpy()
 
         for mods in trainable_models:
             """
             Train the neural networks at the end of eac epoch
-            reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
             loss = models[mods].training(256, 0.9)
             losses = losses + loss.detach().numpy()
@@ -233,8 +231,7 @@ def run_game(
         updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
         if updateEps == True:
-            # epsilon = update_epsilon(epsilon, turn, epoch)
-            epsilon = max(epsilon - 0.00003, 0.2)
+            epsilon = update_epsilon(epsilon, turn, epoch)
 
         if epoch % 100 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead

@@ -171,7 +171,7 @@ def playGame(
                 """
 
                 expList = find_moveables(env.world)
-                env.world = update_memories(models, env.world, expList, end_update=True)
+                env.world = update_memories(env, expList, end_update=True)
                 for location in expList:
                     env.world[location].AC_reward = torch.concat(
                         [
@@ -196,7 +196,7 @@ def playGame(
             for mod in range(len(models)):
                 if len(models[mod].rewards) > 0:
                     loss = models[mod].training()
-                    losses = losses + loss.detach().numpy()
+                    losses = losses + loss.detach().cpu().numpy()
 
         # epdate epsilon to move from mostly random to greedy choices for action with time
         epsilon = update_epsilon(epsilon, turn, epoch)

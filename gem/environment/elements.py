@@ -11,7 +11,7 @@ class Gem:
 
     def __init__(self, value, color):
         self.health = 1  # for the gen, whether it has been mined or not
-        self.appearence = color  # gems are green
+        self.appearance = color  # gems are green
         self.vision = 1  # gems can see one radius around them
         self.policy = "NA"  # gems do not do anything
         self.value = value  # the value of this gem
@@ -31,7 +31,7 @@ class Agent:
 
     def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
-        self.appearence = [0.0, 0.0, 255.0]  # agents are blue
+        self.appearance = [0.0, 0.0, 255.0]  # agents are blue
         self.vision = 4  # agents can see three radius around them
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.value = 0  # agents have no value
@@ -57,7 +57,7 @@ class Agent:
     def died(self):
         # this can only be used it seems if all agents have a different id
         self.kind = "deadAgent"  # label the agents death
-        self.appearence = [130.0, 130.0, 130.0]  # dead agents are grey
+        self.appearance = [130.0, 130.0, 130.0]  # dead agents are grey
         self.trainable = 0  # whether there is a network to be optimized
         self.just_died = True
         self.static = 1
@@ -130,7 +130,7 @@ class deadAgent:
 
     def __init__(self):
         self.health = 10  # for the agents, this is how hungry they are
-        self.appearence = [130.0, 130.0, 130.0]  # agents are blue
+        self.appearance = [130.0, 130.0, 130.0]  # agents are blue
         self.vision = 4  # agents can see three radius around them
         self.policy = "NA"  # agent model here.
         self.value = 0  # agents have no value
@@ -148,7 +148,7 @@ class Wolf:
 
     def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
-        self.appearence = [255.0, 0.0, 0.0]  # agents are red
+        self.appearance = [255.0, 0.0, 0.0]  # agents are red
         self.vision = 8  # agents can see three radius around them
         self.policy = model  # gems do not do anything
         self.value = 0  # agents have no value
@@ -210,7 +210,7 @@ class Wolf:
             attempted_locaton_2 = j + 1
 
         if world[attempted_locaton_1, attempted_locaton_2, 0].passable == 1:
-            if world[attempted_locaton_1, attempted_locaton_2, 0].appearence == [
+            if world[attempted_locaton_1, attempted_locaton_2, 0].appearance == [
                 0.0,
                 0.0,
                 255.0,
@@ -264,7 +264,7 @@ class Wall:
 
     def __init__(self):
         self.health = 0  # wall stuff is basically empty
-        self.appearence = [153.0, 51.0, 102.0]  # walls are purple
+        self.appearance = [153.0, 51.0, 102.0]  # walls are purple
         self.vision = 0  # wall stuff is basically empty
         self.policy = "NA"  # walls do not do anything
         self.value = 0  # wall stuff is basically empty
@@ -281,7 +281,7 @@ class BlastRay:
 
     def __init__(self):
         self.health = 0
-        self.appearence = [255.0, 255.0, 255.0]  # blast rays are white
+        self.appearance = [255.0, 255.0, 255.0]  # blast rays are white
         self.vision = 0  # rays do not see
         self.policy = "NA"  # rays do not think
         self.value = 10  # amount of damage if you are hit by the ray
@@ -298,7 +298,7 @@ class EmptyObject:
 
     def __init__(self):
         self.health = 0  # empty stuff is basically empty
-        self.appearence = [0.0, 0.0, 0.0]  # empty is well, blank
+        self.appearance = [0.0, 0.0, 0.0]  # empty is well, blank
         self.vision = 1  # empty stuff is basically empty
         self.policy = "NA"  # empty stuff is basically empty
         self.value = 0  # empty stuff is basically empty
@@ -316,7 +316,7 @@ class TagAgent:
     def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
         self.is_it = 0  # everyone starts off not it
-        self.appearence = [0.0, 0.0, 255.0]  # agents are blue when not it
+        self.appearance = [0.0, 0.0, 255.0]  # agents are blue when not it
         self.vision = 4  # agents can see three radius around them
         # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.policy = model
@@ -332,13 +332,13 @@ class TagAgent:
     def tag(self, change_model=True):
         if self.is_it == 0:
             self.is_it = 1
-            self.appearence = [54, 139, 193]
+            self.appearance = [54, 139, 193]
             self.frozen = 2
             if change_model:
                 self.policy = 1
         else:
             self.is_it = 0
-            self.appearence = [0.0, 0.0, 255]
+            self.appearance = [0.0, 0.0, 255]
             if change_model:
                 self.policy = 0
 
@@ -347,6 +347,6 @@ class TagAgent:
             self.frozen -= 1
         if self.frozen == 0:
             if self.is_it == 1:
-                self.appearence = [255, 0.0, 0.0]
+                self.appearance = [255, 0.0, 0.0]
             else:
-                self.appearence = [0.0, 0.0, 255]
+                self.appearance = [0.0, 0.0, 255]
