@@ -60,7 +60,7 @@ class Combine_CLD(nn.Module):
             num_layers=n_layers,
             batch_first=True,
         )
-        self.l1 = nn.Linear(hid_size1, hid_size1)
+        self.l1 = nn.Linear(hid_size1, hid_size1) # right here?
         self.l2 = nn.Linear(hid_size1, hid_size2)
         self.l3 = nn.Linear(hid_size2, out_size)
         self.dropout = nn.Dropout(0.15)
@@ -76,17 +76,11 @@ class Combine_CLD(nn.Module):
 
         batch_size, timesteps, C, H, W = x.size()
         c_in = x.view(batch_size * timesteps, C, H, W)
-        #print("c_in.shape: ", c_in.shape)
         c_out = self.cnn(c_in)
-        #print("c_out.shape: ", c_out.shape)
         r_in = c_out.view(batch_size, timesteps, -1)
-        #print("r_in.shape: ", r_in.shape)
         r_out, (h_n, h_c) = self.rnn(r_in)
-        #print("r_out.shape: ", r_out.shape)
-
-        y = F.relu(self.l1(r_out[:, -1, :]))
-        #print("y.shape: ", y.shape)
-        y = F.relu(self.l2(y))
+        y = F.relu(self.l1(r_out[:, -1, :])) # what is this was lr = .001
+        y = F.relu(self.l2(y)) # and this is lr = .0011 (a small bit more)
         y = self.l3(y)
 
         return y

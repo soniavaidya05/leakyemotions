@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+from torch.nn.functional import normalize
 
 # from models.memory import Memory
 from models.perception import agent_visualfield
@@ -43,12 +44,15 @@ class LSTM_DQN(nn.Module):
         self.l2 = nn.Linear(hid_size1, hid_size2)
         self.l3 = nn.Linear(hid_size2, out_size)
         self.dropout = nn.Dropout(0.15)
+        
 
     def forward(self, x):
         """
         TODO: check the shapes below. 
         """
-        r_in = x
+        #r_in =normalize(x, p=1.0, dim = 1)
+        r_in = x/10
+
         #print("r_in.shape: ", r_in.shape)
         r_out, (h_n, h_c) = self.rnn(r_in)
         #print("r_out.shape: ", r_out.shape)

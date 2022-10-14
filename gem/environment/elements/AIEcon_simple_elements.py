@@ -58,7 +58,8 @@ class Agent():
             if random.random() < self.stone_skill:
                 self.wood = self.wood + 1
         if action == 2:
-            if random.random() < self.house_skill and self.wood > 0 and self.stone > 0:
+            if random.random() < self.house_skill:
+            #if random.random() < self.house_skill and self.wood > 0 and self.stone > 0:
                 self.wood = self.wood - 1
                 self.stone = self.stone - 1
                 self.house = self.house + 1
@@ -136,36 +137,36 @@ def create_models():
     models = []
     models.append(
         Model_simple_linear_DQN(
-            lr=0.0001,
+            lr=0.001,
             replay_size=1024,  
             in_size=3,  
             hid_size1=10,  
             hid_size2=10,  
-            out_size=7,
+            out_size=3, # update to 7 later
             priority_replay=False,
             device=device,
         )
     )  # agent model1
     models.append(
         Model_simple_linear_DQN(
-            lr=0.0001,
+            lr=0.001,
             replay_size=1024,  
             in_size=3,  
             hid_size1=10,  
             hid_size2=10,  
-            out_size=7,
+            out_size=3,
             priority_replay=False,
             device=device,
         )
     )  # agent model2
     models.append(
         Model_simple_linear_DQN(
-            lr=0.0001,
+            lr=0.001,
             replay_size=1024,  
             in_size=3,  
             hid_size1=10,  
             hid_size2=10,  
-            out_size=7,
+            out_size=3,
             priority_replay=False,
             device=device,
         )
@@ -179,15 +180,59 @@ def create_models():
 
 models = create_models()
 
+
+models = create_models()
+
+env = AIEcon_simple_game()
+
+agent_list = []
+num_agents = 30
+for i in range(num_agents):
+    agent_list.append(Agent(0))
+    print(agent_list[i].policy)
+
 rewards = [0,0,0]
 losses = 0
+model_learn_rate = 2
+sync_freq = 500
+
+trainable_models = [0,1,2]
+agent1_actions = [0,0,0,0,0,0,0]
+agent2_actions = [0,0,0,0,0,0,0]
+agent3_actions = [0,0,0,0,0,0,0]
+
+epsilon = .99
 
 for epoch in range(1000000):
+    #print("epoch: ", epoch, "env stone and wood: ", env.stone, env.wood)
+    #if epoch % sync_freq == 0:
+    #        # update the double DQN model ever sync_frew
+    #        for mods in trainable_models:
+    #            models[mods].model2.load_state_dict(
+    #                models[mods].model1.state_dict()
+    #            )
+    if epoch % 1000 == 0:
+        epsilon = epsilon - .01
+
+    if epoch % 30 == 0:
+        env.wood = 0
+        env.stone = 0
+
     for agent in range(len(agent_list)):
+        if epoch % 30 == 0:
+            agent_list[agent].coin = 0
+            agent_list[agent].wood = 2
+            agent_list[agent].stone = 2
         state = torch.tensor([agent_list[agent].wood, agent_list[agent].stone, agent_list[agent].coin]).float().to(device)
-        action = models[agent_list[agent].policy].take_action([state, .1])
+        action = models[agent_list[agent].policy].take_action([state, epsilon])
         env, reward, next_state, done, new_loc = agent_list[agent].transition(env, models, action, [])
         rewards[agent_list[agent].policy] = rewards[agent_list[agent].policy] + reward
+        if agent_list[agent].policy == 0:
+            agent1_actions[action] = agent1_actions[action] + 1
+        if agent_list[agent].policy == 1:
+            agent2_actions[action] = agent2_actions[action] + 1
+        if agent_list[agent].policy == 2:
+            agent3_actions[action] = agent3_actions[action] + 1
 
         exp = [1, (
             state,
@@ -197,15 +242,34 @@ for epoch in range(1000000):
             done,
         )]
 
-        agent_list[agent].episode_memory.append(exp)
-        loss = models[agent_list[agent].policy].training(exp)
+
+        #agent.episode_memory.append(exp)
+        models[agent_list[agent].policy].replay.append(exp)
+        loss = models[0].training(exp)
         losses = losses + loss.detach().cpu().numpy()
+        
+        #agent_list[agent].episode_memory.append(exp)
 
+        #models[agent_list[agent].policy].PER_replay.add(exp[0], exp[1])
 
-    if epoch % 100 == 0:
-        print("epoch:" , epoch, "loss: ",round(losses), "points (wood, stone, house): ", rewards)
+    #if epoch % model_learn_rate == 0:
+    #    for mods in trainable_models:
+    #        loss = models[mods].training(100, .1) # reducing gamma to see if future Q is the problem
+    #         losses = losses + loss.detach().cpu().numpy()
+
+    if epoch % 500 == 0:
+        print("--------------------------------------")
+        print("epoch:" , epoch, "loss: ",losses, "points (wood, stone, house): ", rewards, "epsilon: ", epsilon)
+        print("chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone")
+        print("agent1 behaviours: ", agent1_actions)
+        print("agent2 behaviours: ", agent2_actions)
+        print("agent3 behaviours: ", agent3_actions)
         rewards = [0,0,0]
         losses = 0
+        agent1_actions = [0,0,0,0,0,0,0]
+        agent2_actions = [0,0,0,0,0,0,0]
+        agent3_actions = [0,0,0,0,0,0,0]
+
 
 
 

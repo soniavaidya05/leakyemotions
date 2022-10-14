@@ -74,6 +74,7 @@ class Model_simple_linear_DQN:
         )
         self.loss_fn = nn.MSELoss()
         self.sm = nn.Softmax(dim=1)
+        self.replay = deque([], maxlen=replay_size)
         self.device = device
 
     def softmax(self, x):
