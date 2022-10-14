@@ -154,7 +154,7 @@ class TaxiCabEnv:
         taxi_start = (taxi_cab_start1, taxi_cab_start2, 0)
         self.world[taxi_start] = TaxiCab(0)
 
-        curriculum = True
+        curriculum = False
         if curriculum == False:
             self.spawn_passenger()
 

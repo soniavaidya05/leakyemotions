@@ -172,6 +172,19 @@ class TaxiCab:
                 self.has_passenger = 0
                 env.spawn_passenger()
 
+                # found a problem. transition may need to have the
+                # whole environment passed to it if we want an action
+                # to trigger an environment change (like spawn passenger)
+
+        # the section below is probably the one that people
+        # will have the most confusion about, since it is
+        # using two features of Gem that we haven't talked about yet.
+        # nameely, the inventory which is additional things that
+        # can be added to a CNN (here it is whether a person is in the car)
+        # and layers, which is by default just zero, but since I liked the idea
+        # of the high and low res version of the world, we are going to need
+        # to call both of them.
+
         next_state = models[self.policy].pov(
             env.world,
             new_loc,
