@@ -170,7 +170,9 @@ class Agent:
             if isinstance(env.world[attempted_locaton], Agent):
                 reward = -0.1
 
-            if isinstance(env.world[attempted_location_l0], EmptyObject):
+            if isinstance(env.world[attempted_location_l0], EmptyObject) and isinstance(
+                env.world[attempted_location_l1], EmptyObject
+            ):
                 env.world[attempted_location_l1] = self
                 new_loc = attempted_location_l1
                 env.world[location] = EmptyObject()

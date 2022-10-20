@@ -12,6 +12,7 @@ from gem.utils import (
 )
 import torch
 
+
 def create_video(
     models, world_size, num, env, filename="unnamed_video.gif", end_update=True
 ):
@@ -61,7 +62,19 @@ def create_video(
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
     ani.save(filename, writer="PillowWriter", fps=2)
 
-def get_TD_error(models, policy, device, state, action, reward, next_state, done, gamma = 0.95, offset = 0.0001):
+
+def get_TD_error(
+    models,
+    policy,
+    device,
+    state,
+    action,
+    reward,
+    next_state,
+    done,
+    gamma=0.95,
+    offset=0.0001,
+):
     Q1 = models[policy].model1(state.to(device))
     with torch.no_grad():
         Q2 = models[policy].model2(next_state.to(device))
@@ -72,7 +85,6 @@ def get_TD_error(models, policy, device, state, action, reward, next_state, done
     error = torch.abs(Y - X).data.cpu().numpy()
     error = error + offset
     return error
-
 
 
 def save_models(models, save_dir, filename):
@@ -185,10 +197,10 @@ def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
         image1 = create_world_image(env.world, layers=0)
         image2 = create_world_image(env.world, layers=1)
 
-        for i in range(30):
-            for j in range(30):
+        for i in range(world_size):
+            for j in range(world_size):
                 R, G, B = image2[i, j]
-                if R == 0 and G == 0 and B == 255:
+                if R != 0 or G != 0 or B != 0:
                     image1[i, j][0] = R
                     image1[i, j][1] = G
                     image1[i, j][2] = B
@@ -212,21 +224,21 @@ def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
                     info,
                 ) = env.step(models, loc, 0.2)
 
-                #env.world[new_loc].replay.append(
+                # env.world[new_loc].replay.append(
                 #    (state, action, reward, next_state, done)
-                #)
+                # )
                 #
-                #if env.world[new_loc].kind == "agent":
+                # if env.world[new_loc].kind == "agent":
                 #    game_points[0] = game_points[0] + reward
-                #if env.world[new_loc].kind == "wolf":
+                # if env.world[new_loc].kind == "wolf":
                 #    game_points[1] = game_points[1] + reward
 
-        #env.world = update_memories(
+        # env.world = update_memories(
         #    env,
         #    find_instance(env.world, "neural_network"),
         #    done,
         #    end_update=False,
-        #)
+        # )
 
         # note that with the current setup, the world is not generating new wood and stone
         # we will need to consider where to add the transitions that do not have movement or neural networks
