@@ -37,6 +37,8 @@ class AI_Econ:
         self.init_elements()
         self.populate(self.wood1p, self.stone1p)
         self.insert_walls(self.height, self.width, self.layers)
+        self.wood = 4
+        self.stone = 4
 
     def create_world(self, height=30, width=30, layers=2):
         """
@@ -120,14 +122,108 @@ class AI_Econ:
                 if obj == 1:
                     self.world[i, j, 0] = Stone()
 
-        self.world[
-            round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 1
-        ] = Agent(0)
-        self.world[
-            round(self.world.shape[0] / 2) + 1,
-            round(self.world.shape[1] / 2) - 1,
-            1,
-        ] = Agent(0)
+        loc = (3, 7, 1)
+        apperence1 = (0, 0, 255.0)
+        apperence2 = (0, 0, 255.0)
+        apperence3 = (0, 0, 255.0)
+        self.world[loc] = Agent(
+            model=0,
+            stone_skill=0.9,
+            wood_skill=0.25,
+            house_skill=0.25,
+            appearance=apperence1,
+        )
+        loc = (3, 4, 1)
+        self.world[loc] = Agent(
+            model=1,
+            stone_skill=0.25,
+            wood_skill=0.9,
+            house_skill=0.25,
+            appearance=apperence2,
+        )
+        loc = (7, 4, 1)
+        self.world[loc] = Agent(
+            model=2,
+            stone_skill=0.25,
+            wood_skill=0.25,
+            house_skill=0.9,
+            appearance=apperence3,
+        )
+
+        loc = (23, 7, 1)
+        self.world[loc] = Agent(
+            model=0,
+            stone_skill=0.9,
+            wood_skill=0.25,
+            house_skill=0.25,
+            appearance=apperence1,
+        )
+        loc = (23, 4, 1)
+        self.world[loc] = Agent(
+            model=1,
+            stone_skill=0.25,
+            wood_skill=0.9,
+            house_skill=0.25,
+            appearance=apperence2,
+        )
+        loc = (27, 4, 1)
+        self.world[loc] = Agent(
+            model=2,
+            stone_skill=0.25,
+            wood_skill=0.25,
+            house_skill=0.9,
+            appearance=apperence3,
+        )
+
+        loc = (23, 27, 1)
+        self.world[loc] = Agent(
+            model=0,
+            stone_skill=0.9,
+            wood_skill=0.25,
+            house_skill=0.25,
+            appearance=apperence1,
+        )
+        loc = (23, 24, 1)
+        self.world[loc] = Agent(
+            model=1,
+            stone_skill=0.25,
+            wood_skill=0.9,
+            house_skill=0.25,
+            appearance=apperence2,
+        )
+        loc = (27, 24, 1)
+        self.world[loc] = Agent(
+            model=2,
+            stone_skill=0.25,
+            wood_skill=0.25,
+            house_skill=0.9,
+            appearance=apperence3,
+        )
+
+        loc = (3, 23, 1)
+        self.world[loc] = Agent(
+            model=0,
+            stone_skill=0.9,
+            wood_skill=0.25,
+            house_skill=0.25,
+            appearance=apperence1,
+        )
+        loc = (3, 27, 1)
+        self.world[loc] = Agent(
+            model=1,
+            stone_skill=0.25,
+            wood_skill=0.9,
+            house_skill=0.25,
+            appearance=apperence2,
+        )
+        loc = (7, 24, 1)
+        self.world[loc] = Agent(
+            model=2,
+            stone_skill=0.25,
+            wood_skill=0.25,
+            house_skill=0.9,
+            appearance=apperence3,
+        )
 
     def insert_walls(self, height, width, layers):
         """

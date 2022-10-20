@@ -25,17 +25,18 @@ import torch
 
 import random
 
-# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
+# if torch.backends.mps.is_available():
+#    device = torch.device("mps")
 
 print(device)
+
 
 def create_models():
     """
@@ -57,7 +58,37 @@ def create_models():
             priority_replay=False,
             device=device,
         )
-    )  # agent model
+    )  # agent model 1
+
+    models.append(
+        Model_CNN_LSTM_DQN(
+            in_channels=9,
+            num_filters=10,
+            lr=0.001,
+            replay_size=4096,
+            in_size=1300,
+            hid_size1=150,
+            hid_size2=30,
+            out_size=5,
+            priority_replay=False,
+            device=device,
+        )
+    )  # agent model 2
+
+    models.append(
+        Model_CNN_LSTM_DQN(
+            in_channels=9,
+            num_filters=10,
+            lr=0.001,
+            replay_size=4096,
+            in_size=1300,
+            hid_size1=150,
+            hid_size2=30,
+            out_size=5,
+            priority_replay=False,
+            device=device,
+        )
+    )  # agent model 3
 
     # convert to device
     for model in range(len(models)):
@@ -65,6 +96,13 @@ def create_models():
         models[model].model2.to(device)
 
     return models
+
+
+def fix_next_state(state, next_state):
+    state_ = state.clone()
+    state_[:, 0:-1, :, :, :] = state[:, 1:, :, :, :]
+    state_[:, -1, :, :, :] = next_state[:, -1, :, :, :]
+    return state_
 
 
 world_size = 30
@@ -180,6 +218,8 @@ def run_game(
                         info,
                     ) = env.step(models, loc, epsilon)
 
+                    next_state = fix_next_state(state, next_state)
+
                     exp = models[env.world[new_loc].policy].max_priority, (
                         state,
                         action,
@@ -201,7 +241,10 @@ def run_game(
                 env.world = env.world[loc].transition(env.world, loc)
 
             # determine whether the game is finished (either max length or all agents are dead)
-            if withinturn > max_turns or len(find_instance(env.world, "neural_network")) == 0:
+            if (
+                withinturn > max_turns
+                or len(find_instance(env.world, "neural_network")) == 0
+            ):
                 done = 1
 
             if len(trainable_models) > 0:
@@ -251,8 +294,6 @@ def run_game(
             game_points = [0, 0]
             losses = 0
     return models, env, turn, epsilon
-
-
 
 
 models = create_models()

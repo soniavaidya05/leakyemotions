@@ -99,8 +99,8 @@ class Agent:
 
     kind = "agent"  # class variable shared by all instances
 
-    def __init__(self, model):
-        self.appearance = [0.0, 0.0, 255.0]  # agents are blue
+    def __init__(self, model, wood_skill, stone_skill, house_skill, appearance):
+        self.appearance = appearance  # agents are blue
         self.vision = 4  # agents can see three radius around them
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.reward = 0  # how much reward this agent has collected
@@ -114,6 +114,9 @@ class Agent:
         self.wood = 0
         self.labour = 0
         self.action_type = "neural_network"
+        self.wood_skill = wood_skill
+        self.stone_skill = stone_skill
+        self.house_skill = house_skill
 
     def init_replay(self, numberMemories):
         """
@@ -179,44 +182,54 @@ class Agent:
                 reward = -0.1
 
             if isinstance(env.world[attempted_location_l0], Wood):
-                # once this works, we need to set the reward to be 0 for collecting
-                # labour costs need to be implimented
-                reward = 10
-                self.wood += 1
-                env.world[attempted_location_l1] = self
-                env.world[attempted_location_l0] = EmptyObject()
-                env.world[location] = EmptyObject()
-                new_loc = attempted_location_l1
+                if self.wood_skill < random.random():
+                    # once this works, we need to set the reward to be 0 for collecting
+                    # labour costs need to be implimented
+                    reward = 10
+                    self.wood += 1
+                    env.world[attempted_location_l1] = self
+                    env.world[attempted_location_l0] = EmptyObject()
+                    env.world[location] = EmptyObject()
+                    new_loc = attempted_location_l1
 
             if isinstance(env.world[attempted_location_l0], Stone):
-                reward = 10
-                self.stone += 1
-                env.world[attempted_location_l1] = self
-                env.world[attempted_location_l0] = EmptyObject()
-                env.world[location] = EmptyObject()
-                new_loc = attempted_location_l1
+                if self.stone_skill < random.random():
+                    reward = 10
+                    self.stone += 1
+                    env.world[attempted_location_l1] = self
+                    env.world[attempted_location_l0] = EmptyObject()
+                    env.world[location] = EmptyObject()
+                    new_loc = attempted_location_l1
 
         if action == 4:
             # note, you should not be able to build on top of another house
             reward = -0.1
-            if self.stone > 0 and self.wood > 0:
+            if self.stone > 0 and self.wood > 0 and self.house_skill < random.random():
                 if isinstance(env.world[location[0], location[1], 0], EmptyObject):
                     reward = 100
                     self.stone -= 1
                     self.wood -= 1
                     env.world[location[0], location[1], 0] = House()
 
-        if action == 5:  # bid wood
-            pass
+        if action == 5:  # sekk wood
+            if self.wood > 1:
+                self.wood -= 1
+                self.coin += 1
 
-        if action == 6:  # bid stone
-            pass
+        if action == 6:  # sell stone
+            if self.stone > 1:
+                self.stone -= 1
+                self.coin += 1
 
-        if action == 7:  # sell wood
-            pass
+        if action == 7:  # buy wood
+            if self.coin > 2:
+                self.coin -= 2
+                self.wood += 1
 
-        if action == 8:  # sell stone
-            pass
+        if action == 8:  # but stone
+            if self.coin > 2:
+                self.coin -= 2
+                self.stone += 1
 
         if action == 9:  # do nothing
             pass
