@@ -21,22 +21,39 @@ class Agent():
         self.action_type = "neural_network"
 
     def generate_alien(self):
-        alien_type = np.random.choice([0,1])
+        alien_type = np.random.choice([0,1,2,3,4,5])
         if alien_type == 0:
-            appearence = [alien_type, np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1])]
+            appearance = [0, np.random.choice([0,1]), 0, np.random.choice([0,1]), 0, np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1]),np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1]) ]
             cooperation = np.random.choice([-1,1], p = (.1, .9))
         if alien_type == 1:
-            appearence = [alien_type, np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1])]
+            appearance = [0, np.random.choice([0,1]), 1, np.random.choice([0,1]), 1 , np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1]),np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1])]
+            cooperation = np.random.choice([-1,1], p = (.3, .7))
+        if alien_type == 2:
+            appearance = [0, np.random.choice([0,1]), 0, np.random.choice([0,1]), 1, np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1]),np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1]) ]
+            cooperation = np.random.choice([-1,1], p = (.6, .4))
+        if alien_type == 3:
+            appearance = [1, 1, np.random.choice([0,1]), np.random.choice([0,1]), 1 , np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1]),np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1])]
             cooperation = np.random.choice([-1,1], p = (.9, .1))
-        return alien_type, appearence, cooperation
+        if alien_type == 4:
+            appearance = [1, 0, np.random.choice([0,1]), np.random.choice([0,1]), 1, np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1]),np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1]) ]
+            cooperation = np.random.choice([-1,1], p = (.7, .3))
+        if alien_type == 5:
+            appearance = [1, 0, np.random.choice([0,1]), np.random.choice([0,1]), 0 , np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1]),np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1])]
+            cooperation = np.random.choice([-1,1], p = (.4, .6))
+        return alien_type, appearance, cooperation
 
 
-    def transition(self, action, cooperation):
-
-        if action == 0:
-            reward = cooperation * -1
-        if action == 1:
-            reward = cooperation
+    def transition(self, action, cooperation, condition = "full"):
+        if condition == "full":
+            if action == 0:
+                reward = cooperation * -1
+            if action == 1:
+                reward = cooperation
+        if condition == "partial":
+            if action == 0:
+                reward = 0
+            if action == 1:
+                reward = cooperation
 
         return reward
 

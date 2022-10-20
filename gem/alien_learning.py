@@ -1,5 +1,5 @@
 from gem.environment.elements.alien_elements import Agent
-from models.simple_dqn import Model_simple_linear_DQN
+from models.fast_slow_dqn import Model_simple_linear_DQN
 import torch
 
 
@@ -16,7 +16,7 @@ def create_models():
         Model_simple_linear_DQN(
             lr=0.0001,
             replay_size=1024,  
-            in_size=4,  
+            in_size=11,  
             hid_size1=10,  
             hid_size2=10,  
             out_size=2,
@@ -37,28 +37,24 @@ models = create_models()
 agent = Agent(0)
 
 done = 0
-approaches = [0,0]
+approaches = [0,0,0,0,0,0]
 losses = 0
 
-alien_type, appearence, cooperation = agent.generate_alien()
-appearence = torch.tensor(appearence).float().to(device)
-for epoch in range(20000):
 
-    state = appearence
+for epoch in range(1000000):
+    alien_type, appearance, cooperation = agent.generate_alien()
+    appearance = torch.tensor(appearance).float().to(device)
 
-    action = models[0].take_action([appearence, .1])
-    reward = agent.transition(action, cooperation)
+    action = models[0].take_action([appearance, .1])
+    reward = agent.transition(action, cooperation, "partial")
 
     approaches[alien_type] = approaches[alien_type] + action
 
-    alien_type, appearence, cooperation = agent.generate_alien()
-    appearence = torch.tensor(appearence).float().to(device)
-
     exp = [1, (
-        state,
+        appearance,
         action,
         reward,
-        appearence,
+        appearance,
         done,
     )]
 
@@ -67,9 +63,9 @@ for epoch in range(20000):
     losses = losses + loss.detach().cpu().numpy()
 
 
-    if epoch % 100 == 0:
+    if epoch % 500 == 0:
         print("epoch:" , epoch, "loss: ",losses/100, "approaches (good, bad): ", approaches)
-        approaches = [0,0]
+        approaches = [0,0,0,0,0,0]
         losses = 0
 
 
