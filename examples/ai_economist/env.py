@@ -9,12 +9,9 @@ from examples.ai_economist.elements import (
 import numpy as np
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
-from models.perception import agent_visualfield
-import random
+from gem.models.perception import agent_visualfield
 
-from utils import (
-    find_moveables,
-)
+
 
 
 class AI_Econ:

@@ -1,12 +1,9 @@
-from gem.environment.elements.element import Element
 import random
 from collections import deque
 import numpy as np
 import torch
-from gem.environment.elements.element import Wall
 
-
-class Wood(Element):
+class Wood():
 
     kind = "wood"  # class variable shared by all instances
 
@@ -26,7 +23,7 @@ class Wood(Element):
         self.action_type = "static"
 
 
-class Stone(Element):
+class Stone():
 
     kind = "stone"  # class variable shared by all instances
 
@@ -46,7 +43,7 @@ class Stone(Element):
         self.action_type = "static"
 
 
-class House(Element):
+class House():
 
     kind = "house"  # class variable shared by all instances
 
@@ -66,7 +63,7 @@ class House(Element):
         self.action_type = "static"
 
 
-class EmptyObject(Element):
+class EmptyObject():
 
     kind = "empty"  # class variable shared by all instances
 

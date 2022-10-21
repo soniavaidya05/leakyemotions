@@ -153,31 +153,8 @@ class TaxiCabEnv:
         taxi_cab_start2 = round(self.world.shape[1] / 2)
         taxi_start = (taxi_cab_start1, taxi_cab_start2, 0)
         self.world[taxi_start] = TaxiCab(0)
+        self.spawn_passenger()
 
-        curriculum = False
-        if curriculum == False:
-            self.spawn_passenger()
-
-        if curriculum == True:
-            counter_balance = np.random.choice([0, 1, 1])
-            if counter_balance == 0:
-                location = np.random.choice([0, 1, 2, 3])
-                if location == 0:
-                    loc1 = taxi_cab_start1 + 1
-                    loc2 = taxi_cab_start2
-                if location == 1:
-                    loc1 = taxi_cab_start1 - 1
-                    loc2 = taxi_cab_start2
-                if location == 2:
-                    loc1 = taxi_cab_start1
-                    loc2 = taxi_cab_start2 + 1
-                if location == 3:
-                    loc1 = taxi_cab_start1
-                    loc2 = taxi_cab_start2 - 1
-                passenger_start = (loc1, loc2, 0)
-                self.world[passenger_start] = Passenger(self.world)
-            if counter_balance == 1:
-                self.spawn_passenger()
 
     def spawn_passenger(self):
         """

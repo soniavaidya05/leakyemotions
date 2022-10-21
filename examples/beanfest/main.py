@@ -11,7 +11,7 @@ goal without colliding with obstacles in the environment.
 
 
 from examples.beanfest.elements import Agent
-from models.fast_slow_dqn import Model_simple_linear_DQN
+from gem.models.fast_slow_dqn import Model_simple_linear_DQN
 import torch
 
 

@@ -7,14 +7,19 @@ from gem.utils import (
     find_agents,
     find_instance,
 )
-from gem.environment.elements.element import EmptyObject, Wall
-from models.cnn_lstm_dqn_PER import Model_CNN_LSTM_DQN
-from gemworld.gemsWolves import WolfsAndGems
+
+from gem.models.cnn_lstm_dqn_PER import Model_CNN_LSTM_DQN
+from examples.gems_and_wolves.env import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
-from DQN_utils import save_models, load_models, make_video
+from gem.DQN_utils import save_models, load_models, make_video
+
+
+from examples.gems_and_wolves.old.element import EmptyObject, Wall
+
+
 
 import random
 import torch

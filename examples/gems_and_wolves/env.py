@@ -1,14 +1,12 @@
-from gem.environment.elements.agent import Agent
-from gem.environment.elements.element import EmptyObject, Wall
-from gem.environment.elements.gem import Gem
-from gem.environment.elements.wolf import Wolf
+from examples.gems_and_wolves.elements import Agent, Wolf, Gem, EmptyObject, Wall
+
 import numpy as np
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
-from models.perception import agent_visualfield
+from gem.models.perception import agent_visualfield
 import random
 
-from utils import find_moveables, find_instance
+from gem.utils import find_moveables, find_instance
 import torch
 
 class WolfsAndGems:
