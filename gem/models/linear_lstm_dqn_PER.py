@@ -7,14 +7,14 @@ import numpy as np
 from torch.nn.functional import normalize
 
 # from models.memory import Memory
-from models.perception import agent_visualfield
+from gem.models.perception import agent_visualfield
 
 
 import random
 import numpy as np
 from collections import deque
 
-from models.priority_replay import Memory, SumTree
+from gem.models.priority_replay import Memory, SumTree
 
 
 class LSTM_DQN(nn.Module):

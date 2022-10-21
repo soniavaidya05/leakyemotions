@@ -1,18 +1,17 @@
 import numpy as np
 from gem.models.perception import agent_visualfield
-import torch
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
 
 
-def one_hot(N, pos, val=1):
-    one_hot_vec = np.zeros(N)
-    one_hot_vec[pos] = val
-    return one_hot_vec
+#def one_hot(N, pos, val=1):
+#    one_hot_vec = np.zeros(N)
+#    one_hot_vec[pos] = val
+#    return one_hot_vec
 
 
 def find_moveables(world):
-    # needs to be rewriien to return location (i, j, k)
+    # see if the last places this is being used this is needed
     moveList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[1]):
@@ -22,33 +21,21 @@ def find_moveables(world):
     return moveList
 
 
-def find_trainables(world):
-    # needs to be rewriien to return location (i, j, k)
-    trainList = []
-    for i in range(world.shape[0]):
-        for j in range(world.shape[1]):
-            for k in range(world.shape[2]):
-                if world[i, j, k].trainable == 1:
-                    trainList.append((i, j, k))
-    return trainList
+#def find_trainables(world):
+#    # needs to be rewriien to return location (i, j, k)
+#    trainList = []
+#    for i in range(world.shape[0]):
+#        for j in range(world.shape[1]):
+#            for k in range(world.shape[2]):
+#                if world[i, j, k].trainable == 1:
+#                    trainList.append((i, j, k))
+#    return trainList
 
 
-# we will want to have a single "find" script that takes as input what you are looking for and finds those objects
-def find_agents_tag(world):
-    # needs to be rewriien to return location (i, j, k)
-    print(
-        "the find_agents_tag function will be deleted soon. Please update to find_instance"
-    )
-    agentList = []
-    for i in range(world.shape[0]):
-        for j in range(world.shape[0]):
-            if world[i, j, 0].kind == "TagAgent":
-                agentList.append((i, j, 0))
-    return agentList
 
 
 def find_agents(world):
-    # needs to be rewriien to return location (i, j, k)
+    # update gems and wolves to use find_instance instead of this and remove this code
     agentList = []
     for i in range(world.shape[0]):
         for j in range(world.shape[1]):
@@ -76,11 +63,7 @@ def update_epsilon(epsilon, rate=0.99):
     #    epsilon -= 1 / (turn)
 
     epsilon = max(0.1, rate * epsilon)
-
     return epsilon
-
-
-# view a replay memory
 
 
 def examine_replay(models, index, modelnum):
@@ -191,13 +174,3 @@ def transfer_world_memories(models, world, expList, extra_reward=True):
         models[world[loc].policy].transfer_memories(world, loc, extra_reward=True)
     return models
 
-
-# def transfer_memories(models, world, expList, extra_reward=True):
-#     # transfer the events from agent memory to model replay
-#     for loc in expList:
-#         exp = world[loc].replay[-1]
-#         models[world[loc].policy].replay.append(exp)
-#         if extra_reward == True and abs(exp[1][2]) > 3:
-#             for _ in range(2):
-#                 models[world[loc].policy].replay.append(exp)
-#     return models

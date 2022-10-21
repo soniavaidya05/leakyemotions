@@ -17,7 +17,7 @@ import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
 
 
-from examples.gems_and_wolves.old.element import EmptyObject, Wall
+from examples.gems_and_wolves.elements import EmptyObject, Wall
 
 
 
