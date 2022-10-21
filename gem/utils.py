@@ -21,19 +21,6 @@ def find_moveables(world):
     return moveList
 
 
-#def find_trainables(world):
-#    # needs to be rewriien to return location (i, j, k)
-#    trainList = []
-#    for i in range(world.shape[0]):
-#        for j in range(world.shape[1]):
-#            for k in range(world.shape[2]):
-#                if world[i, j, k].trainable == 1:
-#                    trainList.append((i, j, k))
-#    return trainList
-
-
-
-
 def find_agents(world):
     # update gems and wolves to use find_instance instead of this and remove this code
     agentList = []
