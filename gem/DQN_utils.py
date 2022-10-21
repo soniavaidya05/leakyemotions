@@ -1,6 +1,6 @@
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
-from game_utils import create_world, create_world_image
+from gem.game_utils import create_world, create_world_image
 import matplotlib.animation as animation
 import random
 import pickle
@@ -88,7 +88,7 @@ def get_TD_error(
 
 
 def save_models(models, save_dir, filename):
-    with open(save_dir + filename, "wb") as fp:
+    with open(save_dir + filename, "wb+") as fp:
         pickle.dump(models, fp)
 
 

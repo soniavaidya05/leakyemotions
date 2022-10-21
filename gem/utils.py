@@ -1,5 +1,5 @@
 import numpy as np
-from models.perception import agent_visualfield
+from gem.models.perception import agent_visualfield
 import torch
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt

@@ -1,10 +1,7 @@
-from gem.environment.elements.element import Element
 import random
 from collections import deque
 import numpy as np
 import torch
-from gem.environment.elements.element import Wall
-from gem.environment.elements.element import EmptyObject
 import random
 
 

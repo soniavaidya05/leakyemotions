@@ -7,11 +7,11 @@ from examples.taxi_cab.elements import (
 import numpy as np
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
-from models.perception import agent_visualfield
+from gem.models.perception import agent_visualfield
 import random
 import torch
 
-from utils import find_moveables, find_instance
+from gem.utils import find_moveables, find_instance
 
 
 class TaxiCabEnv:

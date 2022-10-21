@@ -13,20 +13,20 @@ from examples.taxi_cab.elements import (
     Wall,
     Passenger,
 )
-from models.cnn_lstm_dqn_PER import Model_CNN_LSTM_DQN
-from gemworld.taxiCab import TaxiCabEnv
+from gem.models.cnn_lstm_dqn_PER import Model_CNN_LSTM_DQN
+from env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
-from DQN_utils import save_models, load_models, make_video
+from gem.DQN_utils import save_models, load_models, make_video
 import torch
 
 import random
 
 # save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+save_dir = "/Users/ethan/gem_output/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
