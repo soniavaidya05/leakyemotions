@@ -27,10 +27,14 @@ Gem uses the [poetry](https://python-poetry.org/) package manager to manage its 
 ```
 poetry install
 ```
-in the folder containing the ``pyproject.toml`` file. 
+in the folder containing the ``pyproject.toml`` file.
 
 See the [poetry](https://python-poetry.org/) documentation for more information and
 installation instructions.
+
+## Examples
+
+We've implemented a number of environments and algorithms in Gem. See the [examples](/examples/) folder for more information.
 
 
 ### Workflow Tools
