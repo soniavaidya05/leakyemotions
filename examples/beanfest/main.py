@@ -1,4 +1,16 @@
-from gem.environment.elements.alien_elements import Agent
+"""
+TODO: What is the problem? Type: discrete control or continous.
+      What is the action space, what does the reward function look like, etc...
+
+Example
+
+A continuous control environment where the agent observes data from a lidar sensor and the
+relative goal position, and must control their steering and acceleration so as to reach a given
+goal without colliding with obstacles in the environment.
+"""
+
+
+from examples.beanfest.elements import Agent
 from models.fast_slow_dqn import Model_simple_linear_DQN
 import torch
 
@@ -15,10 +27,10 @@ def create_models():
     models.append(
         Model_simple_linear_DQN(
             lr=0.0001,
-            replay_size=1024,  
-            in_size=11,  
-            hid_size1=10,  
-            hid_size2=10,  
+            replay_size=1024,
+            in_size=11,
+            hid_size1=10,
+            hid_size2=10,
             out_size=2,
             priority_replay=False,
             device=device,

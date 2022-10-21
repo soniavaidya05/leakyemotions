@@ -1,4 +1,4 @@
-from gem.environment.elements.taxiCab_elements import (
+from examples.taxi_cab.elements import (
     TaxiCab,
     EmptyObject,
     Wall,
@@ -95,7 +95,7 @@ class TaxiCabEnv:
         TODO: get rid of the holdObject input throughout the code
         TODO: to get better flexibility, this code should be moved to env
         """
-        
+
         previous_state = self.world[location].episode_memory[-1][1][0]
         current_state = previous_state.clone()
 
@@ -132,7 +132,7 @@ class TaxiCabEnv:
         we may concat these inputs into a model that can use both scalars and CNNs
         For example, we should be able to have this read in whether a passenger is in the taxi
         """
-        
+
         previous_state = self.world[location].episode_memory[-1][1][0]
         current_state = previous_state.clone()
 

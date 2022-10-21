@@ -1,4 +1,4 @@
-from gem.environment.elements.AI_econ_elements import (
+from examples.ai_economist.elements import (
     Agent,
     Wood,
     Stone,
