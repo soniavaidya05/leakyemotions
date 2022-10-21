@@ -1,9 +1,13 @@
 from examples.ai_economist_simple.elements import Agent
 from examples.ai_economist_simple.env import AIEcon_simple_game
 from examples.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
-from gem.models.linear_lstm_dqn_PER import Model_linear_LSTM_DQN
+from examples.ai_economist_simple.Model_LSTM import Model_linear_LSTM_DQN
 import numpy as np
 import torch
+
+
+# note, the standard LSTM linear model was not working, so it was updated in this example folder
+# that should be fixed
 
 
 save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
