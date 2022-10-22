@@ -26,8 +26,8 @@ import torch
 import random
 
 # save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-# save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -107,9 +107,9 @@ def fix_next_state(state, next_state):
 
 world_size = 30
 
-trainable_models = [0]
+trainable_models = [0,1,2]
 sync_freq = 500
-modelUpdate_freq = 25
+modelUpdate_freq = 5
 epsilon = 0.99
 
 turn = 1
@@ -268,14 +268,14 @@ def run_game(
                 Train the neural networks within a eposide at rate of modelUpdate_freq
                 """
                 for mods in trainable_models:
-                    loss = models[mods].training(256, 0.9)
+                    loss = models[mods].training(64, 0.9)
                     losses = losses + loss.detach().cpu().numpy()
 
         for mods in trainable_models:
             """
             Train the neural networks at the end of eac epoch
             """
-            loss = models[mods].training(256, 0.9)
+            loss = models[mods].training(128, 0.9)
             losses = losses + loss.detach().cpu().numpy()
 
         updateEps = False
