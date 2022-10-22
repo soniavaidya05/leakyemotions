@@ -53,8 +53,8 @@ def create_models():
             replay_size=4096,
             in_size=1300,
             hid_size1=150,
-            hid_size2=30,
-            out_size=5,
+            hid_size2=75,
+            out_size=9,
             priority_replay=False,
             device=device,
         )
@@ -68,8 +68,8 @@ def create_models():
             replay_size=4096,
             in_size=1300,
             hid_size1=150,
-            hid_size2=30,
-            out_size=5,
+            hid_size2=75,
+            out_size=9,
             priority_replay=False,
             device=device,
         )
@@ -83,8 +83,8 @@ def create_models():
             replay_size=4096,
             in_size=1300,
             hid_size1=150,
-            hid_size2=30,
-            out_size=5,
+            hid_size2=75,
+            out_size=9,
             priority_replay=False,
             device=device,
         )
@@ -165,6 +165,7 @@ def run_game(
             env.world[loc].wood = 0
             env.world[loc].stone = 0
             env.world[loc].labour = 100
+            env.world[loc].coin = 4
 
         while done == 0:
             """
@@ -299,16 +300,21 @@ def run_game(
 models = create_models()
 
 run_params = (
-    [0.9, 10, 15],
-    [0.9, 1000, 15],
-    [0.8, 5000, 15],
-    [0.7, 5000, 15],
-    [0.2, 5000, 15],
-    [0.8, 10000, 25],
-    [0.7, 10000, 25],
-    [0.2, 10000, 25],
-    [0.2, 20000, 50],
-    [0.2, 20000, 100],
+    [0.9, 10, 30],
+    [0.9, 10000, 30],
+    [0.8, 10000, 30],
+    [0.7, 10000, 30],
+    [0.2, 10000, 30],
+    [0.8, 10000, 50],
+    [0.7, 10000, 50],
+    [0.2, 10000, 50],
+    [0.2, 10000, 50],
+    [0.8, 15000, 75],
+    [0.7, 15000, 75],
+    [0.2, 15000, 75],
+    [0.8, 20000, 75],
+    [0.7, 20000, 75],
+    [0.2, 20000, 75],
 )
 
 

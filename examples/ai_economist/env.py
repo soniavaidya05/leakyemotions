@@ -120,9 +120,9 @@ class AI_Econ:
                     self.world[i, j, 0] = Stone()
 
         loc = (3, 7, 1)
-        apperence1 = (0, 0, 255.0)
-        apperence2 = (0, 0, 255.0)
-        apperence3 = (0, 0, 255.0)
+        apperence1 = (0., 0., 255.0)
+        apperence2 = (50., 0., 255.0)
+        apperence3 = (0., 50., 255.0)
         self.world[loc] = Agent(
             model=0,
             stone_skill=0.9,
@@ -278,7 +278,7 @@ class AI_Econ:
                 self.world,
                 loc,
                 holdObject,
-                inventory=[holdObject.stone, holdObject.wood, holdObject.labour],
+                inventory=[holdObject.stone, holdObject.wood, holdObject.coin],
                 layers=[0, 1],
             )
             action = models[holdObject.policy].take_action([state.to(device), epsilon])

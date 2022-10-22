@@ -114,6 +114,7 @@ class Agent:
         self.wood_skill = wood_skill
         self.stone_skill = stone_skill
         self.house_skill = house_skill
+        self.coin = 0
 
     def init_replay(self, numberMemories):
         """
@@ -184,7 +185,7 @@ class Agent:
                 if self.wood_skill < random.random():
                     # once this works, we need to set the reward to be 0 for collecting
                     # labour costs need to be implimented
-                    reward = 10
+                    reward = 1
                     self.wood += 1
                     env.world[attempted_location_l1] = self
                     env.world[attempted_location_l0] = EmptyObject()
@@ -193,7 +194,7 @@ class Agent:
 
             if isinstance(env.world[attempted_location_l0], Stone):
                 if self.stone_skill < random.random():
-                    reward = 10
+                    reward = 1
                     self.stone += 1
                     env.world[attempted_location_l1] = self
                     env.world[attempted_location_l0] = EmptyObject()
@@ -205,30 +206,34 @@ class Agent:
             reward = -0.1
             if self.stone > 0 and self.wood > 0 and self.house_skill < random.random():
                 if isinstance(env.world[location[0], location[1], 0], EmptyObject):
-                    reward = 100
+                    reward = 20
                     self.stone -= 1
                     self.wood -= 1
                     env.world[location[0], location[1], 0] = House()
 
-        if action == 5:  # sekk wood
+        if action == 5:  # sell wood
             if self.wood > 1:
                 self.wood -= 1
                 self.coin += 1
+                reward = 5
 
         if action == 6:  # sell stone
             if self.stone > 1:
                 self.stone -= 1
                 self.coin += 1
+                reward = 5
 
         if action == 7:  # buy wood
             if self.coin > 2:
                 self.coin -= 2
                 self.wood += 1
+                reward = -1
 
-        if action == 8:  # but stone
+        if action == 8:  # buy stone
             if self.coin > 2:
                 self.coin -= 2
                 self.stone += 1
+                reward = -1
 
         if action == 9:  # do nothing
             pass
@@ -237,7 +242,7 @@ class Agent:
             env.world,
             new_loc,
             self,
-            inventory=[self.stone, self.wood, self.labour],
+            inventory=[self.stone, self.wood, self.coin],
             layers=[0, 1],
         )
         self.reward += reward
