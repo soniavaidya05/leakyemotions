@@ -165,7 +165,7 @@ for epoch in range(epochs):
 
     loc = find_instance(env.world, "neural_network")[0]
 
-    models[0].transfer_memories_AC(env.world, loc)
+    models[0].transfer_memories(env.world, loc)
     loss = models[0].training()
 
     if epoch % 500 == 0:

@@ -227,16 +227,7 @@ class Model_CNN_LSTM_AC:
         """
         pass
 
-    def transfer_memories(self, world, loc, extra_reward=True, seqLength=5):
-        """
-        Transfer the indiviu=dual memories to the model
-        TODO: A second function is written below because the inputs for
-              Actor-Critic and DQN are different. Need to figure out how to
-              code that one generic set of functions will work
-        """
-        pass
-
-    def transfer_memories_AC(self, world, loc):
+    def transfer_memories(self, world, loc):
         """
         Transfer the indiviu=dual memories to the model
         TODO: A second function is written below because the inputs for
