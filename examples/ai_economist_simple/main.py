@@ -10,7 +10,7 @@ import torch
 # that should be fixed
 
 
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+save_dir = "C:/Users/wilcu/gemout/"
 
 device = "cpu"
 print(device)
