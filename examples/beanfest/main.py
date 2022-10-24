@@ -16,6 +16,7 @@ import torch
 
 
 save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
