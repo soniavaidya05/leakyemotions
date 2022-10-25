@@ -171,7 +171,7 @@ in_channels = 4
 numFilters = 5
 action_dim = 4 #env.action_space.shape[0]
 state_dim  = 650 #env.observation_space.shape[0]
-hidden_dim = 256
+hidden_dim = 150
 
 #value function
 value_net = ValueNetwork(in_channels, numFilters, state_dim,hidden_dim)
@@ -202,7 +202,8 @@ soft_q_optimizer2 = optim.Adam(soft_q_net2.parameters(),lr=lr)
 policy_opimizer = optim.Adam(policy_net.parameters(),lr=lr)
 
 #buffer
-replay_buffer_size = 10e6
+#replay_buffer_size = 10e6
+replay_buffer_size = 4096
 replay_buffer = ReplayBuffer(replay_buffer_size)
 
 
