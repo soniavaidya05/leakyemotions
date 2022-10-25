@@ -63,7 +63,7 @@ class ValueNetwork(nn.Module):
         self.cnn = CNN_CLD(in_channels, numFilters)
         self.linear1 = nn.Linear(state_dim,hidden_dim)
         self.linear2 = nn.Linear(hidden_dim,hidden_dim)
-        self.linear3 = nn.Linear(hidden_dim,1)
+        self.linear3 = nn.Linear(hidden_dim,4)  #this probably should be 1
 
         self.linear3.weight.data.uniform_(-init_w,init_w)
         self.linear3.bias.data.uniform_(-init_w,init_w)
@@ -82,7 +82,7 @@ class SoftQNetwork(nn.Module):
         self.cnn = CNN_CLD(in_channels, numFilters)
         self.linear1 = nn.Linear(state_dim+action_dim,hidden_size)
         self.linear2 = nn.Linear(hidden_size,hidden_size)
-        self.linear3 = nn.Linear(hidden_size,1)
+        self.linear3 = nn.Linear(hidden_size,action_dim) # is this action or is this 1?
 
         self.linear3.weight.data.uniform_(-init_w,init_w)
         self.linear3.bias.data.uniform_(-init_w,init_w)
@@ -225,6 +225,8 @@ def update(batch_size,gamma=0.99,soft_tau=1e-2):
     reward = torch.unsqueeze(reward,dim=1)
     done = torch.FloatTensor(np.float32(done)).unsqueeze(1)
 
+    #print("action: ", action.shape)
+
     predicted_q_value1 = soft_q_net1(state, action)
     predicted_q_value2 = soft_q_net2(state, action)
 
@@ -232,13 +234,30 @@ def update(batch_size,gamma=0.99,soft_tau=1e-2):
 
     new_action, log_prob ,_,_,_ = policy_net.evaluate(state)
 
+    #print("new_action: ", new_action.shape)
+
+
 	#----Training Q Function----
     target_value = target_value_net(next_state)
+    #print("next_state", next_state.shape)
+    #print("target_value", target_value.shape)
     target_q_value = reward+(1-done)*gamma*target_value 
+    #print("reward", reward.shape)
+    #print("done", done.shape)
+    #print("target_q_value", target_q_value.shape)
+
+
+    #print("target_value: ", target_value.shape)
+    #print("target_q_value: ", target_q_value.shape)
+
 
 	# loss = (Q(s_t,a_t) - (r + gamma*V(s_t+1)) )**2
     q_value_loss1 = soft_q_criterion1(predicted_q_value1,target_q_value.detach())
     q_value_loss2 = soft_q_criterion2(predicted_q_value2,target_q_value.detach())
+
+    #print("predicted_q_value1: ", predicted_q_value2.shape)
+    #print("predicted_q_value2: ", predicted_q_value1.shape)
+    #print("target_q_value: ", target_q_value.shape)
 	
 
     soft_q_optimizer1.zero_grad()
@@ -254,8 +273,13 @@ def update(batch_size,gamma=0.99,soft_tau=1e-2):
     predicted_new_q_value = torch.min(soft_q_net1(state,new_action),soft_q_net2(state,new_action))
     target_value_func = predicted_new_q_value - log_prob
 
+
 	#loss = (V(s_t) - ( Q(s_t,a_t) + H(pi(:,s_t)) ))**2  --H(pi(:,s_t)) = -log(pi(:,s_t))--
     value_loss = value_criterion(predicted_value,target_value_func.detach())
+
+    #print("predicted_value: ", predicted_value.shape)
+    #print("target_value_func: ", target_value_func.shape)
+
 
     value_optimizer.zero_grad()
     value_loss.backward()
@@ -265,6 +289,10 @@ def update(batch_size,gamma=0.99,soft_tau=1e-2):
 	#----Training Policy Function----
 	#maximise (Q(s_t,a_t) + H(pi(:,s_t)) )--> (Q(s_t,a_t) - log(pi(:,s_t)) 
 	#minimise (log(pi:,s_t) - Q(s_t,a_t))
+
+
+
+
     policy_loss = (log_prob - predicted_new_q_value).mean()
 
     policy_opimizer.zero_grad()
