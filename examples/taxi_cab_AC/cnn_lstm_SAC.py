@@ -38,86 +38,128 @@ class ReplayBuffer(object):
 		return len(self.buffer)
 
 
+
+class CNN_CLD(nn.Module):
+    def __init__(self, in_channels, numFilters):
+        super(CNN_CLD, self).__init__()
+        self.conv_layer1 = nn.Conv2d(
+            in_channels=in_channels, out_channels=numFilters, kernel_size=1
+        )
+        self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
+
+    def forward(self, x):
+        x = x / 255  # note, a better normalization should be applied
+        y1 = F.relu(self.conv_layer1(x))
+        y2 = self.avg_pool(y1)  # ave pool is intentional (like a count)
+        y2 = torch.flatten(y2, 1)
+        y1 = torch.flatten(y1, 1)
+        y = torch.cat((y1, y2), 1)
+        return y
+
+
 class ValueNetwork(nn.Module):
-	def __init__(self,state_dim,hidden_dim,init_w=3e-3):
-		super(ValueNetwork,self).__init__()
-		self.linear1 = nn.Linear(state_dim,hidden_dim)
-		self.linear2 = nn.Linear(hidden_dim,hidden_dim)
-		self.linear3 = nn.Linear(hidden_dim,1)
+    def __init__(self,in_channels, numFilters, state_dim,hidden_dim,init_w=3e-3):
+        super(ValueNetwork,self).__init__()
+        self.cnn = CNN_CLD(in_channels, numFilters)
+        self.linear1 = nn.Linear(state_dim,hidden_dim)
+        self.linear2 = nn.Linear(hidden_dim,hidden_dim)
+        self.linear3 = nn.Linear(hidden_dim,1)
 
-		self.linear3.weight.data.uniform_(-init_w,init_w)
-		self.linear3.bias.data.uniform_(-init_w,init_w)
+        self.linear3.weight.data.uniform_(-init_w,init_w)
+        self.linear3.bias.data.uniform_(-init_w,init_w)
 
-	def forward(self,state):
-		x = F.relu(self.linear1(state))
-		x = F.relu(self.linear2(x))
-		x = self.linear3(x)
-		return x
+    def forward(self,state):
+        #x = self.cnn(state).flatten()
+        x = self.cnn(state)
+        x = F.relu(self.linear1(x))
+        x = F.relu(self.linear2(x))
+        x = self.linear3(x)
+        return x
 
 class SoftQNetwork(nn.Module):
-	def __init__(self,state_dim,action_dim,hidden_size,init_w=3e-3):
-		super(SoftQNetwork,self).__init__()
-		self.linear1 = nn.Linear(state_dim+action_dim,hidden_size)
-		self.linear2 = nn.Linear(hidden_size,hidden_size)
-		self.linear3 = nn.Linear(hidden_size,1)
+    def __init__(self,in_channels, numFilters, state_dim,action_dim,hidden_size,init_w=3e-3):
+        super(SoftQNetwork,self).__init__()
+        self.cnn = CNN_CLD(in_channels, numFilters)
+        self.linear1 = nn.Linear(state_dim+action_dim,hidden_size)
+        self.linear2 = nn.Linear(hidden_size,hidden_size)
+        self.linear3 = nn.Linear(hidden_size,1)
 
-		self.linear3.weight.data.uniform_(-init_w,init_w)
-		self.linear3.bias.data.uniform_(-init_w,init_w)
+        self.linear3.weight.data.uniform_(-init_w,init_w)
+        self.linear3.bias.data.uniform_(-init_w,init_w)
 
-	def forward(self,state,action):
-		x = torch.cat((state,action),dim=1)
-		x = F.relu(self.linear1(x))
-		x = F.relu(self.linear2(x))
-		x = self.linear3(x)
-		return x
+    def forward(self,state,action):
+        state_flatten = self.cnn(state)
+        x = torch.cat((state_flatten,action),dim=1)
+        x = F.relu(self.linear1(x))
+        x = F.relu(self.linear2(x))
+        x = self.linear3(x)
+        return x
 
 class PolicyNetwork(nn.Module):
-	def __init__(self,state_dim,action_dim,hidden_dim,init_w=3e-3,log_std_min=-20,log_std_max=2):
-		super(PolicyNetwork,self).__init__()
-		self.log_std_min = log_std_min
-		self.log_std_max = log_std_max
-		self.linear1 = nn.Linear(state_dim,hidden_dim)
-		self.linear2 = nn.Linear(hidden_dim,hidden_dim)
+	#def __init__(self,state_dim,action_dim,hidden_dim,init_w=3e-3,log_std_min=-20,log_std_max=2):
+    def __init__(self,in_channels, numFilters, state_dim,action_dim,hidden_dim,init_w=3e-3,log_std_min=-20,log_std_max=2):
+        super(PolicyNetwork,self).__init__()
+        self.cnn = CNN_CLD(in_channels, numFilters)
+        self.log_std_min = log_std_min
+        self.log_std_max = log_std_max
+        self.linear1 = nn.Linear(state_dim,hidden_dim)
+        self.linear2 = nn.Linear(hidden_dim,hidden_dim)
 
-		self.mean_linear = nn.Linear(hidden_dim,action_dim)
-		self.mean_linear.weight.data.uniform_(-init_w,init_w)
-		self.mean_linear.bias.data.uniform_(-init_w,init_w)
+        self.mean_linear = nn.Linear(hidden_dim,action_dim)
+        self.mean_linear.weight.data.uniform_(-init_w,init_w)
+        self.mean_linear.bias.data.uniform_(-init_w,init_w)
 
-		self.log_std_linear = nn.Linear(hidden_dim,action_dim)
-		self.log_std_linear.weight.data.uniform_(-init_w,init_w)
-		self.log_std_linear.bias.data.uniform_(-init_w,init_w)
+        self.log_std_linear = nn.Linear(hidden_dim,action_dim)
+        self.log_std_linear.weight.data.uniform_(-init_w,init_w)
+        self.log_std_linear.bias.data.uniform_(-init_w,init_w)
+        self.sm = nn.Softmax(dim=0)
 
-	def forward(self,state):
-		x = F.relu(self.linear1(state))
-		x = F.relu(self.linear2(x))
-		mean = self.mean_linear(x)
-		log_std = self.log_std_linear(x)
-		log_std = torch.clamp(log_std,self.log_std_min,self.log_std_max)
+    def forward(self,state):
+        x = self.cnn(state)
+        x = F.relu(self.linear1(x))
+        x = F.relu(self.linear2(x))
+        mean = self.mean_linear(x)
+        log_std = self.log_std_linear(x)
+        log_std = torch.clamp(log_std,self.log_std_min,self.log_std_max)
 
-		return mean,log_std
+        return mean,log_std
 
-	def evaluate(self,state,epsilon=1e-6):
+    def evaluate(self,state,epsilon=1e-6):
 
-		mean,log_std = self.forward(state)
-		std = log_std.exp() #exponentiating to get +ve std
-		normal = Normal(0,1)
-		z = normal.sample()
-		action = torch.tanh(mean+std*z)
-		#https://pytorch.org/docs/stable/distributions.html
-		#log_prob to create a differentiable loss function
-		#Normal(mean,sd)l.og_prob(a) finds the normal dist around the passed value 'a'
-		log_prob = Normal(mean,std).log_prob(mean+std*z) - torch.log(1-action.pow(2)+epsilon)
-		return action, log_prob, z, mean, log_std
+        mean,log_std = self.forward(state)
+        std = log_std.exp() #exponentiating to get +ve std
+        normal = Normal(0,1)
+        z = normal.sample()
+        action = torch.tanh(mean+std*z)
+        #https://pytorch.org/docs/stable/distributions.html
+        #log_prob to create a differentiable loss function
+        #Normal(mean,sd)l.og_prob(a) finds the normal dist around the passed value 'a'
+        log_prob = Normal(mean,std).log_prob(mean+std*z) - torch.log(1-action.pow(2)+epsilon)
+        return action, log_prob, z, mean, log_std
 
-	def get_action(self,state):
-		state = torch.FloatTensor(state).unsqueeze(0)
-		mean, log_std = self.forward(state)
-		std = log_std.exp()
+    def get_action(self,state):
+        state = torch.FloatTensor(state).unsqueeze(0)
+        mean, log_std = self.forward(state)
+        std = log_std.exp()
 
-		normal = Normal(mean,std)
-		z = normal.sample()
-		action = torch.tanh(z)
-		return action[0]
+        normal = Normal(mean,std)
+        z = normal.sample()
+        action_dist = torch.distributions.Categorical(logits=z)
+        action = action_dist.sample()  # E
+
+
+
+        #p = self.sm(z).cpu().numpy()
+        #print(p)
+        #action = np.random.choice(np.arange(len(p)), p=p)
+        #print(action)
+        return action
+        #action = torch.tanh(z)
+        #return action[0]
+
+
+
+
 
 
 
@@ -125,22 +167,23 @@ class PolicyNetwork(nn.Module):
 
 # other stuff
 
-
+in_channels = 4
+numFilters = 5
 action_dim = 4 #env.action_space.shape[0]
-state_dim  = 10 #env.observation_space.shape[0]
+state_dim  = 650 #env.observation_space.shape[0]
 hidden_dim = 256
 
 #value function
-value_net = ValueNetwork(state_dim,hidden_dim)
-target_value_net = ValueNetwork(state_dim,hidden_dim)
+value_net = ValueNetwork(in_channels, numFilters, state_dim,hidden_dim)
+target_value_net = ValueNetwork(in_channels, numFilters, state_dim,hidden_dim)
 
 # using two q func to minimise overestimation 
 # and choose the minimum of the two nets
-soft_q_net1 = SoftQNetwork(state_dim,action_dim,hidden_dim)
-soft_q_net2 = SoftQNetwork(state_dim,action_dim,hidden_dim)
+soft_q_net1 = SoftQNetwork(in_channels, numFilters, state_dim,action_dim,hidden_dim)
+soft_q_net2 = SoftQNetwork(in_channels, numFilters, state_dim,action_dim,hidden_dim)
 
 #policy function
-policy_net = PolicyNetwork(state_dim,action_dim,hidden_dim)
+policy_net = PolicyNetwork(in_channels, numFilters, state_dim,action_dim,hidden_dim)
 
 for target_param, param in zip(target_value_net.parameters(),value_net.parameters()):
 	target_param.data.copy_(param.data)
@@ -174,64 +217,65 @@ replay_buffer = ReplayBuffer(replay_buffer_size)
 #simulation on aggregated observations
 def update(batch_size,gamma=0.99,soft_tau=1e-2):
 
-	state, action, reward, next_state, done = replay_buffer.sample(batch_size)
-	state = torch.FloatTensor(state)
-	next_state = torch.FloatTensor(next_state)
-	action = torch.FloatTensor(action)
-	reward = torch.FloatTensor(reward)
-	reward = torch.unsqueeze(reward,dim=1)
-	done = torch.FloatTensor(np.float32(done)).unsqueeze(1)
+    state, action, reward, next_state, done = replay_buffer.sample(batch_size)
+    state = torch.FloatTensor(state)
+    next_state = torch.FloatTensor(next_state)
+    action = torch.FloatTensor(action)
+    reward = torch.FloatTensor(reward)
+    reward = torch.unsqueeze(reward,dim=1)
+    done = torch.FloatTensor(np.float32(done)).unsqueeze(1)
 
-	predicted_q_value1 = soft_q_net1(state, action)
-	predicted_q_value2 = soft_q_net2(state, action)
+    predicted_q_value1 = soft_q_net1(state, action)
+    predicted_q_value2 = soft_q_net2(state, action)
 
-	predicted_value = value_net(state)
+    predicted_value = value_net(state)
 
-	new_action, log_prob ,_,_,_ = policy_net.evaluate(state)
+    new_action, log_prob ,_,_,_ = policy_net.evaluate(state)
 
 	#----Training Q Function----
-	target_value = target_value_net(next_state)
-	target_q_value = reward+(1-done)*gamma*target_value 
+    target_value = target_value_net(next_state)
+    target_q_value = reward+(1-done)*gamma*target_value 
 
 	# loss = (Q(s_t,a_t) - (r + gamma*V(s_t+1)) )**2
-	q_value_loss1 = soft_q_criterion1(predicted_q_value1,target_q_value.detach())
-	q_value_loss2 = soft_q_criterion2(predicted_q_value2,target_q_value.detach())
+    q_value_loss1 = soft_q_criterion1(predicted_q_value1,target_q_value.detach())
+    q_value_loss2 = soft_q_criterion2(predicted_q_value2,target_q_value.detach())
 	
 
-	soft_q_optimizer1.zero_grad()
-	q_value_loss1.backward()
-	soft_q_optimizer1.step()
+    soft_q_optimizer1.zero_grad()
+    q_value_loss1.backward()
+    soft_q_optimizer1.step()
 
-	soft_q_optimizer2.zero_grad()
-	q_value_loss2.backward()
-	soft_q_optimizer2.step()
+    soft_q_optimizer2.zero_grad()
+    q_value_loss2.backward()
+    soft_q_optimizer2.step()
 
 
 	#----Training Value Function----
-	predicted_new_q_value = torch.min(soft_q_net1(state,new_action),soft_q_net2(state,new_action))
-	target_value_func = predicted_new_q_value - log_prob
+    predicted_new_q_value = torch.min(soft_q_net1(state,new_action),soft_q_net2(state,new_action))
+    target_value_func = predicted_new_q_value - log_prob
 
 	#loss = (V(s_t) - ( Q(s_t,a_t) + H(pi(:,s_t)) ))**2  --H(pi(:,s_t)) = -log(pi(:,s_t))--
-	value_loss = value_criterion(predicted_value,target_value_func.detach())
+    value_loss = value_criterion(predicted_value,target_value_func.detach())
 
-	value_optimizer.zero_grad()
-	value_loss.backward()
-	value_optimizer.step()
+    value_optimizer.zero_grad()
+    value_loss.backward()
+    value_optimizer.step()
 
 
 	#----Training Policy Function----
 	#maximise (Q(s_t,a_t) + H(pi(:,s_t)) )--> (Q(s_t,a_t) - log(pi(:,s_t)) 
 	#minimise (log(pi:,s_t) - Q(s_t,a_t))
-	policy_loss = (log_prob - predicted_new_q_value).mean()
+    policy_loss = (log_prob - predicted_new_q_value).mean()
 
-	policy_opimizer.zero_grad()
-	policy_loss.backward()
-	policy_opimizer.step()
+    policy_opimizer.zero_grad()
+    policy_loss.backward()
+    policy_opimizer.step()
 
 	#Update target network parameters
-	for target_param, param in zip(target_value_net.parameters(),value_net.parameters()):
-		target_param.data.copy_(soft_tau*param + (1-soft_tau)*target_param)
+    for target_param, param in zip(target_value_net.parameters(),value_net.parameters()):
+        target_param.data.copy_(soft_tau*param + (1-soft_tau)*target_param)
 
+    return policy_loss.detach().numpy()
 
 ### FROM THE EXAMPLE
 
@@ -346,61 +390,72 @@ def create_models():
     return models
 
 models = create_models()
+test_cnn = CNN_CLD(4,5)
 
-for turn in range(1000):
-    agentList = find_instance(env.world, "neural_network")
-    random.shuffle(agentList)
+for epoch in range(100000):
+    done = 0
+    turn = 0
+    while done == 0:
+        turn = turn + 1
+        agentList = find_instance(env.world, "neural_network")
+        random.shuffle(agentList)
 
-    for loc in find_instance(env.world, "neural_network"):
-        # reset the memories for all agents
-        # the parameter sets the length of the sequence for LSTM
-        env.world[loc].init_replay(3)
+        for loc in find_instance(env.world, "neural_network"):
+            # reset the memories for all agents
+            # the parameter sets the length of the sequence for LSTM
+            env.world[loc].init_replay(3)
 
-    loc = agentList[0]
+        loc = agentList[0]
 
-    env.world[loc].reward = 0
-
-
-
-
-    if env.world[loc].action_type == "neural_network":
-
-        holdObject = env.world[loc]
-        device = "cpu"
-        #state = env.pov(loc, inventory=[holdObject.has_passenger], layers=[0])
-        state = torch.rand(10).float()
-        next_state = torch.rand(10).float()
-        reward = torch.rand(1).float()
-        action_ch = np.random.choice([0,1,2,3])
-        action = [0,0,0,0]
-        action[action_ch] = 1
-        action = torch.tensor(action).float()
-        #action = torch.tensor(np.random.choice([0,1,2,3])).float()
-        done = torch.tensor(np.random.choice([0,0,0,1])).float()
-
-
-        #action, logprob, value = models[holdObject.policy].take_action([state.to(device), epsilon])
-        #"""
-        #Updates the world given an action
-        #"""
-        #(
-        #    env.world,
-        #    reward,
-        #    next_state,
-        #    done,
-        #    new_loc,
-        #) = holdObject.transition(env, models, action, loc)
-    #else:
-        #pass
+        env.world[loc].reward = 0
 
 
 
 
-    replay_buffer.push(state,action,reward,next_state,done)
+        if env.world[loc].action_type == "neural_network":
 
-    if len(replay_buffer) > batch_size:
-	    #run simulation
-        update(batch_size)
+            holdObject = env.world[loc]
+            device = "cpu"
+
+            state = env.pov(loc, inventory=[holdObject.has_passenger], layers=[0])
+            # get rid of LSTM for now
+            state = state.squeeze()[-1,:,:,:]
+            action = policy_net.get_action(state)
+            (
+                env.world,
+                reward,
+                next_state,
+                done,
+                new_loc,
+            ) = holdObject.transition(env, models, action, loc)
+
+            game_points[0] = game_points[0] + reward
+            if reward > 10:
+                game_points[1] = game_points[1] + 1
+
+
+            # get rid of LSTM for now
+            next_state = next_state.squeeze()[-1,:,:,:]
+            action_state = [0,0,0,0]
+            action_state[action] = 1
+            action = torch.tensor(action_state)
+
+        replay_buffer.push(state,action,reward,next_state,done)
+
+        if turn == 30:
+            done = 1
+
+        if len(replay_buffer) > batch_size:
+
+            #run simulation
+            loss = update(batch_size)
+            losses = losses + loss
+
+    if epoch % 100 == 0:
+        print("epoch: ", epoch, "losses: ", losses, game_points)
+        game_points = [0,0]
+        losses = 0
+
 
 
 
