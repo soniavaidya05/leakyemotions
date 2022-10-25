@@ -479,7 +479,7 @@ for epoch in range(100000):
             loss = update(batch_size)
             losses = losses + loss
 
-    if epoch % 100 == 0:
+    if epoch % 10 == 0:
         print("epoch: ", epoch, "losses: ", losses, game_points)
         game_points = [0,0]
         losses = 0
