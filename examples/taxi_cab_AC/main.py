@@ -13,7 +13,7 @@ from examples.taxi_cab.elements import (
     Wall,
     Passenger,
 )
-from examples.taxi_cab_AC.cnn_lstm_AC import Model_CNN_LSTM_AC
+from examples.taxi_cab_AC.cnn_lstm_SAC import Model_CNN_LSTM_AC
 from  examples.taxi_cab_AC.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
