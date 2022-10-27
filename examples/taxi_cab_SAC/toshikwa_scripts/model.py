@@ -174,23 +174,15 @@ class CategoricalPolicy(BaseNetwork):
 
     def act(self, states):
         if not self.shared:
-            print(states.shape)
             batch_size, timesteps, C, H, W = states.size()
-            print(batch_size, timesteps, C, H, W)
             c_in = states.view(batch_size * timesteps, C, H, W)
-            print(c_in.shape)
             c_out = self.conv(c_in)
-            print(c_out.shape)
             r_in = c_out.view(batch_size, timesteps, -1)
-            print(r_in.shape)
 
 
         v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
-        print(v_r_out.shape)
         v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
-        print(v.shape)
         v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
-        print(v.shape)
         action_logits = self.al3(v)
 
 

@@ -152,7 +152,7 @@ m = nn.Softmax()
 model = SAC(
         in_channels = 4,
         num_filters = 5,
-        lr = .001,
+        lr = .0001,
         replay_size = 4096,
         in_size = 650,
         hid_size1 = 100,
@@ -163,7 +163,7 @@ model = SAC(
         state_shape = (3,4,9,9),
         gamma = .9,
         use_per=True,
-        num_steps = 1000000, # the next four are made up
+        num_steps = epochs, # the next four are made up
         start_steps = 20000,
         update_interval = 10,
         multi_step = 1,
@@ -174,6 +174,45 @@ max_turns = 100
 
 rewards = [0,0]
 actions_taken = [0,0,0,0]
+
+
+def evaluate():
+    eval_rewards = [0,0]
+    eval_actions_taken = [0,0,0,0]
+    env.reset_env(height=world_size, width=world_size, layers=1)
+    turn = 0
+    done = False
+    while done == False:
+        turn = turn + 1
+        for loc in find_instance(env.world, "neural_network"):
+            # reset the memories for all agents
+            # the parameter sets the length of the sequence for LSTM
+            env.world[loc].init_replay(3)
+            env.world[loc].reward = 0
+
+        turn = turn + 1
+        agentList = find_instance(env.world, "neural_network")
+        random.shuffle(agentList)
+
+        holdObject = env.world[agentList[0]]
+
+        state = env.pov(loc, inventory=[holdObject.has_passenger], layers=[0])
+
+        action = exploit(state)
+
+        eval_actions_taken[action] = eval_actions_taken[action] + 1
+        if turn == max_turns:
+            done = True
+
+        env.world,reward,next_state,done,new_loc = holdObject.transition(env, models, action, loc, done)
+        eval_rewards[0] = eval_rewards[0] + reward
+        if reward > .9:
+            eval_rewards[1] = eval_rewards[1] + 1
+    return eval_rewards, eval_actions_taken
+
+
+
+
 
 for epoch in range(epochs):
 
@@ -197,14 +236,8 @@ for epoch in range(epochs):
         holdObject = env.world[agentList[0]]
 
         state = env.pov(loc, inventory=[holdObject.has_passenger], layers=[0])
-        #state = state.squeeze()[-1, :, :, :]
-        #state = state.unsqueeze(0)
-        action = explore(state)
 
-        #if epoch < 20000:
-        #    action = explore(state)
-        #else:
-        #    action = exploit(state)
+        action = explore(state)
 
 
         actions_taken[action] = actions_taken[action] + 1
@@ -212,8 +245,7 @@ for epoch in range(epochs):
             done = True
 
         env.world,reward,next_state,done,new_loc = holdObject.transition(env, models, action, loc, done)
-        #next_state = next_state.squeeze()[-1, :, :, :]
-        #next_state = next_state[:, -1, :, :]
+
 
 
         model.memory.append(state, action, reward, next_state, done)  # real version has "clipped_reward" rather than reward
@@ -228,9 +260,12 @@ for epoch in range(epochs):
             model.update_target()
 
     if epoch % 50 == 0 and epoch != 0:
-        print(epoch, rewards, actions_taken)
+        eval_rew, eval_action = evaluate()
+        print(epoch, rewards, actions_taken, eval_rew, eval_action)
         rewards = [0,0]
         actions_taken = [0,0,0,0]
+
+
 
 
 
