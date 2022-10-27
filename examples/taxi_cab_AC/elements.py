@@ -130,22 +130,22 @@ class TaxiCab:
             new_location = (location[0], location[1] + 1, location[2])
         return new_location
 
-    def transition(self, env, models, action, location):
+    def transition(self, env, models, action, location, done):
         """
         Changes the world based on the action taken
         """
-        done = 0
-        reward = -1
+        # done = 0
+        reward = -0.05
         new_loc = location
         attempted_locaton = self.movement(action, location)
 
         if action in [0, 1, 2, 3]:
 
             if isinstance(env.world[attempted_locaton], TaxiCab):
-                reward = -2
+                reward = -0.2
 
             if isinstance(env.world[attempted_locaton], Wall):
-                reward = -2
+                reward = -0.2
 
             if isinstance(env.world[attempted_locaton], EmptyObject):
                 env.world[attempted_locaton] = self
@@ -159,10 +159,10 @@ class TaxiCab:
                 env.world[location] = EmptyObject()
                 self.has_passenger = 255
                 env.world[self.driving_location] = Destination()
-                reward = -1
+                reward = 1
 
             if isinstance(env.world[attempted_locaton], Destination):
-                reward = 25
+                reward = 1
                 env.world[attempted_locaton] = self
                 env.world[location] = EmptyObject()
                 new_loc = attempted_locaton

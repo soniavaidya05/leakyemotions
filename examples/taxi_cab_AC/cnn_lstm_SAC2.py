@@ -218,6 +218,7 @@ class ActorNetwork(nn.Module):
         self.device = T.device("cuda:0" if T.cuda.is_available() else "cpu")
 
         self.to(self.device)
+        self.m = nn.Softmax()
 
     def forward(self, state):
         prob = self.cnn(state)
@@ -247,7 +248,16 @@ class ActorNetwork(nn.Module):
         log_probs -= T.log(1 - action.pow(2) + self.reparam_noise)
         log_probs = log_probs.sum(1, keepdim=True)
 
-        return action, log_probs
+        #probs = self.m(actions)
+        #action_dist = torch.distributions.Categorical(probs)
+        # action = np.argmax(actions.numpy())
+        #action = action_dist.sample()  # E
+        action_max = action.argmax(1)
+        action_disc = torch.zeros(action.shape).scatter (1, action_max.unsqueeze (1), 1.0)
+        #action_state = [0, 0, 0, 0]
+        #action_state[int(action)] = 1
+
+        return action_disc, log_probs
 
     def save_checkpoint(self):
         T.save(self.state_dict(), self.checkpoint_file)
@@ -534,10 +544,10 @@ max_turns = 100
 done = 0
 turn = 0
 losses = [0, 0, 0]
-
+selected_actions = [0, 0, 0, 0]
 m = nn.Softmax()
 for epoch in range(epochs):
-    done = 0
+    terminal = False
     turn = 0
 
     env.reset_env(height=world_size, width=world_size, layers=1)
@@ -548,7 +558,8 @@ for epoch in range(epochs):
         env.world[loc].init_replay(3)
         env.world[loc].reward = 0
 
-    while done == 0:
+
+    while terminal == False:
 
         turn = turn + 1
         agentList = find_instance(env.world, "neural_network")
@@ -565,21 +576,23 @@ for epoch in range(epochs):
                 state = state.squeeze()[-1, :, :, :]
                 actions, _ = model.actor.sample_normal(state, reparameterize=False)
                 # this is not the best, but worth a shot
-                probs = m(actions)
+                # probs = m(actions)
 
-                action_dist = torch.distributions.Categorical(probs)
+                # action_dist = torch.distributions.Categorical(probs)
                 # action = np.argmax(actions.numpy())
-                action = action_dist.sample()  # E
+                # action = action_dist.sample()  # E
+                desc_action = np.argmax(actions)
+                selected_actions[desc_action] = selected_actions[desc_action] + 1
 
                 if turn == max_turns:
-                    done = 1
+                    terminal = True
                 (
                     env.world,
                     reward,
                     next_state,
-                    done,
+                    terminal,
                     new_loc,
-                ) = holdObject.transition(env, models, action, loc, done)
+                ) = holdObject.transition(env, models, desc_action, loc, terminal)
 
                 game_points[0] = game_points[0] + reward
                 if reward > 0.9:
@@ -587,9 +600,9 @@ for epoch in range(epochs):
 
                 # get rid of LSTM for now
                 next_state = next_state.squeeze()[-1, :, :, :]
-                action_state = [0, 0, 0, 0]
-                action_state[action] = 1
-                action = torch.tensor(action_state)
+                # action_state = [0, 0, 0, 0]
+                # action_state[action] = 1
+                action = torch.tensor(actions)
                 model.remember(state, action, reward, next_state, done)
 
     loss = model.learn()
@@ -602,5 +615,14 @@ for epoch in range(epochs):
             loss,
             game_points,
         )
+        print(
+            "epoch: ",
+            epoch,
+            "selected actions",
+            selected_actions,
+            game_points,
+        )
+        print("-----------------------")
         game_points = [0, 0]
         losses = [0, 0, 0]
+        selected_actions = [0, 0, 0, 0]

@@ -1,4 +1,4 @@
-from examples.taxi_cab.elements import (
+from examples.taxi_cab_AC.elements import (
     TaxiCab,
     EmptyObject,
     Wall,
@@ -155,7 +155,6 @@ class TaxiCabEnv:
         self.world[taxi_start] = TaxiCab(0)
         self.spawn_passenger()
 
-
     def spawn_passenger(self):
         """
         Spawns a passenger in a random location
@@ -219,7 +218,9 @@ class TaxiCabEnv:
             holdObject = self.world[loc]
             device = models[holdObject.policy].device
             state = self.pov(loc, inventory=[holdObject.has_passenger], layers=[0])
-            action, logprob, value = models[holdObject.policy].take_action([state.to(device), epsilon])
+            action, logprob, value = models[holdObject.policy].take_action(
+                [state.to(device), epsilon]
+            )
             """
             Updates the world given an action
             """
