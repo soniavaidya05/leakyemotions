@@ -233,20 +233,17 @@ for epoch in range(epochs):
         agentList = find_instance(env.world, "neural_network")
         random.shuffle(agentList)
 
-        holdObject = env.world[agentList[0]]
+        loc = agentList[0]
 
-        state = env.pov(loc, inventory=[holdObject.has_passenger], layers=[0])
+        state = env.pov(loc, inventory=[env.world[loc].has_passenger], layers=[0])
 
         action = explore(state)
-
 
         actions_taken[action] = actions_taken[action] + 1
         if turn == max_turns:
             done = True
 
-        env.world,reward,next_state,done,new_loc = holdObject.transition(env, models, action, loc, done)
-
-
+        env.world,reward,next_state,done,new_loc = env.world[loc].transition(env, models, action, loc, done)
 
         model.memory.append(state, action, reward, next_state, done)  # real version has "clipped_reward" rather than reward
         rewards[0] = rewards[0] + reward
@@ -256,8 +253,8 @@ for epoch in range(epochs):
         if epoch > 50 and turn % 5 == 0:
             model.learn()
 
-        if epoch % 250:
-            model.update_target()
+    if epoch % 250:
+        model.update_target()
 
     if epoch % 50 == 0 and epoch != 0:
         eval_rew, eval_action = evaluate()
