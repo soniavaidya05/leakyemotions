@@ -31,100 +31,111 @@ class BaseNetwork(nn.Module):
         self.load_state_dict(torch.load(path))
 
 
-#class DQNBase(BaseNetwork):
-#
-#    def __init__(self, num_channels):
-#        super(DQNBase, self).__init__()
-#
-#        self.net = nn.Sequential(
-#            nn.Conv2d(num_channels, 32, kernel_size=8, stride=4, padding=0),
-#            nn.ReLU(),
-#            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0),
-#            nn.ReLU(),
-#            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=0),
-#            nn.ReLU(),
-#            Flatten(),
-#        ).apply(initialize_weights_he)
-
-#    def forward(self, states):
-#        return self.net(states)
-
-
 class DQNBase(BaseNetwork):
 
     def __init__(self, in_channels, num_filters):
         super(DQNBase, self).__init__()
-
         self.conv_layer1 = nn.Conv2d(
             in_channels=in_channels, out_channels=num_filters, kernel_size=1
         )
+        self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
 
     def forward(self, x):
         x = x / 255  # note, a better normalization should be applied
-        y = F.relu(self.conv_layer1(x))
-        batch_size, C, H, W = y.size()
-        y = y.view(batch_size, -1)
+        y1 = F.relu(self.conv_layer1(x))
+        y2 = self.avg_pool(y1)  # ave pool is intentional (like a count)
+        y2 = torch.flatten(y2, 1)
+        y1 = torch.flatten(y1, 1)
+        y = torch.cat((y1, y2), 1)
         return y
 
 
 class QNetwork(BaseNetwork):
 
-    def __init__(self, in_channels, num_filters, in_size, hid_size, num_actions, shared=False,
+    def __init__(self, in_channels, num_filters, in_size, hid_size1, hid_size2, num_actions, shared=False,
                  dueling_net=False):
         super().__init__()
 
         if not shared:
             self.conv = DQNBase(in_channels, num_filters)
-        self.dropout = nn.Dropout(0.25)
+        self.rnn = nn.LSTM(
+            input_size=in_size,
+            hidden_size=hid_size1,
+            num_layers=2,
+            batch_first=True,
+        )
+        self.al1 = nn.Linear(hid_size1, hid_size1) 
+        self.al2 = nn.Linear(hid_size1, hid_size2)
+        self.al3 = nn.Linear(hid_size2, num_actions)
+
+        self.vl1 = nn.Linear(hid_size1, hid_size1) 
+        self.vl2 = nn.Linear(hid_size1, hid_size2)
+        self.vl3 = nn.Linear(hid_size2, 1)
+
 
         if not dueling_net:
             self.head = nn.Sequential(
-                nn.Linear(in_size, hid_size), # was 7 * 7 * 64, 512
+                nn.Linear(in_size, hid_size1), # was 7 * 7 * 64, 512
                 nn.ReLU(inplace=True),
                 nn.Dropout(.2),
-                nn.Linear(hid_size, hid_size),
+                nn.Linear(hid_size1, hid_size1),
                 nn.ReLU(inplace=True),
                 nn.Dropout(.2),
-                nn.Linear(hid_size, num_actions)) # was 512
+                nn.Linear(hid_size1, num_actions)) # was 512
         else:
             self.a_head = nn.Sequential(
-                nn.Linear(in_size, hid_size),
+                nn.Linear(in_size, hid_size1),
                 nn.ReLU(inplace=True),
                 nn.Dropout(.2),
-                nn.Linear(hid_size, hid_size),
+                nn.Linear(hid_size1, hid_size1),
                 nn.ReLU(inplace=True),
                 nn.Dropout(.2),
                 nn.Linear(hid_size, num_actions))
             self.v_head = nn.Sequential(
-                nn.Linear(405, hid_size),
+                nn.Linear(405, hid_size1),
                 nn.ReLU(inplace=True),
                 nn.Dropout(.2),
-                nn.Linear(hid_size, hid_size),
+                nn.Linear(hid_size1, hid_size1),
                 nn.ReLU(inplace=True),
                 nn.Dropout(.2),
-                nn.Linear(hid_size, 1))
+                nn.Linear(hid_size1, 1))
 
         self.shared = shared
         self.dueling_net = dueling_net
 
     def forward(self, states):
         if not self.shared:
-            states = self.conv(states)
+            batch_size, timesteps, C, H, W = states.size()
+            c_in = states.view(batch_size * timesteps, C, H, W)
+            c_out = self.conv(c_in)
+            r_in = c_out.view(batch_size, timesteps, -1)
 
         if not self.dueling_net:
-            return self.head(states)
+            a_r_out, (a_h_n, a_h_c) = self.rnn(r_in)
+            a = F.relu(self.al1(a_r_out[:, -1, :])) # what is this was lr = .001
+            a = F.relu(self.al2(a)) # and this is lr = .0011 (a small bit more)
+            a = self.al3(a)
+            return a
         else:
-            a = self.a_head(states)
-            v = self.v_head(states)
+            a_r_out, (a_h_n, a_h_c) = self.rnn(r_in)
+            a = F.relu(self.al1(a_r_out[:, -1, :])) # what is this was lr = .001
+            a = F.relu(self.al2(a)) # and this is lr = .0011 (a small bit more)
+            a = self.al3(a)
+
+            v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
+            v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
+            v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
+            v = self.vl3(v)
+
             return v + a - a.mean(1, keepdim=True)
 
 
 class TwinnedQNetwork(BaseNetwork):
-    def __init__(self, in_channels, num_filters, in_size, hid_size, num_actions, shared=False,
+    def __init__(self, in_channels, num_filters, in_size, hid_size1, hid_size2, num_actions, shared=False,
                  dueling_net=False):
         super().__init__()
-        self.Q1 = QNetwork(in_channels, num_filters, in_size, hid_size, num_actions, shared, dueling_net)
-        self.Q2 = QNetwork(in_channels, num_filters, in_size, hid_size, num_actions, shared, dueling_net)
+        self.Q1 = QNetwork(in_channels, num_filters, in_size, hid_size1, hid_size2, num_actions, shared, dueling_net)
+        self.Q2 = QNetwork(in_channels, num_filters, in_size, hid_size2, hid_size2, num_actions, shared, dueling_net)
 
     def forward(self, states):
         q1 = self.Q1(states)
@@ -134,32 +145,75 @@ class TwinnedQNetwork(BaseNetwork):
 
 class CategoricalPolicy(BaseNetwork):
 
-    def __init__(self, in_channels, num_filters, in_size, hid_size, num_actions, shared=False):
+    def __init__(self, in_channels, num_filters, in_size, hid_size1, hid_size2, num_actions, shared=False):
         super().__init__()
         if not shared:
             self.conv = DQNBase(in_channels, num_filters)
 
+        self.rnn = nn.LSTM(
+        input_size=in_size,
+        hidden_size=hid_size1,
+        num_layers=2,
+        batch_first=True,
+        )
+        self.al1 = nn.Linear(hid_size1, hid_size1) 
+        self.al2 = nn.Linear(hid_size1, hid_size2)
+        self.al3 = nn.Linear(hid_size2, num_actions)
+
+        self.vl1 = nn.Linear(hid_size1, hid_size1) 
+        self.vl2 = nn.Linear(hid_size1, hid_size2)
+        self.vl3 = nn.Linear(hid_size2, num_actions)
+
+
         self.head = nn.Sequential(
-            nn.Linear(in_size, hid_size),
+            nn.Linear(in_size, hid_size1),
             nn.ReLU(inplace=True),
-            nn.Linear(hid_size, num_actions))
+            nn.Linear(hid_size1, num_actions))
 
         self.shared = shared
 
     def act(self, states):
         if not self.shared:
-            states = self.conv(states)
+            print(states.shape)
+            batch_size, timesteps, C, H, W = states.size()
+            print(batch_size, timesteps, C, H, W)
+            c_in = states.view(batch_size * timesteps, C, H, W)
+            print(c_in.shape)
+            c_out = self.conv(c_in)
+            print(c_out.shape)
+            r_in = c_out.view(batch_size, timesteps, -1)
+            print(r_in.shape)
 
-        action_logits = self.head(states)
+
+        v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
+        print(v_r_out.shape)
+        v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
+        print(v.shape)
+        v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
+        print(v.shape)
+        action_logits = self.al3(v)
+
+
+        #action_logits = self.head(states)
         greedy_actions = torch.argmax(
             action_logits, dim=-1, keepdim=True)  # previously dim = 1, changing to -1
         return greedy_actions
 
     def sample(self, states):
         if not self.shared:
-            states = self.conv(states)
+            batch_size, timesteps, C, H, W = states.size()
+            c_in = states.view(batch_size * timesteps, C, H, W)
+            c_out = self.conv(c_in)
+            r_in = c_out.view(batch_size, timesteps, -1)
 
-        action_probs = F.softmax(self.head(states), dim=1)
+        v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
+        v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
+        v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
+        v = self.al3(v)
+
+
+
+        action_probs = F.softmax(v, dim=1)
         action_dist = Categorical(action_probs)
         actions = action_dist.sample().view(-1, 1)
 
@@ -185,7 +239,7 @@ class SAC():
         out_size,
         priority_replay=True,
         device="cpu",
-        state_shape = (4,9,9),
+        state_shape = (3,4,9,9),
         gamma = .9,
         use_per=True,
         num_steps = 100, # the next four are made up
@@ -200,9 +254,9 @@ class SAC():
         self.device = device
         self.modeltype = "soft_actor_critic"
         # Define networks.
-        self.policy = CategoricalPolicy(in_channels, num_filters, in_size, hid_size1, out_size).to(self.device)
-        self.online_critic = TwinnedQNetwork(in_channels, num_filters, in_size, hid_size1, out_size).to(device=self.device)
-        self.target_critic = TwinnedQNetwork(in_channels, num_filters, in_size, hid_size1, out_size).to(device=self.device).eval()
+        self.policy = CategoricalPolicy(in_channels, num_filters, in_size, hid_size1, hid_size2, out_size).to(self.device)
+        self.online_critic = TwinnedQNetwork(in_channels, num_filters, in_size, hid_size1, hid_size2,out_size).to(device=self.device)
+        self.target_critic = TwinnedQNetwork(in_channels, num_filters, in_size, hid_size1, hid_size2,out_size).to(device=self.device).eval()
 
         beta_steps = (num_steps - start_steps) / update_interval
         self.memory = LazyPrioritizedMultiStepMemory(

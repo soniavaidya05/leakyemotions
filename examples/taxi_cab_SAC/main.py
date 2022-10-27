@@ -154,13 +154,13 @@ model = SAC(
         num_filters = 5,
         lr = .001,
         replay_size = 4096,
-        in_size = 405,
+        in_size = 650,
         hid_size1 = 100,
-        hid_size2= 125,
+        hid_size2= 75,
         out_size = 4,
         priority_replay=True,
         device="cpu",
-        state_shape = (4,9,9),
+        state_shape = (3,4,9,9),
         gamma = .9,
         use_per=True,
         num_steps = 1000000, # the next four are made up
@@ -198,8 +198,7 @@ for epoch in range(epochs):
 
         state = env.pov(loc, inventory=[holdObject.has_passenger], layers=[0])
         #state = state.squeeze()[-1, :, :, :]
-        state = state[:, -1, :, :]
-
+        #state = state.unsqueeze(0)
         action = explore(state)
 
         #if epoch < 20000:
@@ -214,7 +213,7 @@ for epoch in range(epochs):
 
         env.world,reward,next_state,done,new_loc = holdObject.transition(env, models, action, loc, done)
         #next_state = next_state.squeeze()[-1, :, :, :]
-        next_state = next_state[:, -1, :, :]
+        #next_state = next_state[:, -1, :, :]
 
 
         model.memory.append(state, action, reward, next_state, done)  # real version has "clipped_reward" rather than reward
@@ -228,7 +227,7 @@ for epoch in range(epochs):
         if epoch % 250:
             model.update_target()
 
-    if epoch % 50 == 0:
+    if epoch % 50 == 0 and epoch != 0:
         print(epoch, rewards, actions_taken)
         rewards = [0,0]
         actions_taken = [0,0,0,0]
