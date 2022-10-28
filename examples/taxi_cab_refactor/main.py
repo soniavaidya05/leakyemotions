@@ -14,7 +14,7 @@ from examples.taxi_cab.elements import (
     Passenger,
 )
 from gem.models.cnn_lstm_dqn_PER import Model_CNN_LSTM_DQN
-from env import TaxiCabEnv
+from examples.taxi_cab_refactor.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -88,6 +88,67 @@ env = TaxiCabEnv(
 )
 
 env.game_test()
+
+
+# -------------------------------------------------------------------------
+# TESTING MODEL STRUCTURE AREA
+# -------------------------------------------------------------------------
+
+from examples.taxi_cab_refactor.dqn_model import AtariLstmModel
+losses = 0
+game_points = [0, 0]
+done, withinturn = 0, 0
+
+env.reset_env(
+    height=world_size,
+    width=world_size,
+    layers=1,
+)
+
+for loc in find_instance(env.world, "neural_network"):
+    # reset the memories for all agents
+    # the parameter sets the length of the sequence for LSTM
+    env.world[loc].init_replay(3)
+
+agentList = find_instance(env.world, "neural_network")
+loc = agentList[0]
+env.world[loc].reward = 0
+
+device = models[env.world[loc].policy].device
+state = env.pov(loc, inventory=[env.world[loc].has_passenger], layers=[0])
+action = models[env.world[loc].policy].take_action([state.to(device), epsilon])
+
+(
+    env.world,
+    reward,
+    next_state,
+    done,
+    new_loc,
+) = env.world[loc].transition(env, models, action, loc)
+
+exp = (
+    models[env.world[new_loc].policy].max_priority,
+    (
+        state,
+        action,
+        reward,
+        next_state,
+        done,
+    ),
+)
+
+env.world[new_loc].episode_memory.append(exp)
+
+
+
+
+
+
+
+
+
+
+# -------------------------------------------------------------------------
 
 
 def run_game(
