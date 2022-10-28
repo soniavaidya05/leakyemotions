@@ -157,7 +157,7 @@ action_one_hot = one_hot(4, action_int)
     new_loc,
 ) = env.world[loc].transition(env, models, action_int, loc)
 
-next_state = next_state[:,-1,:,:,:].unsqueeze(0)   # also converts to be just one time period
+next_state = next_state[:,-1,:,:,:].unsqueeze(0)   # also converts to be just one time pesriod
 
 # below is the replay buffer from our agent. We need to get into their format
 

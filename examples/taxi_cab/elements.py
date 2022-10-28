@@ -103,6 +103,7 @@ class TaxiCab:
         self.reward = 0  # how much reward this agent has collected
         self.has_passenger = 0
         self.driving_location = (0, 0, 0)
+        self.init_rnn_state = None
 
     def init_replay(self, numberMemories):
         """

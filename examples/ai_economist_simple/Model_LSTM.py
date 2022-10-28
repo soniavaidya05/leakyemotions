@@ -45,13 +45,13 @@ class LSTM_DQN(nn.Module):
         self.dropout = nn.Dropout(0.15)
         
 
-    def forward(self, x):
+    def forward(self, x, init_rnn_state):
         """
         TODO: check the shapes below. 
         """
         #r_in =normalize(x, p=1.0, dim = 1)
         r_in = x
-
+        init_rnn_state = None if init_rnn_state is None else tuple(init_rnn_state)
         #print("r_in.shape: ", r_in.shape)
         r_out, (h_n, h_c) = self.rnn(r_in)
         #print("r_out.shape: ", r_out.shape)
@@ -61,7 +61,7 @@ class LSTM_DQN(nn.Module):
         y = F.relu(self.l2(y))
         y = self.l3(y)
 
-        return y
+        return y, (h_n, h_c)
 
 
 class Model_linear_LSTM_DQN:
@@ -132,9 +132,9 @@ class Model_linear_LSTM_DQN:
         Takes action from the input
         """
 
-        inp, epsilon = params
+        inp, epsilon, init_rnn_state = params
 
-        Q = self.model1(inp)
+        Q, (c, n) = self.model1(inp, init_rnn_state)
         p = self.sm(Q).cpu().detach().numpy()[0]
 
         use_softmax = False
@@ -154,7 +154,7 @@ class Model_linear_LSTM_DQN:
             else:
                 action = np.random.choice(np.arange(len(p)), p=p)
 
-        return action
+        return action, (c, n)
 
     def training(self, batch_size, gamma):
         """
@@ -180,9 +180,9 @@ class Model_linear_LSTM_DQN:
             state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
             done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch]).to(self.device)
 
-            Q1 = self.model1(state1_batch)
+            Q1, (c, n) = self.model1(state1_batch, None)
             with torch.no_grad():
-                Q2 = self.model2(state2_batch)
+                Q2, (c, n) = self.model2(state2_batch, None)
 
             Y = reward_batch + gamma * (
                 (1 - done_batch) * torch.max(Q2.detach(), dim=1)[0]

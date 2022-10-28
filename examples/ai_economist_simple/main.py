@@ -135,7 +135,8 @@ for epoch in range(1000000):
 
             state = generate_input(agent_list, agent).unsqueeze(0).to(device)
             state_lstm = prepare_lstm(agent_list, agent, state)
-            action = models[agent_list[agent].policy].take_action([state_lstm, epsilon])
+            action, init_rnn_state= models[agent_list[agent].policy].take_action([state_lstm, epsilon, agent_list[agent].init_rnn_state])
+            agent_list[agent].init_rnn_state = init_rnn_state
             #print(action)
             env, reward, next_state, done, new_loc = agent_list[agent].transition(env, models, action, done, [], agent_list, agent)
             rewards[agent_list[agent].policy] = rewards[agent_list[agent].policy] + reward

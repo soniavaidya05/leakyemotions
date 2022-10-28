@@ -23,6 +23,7 @@ class Agent():
         self.house_skill = house_skill
         self.coin = 6
         self.agent_type = agent_type
+        self.init_rnn_state = None
 
     def init_replay(self, numberMemories):
         image = torch.zeros(1, numberMemories, 6).float()

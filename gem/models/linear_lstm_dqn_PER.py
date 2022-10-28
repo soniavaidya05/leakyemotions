@@ -46,15 +46,15 @@ class LSTM_DQN(nn.Module):
         self.dropout = nn.Dropout(0.15)
         
 
-    def forward(self, x):
+    def forward(self, x, init_rnn_state):
         """
         TODO: check the shapes below. 
         """
         #r_in =normalize(x, p=1.0, dim = 1)
         r_in = x/10
-
+        init_rnn_state = None if init_rnn_state is None else tuple(init_rnn_state)
         #print("r_in.shape: ", r_in.shape)
-        r_out, (h_n, h_c) = self.rnn(r_in)
+        r_out, (h_n, h_c) = self.rnn(r_in, init_rnn_state)
         #print("r_out.shape: ", r_out.shape)
         #y = F.relu(self.l1(r_out[:, -1, :]))
         y = F.relu(self.l1(r_out))
@@ -62,7 +62,7 @@ class LSTM_DQN(nn.Module):
         y = F.relu(self.l2(y))
         y = self.l3(y)
 
-        return y
+        return y, (h_n, h_c)
 
 
 class Model_linear_LSTM_DQN:
@@ -128,13 +128,13 @@ class Model_linear_LSTM_DQN:
 
         return current_state
 
-    def take_action(self, params):
+    def take_action(self, params, init_rnn_state):
         """
         Takes action from the input
         """
 
         inp, epsilon = params
-        Q = self.model1(inp)
+        Q, next_rnn_state = self.model1(inp, init_rnn_state)
         p = self.sm(Q).cpu().detach().numpy()[0]
 
         if epsilon > 0.3:
@@ -144,7 +144,7 @@ class Model_linear_LSTM_DQN:
                 action = np.argmax(Q.detach().cpu().numpy())
         else:
             action = np.random.choice(np.arange(len(p)), p=p)
-        return action
+        return action, next_rnn_state
 
     def training(self, batch_size, gamma):
         """
