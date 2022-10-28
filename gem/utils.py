@@ -4,10 +4,10 @@ from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
 
 
-#def one_hot(N, pos, val=1):
-#    one_hot_vec = np.zeros(N)
-#    one_hot_vec[pos] = val
-#    return one_hot_vec
+def one_hot(N, pos, val=1):
+    one_hot_vec = np.zeros(N)
+    one_hot_vec[pos] = val
+    return one_hot_vec
 
 
 def find_moveables(world):

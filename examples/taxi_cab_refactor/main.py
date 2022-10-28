@@ -6,6 +6,7 @@ from gem.utils import (
     transfer_world_memories,
     find_agents,
     find_instance,
+    one_hot
 )
 from examples.taxi_cab.elements import (
     TaxiCab,
@@ -134,17 +135,13 @@ model = AtariLstmModel(
 
 
 #x = model(state, prev_action, prev_reward, init_rnn_state)
-next_rnn_state = Npne
+next_rnn_state = None
 prev_reward = torch.tensor(0.)
 prev_action = torch.tensor([0,0,0,0])
 pi, v, next_rnn_state = model(state, prev_action, prev_reward, next_rnn_state)
 
-#pi, v, next_rnn_state = model(state, prev_action, prev_reward, next_rnn_state)
-
-
-# this works! above
-
-action = torch.argmax(pi)
+action_int = torch.argmax(pi)
+action_one_hot = one_hot(4, action_int)
 
 (
     env.world,
@@ -152,13 +149,17 @@ action = torch.argmax(pi)
     next_state,
     done,
     new_loc,
-) = env.world[loc].transition(env, models, action, loc)
+) = env.world[loc].transition(env, models, action_int, loc)
+
+next_state = next_state[:,-1,:,:,:].unsqueeze(0)   # also converts to be just one time period
+
+# below is the replay buffer from our agent. We need to get into their format
 
 exp = (
     models[env.world[new_loc].policy].max_priority,
     (
         state,
-        action,
+        action_one_hot,
         reward,
         next_state,
         done,
@@ -166,6 +167,10 @@ exp = (
 )
 
 env.world[new_loc].episode_memory.append(exp)
+
+
+# I found something called self.train() being called but can't find it
+
 
 
 
