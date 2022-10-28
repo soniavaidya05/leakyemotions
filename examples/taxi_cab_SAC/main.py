@@ -221,8 +221,8 @@ for epoch in range(epochs):
 
     env.reset_env(height=world_size, width=world_size, layers=1)
     turn = 0
-    done = False
-    while done == False:
+    done = 0
+    while done == 0:
         turn = turn + 1
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
@@ -242,7 +242,7 @@ for epoch in range(epochs):
 
         actions_taken[action] = actions_taken[action] + 1
         if turn == max_turns:
-            done = True
+            done = 1
 
         env.world,reward,next_state,done,new_loc = env.world[loc].transition(env, models, action, loc, done)
 
