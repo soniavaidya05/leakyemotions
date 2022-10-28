@@ -12,20 +12,58 @@ from tensorboardX import SummaryWriter
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
+class CNN_CLD(nn.Module):
+    def __init__(self, in_channels, num_filters):
+        super(CNN_CLD, self).__init__()
+        self.conv_layer1 = nn.Conv2d(
+            in_channels=in_channels, out_channels=num_filters, kernel_size=1
+        )
+        self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
+
+    def forward(self, x):
+        x = x / 255  # note, a better normalization should be applied
+        y1 = F.relu(self.conv_layer1(x))
+        y2 = self.avg_pool(y1)  # ave pool is intentional (like a count)
+        y2 = torch.flatten(y2, 1)
+        y1 = torch.flatten(y1, 1)
+        y = torch.cat((y1, y2), 1)
+        return y
+
+
+
+
 class QNetwork(nn.Module):
     def __init__(self):
         super(QNetwork, self).__init__()
 
-        self.fc1 = nn.Linear(4, 64)
+        self.cnn = CNN_CLD(4, 5) # in_channels, num_filters
+        self.rnn = nn.LSTM(
+            input_size=650, 
+            hidden_size=100,
+            num_layers=2,
+            batch_first=True,
+        )
+
+
+
+
+        self.fc1 = nn.Linear(100, 64)
         self.relu = nn.ReLU()
         self.fc_value = nn.Linear(64, 256)
         self.fc_adv = nn.Linear(64, 256)
 
         self.value = nn.Linear(256, 1)
-        self.adv = nn.Linear(256, 2)
+        self.adv = nn.Linear(256, 4)
 
-    def forward(self, state):
-        y = self.relu(self.fc1(state))
+    def forward(self, x):
+        batch_size, timesteps, C, H, W = x.size()
+        c_in = x.view(batch_size * timesteps, C, H, W)
+        c_out = self.cnn(c_in)
+        r_in = c_out.view(batch_size, timesteps, -1)
+        r_out, (h_n, h_c) = self.rnn(r_in)
+
+
+        y = self.relu(self.fc1(r_out))
         value = self.relu(self.fc_value(y))
         adv = self.relu(self.fc_adv(y))
 
