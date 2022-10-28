@@ -6,7 +6,6 @@ from gem.utils import (
     transfer_world_memories,
     find_agents,
     find_instance,
-    one_hot
 )
 from examples.taxi_cab.elements import (
     TaxiCab,
@@ -32,6 +31,7 @@ save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+import numpy as np
 
 # if torch.backends.mps.is_available():
 #    device = torch.device("mps")
@@ -39,6 +39,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = "cpu"
 print(device)
 
+
+def one_hot(N, pos, val=1):
+    one_hot_vec = np.zeros(N)
+    one_hot_vec[pos] = val
+    return one_hot_vec
 
 def create_models():
     """
@@ -135,7 +140,8 @@ model = AtariLstmModel(
 
 
 #x = model(state, prev_action, prev_reward, init_rnn_state)
-next_rnn_state = None
+
+next_rnn_state = None # the three below set up the first trial
 prev_reward = torch.tensor(0.)
 prev_action = torch.tensor([0,0,0,0])
 pi, v, next_rnn_state = model(state, prev_action, prev_reward, next_rnn_state)
@@ -167,6 +173,14 @@ exp = (
 )
 
 env.world[new_loc].episode_memory.append(exp)
+
+
+# conceptually, the next forward pass would be (but, need to solve the replay and the training above)
+state = next_state
+prev_action = torch.tensor(action_one_hot).float()
+prev_reward = torch.tensor(reward).float()
+pi, v, next_rnn_state = model(state, prev_action, prev_reward, next_rnn_state)
+
 
 
 # I found something called self.train() being called but can't find it
