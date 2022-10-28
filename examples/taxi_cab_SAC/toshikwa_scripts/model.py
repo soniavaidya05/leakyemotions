@@ -72,34 +72,6 @@ class QNetwork(BaseNetwork):
         self.vl2 = nn.Linear(hid_size1, hid_size2)
         self.vl3 = nn.Linear(hid_size2, 1)
 
-
-        if not dueling_net:
-            self.head = nn.Sequential(
-                nn.Linear(in_size, hid_size1), # was 7 * 7 * 64, 512
-                nn.ReLU(inplace=True),
-                nn.Dropout(.2),
-                nn.Linear(hid_size1, hid_size1),
-                nn.ReLU(inplace=True),
-                nn.Dropout(.2),
-                nn.Linear(hid_size1, num_actions)) # was 512
-        else:
-            self.a_head = nn.Sequential(
-                nn.Linear(in_size, hid_size1),
-                nn.ReLU(inplace=True),
-                nn.Dropout(.2),
-                nn.Linear(hid_size1, hid_size1),
-                nn.ReLU(inplace=True),
-                nn.Dropout(.2),
-                nn.Linear(hid_size1, num_actions))
-            self.v_head = nn.Sequential(
-                nn.Linear(405, hid_size1),
-                nn.ReLU(inplace=True),
-                nn.Dropout(.2),
-                nn.Linear(hid_size1, hid_size1),
-                nn.ReLU(inplace=True),
-                nn.Dropout(.2),
-                nn.Linear(hid_size1, 1))
-
         self.shared = shared
         self.dueling_net = dueling_net
 
@@ -112,19 +84,19 @@ class QNetwork(BaseNetwork):
 
         if not self.dueling_net:
             a_r_out, (a_h_n, a_h_c) = self.rnn(r_in)
-            a = F.relu(self.al1(a_r_out[:, -1, :])) # what is this was lr = .001
-            a = F.relu(self.al2(a)) # and this is lr = .0011 (a small bit more)
+            a = F.relu(self.al1(a_r_out[:, -1, :])) 
+            a = F.relu(self.al2(a)) 
             a = self.al3(a)
             return a
         else:
             a_r_out, (a_h_n, a_h_c) = self.rnn(r_in)
-            a = F.relu(self.al1(a_r_out[:, -1, :])) # what is this was lr = .001
-            a = F.relu(self.al2(a)) # and this is lr = .0011 (a small bit more)
+            a = F.relu(self.al1(a_r_out[:, -1, :])) 
+            a = F.relu(self.al2(a)) 
             a = self.al3(a)
 
             v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
-            v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
-            v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
+            v = F.relu(self.vl1(v_r_out[:, -1, :])) 
+            v = F.relu(self.vl2(v)) 
             v = self.vl3(v)
 
             return v + a - a.mean(1, keepdim=True)
@@ -156,19 +128,10 @@ class CategoricalPolicy(BaseNetwork):
         num_layers=2,
         batch_first=True,
         )
-        self.al1 = nn.Linear(hid_size1, hid_size1) 
-        self.al2 = nn.Linear(hid_size1, hid_size2)
-        self.al3 = nn.Linear(hid_size2, num_actions)
 
-        self.vl1 = nn.Linear(hid_size1, hid_size1) 
-        self.vl2 = nn.Linear(hid_size1, hid_size2)
-        self.vl3 = nn.Linear(hid_size2, num_actions)
-
-
-        self.head = nn.Sequential(
-            nn.Linear(in_size, hid_size1),
-            nn.ReLU(inplace=True),
-            nn.Linear(hid_size1, num_actions))
+        self.l1 = nn.Linear(hid_size1, hid_size1) 
+        self.l2 = nn.Linear(hid_size1, hid_size2)
+        self.l3 = nn.Linear(hid_size2, num_actions)
 
         self.shared = shared
 
@@ -178,45 +141,19 @@ class CategoricalPolicy(BaseNetwork):
         c_out = self.conv(c_in)
         r_in = c_out.view(batch_size, timesteps, -1)
         v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
-        v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
-        v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
-        v = self.vl3(v)
+        v = F.relu(self.l1(v_r_out[:, -1, :])) 
+        v = F.relu(self.l2(v)) 
+        v = self.l3(v)
         return v
 
     def act(self, states):
-        #if not self.shared:
-        #    batch_size, timesteps, C, H, W = states.size()
-        #    c_in = states.view(batch_size * timesteps, C, H, W)
-        #    c_out = self.conv(c_in)
-        #    r_in = c_out.view(batch_size, timesteps, -1)
-
-
-        #v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
-        #v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
-        #v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
-        #action_logits = self.al3(v)
         action_logits = self.forward(states)
-
-
-        #action_logits = self.head(states)
         greedy_actions = torch.argmax(
-            action_logits, dim=-1, keepdim=True)  # previously dim = 1, changing to -1
+            action_logits, dim=1, keepdim=True)  
         return greedy_actions
 
     def sample(self, states):
-        #if not self.shared:
-        #    batch_size, timesteps, C, H, W = states.size()
-        #    c_in = states.view(batch_size * timesteps, C, H, W)
-        #    c_out = self.conv(c_in)
-        #    r_in = c_out.view(batch_size, timesteps, -1)
-
-        #v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
-        #v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
-        #v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
-        #v = self.vl3(v)
         v = self.forward(states)
-
-
 
         action_probs = F.softmax(v, dim=1)
         action_dist = Categorical(action_probs)
