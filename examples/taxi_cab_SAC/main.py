@@ -57,7 +57,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = "cpu"
 print(device)
 
-world_size = 10
+world_size = 5
 
 trainable_models = [0]
 sync_freq = 500
@@ -73,12 +73,13 @@ env = TaxiCabEnv(
     layers=1,
     defaultObject=EmptyObject,
 )
+env.game_test()
 
 losses = 0
 game_points = [0, 0]
 epochs = 100
 max_turns = 100
-world_size = 10
+world_size = 5
 env.reset_env(
     height=world_size,
     width=world_size,
@@ -176,7 +177,7 @@ rewards = [0,0]
 actions_taken = [0,0,0,0]
 
 
-def evaluate():
+def evaluate(create_images = False):
     eval_rewards = [0,0]
     eval_actions_taken = [0,0,0,0]
     env.reset_env(height=world_size, width=world_size, layers=1)
@@ -195,6 +196,8 @@ def evaluate():
         random.shuffle(agentList)
 
         holdObject = env.world[agentList[0]]
+        if create_images == True:
+            env.game_test()
 
         state = env.pov(loc, inventory=[holdObject.has_passenger], layers=[0])
 
@@ -227,8 +230,6 @@ for epoch in range(epochs):
             env.world[loc].init_replay(3)
             env.world[loc].reward = 0
 
-
-
         turn = turn + 1
         agentList = find_instance(env.world, "neural_network")
         random.shuffle(agentList)
@@ -251,7 +252,9 @@ for epoch in range(epochs):
             rewards[1] = rewards[1] + 1
 
         if epoch > 50 and turn % 5 == 0:
-            model.learn()
+            loss = model.learn()
+        else:
+            loss = 0
 
     if epoch % 250:
         model.update_target()
@@ -259,6 +262,7 @@ for epoch in range(epochs):
     if epoch % 50 == 0 and epoch != 0:
         eval_rew, eval_action = evaluate()
         print(epoch, rewards, actions_taken, eval_rew, eval_action)
+        print(epoch, loss)
         rewards = [0,0]
         actions_taken = [0,0,0,0]
 

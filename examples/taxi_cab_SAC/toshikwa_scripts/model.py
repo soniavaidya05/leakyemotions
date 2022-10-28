@@ -8,7 +8,7 @@ import torch.optim as optim
 import numpy as np
 
 from examples.taxi_cab_SAC.memory.per import LazyMultiStepMemory, LazyPrioritizedMultiStepMemory
-from examples.taxi_cab_SAC.toshikwa_scripts.utils import update_params, RunningMeanStats
+from examples.taxi_cab_SAC.toshikwa_scripts.utils import update_params, RunningMeanStats, disable_gradients
 
 
 def initialize_weights_he(m):
@@ -90,7 +90,7 @@ class QNetwork(BaseNetwork):
                 nn.Linear(hid_size1, hid_size1),
                 nn.ReLU(inplace=True),
                 nn.Dropout(.2),
-                nn.Linear(hid_size, num_actions))
+                nn.Linear(hid_size1, num_actions))
             self.v_head = nn.Sequential(
                 nn.Linear(405, hid_size1),
                 nn.ReLU(inplace=True),
@@ -172,18 +172,30 @@ class CategoricalPolicy(BaseNetwork):
 
         self.shared = shared
 
-    def act(self, states):
-        if not self.shared:
-            batch_size, timesteps, C, H, W = states.size()
-            c_in = states.view(batch_size * timesteps, C, H, W)
-            c_out = self.conv(c_in)
-            r_in = c_out.view(batch_size, timesteps, -1)
-
-
+    def forward(self, states):
+        batch_size, timesteps, C, H, W = states.size()
+        c_in = states.view(batch_size * timesteps, C, H, W)
+        c_out = self.conv(c_in)
+        r_in = c_out.view(batch_size, timesteps, -1)
         v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
         v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
         v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
-        action_logits = self.al3(v)
+        v = self.vl3(v)
+        return v
+
+    def act(self, states):
+        #if not self.shared:
+        #    batch_size, timesteps, C, H, W = states.size()
+        #    c_in = states.view(batch_size * timesteps, C, H, W)
+        #    c_out = self.conv(c_in)
+        #    r_in = c_out.view(batch_size, timesteps, -1)
+
+
+        #v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
+        #v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
+        #v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
+        #action_logits = self.al3(v)
+        action_logits = self.forward(states)
 
 
         #action_logits = self.head(states)
@@ -192,16 +204,17 @@ class CategoricalPolicy(BaseNetwork):
         return greedy_actions
 
     def sample(self, states):
-        if not self.shared:
-            batch_size, timesteps, C, H, W = states.size()
-            c_in = states.view(batch_size * timesteps, C, H, W)
-            c_out = self.conv(c_in)
-            r_in = c_out.view(batch_size, timesteps, -1)
+        #if not self.shared:
+        #    batch_size, timesteps, C, H, W = states.size()
+        #    c_in = states.view(batch_size * timesteps, C, H, W)
+        #    c_out = self.conv(c_in)
+        #    r_in = c_out.view(batch_size, timesteps, -1)
 
-        v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
-        v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
-        v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
-        v = self.al3(v)
+        #v_r_out, (v_h_n, v_h_c) = self.rnn(r_in)
+        #v = F.relu(self.vl1(v_r_out[:, -1, :])) # what is this was lr = .001
+        #v = F.relu(self.vl2(v)) # and this is lr = .0011 (a small bit more)
+        #v = self.vl3(v)
+        v = self.forward(states)
 
 
 
@@ -233,7 +246,7 @@ class SAC():
         device="cpu",
         state_shape = (3,4,9,9),
         gamma = .9,
-        use_per=True,
+        use_per=False,
         num_steps = 100, # the next four are made up
         start_steps = 10,
         update_interval = 1,
@@ -318,6 +331,8 @@ class SAC():
 
         if self.use_per:
             self.memory.update_priority(errors)
+
+        return q1_loss.detach(), q2_loss.detach(), policy_loss.detach(), entropy_loss.detach()
 
     def calc_policy_loss(self, batch, weights):
         states, actions, rewards, next_states, dones = batch
