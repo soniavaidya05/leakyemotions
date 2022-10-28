@@ -52,19 +52,19 @@ class Agent():
                 self.coin = self.coin + 10
                 reward = 10
         if action == 3:
-            if random.random() < self.wood_skill: # simulates the AI market
-                if self.wood > 1:
-                    self.wood = self.wood - 2
-                    reward = 1
-                    self.coin = self.coin + 1
-                    env.wood = env.wood + 1
+            #if random.random() < self.wood_skill: # simulates the AI market
+            if self.wood > 1:
+                self.wood = self.wood - 2
+                reward = 1
+                self.coin = self.coin + 1
+                env.wood = env.wood + 1
         if action == 4:
-            if random.random() < self.stone_skill: # simulates the AI market
-                if self.stone > 1:
-                    self.stone = self.stone - 2
-                    reward = 1
-                    self.coin = self.coin + 1
-                    env.stone = env.stone + 1
+            #if random.random() < self.stone_skill: # simulates the AI market
+            if self.stone > 1:
+                self.stone = self.stone - 2
+                reward = 1
+                self.coin = self.coin + 1
+                env.stone = env.stone + 1
         if action == 5:
             if env.wood > 2 and self.coin > 1:
                 env.wood = env.wood - 2

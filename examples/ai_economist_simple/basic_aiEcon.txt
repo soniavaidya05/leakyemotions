@@ -1,0 +1,133 @@
+cpu
+--------------------------------------
+epoch: 0 loss:  35.89820582419634 points (wood, stone, house):  [8.5, 66.5, 9.25] epsilon:  0.989
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [35, 35, 39, 28, 41, 44, 33]
+agent2 behaviours:  [69, 71, 78, 67, 77, 72, 76]
+agent3 behaviours:  [23, 22, 29, 20, 22, 23, 14]
+--------------------------------------
+epoch: 10 loss:  917.8886483497918 points (wood, stone, house):  [275.0, 423.0, 274.25] epsilon:  0.989
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [390, 381, 350, 362, 358, 350, 359]
+agent2 behaviours:  [743, 712, 768, 706, 746, 703, 722]
+agent3 behaviours:  [249, 192, 210, 227, 207, 232, 213]
+--------------------------------------
+epoch: 20 loss:  1103.4331391286105 points (wood, stone, house):  [251.5, 418.5, 380.5] epsilon:  0.988
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [374, 339, 397, 330, 367, 364, 379]
+agent2 behaviours:  [731, 711, 731, 681, 777, 717, 752]
+agent3 behaviours:  [205, 235, 204, 205, 220, 243, 218]
+--------------------------------------
+epoch: 30 loss:  1085.5344342552125 points (wood, stone, house):  [221.75, 544.25, 333.5] epsilon:  0.988
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [376, 329, 396, 388, 352, 358, 351]
+agent2 behaviours:  [734, 711, 764, 711, 728, 715, 737]
+agent3 behaviours:  [209, 228, 216, 226, 226, 205, 220]
+--------------------------------------
+epoch: 40 loss:  1033.3073462992907 points (wood, stone, house):  [223.0, 420.5, 406.75] epsilon:  0.987
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [348, 363, 380, 364, 355, 378, 362]
+agent2 behaviours:  [721, 732, 743, 704, 772, 727, 701]
+agent3 behaviours:  [243, 220, 245, 209, 197, 201, 215]
+--------------------------------------
+epoch: 50 loss:  1088.6417738422751 points (wood, stone, house):  [273.25, 438.25, 388.25] epsilon:  0.987
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [366, 340, 410, 362, 357, 368, 347]
+agent2 behaviours:  [769, 724, 715, 719, 799, 681, 693]
+agent3 behaviours:  [222, 190, 230, 234, 211, 231, 212]
+--------------------------------------
+epoch: 60 loss:  1079.542130190879 points (wood, stone, house):  [219.5, 453.25, 588.25] epsilon:  0.986
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [344, 385, 395, 367, 360, 349, 350]
+agent2 behaviours:  [691, 735, 759, 701, 788, 689, 737]
+agent3 behaviours:  [223, 194, 233, 222, 210, 220, 228]
+--------------------------------------
+epoch: 70 loss:  1142.234111789614 points (wood, stone, house):  [176.25, 391.5, 528.0] epsilon:  0.986
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [355, 357, 364, 362, 376, 353, 383]
+agent2 behaviours:  [749, 702, 734, 749, 762, 686, 718]
+agent3 behaviours:  [201, 203, 223, 225, 199, 257, 222]
+--------------------------------------
+epoch: 80 loss:  1108.3774914443493 points (wood, stone, house):  [198.5, 476.75, 458.5] epsilon:  0.985
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [370, 342, 364, 393, 371, 345, 365]
+agent2 behaviours:  [727, 727, 754, 685, 764, 716, 727]
+agent3 behaviours:  [227, 191, 238, 210, 239, 202, 223]
+--------------------------------------
+epoch: 90 loss:  1154.1755401343107 points (wood, stone, house):  [230.75, 479.5, 550.0] epsilon:  0.985
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [348, 377, 395, 354, 363, 337, 376]
+agent2 behaviours:  [727, 707, 868, 670, 721, 735, 672]
+agent3 behaviours:  [241, 198, 238, 222, 219, 202, 210]
+--------------------------------------
+epoch: 100 loss:  1209.7113435193896 points (wood, stone, house):  [201.0, 321.75, 412.25] epsilon:  0.984
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [340, 382, 421, 368, 344, 333, 362]
+agent2 behaviours:  [669, 751, 706, 739, 794, 711, 730]
+agent3 behaviours:  [214, 211, 225, 218, 221, 217, 224]
+--------------------------------------
+epoch: 110 loss:  1123.4974872618914 points (wood, stone, house):  [175.5, 383.75, 400.5] epsilon:  0.984
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [357, 343, 366, 358, 405, 363, 358]
+agent2 behaviours:  [745, 733, 717, 663, 754, 720, 768]
+agent3 behaviours:  [213, 209, 224, 194, 244, 219, 227]
+--------------------------------------
+epoch: 120 loss:  1092.3432281464338 points (wood, stone, house):  [162.25, 469.75, 432.0] epsilon:  0.983
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [355, 376, 337, 408, 363, 350, 361]
+agent2 behaviours:  [692, 713, 812, 698, 710, 778, 697]
+agent3 behaviours:  [224, 225, 211, 208, 223, 234, 205]
+--------------------------------------
+epoch: 130 loss:  1050.7295293137431 points (wood, stone, house):  [220.75, 421.25, 486.75] epsilon:  0.983
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [374, 353, 374, 397, 348, 366, 338]
+agent2 behaviours:  [734, 692, 788, 717, 745, 711, 713]
+agent3 behaviours:  [223, 198, 216, 244, 210, 229, 210]
+--------------------------------------
+epoch: 140 loss:  1154.081257648766 points (wood, stone, house):  [163.0, 460.0, 461.0] epsilon:  0.982
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [362, 355, 354, 372, 362, 377, 368]
+agent2 behaviours:  [714, 731, 796, 733, 737, 692, 697]
+agent3 behaviours:  [220, 206, 222, 228, 217, 227, 210]
+--------------------------------------
+epoch: 150 loss:  1101.778556395322 points (wood, stone, house):  [176.75, 362.0, 368.0] epsilon:  0.982
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [363, 345, 400, 384, 353, 337, 368]
+agent2 behaviours:  [720, 695, 778, 765, 713, 700, 729]
+agent3 behaviours:  [203, 203, 235, 221, 239, 238, 191]
+--------------------------------------
+epoch: 160 loss:  1089.174705568701 points (wood, stone, house):  [198.0, 352.0, 390.5] epsilon:  0.981
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [335, 338, 400, 349, 371, 375, 382]
+agent2 behaviours:  [784, 699, 801, 712, 729, 683, 692]
+agent3 behaviours:  [212, 222, 236, 202, 212, 227, 219]
+--------------------------------------
+epoch: 170 loss:  1161.1736557092518 points (wood, stone, house):  [192.5, 335.0, 478.0] epsilon:  0.981
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [378, 335, 423, 336, 361, 340, 377]
+agent2 behaviours:  [698, 724, 761, 699, 729, 794, 695]
+agent3 behaviours:  [202, 205, 234, 198, 223, 249, 219]
+--------------------------------------
+epoch: 180 loss:  1117.6003107391298 points (wood, stone, house):  [168.0, 415.25, 395.75] epsilon:  0.98
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [310, 388, 396, 365, 328, 370, 393]
+agent2 behaviours:  [705, 694, 799, 713, 721, 721, 747]
+agent3 behaviours:  [210, 216, 234, 221, 218, 219, 212]
+--------------------------------------
+epoch: 190 loss:  857.1425894498825 points (wood, stone, house):  [207.5, 359.25, 522.5] epsilon:  0.98
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [352, 393, 386, 369, 353, 351, 346]
+agent2 behaviours:  [707, 688, 807, 730, 775, 742, 651]
+agent3 behaviours:  [211, 240, 233, 224, 208, 205, 209]
+--------------------------------------
+epoch: 200 loss:  903.0380761176348 points (wood, stone, house):  [272.5, 322.25, 420.5] epsilon:  0.979
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [381, 356, 395, 333, 362, 335, 388]
+agent2 behaviours:  [745, 693, 758, 706, 796, 665, 737]
+agent3 behaviours:  [195, 227, 221, 217, 238, 227, 205]
+--------------------------------------
+epoch: 210 loss:  944.4523741025478 points (wood, stone, house):  [154.5, 388.75, 446.5] epsilon:  0.979
+chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone
+agent1 behaviours:  [383, 373, 382, 361, 365, 332, 354]
+agent2 behaviours:  [716, 701, 798, 692, 710, 738, 745]
+agent3 behaviours:  

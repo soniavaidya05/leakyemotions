@@ -4,13 +4,16 @@ from examples.ai_economist_simple.env import generate_input, prepare_lstm, prepa
 from examples.ai_economist_simple.Model_LSTM import Model_linear_LSTM_DQN
 import numpy as np
 import torch
+from gem.DQN_utils import save_models, load_models, make_video
+
 
 
 # note, the standard LSTM linear model was not working, so it was updated in this example folder
 # that should be fixed
 
 
-save_dir = "C:/Users/wilcu/gemout/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+
 
 device = "cpu"
 print(device)
@@ -182,6 +185,13 @@ for epoch in range(1000000):
         agent1_actions = [0,0,0,0,0,0,0]
         agent2_actions = [0,0,0,0,0,0,0]
         agent3_actions = [0,0,0,0,0,0,0]
+
+    if epoch % 10000 == 0:
+        save_models(
+        models,
+        save_dir,
+        "AIecon_simple_" + str(epoch),
+    )
 
 
 
