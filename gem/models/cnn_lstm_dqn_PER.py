@@ -215,6 +215,7 @@ class Model_CNN_LSTM_DQN:
             reward_batch = torch.tensor([r for (s1, a, r, s2, d) in minibatch], device=self.device)
             state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
             done_batch = torch.tensor([d for (s1, a, r, s2, d) in minibatch], device=self.device)
+            rnn_batch = torch.tensor([d for (s1, a, r, s2, d) in minibatch], device=self.device)
 
             Q1, (c1, h1) = self.model1(state1_batch, None)
             with torch.no_grad():
@@ -273,16 +274,17 @@ class Model_CNN_LSTM_DQN:
         high_reward = exp[1][2]
 
         # move experience to the gpu if available
-        exp = (
-            exp[0],
-            (
-                exp[1][0].to(self.device),
-                torch.tensor(exp[1][1]).float().to(self.device),
-                torch.tensor(exp[1][2]).float().to(self.device),
-                exp[1][3].to(self.device),
-                torch.tensor(exp[1][4]).float().to(self.device),
-            ),
-        )
+        #exp = (
+        #    exp[0],
+        #    (
+        #        exp[1][0].to(self.device),
+        #        torch.tensor(exp[1][1]).float().to(self.device),
+        #        torch.tensor(exp[1][2]).float().to(self.device),
+        #        exp[1][3].to(self.device),
+        #        torch.tensor(exp[1][4]).float().to(self.device),
+        #        torch.tensor(exp[1][5]).float().to(self.device),
+        #    ),
+        #)
 
         self.PER_replay.add(exp[0], exp[1])
         if extra_reward == True and abs(high_reward) > 9:

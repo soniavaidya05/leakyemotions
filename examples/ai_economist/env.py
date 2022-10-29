@@ -281,7 +281,7 @@ class AI_Econ:
                 inventory=[holdObject.stone, holdObject.wood, holdObject.coin],
                 layers=[0, 1],
             )
-            action = models[holdObject.policy].take_action([state.to(device), epsilon])
+            action, init_rnn_state = models[holdObject.policy].take_action([state.to(device), epsilon, None])
 
         if holdObject.has_transitions == True:
             """

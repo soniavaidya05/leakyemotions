@@ -158,6 +158,7 @@ for epoch in range(1000000):
                 reward,
                 next_state_lstm,
                 done,
+                agent_list[agent].init_rnn_state
             )]
             
             agent_list[agent].episode_memory.append(exp)
@@ -186,12 +187,12 @@ for epoch in range(1000000):
         agent2_actions = [0,0,0,0,0,0,0]
         agent3_actions = [0,0,0,0,0,0,0]
 
-    if epoch % 10000 == 0:
-        save_models(
-        models,
-        save_dir,
-        "AIecon_simple_" + str(epoch),
-    )
+    #if epoch % 10000 == 0:
+    #    save_models(
+    #    models,
+    #    save_dir,
+    #    "AIecon_simple_" + str(epoch),
+    #)
 
 
 

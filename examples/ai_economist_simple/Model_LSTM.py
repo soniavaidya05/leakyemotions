@@ -174,15 +174,17 @@ class Model_linear_LSTM_DQN:
             # but on mps, action, reward, and done are being bounced back to the cpu
             # currently removed for a test on CUDA
 
-            state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
-            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch]).to(self.device)
-            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch]).to(self.device)
-            state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
-            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch]).to(self.device)
+            state1_batch = torch.cat([s1 for (s1, a, r, s2, d, hc) in minibatch])
+            action_batch = torch.Tensor([a for (s1, a, r, s2, d, hc) in minibatch]).to(self.device)
+            reward_batch = torch.Tensor([r for (s1, a, r, s2, d, hc) in minibatch]).to(self.device)
+            state2_batch = torch.cat([s2 for (s1, a, r, s2, d, hc) in minibatch])
+            done_batch = torch.Tensor([d for (s1, a, r, s2, d, hc) in minibatch]).to(self.device)
+            rnn_batch = torch.Tensor([d for (s1, a, r, s2, d, hc) in minibatch]).to(self.device)
 
-            Q1, (c, n) = self.model1(state1_batch, None)
+
+            Q1, (c, n) = self.model1(state1_batch, rnn_batch)
             with torch.no_grad():
-                Q2, (c, n) = self.model2(state2_batch, None)
+                Q2, (c, n) = self.model2(state2_batch, rnn_batch)
 
             Y = reward_batch + gamma * (
                 (1 - done_batch) * torch.max(Q2.detach(), dim=1)[0]

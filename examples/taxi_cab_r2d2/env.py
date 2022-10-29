@@ -1,51 +1,52 @@
-from examples.gems_and_wolves.elements import Agent, Wolf, Gem, EmptyObject, Wall
-
+from examples.taxi_cab.elements import (
+    TaxiCab,
+    EmptyObject,
+    Wall,
+    Passenger,
+)
 import numpy as np
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
 from gem.models.perception import agent_visualfield
 import random
-
-from gem.utils import find_moveables, find_instance
 import torch
 
-class WolfsAndGems:
+from gem.utils import find_moveables, find_instance
+
+
+class TaxiCabEnv:
     def __init__(
         self,
-        height=15,
-        width=15,
+        height=10,
+        width=10,
         layers=1,
         defaultObject=EmptyObject(),
-        gem1p=0.110,
-        gem2p=0.04,
-        wolf1p=0.005,
     ):
-        self.gem1p = gem1p
-        self.gem2p = gem2p
-        self.wolf1p = wolf1p
         self.height = height
         self.width = width
         self.layers = layers
         self.defaultObject = defaultObject
         self.create_world(self.height, self.width, self.layers)
         self.init_elements()
-        self.populate(self.gem1p, self.gem2p, self.wolf1p)
+        self.populate()
         self.insert_walls(self.height, self.width)
 
     def create_world(self, height=15, width=15, layers=1):
         """
         Creates a world of the specified size with a default object
         """
-        self.world = np.full((height, width, layers), self.defaultObject)
+        self.world = np.full((height, width, layers), EmptyObject())
+        for i in range(height):
+            for j in range(width):
+                for k in range(layers):
+                    self.world[i, j, k] = EmptyObject()
 
-    def reset_env(
-        self, height=15, width=15, layers=1, gem1p=0.110, gem2p=0.04, wolf1p=0.005
-    ):
+    def reset_env(self, height=10, width=10, layers=1):
         """
         Resets the environment and repopulates it
         """
         self.create_world(height, width, layers)
-        self.populate(gem1p, gem2p, wolf1p)
+        self.populate()
         self.insert_walls(height, width)
 
     def plot(self, layer):  # is this defined in the master?
@@ -88,14 +89,13 @@ class WolfsAndGems:
         plt.imshow(img)
         plt.show()
 
-        
     def pov(self, location, inventory=[], layers=[0]):
         """
         Creates outputs of a single frame, and also a multiple image sequence
         TODO: get rid of the holdObject input throughout the code
         TODO: to get better flexibility, this code should be moved to env
         """
-        
+
         previous_state = self.world[location].episode_memory[-1][1][0]
         current_state = previous_state.clone()
 
@@ -126,49 +126,48 @@ class WolfsAndGems:
 
         return current_state
 
-    def populate(self, gem1p=0.115, gem2p=0.06, wolf1p=0.005):
+    def pov_noCNN(self, location, lstm_input):
+        """
+        This is being used as a scratch area thinking about non-CNN inputs to the models
+        we may concat these inputs into a model that can use both scalars and CNNs
+        For example, we should be able to have this read in whether a passenger is in the taxi
+        """
+
+        previous_state = self.world[location].episode_memory[-1][1][0]
+        current_state = previous_state.clone()
+
+        current_state[:, 0:-1, :] = previous_state[:, 1:, :]
+
+        state_now = torch.tensor(lstm_input).unsqueeze(0).unsqueeze(0)
+        current_state[:, -1, :] = state_now
+
+        return current_state
+
+    def populate(self):
         """
         Populates the game board with elements
         TODO: test whether the probabilites above are working
         """
 
-        for i in range(self.world.shape[0]):
-            for j in range(self.world.shape[1]):
-                obj = np.random.choice(
-                    [0, 1, 2, 3],
-                    p=[
-                        gem1p,
-                        gem2p,
-                        wolf1p,
-                        1 - gem2p - gem1p - wolf1p,
-                    ],
-                )
-                if obj == 0:
-                    self.world[i, j, 0] = Gem(5, [0.0, 255.0, 0.0])
-                if obj == 1:
-                    self.world[i, j, 0] = Gem(15, [255.0, 255.0, 0.0])
-                if obj == 2:
-                    self.world[i, j, 0] = Wolf(1)
+        taxi_cab_start1 = round(self.world.shape[0] / 2)
+        taxi_cab_start2 = round(self.world.shape[1] / 2)
+        taxi_start = (taxi_cab_start1, taxi_cab_start2, 0)
+        self.world[taxi_start] = TaxiCab(0)
+        self.spawn_passenger()
 
-        cBal = np.random.choice([0, 1])
-        if cBal == 0:
-            self.world[
-                round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
-            ] = Agent(0)
-            self.world[
-                round(self.world.shape[0] / 2) + 1,
-                round(self.world.shape[1] / 2) - 1,
-                0,
-            ] = Agent(0)
-        if cBal == 1:
-            self.world[
-                round(self.world.shape[0] / 2), round(self.world.shape[1] / 2), 0
-            ] = Agent(0)
-            self.world[
-                round(self.world.shape[0] / 2) + 1,
-                round(self.world.shape[1] / 2) - 1,
-                0,
-            ] = Agent(0)
+
+    def spawn_passenger(self):
+        """
+        Spawns a passenger in a random location
+        """
+        valid = False
+        while not valid:
+            loc1 = random.randint(1, self.world.shape[0] - 2)
+            loc2 = random.randint(1, self.world.shape[1] - 2)
+            passenger_start = (loc1, loc2, 0)
+            if isinstance(self.world[passenger_start], EmptyObject):
+                valid = True
+                self.world[passenger_start] = Passenger(self.world)
 
     def insert_walls(self, height, width):
         """
@@ -181,47 +180,19 @@ class WolfsAndGems:
             self.world[i, 0, 0] = Wall()
             self.world[i, height - 1, 0] = Wall()
 
-    def step(self, models, loc, epsilon=0.85, device=None):
+    def step(self, models, loc, epsilon=0.85):
         """
-        This is an example script for an alternative step function
-        It does not account for the fact that an agent can die before
-        it's next turn in the moveList. If that can be solved, this
-        may be preferable to the above function as it is more like openAI gym
-
-        The solution may come from the agent.died() function if we can get that to work
-
-        location = (i, j, 0)
-
-        Uasge:
-            for i, j, k = agents
-                location = (i, j, k)
-                state, action, reward, next_state, done, additional_output = env.stepSingle(models, (0, 0, 0), epsilon)
-                env.world[0, 0, 0].updateMemory(state, action, reward, next_state, done, additional_output)
-            env.WorldUpdate()
-
+        This is an example script for an  step function
         """
-        holdObject = self.world[loc]
-        device = models[holdObject.policy].device
-        
 
+        if self.world[loc].action_type == "neural_network":
 
-        if holdObject.kind != "deadAgent":
-            """
-            This is where the agent will make a decision
-            If done this way, the pov statement may be about to be part of the action
-            Since they are both part of the same class
-
-            if going for this, the pov statement needs to know about location rather than separate
-            i and j variables
-            """
-            state = models[holdObject.policy].pov(self.world, loc, holdObject)
-            params = (state.to(device), epsilon, None)
-            action, init_rnn_state = models[holdObject.policy].take_action(params)
-
-        if holdObject.has_transitions == True:
+            holdObject = self.world[loc]
+            device = models[holdObject.policy].device
+            state = self.pov(loc, inventory=[holdObject.has_passenger], layers=[0])
+            action = models[holdObject.policy].take_action([state.to(device), epsilon])
             """
             Updates the world given an action
-            TODO: does this need self.world in here, or can it be figured out by passing self?
             """
             (
                 self.world,
