@@ -21,8 +21,8 @@ print(device)
 
 
 decider_model =  Model_simple_linear_MLP(
-            lr=0.001,
-            replay_size=1024,  
+            lr=0.0001,
+            replay_size=262144,  
             in_size=18,  
             hid_size1=10,  
             hid_size2=10,  
@@ -178,9 +178,9 @@ for epoch in range(1000000):
                     decider_loss = decider_model.training(exp)
                     decider_losses = decider_losses + decider_loss.detach().cpu().numpy()
 
-                if decider_step % 5000 == 0:
+                if decider_step % 5000 == 0 and decider_step > 40000:
                     print(epoch, "decider maxtrx: ", decider_matrix, decider_losses, epsilon)
-                    epsilon = epsilon - .001
+                    epsilon = epsilon - .002
 
             #agent_list[agent].episode_memory.append(exp)
 
