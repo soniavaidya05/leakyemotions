@@ -1,7 +1,7 @@
 from examples.ai_economist_simple.elements import Agent
 from examples.ai_economist_simple.env import AIEcon_simple_game
 from examples.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
-from examples.ai_economist_simple.Model_dualing_NoneLSTM import Model_linear_LSTM_DQN
+from examples.ai_economist_simple.Model_dualing_LSTM import Model_linear_LSTM_DQN
 import numpy as np
 import torch
 from gem.DQN_utils import save_models, load_models, make_video
@@ -13,8 +13,8 @@ from examples.ai_market_decider.simple_mlp import Model_simple_linear_MLP
 # that should be fixed
 
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-
+#save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 
 device = "cpu"
 print(device)
@@ -25,7 +25,7 @@ def create_models():
     models.append(
         Model_linear_LSTM_DQN(
             lr=0.0005,
-            replay_size=1024,  
+            replay_size=4096,  
             in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
@@ -37,7 +37,7 @@ def create_models():
     models.append(
         Model_linear_LSTM_DQN(
             lr=0.0005,
-            replay_size=1024,  
+            replay_size=4096,  
             in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
@@ -49,7 +49,7 @@ def create_models():
     models.append(
         Model_linear_LSTM_DQN(
             lr=0.0005,
-            replay_size=1024,  
+            replay_size=4096,  
             in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
@@ -61,7 +61,7 @@ def create_models():
     models.append(
         Model_linear_LSTM_DQN(
             lr=0.0005,
-            replay_size=1024,  
+            replay_size=4096,  
             in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
@@ -73,7 +73,7 @@ def create_models():
     models.append(
         Model_linear_LSTM_DQN(
             lr=0.0005,
-            replay_size=1024,  
+            replay_size=4096,  
             in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
@@ -85,7 +85,7 @@ def create_models():
     models.append(
         Model_linear_LSTM_DQN(
             lr=0.0005,
-            replay_size=1024,  
+            replay_size=4096,  
             in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
@@ -97,7 +97,7 @@ def create_models():
     models.append(
         Model_linear_LSTM_DQN(
             lr=0.0005,
-            replay_size=1024,  
+            replay_size=4096,  
             in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
@@ -109,7 +109,7 @@ def create_models():
     models.append(
         Model_linear_LSTM_DQN(
             lr=0.0005,
-            replay_size=1024,  
+            replay_size=4096,  
             in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
@@ -121,7 +121,7 @@ def create_models():
     models.append(
         Model_linear_LSTM_DQN(
             lr=0.0005,
-            replay_size=1024,  
+            replay_size=4096,  
             in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
@@ -154,6 +154,7 @@ decider_model =  Model_simple_linear_MLP(
 
 
 decider_model = load_models(save_dir, "decider_model")
+decider_model.replay = []
 
 decider_model.model1.to(device)
 
@@ -163,7 +164,11 @@ models.append(decider_model)
 env = AIEcon_simple_game()
 
 agent_list = []
-
+i15 = 0
+i14 = 0
+i13 = 0
+i12 = 0
+i11 = 0
 
 for i1 in range(2):
     for i2 in range(2):
@@ -177,14 +182,14 @@ for i1 in range(2):
                                     for i8 in range(2):
                                         for i9 in range(2):
                                             for i10 in range(2):
-                                                for i11 in range(2):
-                                                    for i12 in range(2):
-                                                        for i13 in range(2):
-                                                            for i14 in range(2):
-                                                                for i15 in range(2):
+                                                #for i11 in range(2):
+                                                    #for i12 in range(2):
+                                                        #for i13 in range(2):
+                                                            #for i14 in range(2):
+                                                                #for i15 in range(2):
                                                                     agent_type = np.random.choice([0,1,2])
                                                                     if agent_type == 0:
-                                                                        agent_subtype = np.random.choice([0,1,2], p = (.7,.15,.15))
+                                                                        agent_subtype = np.random.choice([0,1,2], p = (.45,.45,.1))
                                                                         appearence = [1, 0, 0, i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15]
                                                                         if agent_subtype == 0:
                                                                             agent_list.append(Agent(0,0,appearence, .95, .15, .05))
@@ -193,7 +198,7 @@ for i1 in range(2):
                                                                         if agent_subtype == 2:
                                                                             agent_list.append(Agent(2,2,appearence, .95, .15, .05))
                                                                     if agent_type == 1:
-                                                                        agent_subtype = np.random.choice([0,1,2], p = (.15,.7,.15))
+                                                                        agent_subtype = np.random.choice([0,1,2], p = (.45,.45,.1))
                                                                         appearence = [0, 1, 0, i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15]
                                                                         if agent_subtype == 0:
                                                                             agent_list.append(Agent(3,3,appearence, .95, .15, .05))
@@ -202,7 +207,7 @@ for i1 in range(2):
                                                                         if agent_subtype == 2:
                                                                             agent_list.append(Agent(5,5,appearence, .95, .15, .05))
                                                                     if agent_type == 2:
-                                                                        agent_subtype = np.random.choice([0,1,2], p = (.15,.15,.7))
+                                                                        agent_subtype = np.random.choice([0,1,2], p = (.1,.1,.8))
                                                                         appearence = [0, 0, 1, i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15]
                                                                         if agent_subtype == 0:
                                                                             agent_list.append(Agent(6,6,appearence, .95, .15, .05))
@@ -213,6 +218,7 @@ for i1 in range(2):
 
 
 num_agents = len(agent_list)
+print(num_agents)
 for i in range(num_agents):
     agent_list[i].init_replay(3)   
 
@@ -322,7 +328,7 @@ for epoch in range(1000000):
 
             models[agent_list[agent].policy].PER_replay.add(exp[0], exp[1])
 
-        if turn % model_learn_rate == 0 and epoch > 10:
+        if turn % model_learn_rate == 0 and epoch > 100:
             for mods in trainable_models:
                 loss = models[mods].training(128, .9) 
                 losses = losses + loss.detach().cpu().numpy()
@@ -336,14 +342,26 @@ for epoch in range(1000000):
         print("--------------------------------------")
         print("epoch:" , epoch, "loss: ",losses, "points (wood, stone, house): ", rewards, "epsilon: ", epsilon)
         print("chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone")
-        print("agent1 behaviours: ", agent1_actions)
-        print("agent2 behaviours: ", agent2_actions)
-        print("agent3 behaviours: ", agent3_actions)
-        rewards = [0,0,0]
+        print("agent1 behaviours - chop_c: ", agent1_actions)
+        print("agent2 behaviours - chop_m: ", agent2_actions)
+        print("agent3 behaviours - chop_h: ", agent3_actions)
+        print("agent4 behaviours - mine_c: ", agent1_actions)
+        print("agent5 behaviours - mine_m: ", agent2_actions)
+        print("agent6 behaviours - mine_h: ", agent3_actions)
+        print("agent7 behaviours - hous_c: ", agent1_actions)
+        print("agent8 behaviours - hous_m: ", agent2_actions)
+        print("agent9 behaviours - hous_h: ", agent3_actions)
+        rewards = [0,0,0,0,0,0,0,0,0]
         losses = 0
         agent1_actions = [0,0,0,0,0,0,0]
         agent2_actions = [0,0,0,0,0,0,0]
         agent3_actions = [0,0,0,0,0,0,0]
+        agent4_actions = [0,0,0,0,0,0,0]
+        agent5_actions = [0,0,0,0,0,0,0]
+        agent6_actions = [0,0,0,0,0,0,0]
+        agent7_actions = [0,0,0,0,0,0,0]
+        agent8_actions = [0,0,0,0,0,0,0]
+        agent9_actions = [0,0,0,0,0,0,0]
 
     if epoch % 10000 == 0:
         save_models(
