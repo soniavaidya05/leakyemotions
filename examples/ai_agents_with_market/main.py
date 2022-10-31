@@ -200,7 +200,7 @@ for i1 in range(2):
                                                                         if agent_subtype == 1:
                                                                             agent_list.append(Agent(4,4,appearence, .95, .15, .05))
                                                                         if agent_subtype == 2:
-                                                                            agent_list.appen2(Agent(5,5,appearence, .95, .15, .05))
+                                                                            agent_list.append(Agent(5,5,appearence, .95, .15, .05))
                                                                     if agent_type == 2:
                                                                         agent_subtype = np.random.choice([0,1,2], p = (.15,.15,.7))
                                                                         appearence = [0, 0, 1, i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15]
