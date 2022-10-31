@@ -24,9 +24,10 @@ class Agent():
         self.coin = 6
         self.agent_type = agent_type
         self.init_rnn_state = None
+        self.state = torch.zeros(12).float()
 
     def init_replay(self, numberMemories):
-        image = torch.zeros(1, numberMemories, 6).float()
+        image = torch.zeros(1, numberMemories, 12).float()
         exp = (0.1, (image, 0, 0, image, 0, None))
         self.episode_memory.append(exp)
 
@@ -36,12 +37,12 @@ class Agent():
         reward = 0
 
         if action == 0:
-            if random.random() < self.wood_skill:
-                self.wood = min(self.wood + 1,3)
+            if random.random() < self.wood_skill and ((self.wood + self.stone) < 11):
+                self.wood = self.wood + 1
                 reward = 0.00 # for this to really be working, this needs to be zero
         if action == 1:
-            if random.random() < self.stone_skill:
-                self.stone = min(self.stone + 1,3)
+            if random.random() < self.stone_skill and ((self.wood + self.stone) < 11):
+                self.stone = self.stone + 1
                 reward = 0.00 # for this to really be working, this needs to be zero
         if action == 2:
             dice_role = random.random()
@@ -50,35 +51,36 @@ class Agent():
                 self.stone = self.stone - 1
                 self.house = self.house + 1
                 self.coin = self.coin + 10
-                reward = 10
+                reward = 20
         if action == 3:
             #if random.random() < self.wood_skill: # simulates the AI market
             if self.wood > 1:
                 self.wood = self.wood - 2
-                reward = 1
+                reward = 2
                 self.coin = self.coin + 1
                 env.wood = env.wood + 1
         if action == 4:
             #if random.random() < self.stone_skill: # simulates the AI market
             if self.stone > 1:
                 self.stone = self.stone - 2
-                reward = 1
+                reward = 2
                 self.coin = self.coin + 1
                 env.stone = env.stone + 1
         if action == 5:
             if env.wood > 2 and self.coin > 1:
                 env.wood = env.wood - 2
-                reward = -1.25
+                reward = -2.25
                 self.coin = self.coin - 1
                 self.wood = self.wood + 2
         if action == 6:
             if env.stone > 2 and self.coin > 1:
                 env.stone = env.stone - 2
-                reward = -1.25
+                reward = -2.25
                 self.coin = self.coin - 1
                 self.stone = self.stone + 2
 
-        next_state = generate_input(agent_list, agent).unsqueeze(0).to(models[0].device)
+        next_state, _ = generate_input(agent_list, agent, agent_list[agent].state)
+        next_state = next_state.unsqueeze(0).to(models[0].device)
 
         #next_state = torch.tensor([self.wood, self.stone, self.coin]).float().unsqueeze(0)
 

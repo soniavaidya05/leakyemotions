@@ -13,7 +13,7 @@ from examples.taxi_cab.elements import (
     Wall,
     Passenger,
 )
-from gem.models.cnn_lstm_dqn_PER import Model_CNN_LSTM_DQN
+from gem.models.dualing_cnn_lstm_dqn import Model_CNN_LSTM_DQN
 from examples.taxi_cab.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb

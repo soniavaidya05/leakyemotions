@@ -1,7 +1,7 @@
 from examples.ai_economist_simple.elements import Agent
 from examples.ai_economist_simple.env import AIEcon_simple_game
 from examples.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
-from examples.ai_economist_simple.Model_LSTM import Model_linear_LSTM_DQN
+from examples.ai_economist_simple.Model_dualing_NoneLSTM import Model_linear_LSTM_DQN
 import numpy as np
 import torch
 from gem.DQN_utils import save_models, load_models, make_video
@@ -25,9 +25,9 @@ def create_models():
         Model_linear_LSTM_DQN(
             lr=0.0005,
             replay_size=1024,  
-            in_size=6,  
-            hid_size1=10,  
-            hid_size2=10,  
+            in_size=12,  
+            hid_size1=20,  
+            hid_size2=20,  
             out_size=7,
             priority_replay=False,
             device=device,
@@ -37,9 +37,9 @@ def create_models():
         Model_linear_LSTM_DQN(
             lr=0.0005,
             replay_size=1024,  
-            in_size=6,  
-            hid_size1=10,  
-            hid_size2=10,  
+            in_size=12,  
+            hid_size1=20,  
+            hid_size2=20,  
             out_size=7,
             priority_replay=False,
             device=device,
@@ -49,9 +49,9 @@ def create_models():
         Model_linear_LSTM_DQN(
             lr=0.0005,
             replay_size=1024,  
-            in_size=6,  
-            hid_size1=10,  
-            hid_size2=10,  
+            in_size=12,  
+            hid_size1=20,  
+            hid_size2=20,  
             out_size=7,
             priority_replay=False,
             device=device,
@@ -77,13 +77,13 @@ for i in range(num_agents):
     agent_type = np.random.choice([0,1,2])
     if agent_type == 0:
         appearence = [1, 0, 0, np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1])]
-        agent_list.append(Agent(0,0,appearence, .95, .25, .1))
+        agent_list.append(Agent(0,0,appearence, .95, .15, .05))
     if agent_type == 1:
         appearence = [0, 1, 0, np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1])]
-        agent_list.append(Agent(1,1,appearence, .25, .95, .1))
+        agent_list.append(Agent(1,1,appearence, .15, .95, .05))
     if agent_type == 2:
         appearence = [0, 0, 1, np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1])]
-        agent_list.append(Agent(2,2,appearence, .1, .1, .95))
+        agent_list.append(Agent(2,2,appearence, .05, .05, .15))
     agent_list[i].init_replay(3)   
 
 rewards = [0,0,0]
@@ -111,7 +111,7 @@ for epoch in range(1000000):
                     models[mods].model1.state_dict()
                 )
     if epoch % round(1000/max_turns) == 0:
-        epsilon = epsilon - .001
+        epsilon = epsilon - .0001
 
     env.wood = 10
     env.stone = 10
@@ -123,6 +123,7 @@ for epoch in range(1000000):
         if agent_list[agent].policy == 2:
             agent_list[agent].coin = 6
         agent_list[i].init_replay(3)
+        agent_list[i].state = torch.zeros(12).float()
 
     turn = 0
     while done != 1:
@@ -136,7 +137,9 @@ for epoch in range(1000000):
             cur_stone = agent_list[agent].stone
             cur_coin = agent_list[agent].coin
 
-            state = generate_input(agent_list, agent).unsqueeze(0).to(device)
+            state, previous_state = generate_input(agent_list, agent, agent_list[agent].state)
+
+            state = state.unsqueeze(0).to(device)
             state_lstm = prepare_lstm(agent_list, agent, state)
             action, init_rnn_state= models[agent_list[agent].policy].take_action([state_lstm, epsilon, agent_list[agent].init_rnn_state])
             agent_list[agent].init_rnn_state = init_rnn_state
@@ -187,12 +190,12 @@ for epoch in range(1000000):
         agent2_actions = [0,0,0,0,0,0,0]
         agent3_actions = [0,0,0,0,0,0,0]
 
-    #if epoch % 10000 == 0:
-    #    save_models(
-    #    models,
-    #    save_dir,
-    #    "AIecon_simple_" + str(epoch),
-    #)
+    if epoch % 10000 == 0:
+        save_models(
+        models,
+        save_dir,
+        "AIecon_simple_dualing_None_" + str(epoch),
+    )
 
 
 
