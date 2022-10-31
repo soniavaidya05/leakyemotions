@@ -134,7 +134,8 @@ class Model_simple_linear_MLP:
             Y = reward_batch.to(self.device)
 
             X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
-
+            
+            self.optimizer.zero_grad()
             loss = self.loss_fn(X, Y)
             loss.backward()
             self.optimizer.step()

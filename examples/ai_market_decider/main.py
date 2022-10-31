@@ -180,7 +180,7 @@ for epoch in range(1000000):
 
                 if decider_step % 5000 == 0 and decider_step > 40000:
                     print(epoch, "decider maxtrx: ", decider_matrix, decider_losses, epsilon)
-                    epsilon = epsilon - .002
+                    epsilon = epsilon - .01
 
             #agent_list[agent].episode_memory.append(exp)
 

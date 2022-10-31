@@ -108,6 +108,8 @@ class Model_simple_linear_DQN:
         Q1 = self.model1(state)
         Y = torch.tensor(reward).float().to(self.device)
         X = Q1[action]
+        
+        self.optimizer.zero_grad()
         loss = self.loss_fn(X, Y)
         loss.backward()
         self.optimizer.step()
