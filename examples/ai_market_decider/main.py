@@ -171,7 +171,7 @@ for epoch in range(1000000):
                     decider_matrix[3] = decider_matrix[3] + 1
 
 
-                exp = (torch.tensor(agent_list[agent].appearance).float(), decider_action, reward, torch.tensor(agent_list[agent].appearance).float(), done)
+                exp = (torch.tensor(agent_list[agent].appearance).float(), decider_action, decider_reward, torch.tensor(agent_list[agent].appearance).float(), done)
                 decider_model.replay.append(exp)
 
                 if decider_step % 2 == 0:
