@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from gem.DQN_utils import save_models, load_models, make_video
 
-from examples.ai_market_decider.dist_mlp import Model_simple_linear_MLP
+from examples.ai_market_decider.simple_mlp import Model_simple_linear_MLP
 
 
 # note, the standard LSTM linear model was not working, so it was updated in this example folder
@@ -82,7 +82,7 @@ agent3_actions = [0,0,0,0,0,0,0]
 decider_matrix = [0,0,0,0]
 
 
-epsilon = .5
+epsilon = .98
 
 decider_step = 0
 
