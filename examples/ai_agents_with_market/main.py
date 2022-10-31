@@ -188,27 +188,27 @@ for i1 in range(2):
                                                                         appearence = [1, 0, 0, i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15]
                                                                         if agent_subtype == 0:
                                                                             agent_list.append(Agent(0,0,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 2:
+                                                                        if agent_subtype == 1:
                                                                             agent_list.append(Agent(1,1,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 3:
+                                                                        if agent_subtype == 2:
                                                                             agent_list.append(Agent(2,2,appearence, .95, .15, .05))
                                                                     if agent_type == 1:
                                                                         agent_subtype = np.random.choice([0,1,2], p = (.15,.7,.15))
                                                                         appearence = [0, 1, 0, i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15]
                                                                         if agent_subtype == 0:
                                                                             agent_list.append(Agent(3,3,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 2:
+                                                                        if agent_subtype == 1:
                                                                             agent_list.append(Agent(4,4,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 3:
-                                                                            agent_list.append(Agent(5,5,appearence, .95, .15, .05))
+                                                                        if agent_subtype == 2:
+                                                                            agent_list.appen2(Agent(5,5,appearence, .95, .15, .05))
                                                                     if agent_type == 2:
                                                                         agent_subtype = np.random.choice([0,1,2], p = (.15,.15,.7))
                                                                         appearence = [0, 0, 1, i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15]
                                                                         if agent_subtype == 0:
                                                                             agent_list.append(Agent(6,6,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 2:
+                                                                        if agent_subtype == 1:
                                                                             agent_list.append(Agent(7,7,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 3:
+                                                                        if agent_subtype == 2:
                                                                             agent_list.append(Agent(8,8,appearence, .95, .15, .05))
 
 
@@ -322,10 +322,10 @@ for epoch in range(1000000):
 
             models[agent_list[agent].policy].PER_replay.add(exp[0], exp[1])
 
-        #if turn % model_learn_rate == 0 and epoch > 10:
-        #    for mods in trainable_models:
-        #        loss = models[mods].training(128, .9) 
-        #        losses = losses + loss.detach().cpu().numpy()
+        if turn % model_learn_rate == 0 and epoch > 10:
+            for mods in trainable_models:
+                loss = models[mods].training(128, .9) 
+                losses = losses + loss.detach().cpu().numpy()
 
     if turn % model_learn_rate == 0:
         for mods in trainable_models:# reducing gamma to see if future Q is the problem
