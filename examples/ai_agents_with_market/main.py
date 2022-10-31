@@ -293,7 +293,7 @@ for epoch in range(1000000):
 
             if action in (3,4):
                 decider_state = torch.tensor(agent_list[agent].appearance).float()
-                decider_action = models[10].take_action([decider_state, epsilon])
+                decider_action = decider_model.take_action([decider_state, .1])
                 agent_action = action - 3
                 decider_reward = -1
                 if decider_action != agent_action:
