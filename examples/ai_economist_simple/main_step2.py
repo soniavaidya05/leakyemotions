@@ -178,27 +178,27 @@ for indiv in individual_attributes:
         if agent_subtype == 0:
             agent_list.append(Agent(0,0,appearence, .95, .15, .05))
         if agent_subtype == 1:
-            agent_list.append(Agent(1,1,appearence, .95, .15, .05))
+            agent_list.append(Agent(1,1,appearence, .15, .95, .05))
         if agent_subtype == 2:
-            agent_list.append(Agent(2,2,appearence, .95, .15, .05))
+            agent_list.append(Agent(2,2,appearence, .1, .1, .95))
     if agent_type == 1:
         agent_subtype = np.random.choice([0,1,2], p = (.45,.45,.1))
         appearence = [0, 1, 0] + indiv + [i11, i12, i13, i14, i15]
         if agent_subtype == 0:
             agent_list.append(Agent(3,3,appearence, .95, .15, .05))
         if agent_subtype == 1:
-            agent_list.append(Agent(4,4,appearence, .95, .15, .05))
+            agent_list.append(Agent(4,4,appearence, .15, .95, .05))
         if agent_subtype == 2:
-            agent_list.append(Agent(5,5,appearence, .95, .15, .05))
+            agent_list.append(Agent(5,5,appearence, .1, .1, .95))
     if agent_type == 2:
         agent_subtype = np.random.choice([0,1,2], p = (.1,.1,.8))
         appearence = [0, 0, 1] + indiv + [i11, i12, i13, i14, i15]
         if agent_subtype == 0:
             agent_list.append(Agent(6,6,appearence, .95, .15, .05))
         if agent_subtype == 1:
-            agent_list.append(Agent(7,7,appearence, .95, .15, .05))
+            agent_list.append(Agent(7,7,appearence, .15, .95, .05))
         if agent_subtype == 2:
-            agent_list.append(Agent(8,8,appearence, .95, .15, .05))
+            agent_list.append(Agent(8,8,appearence, .1, .1, .95))
 
 num_agents = len(agent_list)
 print(num_agents)
@@ -223,7 +223,7 @@ agent7_actions = [0,0,0,0,0,0,0]
 agent8_actions = [0,0,0,0,0,0,0]
 agent9_actions = [0,0,0,0,0,0,0]
 
-epsilon = .99
+epsilon = .8
 
 
 
@@ -238,7 +238,7 @@ for epoch in range(1000000):
                     models[mods].model1.state_dict()
                 )
     if epoch % round(1000/max_turns) == 0:
-        epsilon = epsilon - .0005
+        epsilon = epsilon - .001
 
     env.wood = 10
     env.stone = 10
