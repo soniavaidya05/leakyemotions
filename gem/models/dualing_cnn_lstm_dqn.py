@@ -224,6 +224,15 @@ class Model_CNN_LSTM_DQN:
             reward_batch = torch.tensor([r for (s1, a, r, s2, d) in minibatch], device=self.device)
             state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
             done_batch = torch.tensor([d for (s1, a, r, s2, d) in minibatch], device=self.device)
+            
+            """
+            # TODO: to get the rnn_batch to be fed in the initial state of the LSTM for GPU
+                    can not be None, but needs to be set to a tensor. This will not be that
+                    much work, but needs to be done. This method with None works reading in the
+                    rnn_batch below on just a CPU, but we should add the functionality only once
+                    it works on GPU as well
+            """
+
             rnn_batch = torch.tensor([d for (s1, a, r, s2, d) in minibatch], device=self.device)
 
             Q1, (c1, h1) = self.model1(state1_batch, None)
