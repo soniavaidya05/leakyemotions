@@ -96,21 +96,6 @@ class Farming:
     def step(self, models, loc, epsilon=0.85):
         """
         This is an example script for an alternative step function
-        It does not account for the fact that an agent can die before
-        it's next turn in the moveList. If that can be solved, this
-        may be preferable to the above function as it is more like openAI gym
-
-        The solution may come from the agent.died() function if we can get that to work
-
-        location = (i, j, 0)
-
-        Uasge:
-            for i, j, k = agents
-                location = (i, j, k)
-                state, action, reward, next_state, done, additional_output = env.stepSingle(models, (0, 0, 0), epsilon)
-                env.world[0, 0, 0].updateMemory(state, action, reward, next_state, done, additional_output)
-            env.WorldUpdate()
-
         """
         holdObject = self.world[loc]
         device = models[holdObject.policy].device
@@ -118,11 +103,6 @@ class Farming:
         if holdObject.static != 1:
             """
             This is where the agent will make a decision
-            If done this way, the pov statement may be about to be part of the action
-            Since they are both part of the same class
-
-            if going for this, the pov statement needs to know about location rather than separate
-            i and j variables
             """
             state = models[holdObject.policy].pov(
                 self.world,
