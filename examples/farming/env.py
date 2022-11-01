@@ -89,7 +89,8 @@ class Farming:
         plt.show()
 
     def populate(self, farmer_probs = .5):
-        # this will be were to initialize farmers
+        self.world[0,0,0] = 5 # number of farmers
+        self.world[0,1,0] = 5
         pass
 
     def step(self, models, loc, epsilon=0.85):
