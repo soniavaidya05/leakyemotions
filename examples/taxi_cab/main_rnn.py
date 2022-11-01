@@ -176,8 +176,8 @@ def run_game(
                             reward,
                             next_state,
                             done,
-                            env.world[new_loc].init_rnn_state[0].unsqueeze(dim=0),
-                            env.world[new_loc].init_rnn_state[1].unsqueeze(dim=0)
+                            env.world[new_loc].init_rnn_state[0],
+                            env.world[new_loc].init_rnn_state[1]
                         ),
                     )
 

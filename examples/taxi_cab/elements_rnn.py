@@ -112,7 +112,7 @@ class TaxiCab:
         # pov_size = (self.vision * 2) - 1
         pov_size = 9
         visual_depth = 4  # change this to be 6 when we add the second layer of the task
-        rnn_init = (torch.zeros([2,1,75]), torch.zeros([2,1,75]))
+        rnn_init = (torch.zeros([1,1,75]), torch.zeros([1,1,75]))
         image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
         exp = 1, (image, 0, 0, image, 0, rnn_init)
         self.episode_memory.append(exp)

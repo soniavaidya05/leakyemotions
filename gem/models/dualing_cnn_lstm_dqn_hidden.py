@@ -49,7 +49,7 @@ class Combine_CLD(nn.Module):
         hid_size1,
         hid_size2,
         out_size,
-        n_layers=2,
+        n_layers=1,
         batch_first=True,
     ):
         super(Combine_CLD, self).__init__()
@@ -229,7 +229,7 @@ class Model_CNN_LSTM_DQN:
             rnn2_batch = torch.cat([rnn2 for (s1, a, r, s2, d, rnn1, rnn2) in minibatch])
            
 
-            Q1, (c1, h1) = self.model1(state1_batch, None)
+            Q1, (c1, h1) = self.model1(state1_batch, (rnn1_batch.permute(1,0,2).detach(), rnn2_batch.permute(1,0,2).detach()))
             with torch.no_grad():
                 Q2, (c1, h1) = self.model2(state2_batch, None)
 
