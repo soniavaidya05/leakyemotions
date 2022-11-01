@@ -55,7 +55,7 @@ def create_models():
             hid_size1=150,
             hid_size2=75,
             out_size=9,
-            priority_replay=False,
+            priority_replay=True,
             device=device,
         )
     )  # agent model 1
@@ -70,7 +70,7 @@ def create_models():
             hid_size1=150,
             hid_size2=75,
             out_size=9,
-            priority_replay=False,
+            priority_replay=True,
             device=device,
         )
     )  # agent model 2
@@ -85,7 +85,7 @@ def create_models():
             hid_size1=150,
             hid_size2=75,
             out_size=9,
-            priority_replay=False,
+            priority_replay=True,
             device=device,
         )
     )  # agent model 3
