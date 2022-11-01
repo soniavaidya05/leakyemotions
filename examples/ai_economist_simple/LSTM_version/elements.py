@@ -1,7 +1,7 @@
 import torch
 import random
 from collections import deque
-from examples.ai_economist_simple.env_MLP import generate_input, prepare_lstm, prepare_lstm2
+from examples.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
 
 
 class Agent():
@@ -24,10 +24,10 @@ class Agent():
         self.coin = 6
         self.agent_type = agent_type
         self.init_rnn_state = None
-        self.state = torch.zeros(6).float()
+        self.state = torch.zeros(12).float()
 
     def init_replay(self, numberMemories):
-        image = torch.zeros(1, numberMemories, 6).float()
+        image = torch.zeros(1, numberMemories, 12).float()
         exp = (0.1, (image, 0, 0, image, 0, None))
         self.episode_memory.append(exp)
 

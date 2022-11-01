@@ -23,7 +23,7 @@ class AIEcon_simple_game:
 
 def generate_input(agent_list, agent, state):
 
-    previous_state = state
+    previous_state = state[0:6]
 
 
     cur_wood = agent_list[agent].wood /5 # what is the best way of having current inventory
@@ -45,13 +45,15 @@ def generate_input(agent_list, agent, state):
         suf_coin = 1
     else:
         suf_coin = 0
-    state = torch.tensor([cur_wood, cur_stone, cur_coin, suf_wood, suf_stone, suf_coin]).float()
+    curstate = torch.tensor([cur_wood, cur_stone, cur_coin, suf_wood, suf_stone, suf_coin]).float()
+    state = torch.cat([curstate, previous_state])
 
 
     return state, previous_state
 
 def prepare_lstm(agent_list, agent, state):
     previous_state = agent_list[agent].episode_memory[-1][1][0]
+
     current_state = previous_state.clone()
     current_state[:, 0:-1, :] = previous_state[:, 1:, :]
     current_state[:, -1, :] = state

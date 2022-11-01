@@ -1,6 +1,6 @@
-from examples.ai_economist_simple.elements_MLP import Agent
-from examples.ai_economist_simple.env_MLP import AIEcon_simple_game
-from examples.ai_economist_simple.env_MLP import generate_input, prepare_lstm, prepare_lstm2
+from examples.ai_economist_simple.elements import Agent
+from examples.ai_economist_simple.env import AIEcon_simple_game
+from examples.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
 from examples.ai_economist_simple.Model_dualing_MLP import Model_linear_MLP_DDQN
 import numpy as np
 import torch
@@ -164,58 +164,41 @@ models.append(decider_model)
 env = AIEcon_simple_game()
 
 agent_list = []
-i15 = 0
-i14 = 0
-i13 = 0
-i12 = 0
-i11 = 0
+i11, i12, i13, i14, i15 = 0, 0, 0, 0 ,0
 
-for i1 in range(2):
-    for i2 in range(2):
-        for i3 in range(2):
-            for i4 in range(2):
-                for i4 in range(2):
-                    for i5 in range(2):
-                        for i6 in range(2):
-                            for i7 in range(2):
-                                for i8 in range(2):
-                                    for i8 in range(2):
-                                        for i9 in range(2):
-                                            for i10 in range(2):
-                                                #for i11 in range(2):
-                                                    #for i12 in range(2):
-                                                        #for i13 in range(2):
-                                                            #for i14 in range(2):
-                                                                #for i15 in range(2):
-                                                                    agent_type = np.random.choice([0,1,2])
-                                                                    if agent_type == 0:
-                                                                        agent_subtype = np.random.choice([0,1,2], p = (.45,.45,.1))
-                                                                        appearence = [1, 0, 0, i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15]
-                                                                        if agent_subtype == 0:
-                                                                            agent_list.append(Agent(0,0,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 1:
-                                                                            agent_list.append(Agent(1,1,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 2:
-                                                                            agent_list.append(Agent(2,2,appearence, .95, .15, .05))
-                                                                    if agent_type == 1:
-                                                                        agent_subtype = np.random.choice([0,1,2], p = (.45,.45,.1))
-                                                                        appearence = [0, 1, 0, i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15]
-                                                                        if agent_subtype == 0:
-                                                                            agent_list.append(Agent(3,3,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 1:
-                                                                            agent_list.append(Agent(4,4,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 2:
-                                                                            agent_list.append(Agent(5,5,appearence, .95, .15, .05))
-                                                                    if agent_type == 2:
-                                                                        agent_subtype = np.random.choice([0,1,2], p = (.1,.1,.8))
-                                                                        appearence = [0, 0, 1, i1,i2,i3,i4,i5,i6,i7,i8,i9,i10,i11,i12,i13,i14,i15]
-                                                                        if agent_subtype == 0:
-                                                                            agent_list.append(Agent(6,6,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 1:
-                                                                            agent_list.append(Agent(7,7,appearence, .95, .15, .05))
-                                                                        if agent_subtype == 2:
-                                                                            agent_list.append(Agent(8,8,appearence, .95, .15, .05))
 
+binary = [0,1]
+
+individual_attributes = [[i1, i2, i3, i4, i5, i6, i7, i8, i9, i10] for i1 in binary for i2 in binary for i3 in binary for i4 in binary for i5 in binary for i6 in binary for i7 in binary for i8 in binary for i9 in binary for i10 in binary]
+for indiv in individual_attributes:
+    agent_type = np.random.choice([0,1,2])
+    if agent_type == 0:
+        agent_subtype = np.random.choice([0,1,2], p = (.45,.45,.1))
+        appearence = [1, 0, 0] + indiv + [i11, i12, i13, i14, i15]
+        if agent_subtype == 0:
+            agent_list.append(Agent(0,0,appearence, .95, .15, .05))
+        if agent_subtype == 1:
+            agent_list.append(Agent(1,1,appearence, .95, .15, .05))
+        if agent_subtype == 2:
+            agent_list.append(Agent(2,2,appearence, .95, .15, .05))
+    if agent_type == 1:
+        agent_subtype = np.random.choice([0,1,2], p = (.45,.45,.1))
+        appearence = [0, 1, 0] + indiv + [i11, i12, i13, i14, i15]
+        if agent_subtype == 0:
+            agent_list.append(Agent(3,3,appearence, .95, .15, .05))
+        if agent_subtype == 1:
+            agent_list.append(Agent(4,4,appearence, .95, .15, .05))
+        if agent_subtype == 2:
+            agent_list.append(Agent(5,5,appearence, .95, .15, .05))
+    if agent_type == 2:
+        agent_subtype = np.random.choice([0,1,2], p = (.1,.1,.8))
+        appearence = [0, 0, 1] + indiv + [i11, i12, i13, i14, i15]
+        if agent_subtype == 0:
+            agent_list.append(Agent(6,6,appearence, .95, .15, .05))
+        if agent_subtype == 1:
+            agent_list.append(Agent(7,7,appearence, .95, .15, .05))
+        if agent_subtype == 2:
+            agent_list.append(Agent(8,8,appearence, .95, .15, .05))
 
 num_agents = len(agent_list)
 print(num_agents)
@@ -255,7 +238,7 @@ for epoch in range(1000000):
                     models[mods].model1.state_dict()
                 )
     if epoch % round(1000/max_turns) == 0:
-        epsilon = epsilon - .0001
+        epsilon = epsilon - .0005
 
     env.wood = 10
     env.stone = 10
