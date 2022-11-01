@@ -24,10 +24,10 @@ import torch
 
 import random
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 # save_dir = "/Users/ethan/gem_output/"
-# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -35,7 +35,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # if torch.backends.mps.is_available():
 #    device = torch.device("mps")
 
-device = "cpu"
+# device = "cpu"
 print(device)
 
 
@@ -57,7 +57,7 @@ def create_models():
             hid_size1=75,  # 75
             hid_size2=30,  # 30
             out_size=4,
-            priority_replay=False,
+            priority_replay=True,
             device=device,
         )
     )  # taxi model
