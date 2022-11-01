@@ -11,7 +11,7 @@ from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
 from gem.models.perception import agent_visualfield
 
-
+import torch
 
 
 class AI_Econ:
@@ -243,6 +243,44 @@ class AI_Econ:
                 self.world[14, height - i - 1, layer] = Wall()
                 self.world[height - i - 1, 14, layer] = Wall()
 
+
+    def pov(self, world, location, holdObject, inventory=[], layers=[0]):
+        """
+        Creates outputs of a single frame, and also a multiple image sequence
+        TODO: get rid of the holdObject input throughout the code
+        TODO: to get better flexibility, this code should be moved to env
+        """
+
+        previous_state = holdObject.episode_memory[-1][1][0]
+        current_state = previous_state.clone()
+
+        current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
+
+        state_now = torch.tensor([])
+        for layer in layers:
+            """
+            Loops through each layer to get full visual field
+            """
+            loc = (location[0], location[1], layer)
+            img = agent_visualfield(world, loc, holdObject.vision)
+            input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+            state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
+
+        if len(inventory) > 0:
+            """
+            Loops through each additional piece of information and places into one layer
+            """
+            inventory_var = torch.tensor([])
+            for item in range(len(inventory)):
+                tmp = (current_state[:, -1, -1, :, :] * 0) + inventory[item]
+                inventory_var = torch.cat((inventory_var, tmp), dim=0)
+            inventory_var = inventory_var.unsqueeze(0).unsqueeze(0)
+            state_now = torch.cat((state_now, inventory_var), dim=2)
+
+        current_state[:, -1, :, :, :] = state_now
+
+        return current_state
+
     def step(self, models, loc, epsilon=0.85):
         """
         This is an example script for an alternative step function
@@ -274,7 +312,7 @@ class AI_Econ:
             if going for this, the pov statement needs to know about location rather than separate
             i and j variables
             """
-            state = models[holdObject.policy].pov(
+            state = self.pov(
                 self.world,
                 loc,
                 holdObject,
@@ -282,7 +320,7 @@ class AI_Econ:
                 layers=[0, 1],
             )
             action, init_rnn_state = models[holdObject.policy].take_action([state.to(device), epsilon, None])
-
+            self.world[loc].init_rnn_state = init_rnn_state
         if holdObject.has_transitions == True:
             """
             Updates the world given an action

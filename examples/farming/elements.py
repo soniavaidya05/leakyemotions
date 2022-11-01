@@ -18,6 +18,7 @@ class Farmer():
         self.agent_type = agent_type
         self.init_rnn_state = None
         self.state = torch.zeros(6).float()
+        self.loc = 0
 
     def init_replay(self, numberMemories):
         image = torch.zeros(1, numberMemories, 6).float()
@@ -31,17 +32,19 @@ class Farmer():
 
         if action == 0:
             if location == 0:
-                new_loc = 1
+                env.world[0,1,0].agentList.append(self)
+                env.world[0,0,0].agentList.pop(self)
+                self.loc = (0,1,0)
             if location == 1:
-                new_loc = 0
+                env.world[0,0,0].agentList.append(self)
+                env.world[0,1,0].agentList.pop(self)
+                self.loc = (0,0,0)
+            reward = 0
 
         if action == 1:
-            #env.world[location].farmers / 2 = reward # fix this
-            pass
+            reward = env.world[location].numAgents /2
 
-
-
-        # get this below
+        # get this below (need to figure out the action space)
         next_state, _ = generate_input(agent_list, agent, agent_list[agent].state)
         next_state = next_state.unsqueeze(0).to(models[0].device)
 

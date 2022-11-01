@@ -4,6 +4,7 @@ from gem.utils import (
     find_moveables,
     transfer_world_memories,
     find_instance,
+    update_memories_rnn
 )
 from examples.ai_economist.elements import (
     Agent,
@@ -13,7 +14,7 @@ from examples.ai_economist.elements import (
     EmptyObject,
     Wall,
 )
-from gem.models.dualing_cnn_lstm_dqn import Model_CNN_LSTM_DQN
+from gem.models.dualing_cnn_lstm_dqn_hidden import Model_CNN_LSTM_DQN
 from examples.ai_economist.env import AI_Econ
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -227,6 +228,8 @@ def run_game(
                         reward,
                         next_state,
                         done,
+                        env.world[new_loc].init_rnn_state[0],
+                        env.world[new_loc].init_rnn_state[1]
                     )
 
                     env.world[new_loc].episode_memory.append(exp)
@@ -254,7 +257,7 @@ def run_game(
                 And then transfer the local memory to the model memory
                 """
                 # this updates the last memory to be the final state of the game board
-                env.world = update_memories(
+                env.world = update_memories_rnn(
                     env, find_moveables(env.world), done, end_update=False
                 )
 
