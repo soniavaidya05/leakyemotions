@@ -1,69 +1,153 @@
-import torch
+from examples.ai_economist.elements import (
+    Farm,
+    EmptyObject,
+)
+import numpy as np
+from astropy.visualization import make_lupton_rgb
+import matplotlib.pyplot as plt
+from gem.models.perception import agent_visualfield
 
-class farming_game:
-    def __init__(self):
-        self.wood = 6
-        self.stone = 6
 
 
-    # this is going to have a grid like taxi_cab, but the world is 1 X 2 
 
-    def pov(self, world, location, holdObject, inventory=[]):
+class Farming:
+    def __init__(
+        self,
+        height=2,
+        width=1,
+        layers=1,
+        defaultObject=Farm(),
+    ):
+
+        self.height = 1
+        self.width = 2
+        self.layers = 1
+        self.defaultObject = defaultObject
+        self.create_world(self.height, self.width, self.layers)
+        self.init_elements()
+        self.populate(self.wood1p, self.stone1p)
+        self.insert_walls(self.height, self.width, self.layers)
+
+    def create_world(self, height=1, width=2, layers=1):
         """
-        TODO: rewrite pov to simply take in a vector
+        Creates a world of the specified size with a default object
         """
+        self.world = np.full((height, width, layers), self.defaultObject)
 
-        previous_state = holdObject.episode_memory[-1][1][0]
-        current_state = previous_state.clone()
+    def reset_env(self, height=30, width=30, layers=1, wood1p=0.04, stone1p=0.04):
+        """
+        Resets the environment and repopulates it
+        """
+        self.create_world(height, width, layers)
+        self.populate(wood1p, stone1p)
+        self.insert_walls(height, width, layers)
 
-        current_state[:, 0:-1, :] = previous_state[:, 1:, :]
+    def plot(self, layer):  # is this defined in the master?
+        """
+        Creates an RGB image of the whole world
+        """
+        image_r = np.random.random((self.world.shape[0], self.world.shape[1]))
+        image_g = np.random.random((self.world.shape[0], self.world.shape[1]))
+        image_b = np.random.random((self.world.shape[0], self.world.shape[1]))
 
+        for i in range(self.world.shape[0]):
+            for j in range(self.world.shape[1]):
+                image_r[i, j] = self.world[i, j, layer].appearance[0]
+                image_g[i, j] = self.world[i, j, layer].appearance[1]
+                image_b[i, j] = self.world[i, j, layer].appearance[2]
 
-        current_state[:, -1, :] = state
+        image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
+        return image
 
-        return current_state
+    def init_elements(self):
+        """
+        Creates objects that survive from game to game
+        """
+        self.emptyObject = EmptyObject()
 
+    def game_test(self, layer=0):
+        """
+        Prints one frame to check game instance parameters
+        """
+        image = self.plot(layer)
 
-def generate_input(agent_list, agent, state):
+        moveList = []
+        for i in range(self.world.shape[0]):
+            for j in range(self.world.shape[1]):
+                if self.world[i, j, layer].static == 0:
+                    moveList.append([i, j, layer])
 
-    previous_state = state
+        if len(moveList) > 0:
+            img = agent_visualfield(self.world, moveList[0], k=4)
+        else:
+            img = image
 
+        plt.subplot(1, 2, 1)
+        plt.imshow(image)
+        plt.subplot(1, 2, 2)
+        plt.imshow(img)
+        plt.show()
 
-    cur_wood = agent_list[agent].wood /5 # what is the best way of having current inventory
-    cur_stone = agent_list[agent].stone /5
-    cur_coin = agent_list[agent].coin /5
+    def populate(self, farmer_probs = .5):
+        # this will be were to initialize farmers
+        pass
 
-    suf_wood = 0    
-    suf_stone = 0
-    suf_coin = 0
-    if agent_list[agent].wood > 2: # does it make sense to also have a degree of whether it can buy or sell as a binary?
-        suf_wood = 1
-    else:
-        suf_wood = 0
-    if agent_list[agent].stone > 2:
-        suf_stone = 1
-    else:
-        suf_stone = 0
-    if agent_list[agent].coin > 2:
-        suf_coin = 1
-    else:
-        suf_coin = 0
-    state = torch.tensor([cur_wood, cur_stone, cur_coin, suf_wood, suf_stone, suf_coin]).float()
+    def step(self, models, loc, epsilon=0.85):
+        """
+        This is an example script for an alternative step function
+        It does not account for the fact that an agent can die before
+        it's next turn in the moveList. If that can be solved, this
+        may be preferable to the above function as it is more like openAI gym
 
+        The solution may come from the agent.died() function if we can get that to work
 
-    return state, previous_state
+        location = (i, j, 0)
 
-def prepare_lstm(agent_list, agent, state):
-    previous_state = agent_list[agent].episode_memory[-1][1][0]
-    current_state = previous_state.clone()
-    current_state[:, 0:-1, :] = previous_state[:, 1:, :]
-    current_state[:, -1, :] = state
-    return current_state
+        Uasge:
+            for i, j, k = agents
+                location = (i, j, k)
+                state, action, reward, next_state, done, additional_output = env.stepSingle(models, (0, 0, 0), epsilon)
+                env.world[0, 0, 0].updateMemory(state, action, reward, next_state, done, additional_output)
+            env.WorldUpdate()
 
-def prepare_lstm2(previous_state, next_state):
+        """
+        holdObject = self.world[loc]
+        device = models[holdObject.policy].device
 
-    current_state = previous_state.clone()
-    current_state[:, 0:-1, :] = previous_state[:, 1:, :]
-    current_state[:, -1, :] = next_state
+        if holdObject.static != 1:
+            """
+            This is where the agent will make a decision
+            If done this way, the pov statement may be about to be part of the action
+            Since they are both part of the same class
 
-    return current_state
+            if going for this, the pov statement needs to know about location rather than separate
+            i and j variables
+            """
+            state = models[holdObject.policy].pov(
+                self.world,
+                loc,
+                holdObject,
+                inventory=[holdObject.stone, holdObject.wood, holdObject.coin],
+                layers=[0, 1],
+            )
+            action, init_rnn_state = models[holdObject.policy].take_action([state.to(device), epsilon, None])
+
+        if holdObject.has_transitions == True:
+            """
+            Updates the world given an action
+            TODO: does this need self.world in here, or can it be figured out by passing self?
+            """
+            (
+                self.world,
+                reward,
+                next_state,
+                done,
+                new_loc,
+            ) = holdObject.transition(self, models, action, loc)
+        else:
+            reward = 0
+            next_state = state
+
+        additional_output = []
+
+        return state, action, reward, next_state, done, new_loc, additional_output
