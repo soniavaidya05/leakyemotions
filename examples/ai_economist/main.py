@@ -13,7 +13,7 @@ from examples.ai_economist.elements import (
     EmptyObject,
     Wall,
 )
-from gem.models.cnn_lstm_dqn_PER import Model_CNN_LSTM_DQN
+from gem.models.dualing_cnn_lstm_dqn import Model_CNN_LSTM_DQN
 from examples.ai_economist.env import AI_Econ
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -26,8 +26,8 @@ import torch
 import random
 
 # save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+# save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

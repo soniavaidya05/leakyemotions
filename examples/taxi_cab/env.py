@@ -190,7 +190,7 @@ class TaxiCabEnv:
             holdObject = self.world[loc]
             device = models[holdObject.policy].device
             state = self.pov(loc, inventory=[holdObject.has_passenger], layers=[0])
-            params = (state.to(device), epsilon, holdObject.init_rnn_state)
+            params = (state.to(device), epsilon, self.world[loc].init_rnn_state)
             action, init_rnn_state = models[holdObject.policy].take_action(params)
             self.world[loc].init_rnn_state = init_rnn_state
             """
