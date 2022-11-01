@@ -273,8 +273,6 @@ for epoch in range(1000000):
             env, reward, next_state, done, new_loc = agent_list[agent].transition(env, models, action, done, [], agent_list, agent)
             rewards[agent_list[agent].policy] = rewards[agent_list[agent].policy] + reward
 
-
-
             if action in (3,4):
                 decider_state = torch.tensor(agent_list[agent].appearance).float()
                 decider_action = decider_model.take_action([decider_state, .1])
@@ -283,14 +281,13 @@ for epoch in range(1000000):
                 if decider_action != agent_action:
                     reward = -.1
 
-
+            # should make this a matrix to clean up code
             if agent_list[agent].policy == 0:
                 agent1_actions[action] = agent1_actions[action] + 1
             if agent_list[agent].policy == 1:
                 agent2_actions[action] = agent2_actions[action] + 1
             if agent_list[agent].policy == 2:
                 agent3_actions[action] = agent3_actions[action] + 1
-
 
             if agent_list[agent].policy == 3:
                 agent4_actions[action] = agent4_actions[action] + 1
@@ -299,13 +296,13 @@ for epoch in range(1000000):
             if agent_list[agent].policy == 5:
                 agent6_actions[action] = agent6_actions[action] + 1
 
-
             if agent_list[agent].policy == 6:
                 agent7_actions[action] = agent7_actions[action] + 1
             if agent_list[agent].policy == 7:
                 agent8_actions[action] = agent8_actions[action] + 1
             if agent_list[agent].policy == 8:
                 agent9_actions[action] = agent9_actions[action] + 1
+
             # is this next state a problem in the main version of gem?
             next_state_lstm = prepare_lstm2(state_lstm, next_state)
 
@@ -338,12 +335,12 @@ for epoch in range(1000000):
         print("agent1 behaviours - chop_c: ", agent1_actions)
         print("agent2 behaviours - chop_m: ", agent2_actions)
         print("agent3 behaviours - chop_h: ", agent3_actions)
-        print("agent4 behaviours - mine_c: ", agent1_actions)
-        print("agent5 behaviours - mine_m: ", agent2_actions)
-        print("agent6 behaviours - mine_h: ", agent3_actions)
-        print("agent7 behaviours - hous_c: ", agent1_actions)
-        print("agent8 behaviours - hous_m: ", agent2_actions)
-        print("agent9 behaviours - hous_h: ", agent3_actions)
+        print("agent4 behaviours - mine_c: ", agent4_actions)
+        print("agent5 behaviours - mine_m: ", agent5_actions)
+        print("agent6 behaviours - mine_h: ", agent6_actions)
+        print("agent7 behaviours - hous_c: ", agent7_actions)
+        print("agent8 behaviours - hous_m: ", agent8_actions)
+        print("agent9 behaviours - hous_h: ", agent9_actions)
         rewards = [0,0,0,0,0,0,0,0,0]
         losses = 0
         agent1_actions = [0,0,0,0,0,0,0]
