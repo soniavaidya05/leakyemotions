@@ -89,7 +89,7 @@ class Farming:
         plt.show()
 
     def populate(self, farmer_probs = .5):
-        self.world[0,0,0] = 5 # number of farmers - need to allow multiple farmers on a single grid
+        self.world[0,0,0] = 5 # number of farmers - need to allow multiple farmers on a single grid. maybe this becomes a list of agents that are there
         self.world[0,1,0] = 5
         pass
 
