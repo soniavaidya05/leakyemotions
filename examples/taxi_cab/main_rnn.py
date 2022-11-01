@@ -4,17 +4,18 @@ from gem.utils import (
     update_memories,
     find_moveables,
     transfer_world_memories,
+    update_memories_rnn,
     find_agents,
     find_instance,
 )
-from examples.taxi_cab.elements import (
+from examples.taxi_cab.elements_rnn import (
     TaxiCab,
     EmptyObject,
     Wall,
     Passenger,
 )
-from gem.models.dualing_cnn_lstm_dqn import Model_CNN_LSTM_DQN
-from examples.taxi_cab.env import TaxiCabEnv
+from gem.models.dualing_cnn_lstm_dqn_hidden import Model_CNN_LSTM_DQN
+from examples.taxi_cab.env_rnn import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -175,6 +176,8 @@ def run_game(
                             reward,
                             next_state,
                             done,
+                            env.world[new_loc].init_rnn_state[0].unsqueeze(dim=0),
+                            env.world[new_loc].init_rnn_state[1].unsqueeze(dim=0)
                         ),
                     )
 
@@ -199,7 +202,7 @@ def run_game(
                 And then transfer the local memory to the model memory
                 """
                 # this updates the last memory to be the final state of the game board
-                env.world = update_memories(
+                env.world = update_memories_rnn(
                     env,
                     find_instance(env.world, "neural_network"),
                     done,

@@ -210,11 +210,11 @@ class Model_CNN_LSTM_DQN:
             # but on mps, action, reward, and done are being bounced back to the cpu
             # currently removed for a test on CUDA
 
-            state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch]).to(self.device)
-            action_batch = torch.tensor([a for (s1, a, r, s2, d) in minibatch]).to(self.device)
-            reward_batch = torch.tensor([r for (s1, a, r, s2, d) in minibatch]).to(self.device)
-            state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch]).to(self.device)
-            done_batch = torch.tensor([d for (s1, a, r, s2, d) in minibatch]).to(self.device)
+            state1_batch = torch.cat([s1 for (s1, a, r, s2, d, rnn1, rnn2) in minibatch]).to(self.device)
+            action_batch = torch.tensor([a for (s1, a, r, s2, d, rnn1, rnn2) in minibatch]).to(self.device)
+            reward_batch = torch.tensor([r for (s1, a, r, s2, d, rnn1, rnn2) in minibatch]).to(self.device)
+            state2_batch = torch.cat([s2 for (s1, a, r, s2, d, rnn1, rnn2) in minibatch]).to(self.device)
+            done_batch = torch.tensor([d for (s1, a, r, s2, d, rnn1, rnn2) in minibatch]).to(self.device)
             
             """
             # TODO: to get the rnn_batch to be fed in the initial state of the LSTM for GPU
@@ -224,7 +224,10 @@ class Model_CNN_LSTM_DQN:
                     it works on GPU as well
             """
 
-            #rnn_batch = torch.tensor([d for (s1, a, r, s2, d) in minibatch], device=self.device)
+            #rnn_batch = torch.cat([rnn for (s1, a, r, s2, d, rnn) in minibatch], device=self.device)
+            rnn1_batch = torch.cat([rnn1 for (s1, a, r, s2, d, rnn1, rnn2) in minibatch])
+            rnn2_batch = torch.cat([rnn2 for (s1, a, r, s2, d, rnn1, rnn2) in minibatch])
+           
 
             Q1, (c1, h1) = self.model1(state1_batch, None)
             with torch.no_grad():
