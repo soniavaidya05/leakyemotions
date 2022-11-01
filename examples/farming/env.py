@@ -1,9 +1,12 @@
 import torch
 
-class AIEcon_simple_game:
+class farming_game:
     def __init__(self):
         self.wood = 6
         self.stone = 6
+
+
+    # this is going to have a grid like taxi_cab, but the world is 1 X 2 
 
     def pov(self, world, location, holdObject, inventory=[]):
         """
