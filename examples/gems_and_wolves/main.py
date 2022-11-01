@@ -8,7 +8,7 @@ from gem.utils import (
     find_instance,
 )
 
-from gem.models.cnn_lstm_dqn_PER import Model_CNN_LSTM_DQN
+from gem.models.dualing_cnn_lstm_dqn import Model_CNN_LSTM_DQN
 from examples.gems_and_wolves.env import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -24,15 +24,15 @@ from examples.gems_and_wolves.elements import EmptyObject, Wall
 import random
 import torch
 
-# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
+#if torch.backends.mps.is_available():
+#    device = torch.device("mps")
 
 
 def create_models():
