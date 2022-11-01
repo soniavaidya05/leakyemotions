@@ -47,3 +47,17 @@ class Farmer():
 
 
         return env, reward, next_state, done, new_loc
+
+class Farm():
+    kind = "farmer"  # class variable shared by all instances
+
+    def __init__(self, model, agent_type, appearance, wood_skill, stone_skill, house_skill):
+        self.appearance = None  # init agents
+        self.episode_memory = deque([], maxlen=3)  # we should read in these maxlens
+        self.has_transitions = False
+        self.action_type = "static"
+        self.agentList = []
+        self.numAgents = 0
+
+ 
+
