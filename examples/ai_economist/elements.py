@@ -115,6 +115,8 @@ class Agent:
         self.stone_skill = stone_skill
         self.house_skill = house_skill
         self.coin = 0
+        self.init_rnn_state = None
+
 
     def init_replay(self, numberMemories):
         """
@@ -124,7 +126,8 @@ class Agent:
         pov_size = 9
         visual_depth = 3 + 3 + 3
         image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
-        exp = 1, (image, 0, 0, image, 0)
+        rnn_init = (torch.zeros([1,1,150]), torch.zeros([1,1,150]))
+        exp = 1, (image, 0, 0, image, 0, rnn_init )
         self.episode_memory.append(exp)
 
     def movement(self, action, location):
@@ -238,7 +241,7 @@ class Agent:
         if action == 9:  # do nothing
             pass
 
-        next_state = models[self.policy].pov(
+        next_state = env.pov(
             env.world,
             new_loc,
             self,

@@ -269,8 +269,6 @@ run_params = (
     [0.6, 1000, 100, 8],
     [0.5, 2000, 100, 8],
     [0.2, 20000, 100, 8],
-    [0.5, 40000, 100, 12],
-    [0.2, 40000, 100, 12],
 )
 
 # the version below needs to have the keys from above in it
