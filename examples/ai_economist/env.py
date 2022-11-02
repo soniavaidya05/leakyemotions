@@ -101,7 +101,6 @@ class AI_Econ:
     def populate(self, wood1p=0.04, stone1p=0.04):
         """
         Populates the game board with elements
-        TODO: test whether the probabilites above are working
         """
 
         for i in range(self.world.shape[0]):
@@ -118,6 +117,10 @@ class AI_Econ:
                     self.world[i, j, 0] = Wood()
                 if obj == 1:
                     self.world[i, j, 0] = Stone()
+
+        """
+        Quick and dirty population. Should do this with lists instead
+        """
 
         loc = (3, 7, 1)
         apperence1 = (0., 0., 255.0)
@@ -248,7 +251,6 @@ class AI_Econ:
         """
         Creates outputs of a single frame, and also a multiple image sequence
         TODO: get rid of the holdObject input throughout the code
-        TODO: to get better flexibility, this code should be moved to env
         """
 
         previous_state = holdObject.episode_memory[-1][1][0]
@@ -283,40 +285,20 @@ class AI_Econ:
 
     def step(self, models, loc, epsilon=0.85):
         """
-        This is an example script for an alternative step function
-        It does not account for the fact that an agent can die before
-        it's next turn in the moveList. If that can be solved, this
-        may be preferable to the above function as it is more like openAI gym
-
-        The solution may come from the agent.died() function if we can get that to work
-
-        location = (i, j, 0)
-
-        Uasge:
-            for i, j, k = agents
-                location = (i, j, k)
-                state, action, reward, next_state, done, additional_output = env.stepSingle(models, (0, 0, 0), epsilon)
-                env.world[0, 0, 0].updateMemory(state, action, reward, next_state, done, additional_output)
-            env.WorldUpdate()
-
+        Have the agent take an action
         """
-        holdObject = self.world[loc]
+        holdObject = self.world[loc] # TODO: need to see whether holding this constant is still needed
         device = models[holdObject.policy].device
 
         if holdObject.static != 1:
             """
             This is where the agent will make a decision
-            If done this way, the pov statement may be about to be part of the action
-            Since they are both part of the same class
-
-            if going for this, the pov statement needs to know about location rather than separate
-            i and j variables
             """
             state = self.pov(
                 self.world,
                 loc,
                 holdObject,
-                inventory=[holdObject.stone, holdObject.wood, holdObject.coin],
+                inventory=[self.world[loc].stone, holdObject.wood, holdObject.coin],
                 layers=[0, 1],
             )
             action, init_rnn_state = models[holdObject.policy].take_action([state.to(device), epsilon, None])
