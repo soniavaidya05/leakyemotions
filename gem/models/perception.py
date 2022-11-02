@@ -2,35 +2,54 @@ from astropy.visualization import make_lupton_rgb
 import numpy as np
 
 
-def agent_visualfield(world, location, k=4, wall_app=[50.0, 50.0, 50.0]):
-    """
-    Create an agent visual field of size (2k + 1, 2k + 1) pixels
-    Layer = location[2] and layer in the else are added to this function
-    """
-    if len(location) > 2:
-        layer = location[2]
-    else:
-        layer = 0
+def agent_visualfield(world, location, tile_size, k=4,
+                      out_of_bounds_colour=[50.0, 50.0, 50.0]):
+    """Compute the visual field of the agent.
 
-    bounds = (location[0] - k, location[0] + k, location[1] - k, location[1] + k)
-    # instantiate image
-    image_r = np.random.random((bounds[1] - bounds[0] + 1, bounds[3] - bounds[2] + 1))
-    image_g = np.random.random((bounds[1] - bounds[0] + 1, bounds[3] - bounds[2] + 1))
-    image_b = np.random.random((bounds[1] - bounds[0] + 1, bounds[3] - bounds[2] + 1))
+    Args:
+      world: The world in which the agent is located.
+      location: The location of the agent. A tuple of (x, y) or (x, y, layer)
+        coordinates.
+      tile_size: The size of the tiles in the world. A tuple of (w, h) dimensions.
+      k: The vision radius of the agent.
+      out_of_bounds_colour: The color to use for out of bounds tiles. A tuple of
+        (r, g, b) values.
 
-    for i in range(bounds[0], bounds[1] + 1):
-        for j in range(bounds[2], bounds[3] + 1):
-            # while outside the world array index...
-            if i < 0 or j < 0 or i >= world.shape[0] - 1 or j >= world.shape[1]:
-                # image has shape bounds[1] - bounds[0], bounds[3] - bounds[2]
-                # visual appearance = wall
-                image_r[i - bounds[0], j - bounds[2]] = wall_app[0]
-                image_g[i - bounds[0], j - bounds[2]] = wall_app[1]
-                image_b[i - bounds[0], j - bounds[2]] = wall_app[2]
+    Returns:
+      A `((2k + 1) * tile_size[0], (2k + 1) * tile_size[1], 3)` numpy array
+      describing the visual field of the agent centered at the given location,
+      with vision radius `k`.
+    """
+    # Ensure location is (x, y) or (x, y, layer) coordinates.
+    assert len(location) == 2 or len(location) == 3,\
+        "location must be a tuple of (x, y) or (x, y, layer) coordinates"
+    # Ensure tile_size is (w, h) dimensions.
+    assert len(tile_size) == 2,\
+        "tile_size must be a tuple of (w, h) dimensions"
+
+    out_of_bounds_appearance = np.fill((tile_size[0], tile_size[1], 3),
+                                       out_of_bounds_colour)
+
+    x, y = location[:2]
+    layer = location[2] if len(location) == 3 else 0
+    tile_w, tile_h = tile_size
+
+    visual_field = np.zeros((tile_w * (2 * k + 1), tile_h * (2 * k + 1), 3))
+    for i in range(-k, k + 1):
+        for j in range(-k, k + 1):
+            # Compute global (non-relative) coordinates of the tile
+            px, py = x + i, y + j
+            # Check if the pixel is outside the world
+            if px < 0 or py < 0 or px >= world.shape[0] or py >= world.shape[1]:
+              tile = out_of_bounds_appearance
             else:
-                image_r[i - bounds[0], j - bounds[2]] = world[i, j, layer].appearance[0]
-                image_g[i - bounds[0], j - bounds[2]] = world[i, j, layer].appearance[1]
-                image_b[i - bounds[0], j - bounds[2]] = world[i, j, layer].appearance[2]
+              # Compute the visual field tile for the current location
+              tile = world[px, py, layer].visual_field_tile(tile_size)
 
-    image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
-    return image
+            # Compute the location of the visual field tile
+            tile_x = (i + k) * tile_w
+            tile_y = (j + k) * tile_h
+            # Add the visual field tile to the visual field.
+            visual_field[tile_x:tile_x + tile_w, tile_y:tile_y + tile_h] = tile
+
+    return visual_field

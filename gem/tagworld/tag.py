@@ -44,6 +44,7 @@ from collections import deque
 
 # generate the gem search game objects
 
+tile_size = (3, 3)
 
 def createTagWorld(world_size, agentp=0.05):
     num_agents = 0
@@ -79,7 +80,7 @@ def createTagWorld(world_size, agentp=0.05):
     all_agents = find_moveables(world)
     for location in all_agents:
         agent = world[location]
-        img = agent_visualfield(world, location, agent.vision)
+        img = agent_visualfield(world, location, tile_size, agent.vision)
         current_state = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         next_state = current_state
         action = random.randint(0, 3)
@@ -110,7 +111,7 @@ def game_test(world_size):
             if world[i, j, 0].static == 0:
                 moveList.append([i, j])
 
-    img = agent_visualfield(world, (moveList[0][0], moveList[0][1]), k=4)
+    img = agent_visualfield(world, (moveList[0][0], moveList[0][1]), tile_size, k=4)
 
     plt.subplot(1, 2, 1)
     plt.imshow(image)
@@ -159,7 +160,7 @@ def playGame(models, world_size=15, epochs=200000, maxEpochs=100, epsilon=0.9):
             for location in moveList:
                 holdObject = world[location]
 
-                img = agent_visualfield(world, location, holdObject.vision)
+                img = agent_visualfield(world, location, tile_size, holdObject.vision)
 
                 input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
                 if holdObject.static != 1:
@@ -230,7 +231,7 @@ def watchAgame(world, models, maxEpochs):
         for location in moveList:
             holdObject = world[location]
 
-            img = agent_visualfield(world, location, holdObject.vision)
+            img = agent_visualfield(world, location, tile_size, holdObject.vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             if holdObject.static != 1:
                 action = models[holdObject.policy].take_action([input, 0.1])

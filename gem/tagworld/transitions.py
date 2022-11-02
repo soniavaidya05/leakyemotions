@@ -80,7 +80,7 @@ def tagAgentTransitions(
 
     if update_experience_buffer == True:
         img2 = agent_visualfield(
-            world, (new_locaton_1, new_locaton_2), holdObject.vision
+            world, (new_locaton_1, new_locaton_2), holdObject.appearance.shape, holdObject.vision
         )
         input2 = torch.tensor(img2).unsqueeze(0).permute(0, 3, 1, 2).float()
         exp = (input, action, reward, input2, done)

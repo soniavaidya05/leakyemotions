@@ -99,7 +99,7 @@ class Model_CNN_LSTM_DQN:
 
         current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
 
-        img = agent_visualfield(world, location, holdObject.vision)
+        img = agent_visualfield(world, location, holdObject.appearance.shape, k=holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         state_now = input.unsqueeze(0)
 

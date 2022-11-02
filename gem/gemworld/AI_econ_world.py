@@ -26,6 +26,7 @@ class AI_Econ:
         defaultObject=EmptyObject(),
         wood1p=0.04,
         stone1p=0.04,
+        tile_size=(3, 3),
     ):
         self.wood1p = wood1p
         self.stone1p = stone1p
@@ -39,6 +40,7 @@ class AI_Econ:
         self.insert_walls(self.height, self.width, self.layers)
         self.wood = 4
         self.stone = 4
+        self.tile_size = tile_size
 
     def create_world(self, height=30, width=30, layers=2):
         """
@@ -91,7 +93,7 @@ class AI_Econ:
                     moveList.append([i, j, layer])
 
         if len(moveList) > 0:
-            img = agent_visualfield(self.world, moveList[0], k=4)
+            img = agent_visualfield(self.world, moveList[0], self.tile_size, k=4)
         else:
             img = image
 
