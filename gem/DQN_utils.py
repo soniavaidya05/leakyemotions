@@ -1,6 +1,6 @@
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
-from game_utils import create_world, create_world_image
+from gem.game_utils import create_world, create_world_image
 import matplotlib.animation as animation
 import random
 import pickle
@@ -8,7 +8,6 @@ import pickle
 from gem.utils import (
     find_instance,
     update_memories,
-    find_moveables,
 )
 import torch
 
@@ -88,7 +87,7 @@ def get_TD_error(
 
 
 def save_models(models, save_dir, filename):
-    with open(save_dir + filename, "wb") as fp:
+    with open(save_dir + filename, "wb+") as fp:
         pickle.dump(models, fp)
 
 
@@ -224,24 +223,6 @@ def create_video2(models, world_size, num, env, filename="unnamed_video.gif"):
                     info,
                 ) = env.step(models, loc, 0.2)
 
-                # env.world[new_loc].replay.append(
-                #    (state, action, reward, next_state, done)
-                # )
-                #
-                # if env.world[new_loc].kind == "agent":
-                #    game_points[0] = game_points[0] + reward
-                # if env.world[new_loc].kind == "wolf":
-                #    game_points[1] = game_points[1] + reward
-
-        # env.world = update_memories(
-        #    env,
-        #    find_instance(env.world, "neural_network"),
-        #    done,
-        #    end_update=False,
-        # )
-
-        # note that with the current setup, the world is not generating new wood and stone
-        # we will need to consider where to add the transitions that do not have movement or neural networks
         regenList = find_instance(env.world, "deterministic")
 
         for loc in regenList:

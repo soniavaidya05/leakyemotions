@@ -6,14 +6,14 @@ import torch.nn.functional as F
 import numpy as np
 
 # from models.memory import Memory
-from models.perception import agent_visualfield
+from gem.models.perception import agent_visualfield
 
 
 import random
 import numpy as np
 from collections import deque
 
-from models.priority_replay import Memory, SumTree
+from gem.models.priority_replay import Memory, SumTree
 
 
 class CNN_CLD(nn.Module):
@@ -65,7 +65,7 @@ class Combine_CLD(nn.Module):
         self.l3 = nn.Linear(hid_size2, out_size)
         self.dropout = nn.Dropout(0.15)
 
-    def forward(self, x):
+    def forward(self, x, init_rnn_state):
         """
         TODO: check the shapes below. These are from the print
         c_in.shape:  torch.Size([3, 4, 9, 9])
@@ -73,17 +73,17 @@ class Combine_CLD(nn.Module):
         r_in.shape:  torch.Size([1, 3, 650])
         r_out.shape:  torch.Size([1, 3, 75])
         """
-
+        init_rnn_state = None if init_rnn_state is None else tuple(init_rnn_state)
         batch_size, timesteps, C, H, W = x.size()
         c_in = x.view(batch_size * timesteps, C, H, W)
         c_out = self.cnn(c_in)
         r_in = c_out.view(batch_size, timesteps, -1)
-        r_out, (h_n, h_c) = self.rnn(r_in)
+        r_out, (h_n, h_c) = self.rnn(r_in, init_rnn_state)
         y = F.relu(self.l1(r_out[:, -1, :])) # what is this was lr = .001
         y = F.relu(self.l2(y)) # and this is lr = .0011 (a small bit more)
         y = self.l3(y)
 
-        return y
+        return y, (h_n, h_c)
 
 
 class Model_CNN_LSTM_DQN:
@@ -178,8 +178,9 @@ class Model_CNN_LSTM_DQN:
         Takes action from the input
         """
 
-        inp, epsilon = params
-        Q = self.model1(inp)
+        inp, epsilon, init_rnn_state = params
+        Q, (c, h) = self.model1(inp, init_rnn_state)
+
         p = self.sm(Q).cpu().detach().numpy()[0]
 
         if epsilon > 0.3:
@@ -189,7 +190,7 @@ class Model_CNN_LSTM_DQN:
                 action = np.argmax(Q.detach().cpu().numpy())
         else:
             action = np.random.choice(np.arange(len(p)), p=p)
-        return action
+        return action, (c, h)
 
     def training(self, batch_size, gamma):
         """
@@ -209,15 +210,16 @@ class Model_CNN_LSTM_DQN:
             # but on mps, action, reward, and done are being bounced back to the cpu
             # currently removed for a test on CUDA
 
-            state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
-            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch]).to(self.device)
-            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch]).to(self.device)
-            state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
-            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch]).to(self.device)
+            state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch]).to(self.device)
+            action_batch = torch.tensor([a for (s1, a, r, s2, d) in minibatch]).to(self.device)
+            reward_batch = torch.tensor([r for (s1, a, r, s2, d) in minibatch]).to(self.device)
+            state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch]).to(self.device)
+            done_batch = torch.tensor([d for (s1, a, r, s2, d) in minibatch]).to(self.device)
+            #rnn_batch = torch.tensor([d for (s1, a, r, s2, d) in minibatch], device=self.device)
 
-            Q1 = self.model1(state1_batch)
+            Q1, (c1, h1) = self.model1(state1_batch, None)
             with torch.no_grad():
-                Q2 = self.model2(state2_batch)
+                Q2, (c1, h1) = self.model2(state2_batch, None)
 
             Y = reward_batch + gamma * (
                 (1 - done_batch) * torch.max(Q2.detach(), dim=1)[0]
@@ -272,16 +274,17 @@ class Model_CNN_LSTM_DQN:
         high_reward = exp[1][2]
 
         # move experience to the gpu if available
-        exp = (
-            exp[0],
-            (
-                exp[1][0].to(self.device),
-                torch.tensor(exp[1][1]).float().to(self.device),
-                torch.tensor(exp[1][2]).float().to(self.device),
-                exp[1][3].to(self.device),
-                torch.tensor(exp[1][4]).float().to(self.device),
-            ),
-        )
+        #exp = (
+        #    exp[0],
+        #    (
+        #        exp[1][0].to(self.device),
+        #        torch.tensor(exp[1][1]).float().to(self.device),
+        #        torch.tensor(exp[1][2]).float().to(self.device),
+        #        exp[1][3].to(self.device),
+        #        torch.tensor(exp[1][4]).float().to(self.device),
+        #        torch.tensor(exp[1][5]).float().to(self.device),
+        #    ),
+        #)
 
         self.PER_replay.add(exp[0], exp[1])
         if extra_reward == True and abs(high_reward) > 9:
