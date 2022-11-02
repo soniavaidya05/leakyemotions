@@ -16,7 +16,7 @@ from collections import deque
 from gem.models.priority_replay import Memory, SumTree
 
 
-class SIMPLE_DQN(nn.Module):
+class SIMPLE_MLP(nn.Module):
     """
     TODO: need to be able to have an input for non CNN layers to add additional inputs to the model
             likely requires an MLP before the LSTM where the CNN and the additional
@@ -32,10 +32,12 @@ class SIMPLE_DQN(nn.Module):
         n_layers=2,
         batch_first=True,
     ):
-        super(SIMPLE_DQN, self).__init__()
+        super(SIMPLE_MLP, self).__init__()
         self.l1 = nn.Linear(in_size, hid_size1)
         self.l2 = nn.Linear(hid_size1, hid_size2)
-        self.l3 = nn.Linear(hid_size2+in_size, out_size)
+        self.adv = nn.Linear(hid_size2, out_size)
+        self.value = nn.Linear(hid_size2, 1)
+
         self.dropout = nn.Dropout(0.15)
 
     def forward(self, x):
@@ -45,16 +47,19 @@ class SIMPLE_DQN(nn.Module):
         y = F.relu(self.l1(x))
         #print("y.shape: ", y.shape)
         y = F.relu(self.l2(y))
-        # direct perception to action link (when I get ethan code, i will set this up as fast lr instead through a small MLP)
-        y = torch.cat((x, y), -1)
-        y = self.l3(y)
+
+        value = self.value(y)
+        adv = self.adv(y)
+
+        advAverage = torch.mean(adv, dim=-1, keepdim=True)
+        Q = value + adv - advAverage
 
         return y
 
 
-class Model_simple_linear_DQN:
+class Model_simple_linear_MLP:
 
-    kind = "linear_dqn"  # class variable shared by all instances
+    kind = "linear_mlp"  # class variable shared by all instances
 
     def __init__(
         self,
@@ -67,8 +72,8 @@ class Model_simple_linear_DQN:
         priority_replay=True,
         device="cpu",
     ):
-        self.modeltype = "linear_dqn"
-        self.model1 = SIMPLE_DQN(
+        self.modeltype = "linear_mlp"
+        self.model1 = SIMPLE_MLP(
             in_size, hid_size1, hid_size2, out_size
         )
         self.optimizer = torch.optim.Adam(
@@ -79,17 +84,8 @@ class Model_simple_linear_DQN:
         self.replay = deque([], maxlen=replay_size)
         self.device = device
 
-    def softmax(self, x, tau = 1):
-        """ Returns softmax probabilities with temperature tau
-            Input:  x -- 1-dimensional array
-            Output: s -- 1-dimensional array
-        """
-        tau = .1
-        e_x = np.exp(x / tau)
-        return e_x / e_x.sum()
-
-    #def softmax(self, x, temperature = 1):
-    #    return(np.exp(x)/np.exp(x).sum())
+    def softmax(self, x):
+        return(np.exp(x)/np.exp(x).sum())
 
 
     def take_action(self, params):
@@ -103,26 +99,37 @@ class Model_simple_linear_DQN:
         p = self.softmax(vals)
         #p = self.sm(Q).cpu().detach().numpy()
 
-        if epsilon > 0.3:
+        if epsilon > 0.2:
             if random.random() < epsilon:
                 action = np.random.randint(0, len(p))
             else:
                 action = np.argmax(Q.detach().cpu().numpy())
         else:
-            action = np.random.choice(np.arange(len(p)), p=np.asarray(p))
+            action = np.argmax(Q.detach().cpu().numpy())
         return action
 
     def training(self, exp):
+        loss = torch.tensor(0)
+        batch_size = 128
+        if len(self.replay) > batch_size:
 
-        priority, (state, action, reward, next_state, done) = exp
+            minibatch = random.sample(self.replay, batch_size)
+            state1_batch = torch.cat([s1 for (s1, a, r, s2, d) in minibatch])
+            action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
+            reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch])
+            state2_batch = torch.cat([s2 for (s1, a, r, s2, d) in minibatch])
+            done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch])
 
-        Q1 = self.model1(state)
-        Y = torch.tensor(reward).float().to(self.device)
-        X = Q1[action]
-        self.optimizer.zero_grad()
-        loss = self.loss_fn(X, Y)
-        loss.backward()
-        self.optimizer.step()
+        #priority, (state, action, reward, next_state, done) = exp
+
+            Q1 = self.model1(state1_batch.reshape(batch_size,18))
+            Y = reward_batch.to(self.device)
+
+            X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
+            self.optimizer.zero_grad()
+            loss = self.loss_fn(X, Y)
+            loss.backward()
+            self.optimizer.step()
 
         return loss
 

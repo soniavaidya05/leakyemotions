@@ -210,6 +210,7 @@ class Model_CNN_LSTM_AC:
         """
         loss = torch.tensor(0.0)
         if len(self.values) > 1:
+            self.optimizer.zero_grad()
             actor_loss = -1 * self.logprobs * (self.Returns - self.values.detach())
             critic_loss = torch.pow(self.values - self.Returns, 2)
             loss = actor_loss.sum() + clc * critic_loss.sum()

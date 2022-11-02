@@ -161,3 +161,20 @@ def transfer_world_memories(models, world, expList, extra_reward=True):
         models[world[loc].policy].transfer_memories(world, loc, extra_reward=True)
     return models
 
+def update_memories_rnn(env, expList, done, end_update=True):
+    # update the reward and last state after all have moved
+    # changed to holdObject to see if this fixes the failure of updating last memory
+    for loc in expList:
+        # location = (i, j, 0)
+        #holdObject = env.world[loc]
+        exp = env.world[loc].episode_memory[-1]
+        lastdone = exp[1][4]
+        if done == 1:
+            lastdone = 1
+        if end_update == False:
+            exp = exp[0], (exp[1][0], exp[1][1], env.world[loc].reward, exp[1][3], lastdone, exp[1][5], exp[1][6])
+        if end_update == True:
+            input2 = env.pov(loc)
+            exp = exp[0], (exp[1][0], exp[1][1], env.world[loc].reward, input2, lastdone, exp[1][5], exp[1][6])
+        env.world[loc].episode_memory[-1] = exp
+    return env.world

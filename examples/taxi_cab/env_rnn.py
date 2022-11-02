@@ -1,4 +1,4 @@
-from examples.taxi_cab.elements import (
+from examples.taxi_cab.elements_rnn import (
     TaxiCab,
     EmptyObject,
     Wall,
@@ -192,7 +192,9 @@ class TaxiCabEnv:
             holdObject = self.world[loc]
             device = models[holdObject.policy].device
             state = self.pov(loc, inventory=[holdObject.has_passenger], layers=[0])
-            action = models[holdObject.policy].take_action([state.to(device), epsilon])
+            params = (state.to(device), epsilon, self.world[loc].init_rnn_state)
+            action, init_rnn_state = models[holdObject.policy].take_action(params)
+            self.world[loc].init_rnn_state = init_rnn_state
             """
             Updates the world given an action
             """

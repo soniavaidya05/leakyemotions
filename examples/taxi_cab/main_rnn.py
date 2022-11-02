@@ -1,38 +1,43 @@
-# from tkinter.tix import Tree
+import argparse
 from gem.utils import (
     update_epsilon,
     update_memories,
     find_moveables,
     transfer_world_memories,
+    update_memories_rnn,
     find_agents,
     find_instance,
 )
-
-from gem.models.dualing_cnn_lstm_dqn import Model_CNN_LSTM_DQN
-from examples.gems_and_wolves.env import WolfsAndGems
+from examples.taxi_cab.elements_rnn import (
+    TaxiCab,
+    EmptyObject,
+    Wall,
+    Passenger,
+)
+from gem.models.dualing_cnn_lstm_dqn_hidden import Model_CNN_LSTM_DQN
+from examples.taxi_cab.env_rnn import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
-
-
-from examples.gems_and_wolves.elements import EmptyObject, Wall
-
-
-
-import random
 import torch
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+import random
+
+# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+# save_dir = "/Users/ethan/gem_output/"
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-#if torch.backends.mps.is_available():
+# if torch.backends.mps.is_available():
 #    device = torch.device("mps")
+
+# device = "cpu"
+print(device)
 
 
 def create_models():
@@ -45,33 +50,18 @@ def create_models():
     models = []
     models.append(
         Model_CNN_LSTM_DQN(
-            in_channels=3,
+            in_channels=4,
             num_filters=5,
             lr=0.001,
-            replay_size=2048,
-            in_size=650,
-            hid_size1=75,
-            hid_size2=30,
+            replay_size=1024*5,  # 2048
+            in_size=650,  # 650
+            hid_size1=75,  # 75
+            hid_size2=30,  # 30
             out_size=4,
             priority_replay=True,
             device=device,
         )
-    )  # agent model
-
-    models.append(
-        Model_CNN_LSTM_DQN(
-            in_channels=3,
-            num_filters=5,
-            lr=0.001,
-            replay_size=2048,
-            in_size=2570,
-            hid_size1=150,
-            hid_size2=30,
-            out_size=4,
-            priority_replay=False,
-            device=device,
-        )
-    )  # wolf model
+    )  # taxi model
 
     # convert to device
     for model in range(len(models)):
@@ -81,25 +71,23 @@ def create_models():
     return models
 
 
-world_size = 15
+world_size = 10
 
-trainable_models = [0, 1]
+trainable_models = [0]
 sync_freq = 500
 modelUpdate_freq = 25
-epsilon = 0.99
+epsilon = .99
 
 turn = 1
 
 models = create_models()
-env = WolfsAndGems(
+env = TaxiCabEnv(
     height=world_size,
     width=world_size,
     layers=1,
-    defaultObject=EmptyObject(),
-    gem1p=0.03,
-    gem2p=0.02,
-    wolf1p=0.01,
+    defaultObject=EmptyObject,
 )
+
 env.game_test()
 
 
@@ -110,6 +98,7 @@ def run_game(
     epsilon,
     epochs=10000,
     max_turns=100,
+    world_size=10,
 ):
     """
     This is the main loop of the game
@@ -131,14 +120,14 @@ def run_game(
             height=world_size,
             width=world_size,
             layers=1,
-            gem1p=0.03,
-            gem2p=0.02,
-            wolf1p=0.01,
         )
+
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
             env.world[loc].init_replay(3)
+            env.world[loc].init_rnn_state = None
+
 
         while done == 0:
             """
@@ -187,20 +176,23 @@ def run_game(
                             reward,
                             next_state,
                             done,
+                            env.world[new_loc].init_rnn_state[0],
+                            env.world[new_loc].init_rnn_state[1]
                         ),
                     )
 
                     env.world[new_loc].episode_memory.append(exp)
 
-                    if env.world[new_loc].kind == "agent":
+                    if env.world[new_loc].kind == "taxi_cab":
                         game_points[0] = game_points[0] + reward
-                    if env.world[new_loc].kind == "wolf":
-                        game_points[1] = game_points[1] + reward
+                    if env.world[new_loc].kind == "taxi_cab" and reward > 20:
+                        game_points[1] = game_points[1] + 1
 
             # determine whether the game is finished (either max length or all agents are dead)
             if (
                 withinturn > max_turns
                 or len(find_instance(env.world, "neural_network")) == 0
+                # or reward > 0
             ):
                 done = 1
 
@@ -210,11 +202,11 @@ def run_game(
                 And then transfer the local memory to the model memory
                 """
                 # this updates the last memory to be the final state of the game board
-                env.world = update_memories(
+                env.world = update_memories_rnn(
                     env,
                     find_instance(env.world, "neural_network"),
                     done,
-                    end_update=True,
+                    end_update=False,  # the end update fails with non standard inputs. this needs to be fixed
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved
@@ -238,11 +230,11 @@ def run_game(
             loss = models[mods].training(256, 0.9)
             losses = losses + loss.detach().cpu().numpy()
 
-        updateEps = False
+        updateEps = True
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
         if updateEps == True:
             # epsilon = update_epsilon(epsilon, turn, epoch)
-            epsilon = max(epsilon - 0.00003, 0.2)
+            epsilon = max(epsilon - (0.1 / epochs), 0.2)
 
         if epoch % 100 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
@@ -253,6 +245,7 @@ def run_game(
                 round(game_points[1]),
                 losses,
                 epsilon,
+                world_size,
             )
             game_points = [0, 0]
             losses = 0
@@ -269,14 +262,13 @@ def run_game(
 models = create_models()
 
 run_params = (
-    [0.9, 1000, 5],
-    [0.8, 5000, 5],
-    [0.7, 5000, 5],
-    [0.2, 5000, 5],
-    [0.8, 10000, 25],
-    [0.6, 10000, 35],
-    [0.2, 10000, 35],
-    [0.2, 20000, 50],
+    [0.99, 10, 100, 8],
+    [0.9, 1000, 100, 8],
+    [0.8, 1000, 100, 8],
+    [0.7, 1000, 100, 8],
+    [0.6, 1000, 100, 8],
+    [0.5, 2000, 100, 8],
+    [0.2, 20000, 100, 8],
 )
 
 # the version below needs to have the keys from above in it
@@ -285,19 +277,21 @@ for modRun in range(len(run_params)):
         models,
         env,
         turn,
-        run_params[modRun][0],
+        epsilon=run_params[modRun][0],
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
+        world_size=run_params[modRun][3],
     )
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_" + str(modRun),
+        "taxi_cab_vbasic_" + str(modRun),
     )
     make_video(
-        "WolvesGems_PER_" + str(modRun),
+        "taxi_cab_vbasic" + str(modRun),
         save_dir,
         models,
-        20,
+        run_params[modRun][3],
         env,
+        end_update=False,
     )
