@@ -21,6 +21,7 @@ class TaxiCabEnv:
         width=10,
         layers=1,
         defaultObject=EmptyObject(),
+        tile_size=(3, 3)
     ):
         self.height = height
         self.width = width
@@ -30,6 +31,7 @@ class TaxiCabEnv:
         self.init_elements()
         self.populate()
         self.insert_walls(self.height, self.width)
+        self.tile_size = tile_size
 
     def create_world(self, height=15, width=15, layers=1):
         """
@@ -81,7 +83,7 @@ class TaxiCabEnv:
 
         moveList = find_instance(self.world, "neural_network")
 
-        img = agent_visualfield(self.world, moveList[0], k=4)
+        img = agent_visualfield(self.world, moveList[0], self.tile_size, k=4)
 
         plt.subplot(1, 2, 1)
         plt.imshow(image)
@@ -107,7 +109,7 @@ class TaxiCabEnv:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            img = agent_visualfield(self.world, loc, self.world[location].vision)
+            img = agent_visualfield(self.world, loc, self.tile_size, k=self.world[location].vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
 

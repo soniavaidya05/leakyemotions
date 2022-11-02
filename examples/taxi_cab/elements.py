@@ -10,7 +10,14 @@ class Wall:
     kind = "wall"  # class variable shared by all instances
 
     def __init__(self):
-        self.appearance = [50.0, 50.0, 50.0]  # walls are purple
+        GRAY = (128, 128, 128)
+        WHITE = (255, 255, 255)
+        self.appearance = np.array([
+            [GRAY, WHITE, GRAY],
+            [WHITE, GRAY, WHITE],
+            [GRAY, WHITE, GRAY],
+        ])
+
         self.passable = 0  # you can't walk through a wall
         self.action_type = "static"
 
@@ -20,7 +27,7 @@ class EmptyObject:
     kind = "empty"  # class variable shared by all instances
 
     def __init__(self):
-        self.appearance = [0.0, 0.0, 0.0]  # empty is well, blank
+        self.appearance = np.full((3, 3, 3), 255)
         self.passable = 1  # whether the object blocks movement
         self.action_type = "empty"
         # self.change_appearance(0.05)
@@ -45,17 +52,28 @@ class Passenger:
 
     def __init__(self, world):
         super().__init__()
-        self.appearance = (255.0, 0.0, 0.0)  # passengers are red
+        BLACK = (0, 0, 0)
+        ORANGE = (255, 165, 0)
+        RED = (255, 0, 0)
+
+        self.appearance = np.array([
+            [BLACK, ORANGE, BLACK],
+            [BLACK, RED, BLACK],
+            [BLACK, RED, BLACK],
+        ])
+
         self.passable = 1  # whether the object blocks movement
         self.action_type = "static"
         self.select_desired_location(world)
         # self.change_appearance(1)
 
     def change_appearance(self, scaling, max_value=255.0):
-        R = min((random.random() * scaling + 235.0), max_value)
-        G = min((random.random() * scaling + 0.0), max_value)
-        B = min((random.random() * scaling + 0.0), max_value)
-        self.appearance = [R, G, B]
+        # TODO: implement this
+        # R = min((random.random() * scaling + 235.0), max_value)
+        # G = min((random.random() * scaling + 0.0), max_value)
+        # B = min((random.random() * scaling + 0.0), max_value)
+        # self.appearance = [R, G, B]
+        ...
 
     def select_desired_location(self, world):
         """
@@ -83,7 +101,14 @@ class Destination:
 
     def __init__(self):
         super().__init__()
-        self.appearance = (0.0, 255.0, 0.0)  # destination is green
+        GREEN = (0, 255, 0)
+        BLACK = (0, 0, 0)
+        self.appearance = np.array([
+            [GREEN, BLACK, GREEN],
+            [GREEN, GREEN, BLACK],
+            [GREEN, BLACK, GREEN],
+        ])
+
         self.passable = 1  # whether the object blocks movement
         self.action_type = "static"
 
@@ -94,7 +119,15 @@ class TaxiCab:
 
     def __init__(self, model):
         super().__init__()
-        self.appearance = (255.0, 225.0, 0.0)  # taxi is yellow
+        BLACK = (0, 0, 0)
+        ORANGE = (255, 165, 0)
+        YELLOW = (255, 255, 0)
+        self.appearance = np.array([
+            [BLACK, BLACK, BLACK],
+            [BLACK, ORANGE, BLACK],
+            [YELLOW, YELLOW, YELLOW],
+        ])
+
         self.passable = 0  # whether the object blocks movement
         self.action_type = "neural_network"
         self.episode_memory = deque([], maxlen=10)  # we should read in these maxlens

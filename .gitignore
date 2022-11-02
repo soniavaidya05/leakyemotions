@@ -133,3 +133,7 @@ dmypy.json
 
 # OSX stuff
 .DS_Store
+
+# Output files
+output/
+logs/
