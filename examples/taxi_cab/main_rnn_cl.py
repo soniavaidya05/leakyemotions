@@ -25,10 +25,19 @@ import torch
 
 import random
 
-# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-# save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-# save_dir = "/Users/ethan/gem_output/"
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+parser = argparse.ArgumentParser()
+parser.add_argument('filename')
+args = parser.parse_args()
+
+if args.test is True:
+    save_dir = args.filename
+else:
+    save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+    # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+    # save_dir = "/Users/ethan/gem_output/"
+    #save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+
+
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

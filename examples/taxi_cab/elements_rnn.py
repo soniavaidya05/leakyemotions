@@ -3,6 +3,8 @@ from collections import deque
 import numpy as np
 import torch
 import random
+from gem.models.perception import agent_visualfield
+
 
 
 class Wall:
@@ -116,6 +118,42 @@ class TaxiCab:
         image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
         exp = 1, (image, 0, 0, image, 0, rnn_init)
         self.episode_memory.append(exp)
+
+    def pov(self, env, location, inventory=[], layers=[0]):
+        """
+        TODO: refactor all the code so that this is here
+        """
+
+        previous_state = self.episode_memory[-1][1][0]
+        current_state = previous_state.clone()
+
+        current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
+
+        state_now = torch.tensor([])
+        for layer in layers:
+            """
+            Loops through each layer to get full visual field
+            """
+            loc = (location[0], location[1], layer)
+            img = agent_visualfield(env.world, loc, self.vision)
+            input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
+            state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
+        
+        if len(inventory) > 0:
+            """
+            Loops through each additional piece of information and places into one layer
+            """
+            inventory_var = torch.tensor([])
+            for item in range(len(inventory)):
+                tmp = (current_state[:, -1, -1, :, :] * 0) + inventory[item]
+                inventory_var = torch.cat((inventory_var, tmp), dim=0)
+            inventory_var = inventory_var.unsqueeze(0).unsqueeze(0)
+            state_now = torch.cat((state_now, inventory_var), dim=2)
+
+        current_state[:, -1, :, :, :] = state_now
+
+        return current_state
+
 
     def movement(self, action, location):
         """
