@@ -32,32 +32,7 @@ def create_models():
             priority_replay=False,
             device=device,
         )
-    )  # agent model1
-    models.append(
-        Model_linear_MLP_DDQN(
-            lr=0.0005,
-            replay_size=1024,  
-            in_size=18,  
-            hid_size1=20,  
-            hid_size2=20,  
-            out_size=7,
-            priority_replay=False,
-            device=device,
-        )
-    )  # agent model2
-    models.append(
-        Model_linear_MLP_DDQN(
-            lr=0.0005,
-            replay_size=1024,  
-            in_size=18,  
-            hid_size1=20,  
-            hid_size2=20,  
-            out_size=7,
-            priority_replay=False,
-            device=device,
-        )
-    )  # agent model3
-
+    )
     # convert to device
     for model in range(len(models)):
         models[model].model1.to(device)
@@ -74,27 +49,15 @@ env = AIEcon_simple_game()
 agent_list = []
 num_agents = 18
 for i in range(num_agents):
-    agent_type = np.random.choice([0,1,2])
-    if agent_type == 0:
-        appearence = [1, 0, 0, np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1])]
-        agent_list.append(Agent(0,0,appearence, .95, .15, .05))
-    if agent_type == 1:
-        appearence = [0, 1, 0, np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1])]
-        agent_list.append(Agent(1,1,appearence, .15, .95, .05))
-    if agent_type == 2:
-        appearence = [0, 0, 1, np.random.choice([0,1]), np.random.choice([0,1]), np.random.choice([0,1])]
-        agent_list.append(Agent(2,2,appearence, .05, .05, .15))
-    agent_list[i].init_replay(3)   
+    # do all the agents need to have a unique object?
+    pass
 
 rewards = [0,0,0]
 losses = 0
 model_learn_rate = 2
 sync_freq = 500
 
-trainable_models = [0,1,2]
-agent1_actions = [0,0,0,0,0,0,0]
-agent2_actions = [0,0,0,0,0,0,0]
-agent3_actions = [0,0,0,0,0,0,0]
+trainable_models = [0]
 
 epsilon = .99
 
@@ -117,11 +80,7 @@ for epoch in range(1000000):
     env.stone = 10
 
     for agent in range(len(agent_list)):
-        agent_list[agent].coin = 0
-        agent_list[agent].wood = 0
-        agent_list[agent].stone = 0
-        if agent_list[agent].policy == 2:
-            agent_list[agent].coin = 6
+        # reset the agents for a new epoch
         agent_list[i].init_replay(3)
         agent_list[i].state = torch.zeros(12).float()
 
@@ -131,10 +90,9 @@ for epoch in range(1000000):
         if turn > max_turns:
             done = 1
         for agent in range(len(agent_list)):
-
-            cur_wood = agent_list[agent].wood
-            cur_stone = agent_list[agent].stone
-            cur_coin = agent_list[agent].coin
+            """
+            This is where some thought will need to go in, if the agents are in lists in locations
+            """
 
             state, previous_state = generate_input(agent_list, agent, agent_list[agent].state)
             state_lstm = prepare_lstm(agent_list, agent, state)
@@ -142,12 +100,6 @@ for epoch in range(1000000):
             action= models[agent_list[agent].policy].take_action([state_lstm, epsilon])
             env, reward, next_state, done, new_loc = agent_list[agent].transition(env, models, action, done, [], agent_list, agent)
             rewards[agent_list[agent].policy] = rewards[agent_list[agent].policy] + reward
-            if agent_list[agent].policy == 0:
-                agent1_actions[action] = agent1_actions[action] + 1
-            if agent_list[agent].policy == 1:
-                agent2_actions[action] = agent2_actions[action] + 1
-            if agent_list[agent].policy == 2:
-                agent3_actions[action] = agent3_actions[action] + 1
             next_state_lstm = prepare_lstm2(state_lstm, next_state)
 
 
@@ -171,26 +123,3 @@ for epoch in range(1000000):
     if turn % model_learn_rate == 0:
         for mods in trainable_models:# reducing gamma to see if future Q is the problem
             losses = losses + loss.detach().cpu().numpy()
-
-    if epoch % round(500/max_turns) == 0:
-        print("--------------------------------------")
-        print("epoch:" , epoch, "loss: ",losses, "points (wood, stone, house): ", rewards, "epsilon: ", epsilon)
-        print("chop, mine, build, sell_wood, sell_stone, buy_wood, buy_stone")
-        print("agent1 behaviours: ", agent1_actions)
-        print("agent2 behaviours: ", agent2_actions)
-        print("agent3 behaviours: ", agent3_actions)
-        rewards = [0,0,0]
-        losses = 0
-        agent1_actions = [0,0,0,0,0,0,0]
-        agent2_actions = [0,0,0,0,0,0,0]
-        agent3_actions = [0,0,0,0,0,0,0]
-
-    if epoch % 10000 == 0:
-        save_models(
-        models,
-        save_dir,
-        "AIecon_simple_dualing_None_" + str(epoch),
-    )
-
-
-
