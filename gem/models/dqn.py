@@ -68,7 +68,7 @@ class ModelDQN:
               can handle both types of input files for RNN models
         """
 
-        img = agent_visualfield(world, (i, j), holdObject.vision)
+        img = agent_visualfield(world, (i, j), holdObject.appearance.shape, k=holdObject.vision)
         input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
         return input
 

@@ -8,8 +8,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-astropy = "^5.1"
+astropy = "^5.1.1"
 matplotlib = "^3.6.1"
+numpy = "^1.23.4"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.20.0"

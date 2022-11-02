@@ -19,6 +19,7 @@ class WolfsAndGems:
         gem1p=0.110,
         gem2p=0.04,
         wolf1p=0.005,
+        tile_size=(3, 3)
     ):
         self.gem1p = gem1p
         self.gem2p = gem2p
@@ -31,6 +32,7 @@ class WolfsAndGems:
         self.init_elements()
         self.populate(self.gem1p, self.gem2p, self.wolf1p)
         self.insert_walls(self.height, self.width)
+        self.tile_size = tile_size
 
     def create_world(self, height=15, width=15, layers=1):
         """
@@ -80,7 +82,7 @@ class WolfsAndGems:
 
         moveList = find_instance(self.world, "neural_network")
 
-        img = agent_visualfield(self.world, moveList[0], k=4)
+        img = agent_visualfield(self.world, moveList[0], self.tile_size, k=4)
 
         plt.subplot(1, 2, 1)
         plt.imshow(image)
@@ -88,14 +90,14 @@ class WolfsAndGems:
         plt.imshow(img)
         plt.show()
 
-        
+
     def pov(self, location, inventory=[], layers=[0]):
         """
         Creates outputs of a single frame, and also a multiple image sequence
         TODO: get rid of the holdObject input throughout the code
         TODO: to get better flexibility, this code should be moved to env
         """
-        
+
         previous_state = self.world[location].episode_memory[-1][1][0]
         current_state = previous_state.clone()
 
@@ -107,7 +109,7 @@ class WolfsAndGems:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            img = agent_visualfield(self.world, loc, self.world[location].vision)
+            img = agent_visualfield(self.world, loc, self.tile_size, k=self.world[location].vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
 
@@ -202,7 +204,7 @@ class WolfsAndGems:
         """
         holdObject = self.world[loc]
         device = models[holdObject.policy].device
-        
+
 
 
         if holdObject.kind != "deadAgent":
