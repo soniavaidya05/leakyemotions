@@ -271,15 +271,16 @@ for epoch in range(1000000):
             state = state.unsqueeze(0).to(device)
             action= models[agent_list[agent].policy].take_action([state_lstm, epsilon])
             env, reward, next_state, done, new_loc = agent_list[agent].transition(env, models, action, done, [], agent_list, agent)
-            rewards[agent_list[agent].policy] = rewards[agent_list[agent].policy] + reward
 
             if action in (3,4):
                 decider_state = torch.tensor(agent_list[agent].appearance).float()
                 decider_action = decider_model.take_action([decider_state, .1])
                 agent_action = action - 3
-                reward = -1
                 if decider_action != agent_action:
-                    reward = 1
+                    reward = -.1
+
+            rewards[agent_list[agent].policy] = rewards[agent_list[agent].policy] + reward
+
 
             # should make this a matrix to clean up code
             if agent_list[agent].policy == 0:

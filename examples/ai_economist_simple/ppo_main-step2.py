@@ -391,9 +391,9 @@ for epoch in range(1000000):
                 decider_state = torch.tensor(agent_list[agent].appearance).float()
                 decider_action = decider_model.take_action([decider_state, .1])
                 agent_action = action - 3
-                reward = -1
+                #reward = -1
                 if decider_action != agent_action:
-                    reward = 1
+                    reward = -.1
 
             agent_list[agent].episode_memory.states.append(state)
             agent_list[agent].episode_memory.actions.append(action)
