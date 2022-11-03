@@ -35,7 +35,7 @@ else:
     save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
     # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
     # save_dir = "/Users/ethan/gem_output/"
-    #save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+    # save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 
 

@@ -277,9 +277,9 @@ for epoch in range(1000000):
                 decider_state = torch.tensor(agent_list[agent].appearance).float()
                 decider_action = decider_model.take_action([decider_state, .1])
                 agent_action = action - 3
-                decider_reward = -1
+                reward = -1
                 if decider_action != agent_action:
-                    reward = -.1
+                    reward = 1
 
             # should make this a matrix to clean up code
             if agent_list[agent].policy == 0:
