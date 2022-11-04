@@ -13,7 +13,7 @@ from examples.taxi_cab.elements import (
     Wall,
     Passenger,
 )
-from gem.models.dualing_cnn_lstm_dqn import Model_CNN_LSTM_DQN
+from gem.models.dualing_cnn_lstm_dqn_newpov import Model_CNN_LSTM_DQN
 from examples.taxi_cab.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -26,8 +26,8 @@ import random
 
 # save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-save_dir = "/Users/ethan/gem_output/"
-# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+# save_dir = "/Users/ethan/gem_output/"
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -51,9 +51,10 @@ def create_models():
         Model_CNN_LSTM_DQN(
             in_channels=4,
             num_filters=5,
+            filter_size = 3,
             lr=0.001,
-            replay_size=1024,  # 2048
-            in_size=6770,  # TODO: Need to write a function to determine this automatically
+            replay_size=1024*3,  # 2048
+            in_size=3445,  # TODO: Need to write a function to determine this automatically
             hid_size1=75,  # 75
             hid_size2=30,  # 30
             out_size=4,
@@ -125,7 +126,6 @@ def run_game(
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
             pov_size = (env.tile_size[0] * (env.world[loc].vision*2 + 1), env.tile_size[1] * (env.world[loc].vision*2 + 1))
-            print(pov_size)
             env.world[loc].init_replay(numberMemories=3, pov_size=pov_size, visual_depth=4)
             env.world[loc].init_rnn_state = None
 
@@ -291,10 +291,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "taxi_cab_vbasic_" + str(modRun),
+        "taxi_cab_images_" + str(modRun),
     )
     make_video(
-        "taxi_cab_vbasic" + str(modRun),
+        "taxi_cab_images_" + str(modRun),
         save_dir,
         models,
         run_params[modRun][3],
