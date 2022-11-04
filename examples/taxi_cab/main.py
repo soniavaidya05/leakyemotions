@@ -26,8 +26,8 @@ import random
 
 # save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-# save_dir = "/Users/ethan/gem_output/"
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+save_dir = "/Users/ethan/gem_output/"
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -53,7 +53,7 @@ def create_models():
             num_filters=5,
             lr=0.001,
             replay_size=1024,  # 2048
-            in_size=650,  # 650
+            in_size=6770,  # TODO: Need to write a function to determine this automatically
             hid_size1=75,  # 75
             hid_size2=30,  # 30
             out_size=4,
@@ -124,7 +124,9 @@ def run_game(
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[loc].init_replay(3)
+            pov_size = (env.tile_size[0] * (env.world[loc].vision*2 + 1), env.tile_size[1] * (env.world[loc].vision*2 + 1))
+            print(pov_size)
+            env.world[loc].init_replay(numberMemories=3, pov_size=pov_size, visual_depth=4)
             env.world[loc].init_rnn_state = None
 
 

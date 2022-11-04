@@ -4,6 +4,7 @@ from gem.game_utils import create_world, create_world_image
 import matplotlib.animation as animation
 import random
 import pickle
+from gem.models.perception import agent_visualfield
 
 from gem.utils import (
     find_instance,
@@ -19,12 +20,16 @@ def create_video(
     ims = []
     env.reset_env(world_size, world_size)
     done = 0
-    for location in find_instance(env.world, "neural_network"):
+    for loc in find_instance(env.world, "neural_network"):
         # reset the memories for all agents
-        env.world[location].init_replay(3)
+        # the parameter sets the length of the sequence for LSTM
+        pov_size = (env.tile_size[0] * (env.world[loc].vision*2 + 1), env.tile_size[1] * (env.world[loc].vision*2 + 1))
+        env.world[loc].init_replay(numberMemories=3, pov_size=pov_size, visual_depth=4)
+        env.world[loc].init_rnn_state = None
     game_points = [0, 0]
     for _ in range(num):
-        image = create_world_image(env.world)
+        # image = create_world_image(env.world)
+        image = agent_visualfield(env.world, (0,0), env.tile_size, k=None)
         im = plt.imshow(image, animated=True)
         ims.append([im])
 
