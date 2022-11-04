@@ -24,10 +24,10 @@ import torch
 
 import random
 
-# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 # save_dir = "/Users/ethan/gem_output/"
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -54,7 +54,7 @@ def create_models():
             filter_size = 3,
             lr=0.001,
             replay_size=1024*3,  # 2048
-            in_size=3445,  # TODO: Need to write a function to determine this automatically
+            in_size=650,  # TODO: Need to write a function to determine this automatically
             hid_size1=75,  # 75
             hid_size2=30,  # 30
             out_size=4,

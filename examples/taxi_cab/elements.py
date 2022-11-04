@@ -27,7 +27,12 @@ class EmptyObject:
     kind = "empty"  # class variable shared by all instances
 
     def __init__(self):
-        self.appearance = np.full((3, 3, 3), 255)
+        BLACK = (0, 0, 0)
+        self.appearance = np.array([
+            [BLACK, BLACK, BLACK],
+            [BLACK, BLACK, BLACK],
+            [BLACK, BLACK, BLACK],
+        ])
         self.passable = 1  # whether the object blocks movement
         self.action_type = "empty"
         # self.change_appearance(0.05)

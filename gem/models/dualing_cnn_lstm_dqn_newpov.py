@@ -20,9 +20,9 @@ class CNN_CLD(nn.Module):
     def __init__(self, in_channels, num_filters, filter_size):
         super(CNN_CLD, self).__init__()
         self.conv_layer1 = nn.Conv2d(
-            in_channels=in_channels, out_channels=num_filters, kernel_size=filter_size
+            in_channels=in_channels, out_channels=num_filters, kernel_size=filter_size, stride = filter_size
         )
-        self.avg_pool = nn.MaxPool2d(3, filter_size, padding=0)
+        self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
 
     def forward(self, x):
         x = x / 255  # note, a better normalization should be applied
