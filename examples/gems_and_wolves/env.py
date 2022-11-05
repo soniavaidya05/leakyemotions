@@ -19,7 +19,7 @@ class WolfsAndGems:
         gem1p=0.110,
         gem2p=0.04,
         wolf1p=0.005,
-        tile_size=(3, 3)
+        tile_size=(1, 1)
     ):
         self.gem1p = gem1p
         self.gem2p = gem2p

@@ -118,7 +118,7 @@ class Agent:
         self.init_rnn_state = None
 
 
-    def init_replay(self, numberMemories):
+    def init_replay(self, numberMemories, pov_size = 9, visual_depth = 9):
         """
         Fills in blank images for the LSTM before game play.
         Impicitly defines the number of sequences that the LSTM will be trained on.

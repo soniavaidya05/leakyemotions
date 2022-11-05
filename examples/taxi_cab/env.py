@@ -112,7 +112,7 @@ class TaxiCabEnv:
                 inventory_var = torch.cat((inventory_var, tmp), dim=0)
             inventory_var = inventory_var.unsqueeze(0).unsqueeze(0)
             state_now = torch.cat((state_now, inventory_var), dim=2)
-
+            
         current_state[:, -1, :, :, :] = state_now
 
         return current_state

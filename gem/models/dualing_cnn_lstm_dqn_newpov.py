@@ -17,10 +17,10 @@ from gem.models.priority_replay import Memory, SumTree
 
 
 class CNN_CLD(nn.Module):
-    def __init__(self, in_channels, num_filters):
+    def __init__(self, in_channels, num_filters, filter_size):
         super(CNN_CLD, self).__init__()
         self.conv_layer1 = nn.Conv2d(
-            in_channels=in_channels, out_channels=num_filters, kernel_size=1
+            in_channels=in_channels, out_channels=num_filters, kernel_size=filter_size, stride = filter_size
         )
         self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
 
@@ -45,6 +45,7 @@ class Combine_CLD(nn.Module):
         self,
         in_channels,
         num_filters,
+        filter_size,
         in_size,
         hid_size1,
         hid_size2,
@@ -53,7 +54,7 @@ class Combine_CLD(nn.Module):
         batch_first=True,
     ):
         super(Combine_CLD, self).__init__()
-        self.cnn = CNN_CLD(in_channels, num_filters)
+        self.cnn = CNN_CLD(in_channels, num_filters, filter_size)
         self.rnn = nn.LSTM(
             input_size=in_size,
             hidden_size=hid_size1,
@@ -94,6 +95,7 @@ class Model_CNN_LSTM_DQN:
         self,
         in_channels,
         num_filters,
+        filter_size,
         lr,
         replay_size,
         in_size,
@@ -105,10 +107,10 @@ class Model_CNN_LSTM_DQN:
     ):
         self.modeltype = "cnn_lstm_dqn"
         self.model1 = Combine_CLD(
-            in_channels, num_filters, in_size, hid_size1, hid_size2, out_size
+            in_channels, num_filters, filter_size, in_size, hid_size1, hid_size2, out_size
         )
         self.model2 = Combine_CLD(
-            in_channels, num_filters, in_size, hid_size1, hid_size2, out_size
+            in_channels, num_filters, filter_size, in_size, hid_size1, hid_size2, out_size
         )
         self.optimizer = torch.optim.Adam(
             self.model1.parameters(), lr=lr, weight_decay=0.01
@@ -154,7 +156,7 @@ class Model_CNN_LSTM_DQN:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            img = agent_visualfield(world, loc, tile_size=(1,1), k=holdObject.vision)
+            img = agent_visualfield(world, loc, tile_size=holdObject.appearance.shape[:2], k=holdObject.vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
 

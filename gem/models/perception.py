@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def agent_visualfield(world, location, tile_size, k=4,
+def agent_visualfield(world, location, tile_size = (1,1), k=4,
                       out_of_bounds_colour=[50.0, 50.0, 50.0],
                       convert_to_float=True):
     """Compute the visual field of the agent.

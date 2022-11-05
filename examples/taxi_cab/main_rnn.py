@@ -22,13 +22,17 @@ import torch.nn as nn
 import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
 import torch
+from tensorboardX import SummaryWriter
+import time
 
 import random
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 # save_dir = "/Users/ethan/gem_output/"
-# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+logger = SummaryWriter(f"{save_dir}/taxicab/", comment=str(time.time))
+
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -247,6 +251,15 @@ def run_game(
                 epsilon,
                 world_size,
             )
+            # Tensorboard logging
+            #logger.add_scalar('epoch', value=epoch, iteration=epoch)
+            logger.add_scalar('num_turns', withinturn, epoch)
+            logger.add_scalar('total_points', game_points[0], epoch)
+            logger.add_scalar('n_passengers_delivered', game_points[1], epoch)
+            logger.add_scalar('sum_loss', losses, epoch)
+            logger.add_scalar('epsilon', epsilon, epoch)
+            logger.add_scalar('world_size', world_size, epoch)
+
             game_points = [0, 0]
             losses = 0
     return models, env, turn, epsilon

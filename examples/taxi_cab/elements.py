@@ -27,7 +27,12 @@ class EmptyObject:
     kind = "empty"  # class variable shared by all instances
 
     def __init__(self):
-        self.appearance = np.full((3, 3, 3), 255)
+        BLACK = (0, 0, 0)
+        self.appearance = np.array([
+            [BLACK, BLACK, BLACK],
+            [BLACK, BLACK, BLACK],
+            [BLACK, BLACK, BLACK],
+        ])
         self.passable = 1  # whether the object blocks movement
         self.action_type = "empty"
         # self.change_appearance(0.05)
@@ -138,14 +143,15 @@ class TaxiCab:
         self.driving_location = (0, 0, 0)
         self.init_rnn_state = None
 
-    def init_replay(self, numberMemories):
+    def init_replay(self, numberMemories, pov_size, visual_depth):
         """
         Fills in blank images for the LSTM before game play.
         """
         # pov_size = (self.vision * 2) - 1
-        pov_size = 9
-        visual_depth = 4  # change this to be 6 when we add the second layer of the task
-        image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
+        # pov_size = 27 
+        # visual_depth = 4  # change this to be 6 when we add the second layer of the task
+        pov_width, pov_height = pov_size
+        image = torch.zeros(1, numberMemories, visual_depth, pov_height, pov_width).float()
         exp = 1, (image, 0, 0, image, 0)
         self.episode_memory.append(exp)
 

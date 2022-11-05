@@ -107,7 +107,7 @@ class TaxiCab:
         self.driving_location = (0, 0, 0)
         self.init_rnn_state = None
 
-    def init_replay(self, numberMemories):
+    def init_replay(self, numberMemories, pov_size = 9, visual_depth = 4):
         """
         Fills in blank images for the LSTM before game play.
         """
@@ -135,7 +135,7 @@ class TaxiCab:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            img = agent_visualfield(env.world, loc, self.vision)
+            img = agent_visualfield(env.world, loc, env.tile_size, self.vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
         
@@ -221,14 +221,8 @@ class TaxiCab:
         # and layers, which is by default just zero, but since I liked the idea
         # of the high and low res version of the world, we are going to need
         # to call both of them.
+        next_state = env.pov(new_loc, inventory=[self.has_passenger], layers=[0])
 
-        next_state = models[self.policy].pov(
-            env.world,
-            new_loc,
-            self,
-            inventory=[self.has_passenger],
-            layers=[0],
-        )
         self.reward += reward
 
         return env.world, reward, next_state, done, new_loc

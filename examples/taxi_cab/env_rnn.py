@@ -21,7 +21,7 @@ class TaxiCabEnv:
         width=10,
         layers=1,
         defaultObject=EmptyObject(),
-        tile_size=(3, 3)
+        tile_size=(1, 1)
     ):
         self.height = height
         self.width = width
