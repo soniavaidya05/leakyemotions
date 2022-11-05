@@ -23,7 +23,7 @@ class AI_Econ:
         defaultObject=EmptyObject(),
         wood1p=0.04,
         stone1p=0.04,
-        tile_size=(3, 3)
+        tile_size=(1, 1)
     ):
         self.wood1p = wood1p
         self.stone1p = stone1p
@@ -266,7 +266,7 @@ class AI_Econ:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            img = agent_visualfield(world, loc, holdObject.vision)
+            img = agent_visualfield(world, loc, self.tile_size, holdObject.vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
 

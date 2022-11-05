@@ -27,11 +27,12 @@ import time
 
 import random
 
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 # save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-save_dir = "/Users/ethan/gem_output/"
+# save_dir = "/Users/ethan/gem_output/"
 logger = SummaryWriter(f"{save_dir}/taxicab/", comment=str(time.time))
-# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -251,7 +252,7 @@ def run_game(
                 world_size,
             )
             # Tensorboard logging
-            logger.add_scalar('epoch', value=epoch, iteration=epoch)
+            #logger.add_scalar('epoch', value=epoch, iteration=epoch)
             logger.add_scalar('num_turns', withinturn, epoch)
             logger.add_scalar('total_points', game_points[0], epoch)
             logger.add_scalar('n_passengers_delivered', game_points[1], epoch)

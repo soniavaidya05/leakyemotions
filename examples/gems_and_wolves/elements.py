@@ -96,7 +96,7 @@ class Agent:
         self.has_transitions = True
         self.action_type = "neural_network"
 
-    def init_replay(self, numberMemories, device="cpu"):
+    def init_replay(self, numberMemories, pov_size = 9, visual_depth = 3):
         """
         Fills in blank images for the LSTM before game play.
         Impicitly defines the number of sequences that the LSTM will be trained on.
@@ -227,7 +227,7 @@ class Wolf:
         self.action_type = "neural_network"
 
     # init is now for LSTM, may need to have a toggle for LSTM of not
-    def init_replay(self, numberMemories, device="cpu"):
+    def init_replay(self, numberMemories, pov_size = 17, visual_depth = 3):
         """
         Fills in blank images for the LSTM before game play.
         Impicitly defines the number of sequences that the LSTM will be trained on.
