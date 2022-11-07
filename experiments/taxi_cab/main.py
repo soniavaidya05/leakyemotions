@@ -1,10 +1,9 @@
-import argparse
+# from tkinter.tix import Tree
 from gem.utils import (
     update_epsilon,
     update_memories,
     find_moveables,
     transfer_world_memories,
-    update_memories_rnn,
     find_agents,
     find_instance,
 )
@@ -14,25 +13,21 @@ from examples.taxi_cab.elements import (
     Wall,
     Passenger,
 )
-from gem.models.dualing_cnn_lstm_dqn_hidden import Model_CNN_LSTM_DQN
-from examples.taxi_cab.env_rnn import TaxiCabEnv
+from gem.models.dualing_cnn_lstm_dqn_newpov2 import Model_CNN_LSTM_DQN
+from examples.taxi_cab.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
 import torch
-from tensorboardX import SummaryWriter
-import time
 
 import random
 
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
-# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 # save_dir = "/Users/ethan/gem_output/"
-logger = SummaryWriter(f"{save_dir}/taxicab/", comment=str(time.time))
-
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -54,15 +49,17 @@ def create_models():
     models = []
     models.append(
         Model_CNN_LSTM_DQN(
-            in_channels=4,
-            num_filters=5,
+            in_channels=(4, 16, 10),
+            num_filters=(16, 10, 10),
+            filter_size=(3, 3, 3),
+            stride=(1, 1, 1),
             lr=0.001,
-            replay_size=1024 * 5,  # 2048
-            in_size=650,  # 650
+            replay_size=1024,  # 2048
+            in_size=8020,  # TODO: Need to write a function to determine this automatically
             hid_size1=75,  # 75
             hid_size2=30,  # 30
             out_size=4,
-            priority_replay=True,
+            priority_replay=False,
             device=device,
         )
     )  # taxi model
@@ -185,8 +182,6 @@ def run_game(
                             reward,
                             next_state,
                             done,
-                            env.world[new_loc].init_rnn_state[0],
-                            env.world[new_loc].init_rnn_state[1],
                         ),
                     )
 
@@ -211,7 +206,7 @@ def run_game(
                 And then transfer the local memory to the model memory
                 """
                 # this updates the last memory to be the final state of the game board
-                env.world = update_memories_rnn(
+                env.world = update_memories(
                     env,
                     find_instance(env.world, "neural_network"),
                     done,
@@ -256,15 +251,6 @@ def run_game(
                 epsilon,
                 world_size,
             )
-            # Tensorboard logging
-            #logger.add_scalar('epoch', value=epoch, iteration=epoch)
-            logger.add_scalar('num_turns', withinturn, epoch)
-            logger.add_scalar('total_points', game_points[0], epoch)
-            logger.add_scalar('n_passengers_delivered', game_points[1], epoch)
-            logger.add_scalar('sum_loss', losses, epoch)
-            logger.add_scalar('epsilon', epsilon, epoch)
-            logger.add_scalar('world_size', world_size, epoch)
-
             game_points = [0, 0]
             losses = 0
     return models, env, turn, epsilon
@@ -280,13 +266,20 @@ def run_game(
 models = create_models()
 
 run_params = (
-    [0.99, 10, 100, 8],
-    [0.9, 1000, 100, 8],
-    [0.8, 1000, 100, 8],
-    [0.7, 1000, 100, 8],
-    [0.6, 1000, 100, 8],
-    [0.5, 2000, 100, 8],
-    [0.2, 20000, 100, 8],
+    [0.99, 10, 100, 7],
+    [0.99, 10000, 100, 7],
+    [0.9, 10000, 100, 7],
+    [0.8, 10000, 100, 7],
+    [0.7, 10000, 100, 7],
+    [0.6, 10000, 100, 7],
+    [0.5, 10000, 100, 7],
+    [0.2, 20000, 100, 7],
+    [0.5, 40000, 100, 7],
+    [0.2, 40000, 100, 7],
+    [0.2, 20000, 100, 7],
+    [0.2, 20000, 100, 7],
+    [0.2, 20000, 100, 7],
+    [0.2, 20000, 100, 7],
 )
 
 # the version below needs to have the keys from above in it
@@ -303,10 +296,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "taxi_cab_vbasic_" + str(modRun),
+        "taxi_cab_images_biggerCNN" + str(modRun),
     )
     make_video(
-        "taxi_cab_vbasic" + str(modRun),
+        "taxi_cab_images_biggerCNN" + str(modRun),
         save_dir,
         models,
         run_params[modRun][3],

@@ -3,8 +3,6 @@ from collections import deque
 import numpy as np
 import torch
 import random
-from gem.models.perception import agent_visualfield
-
 
 
 class Wall:
@@ -12,7 +10,14 @@ class Wall:
     kind = "wall"  # class variable shared by all instances
 
     def __init__(self):
-        self.appearance = [50.0, 50.0, 50.0]  # walls are purple
+        GRAY = (128, 128, 128)
+        WHITE = (255, 255, 255)
+        self.appearance = np.array([
+            [GRAY, WHITE, GRAY],
+            [WHITE, GRAY, WHITE],
+            [GRAY, WHITE, GRAY],
+        ])
+
         self.passable = 0  # you can't walk through a wall
         self.action_type = "static"
 
@@ -22,7 +27,12 @@ class EmptyObject:
     kind = "empty"  # class variable shared by all instances
 
     def __init__(self):
-        self.appearance = [0.0, 0.0, 0.0]  # empty is well, blank
+        BLACK = (0, 0, 0)
+        self.appearance = np.array([
+            [BLACK, BLACK, BLACK],
+            [BLACK, BLACK, BLACK],
+            [BLACK, BLACK, BLACK],
+        ])
         self.passable = 1  # whether the object blocks movement
         self.action_type = "empty"
         # self.change_appearance(0.05)
@@ -47,17 +57,28 @@ class Passenger:
 
     def __init__(self, world):
         super().__init__()
-        self.appearance = (255.0, 0.0, 0.0)  # passengers are red
+        BLACK = (0, 0, 0)
+        ORANGE = (255, 165, 0)
+        RED = (255, 0, 0)
+
+        self.appearance = np.array([
+            [BLACK, ORANGE, BLACK],
+            [BLACK, RED, BLACK],
+            [BLACK, RED, BLACK],
+        ])
+
         self.passable = 1  # whether the object blocks movement
         self.action_type = "static"
         self.select_desired_location(world)
         # self.change_appearance(1)
 
     def change_appearance(self, scaling, max_value=255.0):
-        R = min((random.random() * scaling + 235.0), max_value)
-        G = min((random.random() * scaling + 0.0), max_value)
-        B = min((random.random() * scaling + 0.0), max_value)
-        self.appearance = [R, G, B]
+        # TODO: implement this
+        # R = min((random.random() * scaling + 235.0), max_value)
+        # G = min((random.random() * scaling + 0.0), max_value)
+        # B = min((random.random() * scaling + 0.0), max_value)
+        # self.appearance = [R, G, B]
+        ...
 
     def select_desired_location(self, world):
         """
@@ -85,7 +106,14 @@ class Destination:
 
     def __init__(self):
         super().__init__()
-        self.appearance = (0.0, 255.0, 0.0)  # destination is green
+        GREEN = (0, 255, 0)
+        BLACK = (0, 0, 0)
+        self.appearance = np.array([
+            [GREEN, BLACK, GREEN],
+            [GREEN, GREEN, BLACK],
+            [GREEN, BLACK, GREEN],
+        ])
+
         self.passable = 1  # whether the object blocks movement
         self.action_type = "static"
 
@@ -96,7 +124,15 @@ class TaxiCab:
 
     def __init__(self, model):
         super().__init__()
-        self.appearance = (255.0, 225.0, 0.0)  # taxi is yellow
+        BLACK = (0, 0, 0)
+        ORANGE = (255, 165, 0)
+        YELLOW = (255, 255, 0)
+        self.appearance = np.array([
+            [BLACK, BLACK, BLACK],
+            [BLACK, ORANGE, BLACK],
+            [YELLOW, YELLOW, YELLOW],
+        ])
+
         self.passable = 0  # whether the object blocks movement
         self.action_type = "neural_network"
         self.episode_memory = deque([], maxlen=10)  # we should read in these maxlens
@@ -107,53 +143,17 @@ class TaxiCab:
         self.driving_location = (0, 0, 0)
         self.init_rnn_state = None
 
-    def init_replay(self, numberMemories, pov_size = 9, visual_depth = 4):
+    def init_replay(self, numberMemories, pov_size, visual_depth):
         """
         Fills in blank images for the LSTM before game play.
         """
         # pov_size = (self.vision * 2) - 1
-        pov_size = 9
-        visual_depth = 4  # change this to be 6 when we add the second layer of the task
-        rnn_init = (torch.zeros([1,1,75]), torch.zeros([1,1,75]))
-        image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
-        exp = 1, (image, 0, 0, image, 0, rnn_init)
+        # pov_size = 27 
+        # visual_depth = 4  # change this to be 6 when we add the second layer of the task
+        pov_width, pov_height = pov_size
+        image = torch.zeros(1, numberMemories, visual_depth, pov_height, pov_width).float()
+        exp = 1, (image, 0, 0, image, 0)
         self.episode_memory.append(exp)
-
-    def pov(self, env, location, inventory=[], layers=[0]):
-        """
-        TODO: refactor all the code so that this is here
-        """
-
-        previous_state = self.episode_memory[-1][1][0]
-        current_state = previous_state.clone()
-
-        current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
-
-        state_now = torch.tensor([])
-        for layer in layers:
-            """
-            Loops through each layer to get full visual field
-            """
-            loc = (location[0], location[1], layer)
-            img = agent_visualfield(env.world, loc, env.tile_size, self.vision)
-            input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
-            state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
-        
-        if len(inventory) > 0:
-            """
-            Loops through each additional piece of information and places into one layer
-            """
-            inventory_var = torch.tensor([])
-            for item in range(len(inventory)):
-                tmp = (current_state[:, -1, -1, :, :] * 0) + inventory[item]
-                inventory_var = torch.cat((inventory_var, tmp), dim=0)
-            inventory_var = inventory_var.unsqueeze(0).unsqueeze(0)
-            state_now = torch.cat((state_now, inventory_var), dim=2)
-
-        current_state[:, -1, :, :, :] = state_now
-
-        return current_state
-
 
     def movement(self, action, location):
         """
@@ -221,8 +221,14 @@ class TaxiCab:
         # and layers, which is by default just zero, but since I liked the idea
         # of the high and low res version of the world, we are going to need
         # to call both of them.
-        next_state = env.pov(new_loc, inventory=[self.has_passenger], layers=[0])
 
+        next_state = models[self.policy].pov(
+            env.world,
+            new_loc,
+            self,
+            inventory=[self.has_passenger],
+            layers=[0],
+        )
         self.reward += reward
 
         return env.world, reward, next_state, done, new_loc

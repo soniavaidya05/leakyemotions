@@ -24,9 +24,9 @@ from examples.gems_and_wolves.elements import EmptyObject, Wall
 import random
 import torch
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -292,10 +292,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "WolvesGems_PER_" + str(modRun),
+        "WolvesGems_" + str(modRun),
     )
     make_video(
-        "WolvesGems_PER_" + str(modRun),
+        "WolvesGems_" + str(modRun),
         save_dir,
         models,
         20,

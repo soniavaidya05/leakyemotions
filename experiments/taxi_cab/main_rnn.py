@@ -8,35 +8,30 @@ from gem.utils import (
     find_agents,
     find_instance,
 )
-from examples.taxi_cab.elements_rnn import (
+from examples.taxi_cab.elements import (
     TaxiCab,
     EmptyObject,
     Wall,
     Passenger,
 )
 from gem.models.dualing_cnn_lstm_dqn_hidden import Model_CNN_LSTM_DQN
-from examples.taxi_cab.env_rnn import TaxiCabEnv
+from examples.taxi_cab.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
 import torch
+from tensorboardX import SummaryWriter
+import time
 
 import random
 
-parser = argparse.ArgumentParser()
-parser.add_argument('filename')
-args = parser.parse_args()
-
-if args.test is True:
-    save_dir = args.filename
-else:
-    save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-    # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-    # save_dir = "/Users/ethan/gem_output/"
-    # save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
-
+save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+# save_dir = "/Users/ethan/gem_output/"
+logger = SummaryWriter(f"{save_dir}/taxicab/", comment=str(time.time))
 
 
 # choose device
@@ -62,7 +57,7 @@ def create_models():
             in_channels=4,
             num_filters=5,
             lr=0.001,
-            replay_size=1024*5,  # 2048
+            replay_size=1024 * 5,  # 2048
             in_size=650,  # 650
             hid_size1=75,  # 75
             hid_size2=30,  # 30
@@ -85,7 +80,7 @@ world_size = 10
 trainable_models = [0]
 sync_freq = 500
 modelUpdate_freq = 25
-epsilon = .99
+epsilon = 0.99
 
 turn = 1
 
@@ -134,9 +129,14 @@ def run_game(
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[loc].init_replay(3)
+            pov_size = (
+                env.tile_size[0] * (env.world[loc].vision * 2 + 1),
+                env.tile_size[1] * (env.world[loc].vision * 2 + 1),
+            )
+            env.world[loc].init_replay(
+                numberMemories=3, pov_size=pov_size, visual_depth=4
+            )
             env.world[loc].init_rnn_state = None
-
 
         while done == 0:
             """
@@ -186,7 +186,7 @@ def run_game(
                             next_state,
                             done,
                             env.world[new_loc].init_rnn_state[0],
-                            env.world[new_loc].init_rnn_state[1]
+                            env.world[new_loc].init_rnn_state[1],
                         ),
                     )
 
@@ -256,6 +256,15 @@ def run_game(
                 epsilon,
                 world_size,
             )
+            # Tensorboard logging
+            #logger.add_scalar('epoch', value=epoch, iteration=epoch)
+            logger.add_scalar('num_turns', withinturn, epoch)
+            logger.add_scalar('total_points', game_points[0], epoch)
+            logger.add_scalar('n_passengers_delivered', game_points[1], epoch)
+            logger.add_scalar('sum_loss', losses, epoch)
+            logger.add_scalar('epsilon', epsilon, epoch)
+            logger.add_scalar('world_size', world_size, epoch)
+
             game_points = [0, 0]
             losses = 0
     return models, env, turn, epsilon

@@ -21,7 +21,7 @@ class TaxiCabEnv:
         width=10,
         layers=1,
         defaultObject=EmptyObject(),
-        tile_size=(1, 1)
+        tile_size=(3, 3)
     ):
         self.height = height
         self.width = width
@@ -55,18 +55,7 @@ class TaxiCabEnv:
         """
         Creates an RGB image of the whole world
         """
-        image_r = np.random.random((self.world.shape[0], self.world.shape[1]))
-        image_g = np.random.random((self.world.shape[0], self.world.shape[1]))
-        image_b = np.random.random((self.world.shape[0], self.world.shape[1]))
-
-        for i in range(self.world.shape[0]):
-            for j in range(self.world.shape[1]):
-                image_r[i, j] = self.world[i, j, layer].appearance[0]
-                image_g[i, j] = self.world[i, j, layer].appearance[1]
-                image_b[i, j] = self.world[i, j, layer].appearance[2]
-
-        image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
-        return image
+        return agent_visualfield(self.world, (0, 0, layer), self.tile_size, k=None)
 
     def init_elements(self):
         """
@@ -109,9 +98,7 @@ class TaxiCabEnv:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            img = agent_visualfield(
-                self.world, loc, self.tile_size, k=self.world[location].vision
-            )
+            img = agent_visualfield(self.world, loc, self.tile_size, k=self.world[location].vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
 
@@ -125,7 +112,7 @@ class TaxiCabEnv:
                 inventory_var = torch.cat((inventory_var, tmp), dim=0)
             inventory_var = inventory_var.unsqueeze(0).unsqueeze(0)
             state_now = torch.cat((state_now, inventory_var), dim=2)
-
+            
         current_state[:, -1, :, :, :] = state_now
 
         return current_state
@@ -158,6 +145,7 @@ class TaxiCabEnv:
         taxi_start = (taxi_cab_start1, taxi_cab_start2, 0)
         self.world[taxi_start] = TaxiCab(0)
         self.spawn_passenger()
+
 
     def spawn_passenger(self):
         """

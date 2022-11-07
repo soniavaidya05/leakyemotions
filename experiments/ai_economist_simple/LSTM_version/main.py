@@ -1,7 +1,7 @@
 from examples.ai_economist_simple.elements import Agent
 from examples.ai_economist_simple.env import AIEcon_simple_game
 from examples.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
-from examples.ai_economist_simple.Model_dualing_MLP import Model_linear_MLP_DDQN
+from examples.ai_economist_simple.Model_dualing_NoneLSTM import Model_linear_LSTM_DQN
 import numpy as np
 import torch
 from gem.DQN_utils import save_models, load_models, make_video
@@ -12,9 +12,7 @@ from gem.DQN_utils import save_models, load_models, make_video
 # that should be fixed
 
 
-#save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
-
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
 
 device = "cpu"
@@ -24,10 +22,10 @@ print(device)
 def create_models():
     models = []
     models.append(
-        Model_linear_MLP_DDQN(
+        Model_linear_LSTM_DQN(
             lr=0.0005,
             replay_size=1024,  
-            in_size=18,  
+            in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
             out_size=7,
@@ -36,10 +34,10 @@ def create_models():
         )
     )  # agent model1
     models.append(
-        Model_linear_MLP_DDQN(
+        Model_linear_LSTM_DQN(
             lr=0.0005,
             replay_size=1024,  
-            in_size=18,  
+            in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
             out_size=7,
@@ -48,10 +46,10 @@ def create_models():
         )
     )  # agent model2
     models.append(
-        Model_linear_MLP_DDQN(
+        Model_linear_LSTM_DQN(
             lr=0.0005,
             replay_size=1024,  
-            in_size=18,  
+            in_size=12,  
             hid_size1=20,  
             hid_size2=20,  
             out_size=7,
@@ -132,6 +130,7 @@ for epoch in range(1000000):
         turn = turn + 1
         if turn > max_turns:
             done = 1
+        
         for agent in range(len(agent_list)):
 
             cur_wood = agent_list[agent].wood
@@ -139,9 +138,12 @@ for epoch in range(1000000):
             cur_coin = agent_list[agent].coin
 
             state, previous_state = generate_input(agent_list, agent, agent_list[agent].state)
-            state_lstm = prepare_lstm(agent_list, agent, state)
+
             state = state.unsqueeze(0).to(device)
-            action= models[agent_list[agent].policy].take_action([state_lstm, epsilon])
+            state_lstm = prepare_lstm(agent_list, agent, state)
+            action, init_rnn_state= models[agent_list[agent].policy].take_action([state_lstm, epsilon, agent_list[agent].init_rnn_state])
+            agent_list[agent].init_rnn_state = init_rnn_state
+            #print(action)
             env, reward, next_state, done, new_loc = agent_list[agent].transition(env, models, action, done, [], agent_list, agent)
             rewards[agent_list[agent].policy] = rewards[agent_list[agent].policy] + reward
             if agent_list[agent].policy == 0:
@@ -150,8 +152,8 @@ for epoch in range(1000000):
                 agent2_actions[action] = agent2_actions[action] + 1
             if agent_list[agent].policy == 2:
                 agent3_actions[action] = agent3_actions[action] + 1
+            # is this next state a problem in the main version of gem?
             next_state_lstm = prepare_lstm2(state_lstm, next_state)
-
 
             exp = [1, (
                 state_lstm,
@@ -159,6 +161,7 @@ for epoch in range(1000000):
                 reward,
                 next_state_lstm,
                 done,
+                agent_list[agent].init_rnn_state
             )]
             
             agent_list[agent].episode_memory.append(exp)
@@ -191,7 +194,7 @@ for epoch in range(1000000):
         save_models(
         models,
         save_dir,
-        "AIecon_simple_" + str(epoch),
+        "AIecon_simple_dualing_None_" + str(epoch),
     )
 
 

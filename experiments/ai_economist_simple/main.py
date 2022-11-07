@@ -12,9 +12,7 @@ from gem.DQN_utils import save_models, load_models, make_video
 # that should be fixed
 
 
-#save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
-
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 
 
 device = "cpu"
@@ -191,7 +189,7 @@ for epoch in range(1000000):
         save_models(
         models,
         save_dir,
-        "AIecon_simple_" + str(epoch),
+        "AIecon_simple_dualing_None_" + str(epoch),
     )
 
 
