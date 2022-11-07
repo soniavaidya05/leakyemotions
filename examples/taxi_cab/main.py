@@ -13,7 +13,7 @@ from examples.taxi_cab.elements import (
     Wall,
     Passenger,
 )
-from gem.models.dualing_cnn_lstm_dqn_newpov import Model_CNN_LSTM_DQN
+from gem.models.dualing_cnn_lstm_dqn_newpov2 import Model_CNN_LSTM_DQN
 from examples.taxi_cab.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -49,16 +49,17 @@ def create_models():
     models = []
     models.append(
         Model_CNN_LSTM_DQN(
-            in_channels=4,
-            num_filters=5,
-            filter_size = 3,
+            in_channels=(4, 16, 10),
+            num_filters=(16, 10, 10),
+            filter_size=(3, 3, 3),
+            stride=(1, 1, 1),
             lr=0.001,
-            replay_size=1024*3,  # 2048
-            in_size=650,  # TODO: Need to write a function to determine this automatically
+            replay_size=1024,  # 2048
+            in_size=8020,  # TODO: Need to write a function to determine this automatically
             hid_size1=75,  # 75
             hid_size2=30,  # 30
             out_size=4,
-            priority_replay=True,
+            priority_replay=False,
             device=device,
         )
     )  # taxi model
@@ -125,10 +126,14 @@ def run_game(
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            pov_size = (env.tile_size[0] * (env.world[loc].vision*2 + 1), env.tile_size[1] * (env.world[loc].vision*2 + 1))
-            env.world[loc].init_replay(numberMemories=3, pov_size=pov_size, visual_depth=4)
+            pov_size = (
+                env.tile_size[0] * (env.world[loc].vision * 2 + 1),
+                env.tile_size[1] * (env.world[loc].vision * 2 + 1),
+            )
+            env.world[loc].init_replay(
+                numberMemories=3, pov_size=pov_size, visual_depth=4
+            )
             env.world[loc].init_rnn_state = None
-
 
         while done == 0:
             """
@@ -261,20 +266,20 @@ def run_game(
 models = create_models()
 
 run_params = (
-    [0.99, 10, 100, 8],
-    [0.99, 10000, 100, 8],
-    [0.9, 10000, 100, 8],
-    [0.8, 10000, 100, 8],
-    [0.7, 10000, 100, 8],
-    [0.6, 10000, 100, 8],
-    [0.5, 10000, 100, 8],
-    [0.2, 20000, 100, 8],
-    [0.5, 40000, 100, 8],
-    [0.2, 40000, 100, 8],
-    [0.2, 20000, 100, 8],
-    [0.2, 20000, 100, 8],
-    [0.2, 20000, 100, 8],
-    [0.2, 20000, 100, 8],
+    [0.99, 10, 100, 7],
+    [0.99, 10000, 100, 7],
+    [0.9, 10000, 100, 7],
+    [0.8, 10000, 100, 7],
+    [0.7, 10000, 100, 7],
+    [0.6, 10000, 100, 7],
+    [0.5, 10000, 100, 7],
+    [0.2, 20000, 100, 7],
+    [0.5, 40000, 100, 7],
+    [0.2, 40000, 100, 7],
+    [0.2, 20000, 100, 7],
+    [0.2, 20000, 100, 7],
+    [0.2, 20000, 100, 7],
+    [0.2, 20000, 100, 7],
 )
 
 # the version below needs to have the keys from above in it
@@ -291,10 +296,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "taxi_cab_images_" + str(modRun),
+        "taxi_cab_images_biggerCNN" + str(modRun),
     )
     make_video(
-        "taxi_cab_images_" + str(modRun),
+        "taxi_cab_images_biggerCNN" + str(modRun),
         save_dir,
         models,
         run_params[modRun][3],

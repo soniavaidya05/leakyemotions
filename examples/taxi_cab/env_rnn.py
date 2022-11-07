@@ -1,4 +1,4 @@
-from examples.taxi_cab.elements_rnn import (
+from examples.taxi_cab.elements import (
     TaxiCab,
     EmptyObject,
     Wall,
@@ -21,7 +21,11 @@ class TaxiCabEnv:
         width=10,
         layers=1,
         defaultObject=EmptyObject(),
+<<<<<<< Updated upstream
         tile_size=(1, 1)
+=======
+        tile_size=(3, 3),
+>>>>>>> Stashed changes
     ):
         self.height = height
         self.width = width
@@ -109,7 +113,9 @@ class TaxiCabEnv:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            img = agent_visualfield(self.world, loc, self.tile_size, k=self.world[location].vision)
+            img = agent_visualfield(
+                self.world, loc, self.tile_size, k=self.world[location].vision
+            )
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
 
@@ -156,7 +162,6 @@ class TaxiCabEnv:
         taxi_start = (taxi_cab_start1, taxi_cab_start2, 0)
         self.world[taxi_start] = TaxiCab(0)
         self.spawn_passenger()
-
 
     def spawn_passenger(self):
         """
