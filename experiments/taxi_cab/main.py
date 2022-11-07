@@ -7,14 +7,14 @@ from gem.utils import (
     find_agents,
     find_instance,
 )
-from examples.taxi_cab.elements import (
+from experiments.taxi_cab.elements import (
     TaxiCab,
     EmptyObject,
     Wall,
     Passenger,
 )
 from gem.models.dualing_cnn_lstm_dqn_newpov2 import Model_CNN_LSTM_DQN
-from examples.taxi_cab.env import TaxiCabEnv
+from experiments.taxi_cab.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn

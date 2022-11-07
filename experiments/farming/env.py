@@ -1,4 +1,4 @@
-from examples.ai_economist.elements import (
+from experiments.ai_economist.elements import (
     Farm,
     EmptyObject,
 )

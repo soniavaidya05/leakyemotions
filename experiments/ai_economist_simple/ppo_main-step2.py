@@ -1,13 +1,13 @@
-from examples.ai_economist_simple.elements import Agent
-from examples.ai_economist_simple.env import AIEcon_simple_game
-from examples.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
+from experiments.ai_economist_simple.elements import Agent
+from experiments.ai_economist_simple.env import AIEcon_simple_game
+from experiments.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
 # from examples.ai_economist_simple.Model_dualing_MLP import Model_linear_MLP_DDQN
 import numpy as np
 import torch
 import random 
 from gem.DQN_utils import save_models, load_models
-from examples.ai_market_decider.simple_mlp import Model_simple_linear_MLP
-from examples.ai_economist_simple.PPO import RolloutBuffer, PPO 
+from experiments.ai_market_decider.simple_mlp import Model_simple_linear_MLP
+from experiments.ai_economist_simple.PPO import RolloutBuffer, PPO 
 import itertools 
 
 

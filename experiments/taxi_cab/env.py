@@ -1,4 +1,4 @@
-from examples.taxi_cab.elements import (
+from experiments.taxi_cab.elements import (
     TaxiCab,
     EmptyObject,
     Wall,

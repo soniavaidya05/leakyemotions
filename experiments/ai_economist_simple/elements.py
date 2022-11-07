@@ -1,7 +1,7 @@
 import torch
 import random
 from collections import deque
-from examples.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
+from experiments.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
 
 
 class Agent():

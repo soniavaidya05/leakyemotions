@@ -1,12 +1,12 @@
-from examples.ai_economist_simple.elements import Agent
-from examples.ai_economist_simple.env import AIEcon_simple_game
-from examples.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
-from examples.ai_economist_simple.Model_dualing_NoneLSTM import Model_linear_LSTM_DQN
+from experiments.ai_economist_simple.elements import Agent
+from experiments.ai_economist_simple.env import AIEcon_simple_game
+from experiments.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
+from experiments.ai_economist_simple.Model_dualing_NoneLSTM import Model_linear_LSTM_DQN
 import numpy as np
 import torch
 from gem.DQN_utils import save_models, load_models, make_video
 
-from examples.ai_market_decider.simple_mlp import Model_simple_linear_MLP
+from experiments.ai_market_decider.simple_mlp import Model_simple_linear_MLP
 
 
 # note, the standard LSTM linear model was not working, so it was updated in this example folder
