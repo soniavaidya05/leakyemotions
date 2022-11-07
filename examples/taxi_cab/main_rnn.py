@@ -257,7 +257,6 @@ def run_game(
                 world_size,
             )
             # Tensorboard logging
-<<<<<<< Updated upstream
             #logger.add_scalar('epoch', value=epoch, iteration=epoch)
             logger.add_scalar('num_turns', withinturn, epoch)
             logger.add_scalar('total_points', game_points[0], epoch)
@@ -265,15 +264,6 @@ def run_game(
             logger.add_scalar('sum_loss', losses, epoch)
             logger.add_scalar('epsilon', epsilon, epoch)
             logger.add_scalar('world_size', world_size, epoch)
-=======
-            logger.add_scalar("epoch", value=epoch, iteration=epoch)
-            logger.add_scalar("num_turns", withinturn, epoch)
-            logger.add_scalar("total_points", game_points[0], epoch)
-            logger.add_scalar("n_passengers_delivered", game_points[1], epoch)
-            logger.add_scalar("sum_loss", losses, epoch)
-            logger.add_scalar("epsilon", epsilon, epoch)
-            logger.add_scalar("world_size", world_size, epoch)
->>>>>>> Stashed changes
 
             game_points = [0, 0]
             losses = 0
