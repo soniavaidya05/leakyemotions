@@ -97,7 +97,7 @@ env = TaxiCabEnv(
     defaultObject=EmptyObject,
 )
 
-env.game_test()
+#env.game_test()
 
 
 def run_game(
