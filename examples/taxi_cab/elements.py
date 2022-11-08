@@ -3,8 +3,7 @@ from collections import deque
 import numpy as np
 import torch
 import random
-from gem.models.perception import agent_visualfield
-
+from gem.models.perception_singlePixel import agent_visualfield
 
 
 class Wall:
@@ -107,16 +106,16 @@ class TaxiCab:
         self.driving_location = (0, 0, 0)
         self.init_rnn_state = None
 
-    def init_replay(self, numberMemories, pov_size = 9, visual_depth = 4):
+    def init_replay(self, numberMemories, pov_size=9, visual_depth=4):
         """
         Fills in blank images for the LSTM before game play.
         """
         # pov_size = (self.vision * 2) - 1
         pov_size = 9
         visual_depth = 4  # change this to be 6 when we add the second layer of the task
-        rnn_init = (torch.zeros([1,1,75]), torch.zeros([1,1,75]))
+        rnn_init = (torch.zeros([1, 1, 75]), torch.zeros([1, 1, 75]))
         image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
-        #exp = 1, (image, 0, 0, image, 0, rnn_init)
+        # exp = 1, (image, 0, 0, image, 0, rnn_init)
         exp = 1, (image, 0, 0, image, 0)
         self.episode_memory.append(exp)
 
@@ -136,10 +135,10 @@ class TaxiCab:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            img = agent_visualfield(env.world, loc, env.tile_size, self.vision)
+            img = agent_visualfield(env.world, loc, self.vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
-        
+
         if len(inventory) > 0:
             """
             Loops through each additional piece of information and places into one layer
@@ -154,7 +153,6 @@ class TaxiCab:
         current_state[:, -1, :, :, :] = state_now
 
         return current_state
-
 
     def movement(self, action, location):
         """
