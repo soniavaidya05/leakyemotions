@@ -116,7 +116,8 @@ class TaxiCab:
         visual_depth = 4  # change this to be 6 when we add the second layer of the task
         rnn_init = (torch.zeros([1,1,75]), torch.zeros([1,1,75]))
         image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
-        exp = 1, (image, 0, 0, image, 0, rnn_init)
+        #exp = 1, (image, 0, 0, image, 0, rnn_init)
+        exp = 1, (image, 0, 0, image, 0)
         self.episode_memory.append(exp)
 
     def pov(self, env, location, inventory=[], layers=[0]):

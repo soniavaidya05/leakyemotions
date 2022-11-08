@@ -14,7 +14,7 @@ from examples.taxi_cab.elements import (
     Wall,
     Passenger,
 )
-from gem.models.dualing_cnn_lstm_dqn_hidden import Model_CNN_LSTM_DQN
+from gem.models.dualing_cnn_lstm_dqn import Model_CNN_LSTM_DQN
 from examples.taxi_cab.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -57,12 +57,12 @@ def create_models():
             in_channels=4,
             num_filters=5,
             lr=0.001,
-            replay_size=1024 * 5,  # 2048
+            replay_size=1024,  # 2048
             in_size=650,  # 650
             hid_size1=75,  # 75
             hid_size2=30,  # 30
             out_size=4,
-            priority_replay=True,
+            priority_replay=False,
             device=device,
         )
     )  # taxi model
@@ -185,8 +185,8 @@ def run_game(
                             reward,
                             next_state,
                             done,
-                            env.world[new_loc].init_rnn_state[0],
-                            env.world[new_loc].init_rnn_state[1],
+                            #env.world[new_loc].init_rnn_state[0],
+                            #env.world[new_loc].init_rnn_state[1],
                         ),
                     )
 
@@ -211,7 +211,7 @@ def run_game(
                 And then transfer the local memory to the model memory
                 """
                 # this updates the last memory to be the final state of the game board
-                env.world = update_memories_rnn(
+                env.world = update_memories(
                     env,
                     find_instance(env.world, "neural_network"),
                     done,
@@ -281,11 +281,11 @@ models = create_models()
 
 run_params = (
     [0.99, 10, 100, 8],
-    [0.9, 1000, 100, 8],
-    [0.8, 1000, 100, 8],
-    [0.7, 1000, 100, 8],
-    [0.6, 1000, 100, 8],
-    [0.5, 2000, 100, 8],
+    [0.9, 10000, 100, 8],
+    [0.8, 10000, 100, 8],
+    [0.7, 10000, 100, 8],
+    [0.6, 10000, 100, 8],
+    [0.5, 20000, 100, 8],
     [0.2, 20000, 100, 8],
 )
 
@@ -303,10 +303,10 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "taxi_cab_" + str(modRun),
+        "taxi_cab_noPER_" + str(modRun),
     )
     make_video(
-        "taxi_cab_" + str(modRun),
+        "taxi_cab_noPER_" + str(modRun),
         save_dir,
         models,
         run_params[modRun][3],
