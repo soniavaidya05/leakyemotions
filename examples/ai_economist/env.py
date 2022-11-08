@@ -9,7 +9,7 @@ from examples.ai_economist.elements import (
 import numpy as np
 from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
-from gem.models.perception import agent_visualfield
+from gem.models.perception_AI_econ import agent_visualfield
 
 import torch
 
@@ -23,7 +23,7 @@ class AI_Econ:
         defaultObject=EmptyObject(),
         wood1p=0.04,
         stone1p=0.04,
-        tile_size=(1, 1)
+        tile_size=(1, 1),
     ):
         self.wood1p = wood1p
         self.stone1p = stone1p
@@ -90,7 +90,7 @@ class AI_Econ:
                     moveList.append([i, j, layer])
 
         if len(moveList) > 0:
-            img = agent_visualfield(self.world, moveList[0], self.tile_size, k=4)
+            img = agent_visualfield(self.world, moveList[0], k=4)
         else:
             img = image
 
@@ -125,9 +125,9 @@ class AI_Econ:
         """
 
         loc = (3, 7, 1)
-        apperence1 = (0., 0., 255.0)
-        apperence2 = (50., 0., 255.0)
-        apperence3 = (0., 50., 255.0)
+        apperence1 = (0.0, 0.0, 255.0)
+        apperence2 = (50.0, 0.0, 255.0)
+        apperence3 = (0.0, 50.0, 255.0)
         self.world[loc] = Agent(
             model=0,
             stone_skill=0.9,
@@ -248,7 +248,6 @@ class AI_Econ:
                 self.world[14, height - i - 1, layer] = Wall()
                 self.world[height - i - 1, 14, layer] = Wall()
 
-
     def pov(self, world, location, holdObject, inventory=[], layers=[0]):
         """
         Creates outputs of a single frame, and also a multiple image sequence
@@ -266,7 +265,7 @@ class AI_Econ:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            img = agent_visualfield(world, loc, self.tile_size, holdObject.vision)
+            img = agent_visualfield(world, loc, holdObject.vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
 
@@ -289,7 +288,9 @@ class AI_Econ:
         """
         Have the agent take an action
         """
-        holdObject = self.world[loc] # TODO: need to see whether holding this constant is still needed
+        holdObject = self.world[
+            loc
+        ]  # TODO: need to see whether holding this constant is still needed
         device = models[holdObject.policy].device
 
         if holdObject.static != 1:
@@ -303,7 +304,9 @@ class AI_Econ:
                 inventory=[self.world[loc].stone, holdObject.wood, holdObject.coin],
                 layers=[0, 1],
             )
-            action, init_rnn_state = models[holdObject.policy].take_action([state.to(device), epsilon, None])
+            action, init_rnn_state = models[holdObject.policy].take_action(
+                [state.to(device), epsilon, None]
+            )
             self.world[loc].init_rnn_state = init_rnn_state
         if holdObject.has_transitions == True:
             """
