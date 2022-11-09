@@ -52,7 +52,7 @@ def create_models():
             hid_size1=75,
             hid_size2=30,
             out_size=4,
-            priority_replay=True,
+            priority_replay=False,
             device=device,
         )
     )  # agent model
