@@ -172,9 +172,14 @@ def run_game(
                     params = (state.to(device), epsilon, env.world[loc].init_rnn_state)
 
                     # set up the right params below
+
+                    random_action = True
+                    if epoch > 20000:
+                        random_action = False
+
                     action, action_logprob, init_rnn_state = models[
                         env.world[loc].policy
-                    ].take_action(state)
+                    ].take_action(state, env.world[loc].init_rnn_state, random_action)
                     env.world[loc].init_rnn_state = init_rnn_state
                     (
                         env.world,
@@ -300,15 +305,7 @@ def run_game(
 
 models = create_models()
 
-run_params = (
-    [0.99, 10, 100, 8],
-    [0.9, 10000, 100, 8],
-    [0.8, 10000, 100, 8],
-    [0.7, 10000, 100, 8],
-    [0.6, 10000, 100, 8],
-    [0.5, 20000, 100, 8],
-    [0.2, 20000, 100, 8],
-)
+run_params = ([0.9, 100000, 100, 8],)
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
