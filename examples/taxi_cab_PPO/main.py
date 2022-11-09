@@ -58,10 +58,10 @@ def create_models():
             device=device,
             state_dim=650,
             action_dim=4,
-            lr_actor=0.001,
-            lr_critic=0.0005,
-            gamma=0.9,
-            K_epochs=10,
+            lr_actor=0.001,  # .001
+            lr_critic=0.0005,  # .0005
+            gamma=0.99,  # was .9
+            K_epochs=30,  # was 10
             eps_clip=0.2,
         )
     )  # taxi model
@@ -213,7 +213,7 @@ def run_game(
 
                     if env.world[new_loc].kind == "taxi_cab":
                         game_points[0] = game_points[0] + reward
-                    if env.world[new_loc].kind == "taxi_cab" and reward > 20:
+                    if env.world[new_loc].kind == "taxi_cab" and reward > 2:
                         game_points[1] = game_points[1] + 1
 
             # determine whether the game is finished (either max length or all agents are dead)
@@ -256,8 +256,8 @@ def run_game(
             reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
             loss = models[mods].training(
-                env.world[new_loc].episode_memory_PPO, entropy_coefficient=0.01
-            )
+                env.world[new_loc].episode_memory_PPO, entropy_coefficient=0.02
+            )  # entropy_coefficient=0.01 was before
             env.world[new_loc].episode_memory_PPO.clear()
             losses = losses + loss.detach().cpu().numpy()
 
