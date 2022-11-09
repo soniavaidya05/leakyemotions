@@ -173,13 +173,9 @@ def run_game(
 
                     # set up the right params below
 
-                    random_action = True
-                    if epoch > 20000:
-                        random_action = False
-
                     action, action_logprob, init_rnn_state = models[
                         env.world[loc].policy
-                    ].take_action(state, env.world[loc].init_rnn_state, random_action)
+                    ].take_action(state, env.world[loc].init_rnn_state)
                     env.world[loc].init_rnn_state = init_rnn_state
                     (
                         env.world,

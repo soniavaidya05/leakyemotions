@@ -76,7 +76,7 @@ class ActorCritic(nn.Module):
     def forward(self):
         raise NotImplementedError
 
-    def act(self, x, init_rnn_state=None, random_action=False):
+    def act(self, x, init_rnn_state=None):
         init_rnn_state = None if init_rnn_state is None else tuple(init_rnn_state)
         batch_size, timesteps, C, H, W = x.size()
         c_in = x.view(batch_size * timesteps, C, H, W)
@@ -89,8 +89,6 @@ class ActorCritic(nn.Module):
         dist = Categorical(action_probs)
 
         action = dist.sample()
-        if random_action == True:
-            action = torch.randint(0, 4, (1,))
         action_logprob = dist.log_prob(action)
 
         return action.detach(), action_logprob.detach(), (h_n, h_c)
@@ -149,7 +147,7 @@ class PPO:
 
         self.loss_fn = nn.MSELoss()
 
-    def take_action(self, state, hidden_state=None, random_action=False):
+    def take_action(self, state, hidden_state=None):
         with torch.no_grad():
             state = torch.FloatTensor(state).to(self.device)
             # action, action_logprob = self.policy_old.act(state)
