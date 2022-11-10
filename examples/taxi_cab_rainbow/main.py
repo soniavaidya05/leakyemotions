@@ -8,15 +8,15 @@ from gem.utils import (
     find_agents,
     find_instance,
 )
-from examples.taxi_cab_PPO.elements import (
+from examples.taxi_cab_rainbow.elements import (
     TaxiCab,
     EmptyObject,
     Wall,
     Passenger,
 )
-from examples.taxi_cab_PPO.cnn_PPO import PPO, RolloutBuffer
+from gem.models.iqn import IQNModel, PrioritizedReplay
 
-from examples.taxi_cab_PPO.env import TaxiCabEnv
+from examples.taxi_cab_rainbow.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -25,6 +25,7 @@ from gem.DQN_utils import save_models, load_models, make_video
 import torch
 from tensorboardX import SummaryWriter
 import time
+import numpy as np
 
 import random
 
@@ -44,6 +45,17 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # device = "cpu"
 print(device)
 
+SEED = 1  # Seed for replicating training runs
+np.random.seed(SEED)
+random.seed(SEED)
+torch.manual_seed(SEED)
+
+
+# The configuration of the network
+# One of: "iqn", "iqn+per", "noisy_iqn", "noisy_iqn+per", "dueling", "dueling+per",
+#         "noisy_dueling", "noisy_dueling+per"
+NETWORK_CONFIG = "noisy_iqn+per"
+
 
 def create_models():
     """
@@ -54,15 +66,23 @@ def create_models():
 
     models = []
     models.append(
-        PPO(
+        IQNModel(
+            state_size=[4, 9, 9],
+            action_size=4,
+            network=NETWORK_CONFIG,
+            munchausen=False,  # Don't use Munchausen RL loss
+            layer_size=100,
+            n_hidden_layers=3,
+            n_step=1,  # Multistep IQN
+            BATCH_SIZE=32,
+            BUFFER_SIZE=1024,
+            LR=0.00025,
+            TAU=1e-3,  # Soft update parameter
+            GAMMA=0.99,  # Discout factor
+            N=12,  # Number of quantiles
+            worker=1,  # number of parallel environments
             device=device,
-            state_dim=650,
-            action_dim=4,
-            lr_actor=0.0001,  # .001
-            lr_critic=0.0005,  # .0005
-            gamma=0.92,  # was .9
-            K_epochs=10,  # was 10
-            eps_clip=0.2,
+            seed=SEED,
         )
     )  # taxi model
 
