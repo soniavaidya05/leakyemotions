@@ -27,8 +27,8 @@ import time
 
 import random
 
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
-# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 # save_dir = "/Users/ethan/gem_output/"
 logger = SummaryWriter(f"{save_dir}/taxicab/", comment=str(time.time))
@@ -92,7 +92,7 @@ env = TaxiCabEnv(
     defaultObject=EmptyObject,
 )
 
-env.game_test()
+# env.game_test()
 
 
 def run_game(
@@ -185,8 +185,8 @@ def run_game(
                             reward,
                             next_state,
                             done,
-                            #env.world[new_loc].init_rnn_state[0],
-                            #env.world[new_loc].init_rnn_state[1],
+                            # env.world[new_loc].init_rnn_state[0],
+                            # env.world[new_loc].init_rnn_state[1],
                         ),
                     )
 
@@ -257,13 +257,13 @@ def run_game(
                 world_size,
             )
             # Tensorboard logging
-            #logger.add_scalar('epoch', value=epoch, iteration=epoch)
-            logger.add_scalar('num_turns', withinturn, epoch)
-            logger.add_scalar('total_points', game_points[0], epoch)
-            logger.add_scalar('n_passengers_delivered', game_points[1], epoch)
-            logger.add_scalar('sum_loss', losses, epoch)
-            logger.add_scalar('epsilon', epsilon, epoch)
-            logger.add_scalar('world_size', world_size, epoch)
+            # logger.add_scalar('epoch', value=epoch, iteration=epoch)
+            logger.add_scalar("num_turns", withinturn, epoch)
+            logger.add_scalar("total_points", game_points[0], epoch)
+            logger.add_scalar("n_passengers_delivered", game_points[1], epoch)
+            logger.add_scalar("sum_loss", losses, epoch)
+            logger.add_scalar("epsilon", epsilon, epoch)
+            logger.add_scalar("world_size", world_size, epoch)
 
             game_points = [0, 0]
             losses = 0

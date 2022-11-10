@@ -1,4 +1,4 @@
-from examples.taxi_cab.elements import (
+from examples.taxi_cab_PPO.elements import (
     TaxiCab,
     EmptyObject,
     Wall,

@@ -4,7 +4,7 @@ from gem.utils import (
     find_moveables,
     transfer_world_memories,
     find_instance,
-    update_memories_rnn
+    update_memories_rnn,
 )
 from examples.ai_economist.elements import (
     Agent,
@@ -26,9 +26,9 @@ import torch
 
 import random
 
-# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -108,7 +108,7 @@ def fix_next_state(state, next_state):
 
 world_size = 30
 
-trainable_models = [0,1,2]
+trainable_models = [0, 1, 2]
 sync_freq = 500
 modelUpdate_freq = 5
 epsilon = 0.99
@@ -229,7 +229,7 @@ def run_game(
                         next_state,
                         done,
                         env.world[new_loc].init_rnn_state[0],
-                        env.world[new_loc].init_rnn_state[1]
+                        env.world[new_loc].init_rnn_state[1],
                     )
 
                     env.world[new_loc].episode_memory.append(exp)

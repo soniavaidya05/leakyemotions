@@ -8,35 +8,31 @@ from gem.utils import (
     find_agents,
     find_instance,
 )
-from examples.taxi_cab.elements import (
+from examples.taxi_cab_PPO.elements import (
     TaxiCab,
     EmptyObject,
     Wall,
     Passenger,
 )
-from gem.models.dualing_cnn_lstm_dqn import Model_CNN_LSTM_DQN
-from examples.taxi_cab.env import TaxiCabEnv
+from examples.taxi_cab_PPO.cnn_PPO import PPO, RolloutBuffer
+
+from examples.taxi_cab_PPO.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
 import torch
+from tensorboardX import SummaryWriter
+import time
 
 import random
 
-parser = argparse.ArgumentParser()
-parser.add_argument('filename')
-args = parser.parse_args()
-
-if args.test is True:
-    save_dir = args.filename
-else:
-    save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-    # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-    # save_dir = "/Users/ethan/gem_output/"
-    # save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
-
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+# save_dir = "/Users/ethan/gem_output/"
+logger = SummaryWriter(f"{save_dir}/taxicab/", comment=str(time.time))
 
 
 # choose device
@@ -58,24 +54,21 @@ def create_models():
 
     models = []
     models.append(
-        Model_CNN_LSTM_DQN(
-            in_channels=4,
-            num_filters=5,
-            lr=0.001,
-            replay_size=1024*5,  # 2048
-            in_size=650,  # 650
-            hid_size1=75,  # 75
-            hid_size2=30,  # 30
-            out_size=4,
-            priority_replay=True,
+        PPO(
             device=device,
+            state_dim=650,
+            action_dim=4,
+            lr_actor=0.0001,  # .001
+            lr_critic=0.0005,  # .0005
+            gamma=0.92,  # was .9
+            K_epochs=10,  # was 10
+            eps_clip=0.2,
         )
     )  # taxi model
 
     # convert to device
     for model in range(len(models)):
         models[model].model1.to(device)
-        models[model].model2.to(device)
 
     return models
 
@@ -85,7 +78,7 @@ world_size = 10
 trainable_models = [0]
 sync_freq = 500
 modelUpdate_freq = 25
-epsilon = .99
+epsilon = 0.99
 
 turn = 1
 
@@ -97,7 +90,7 @@ env = TaxiCabEnv(
     defaultObject=EmptyObject,
 )
 
-#env.game_test()
+# env.game_test()
 
 
 def run_game(
@@ -134,9 +127,15 @@ def run_game(
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[loc].init_replay(3)
+            pov_size = (
+                env.tile_size[0] * (env.world[loc].vision * 2 + 1),
+                env.tile_size[1] * (env.world[loc].vision * 2 + 1),
+            )
+            env.world[loc].init_replay(
+                numberMemories=3, pov_size=pov_size, visual_depth=4
+            )
             env.world[loc].init_rnn_state = None
-
+            env.world[loc].episode_memory_PPO = RolloutBuffer()
 
         while done == 0:
             """
@@ -145,12 +144,12 @@ def run_game(
             turn = turn + 1
             withinturn = withinturn + 1
 
-            if epoch % sync_freq == 0:
-                # update the double DQN model ever sync_frew
-                for mods in trainable_models:
-                    models[mods].model2.load_state_dict(
-                        models[mods].model1.state_dict()
-                    )
+            # if epoch % sync_freq == 0:
+            #    # update the double DQN model ever sync_frew
+            #    for mods in trainable_models:
+            #       models[mods].model2.load_state_dict(
+            #            models[mods].model1.state_dict()
+            #        )
 
             agentList = find_instance(env.world, "neural_network")
 
@@ -165,15 +164,26 @@ def run_game(
             for loc in agentList:
                 if env.world[loc].kind != "deadAgent":
 
+                    holdObject = env.world[loc]
+                    device = models[holdObject.policy].device
+                    state = env.pov(
+                        loc, inventory=[holdObject.has_passenger], layers=[0]
+                    )
+                    params = (state.to(device), epsilon, env.world[loc].init_rnn_state)
+
+                    # set up the right params below
+
+                    action, action_logprob, init_rnn_state = models[
+                        env.world[loc].policy
+                    ].take_action(state, env.world[loc].init_rnn_state)
+                    env.world[loc].init_rnn_state = init_rnn_state
                     (
-                        state,
-                        action,
+                        env.world,
                         reward,
                         next_state,
                         done,
                         new_loc,
-                        info,
-                    ) = env.step(models, loc, epsilon)
+                    ) = holdObject.transition(env, models, action, loc)
 
                     # these can be included on one replay
 
@@ -185,16 +195,25 @@ def run_game(
                             reward,
                             next_state,
                             done,
-                            #env.world[new_loc].init_rnn_state[0],
-                            #env.world[new_loc].init_rnn_state[1]
+                            # env.world[new_loc].init_rnn_state[0],
+                            # env.world[new_loc].init_rnn_state[1],
                         ),
                     )
+
+                    # note, these need to get updated for games like gems and wolves. right now it is just EOT
+                    env.world[new_loc].episode_memory_PPO.states.append(state)
+                    env.world[new_loc].episode_memory_PPO.actions.append(action)
+                    env.world[new_loc].episode_memory_PPO.logprobs.append(
+                        action_logprob
+                    )
+                    env.world[new_loc].episode_memory_PPO.rewards.append(reward)
+                    env.world[new_loc].episode_memory_PPO.is_terminals.append(done)
 
                     env.world[new_loc].episode_memory.append(exp)
 
                     if env.world[new_loc].kind == "taxi_cab":
                         game_points[0] = game_points[0] + reward
-                    if env.world[new_loc].kind == "taxi_cab" and reward > 20:
+                    if env.world[new_loc].kind == "taxi_cab" and reward > 2:
                         game_points[1] = game_points[1] + 1
 
             # determine whether the game is finished (either max length or all agents are dead)
@@ -219,24 +238,27 @@ def run_game(
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved
-                models = transfer_world_memories(
-                    models, env.world, find_instance(env.world, "neural_network")
-                )
+                # models = transfer_world_memories(
+                #    models, env.world, find_instance(env.world, "neural_network")
+                # )
 
-            if withinturn % modelUpdate_freq == 0:
-                """
-                Train the neural networks within a eposide at rate of modelUpdate_freq
-                """
-                for mods in trainable_models:
-                    loss = models[mods].training(128, 0.9)
-                    losses = losses + loss.detach().cpu().numpy()
+            # if withinturn % modelUpdate_freq == 0:
+            #    """
+            #    Train the neural networks within a eposide at rate of modelUpdate_freq
+            #    """
+            #    for mods in trainable_models:
+            #        loss = models[mods].training(128, 0.9)
+            #        losses = losses + loss.detach().cpu().numpy()
 
         for mods in trainable_models:
             """
             Train the neural networks at the end of eac epoch
             reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
-            loss = models[mods].training(256, 0.9)
+            loss = models[mods].training(
+                env.world[new_loc].episode_memory_PPO, entropy_coefficient=0.005
+            )  # entropy_coefficient=0.01 was before
+            env.world[new_loc].episode_memory_PPO.clear()
             losses = losses + loss.detach().cpu().numpy()
 
         updateEps = True
@@ -256,6 +278,15 @@ def run_game(
                 epsilon,
                 world_size,
             )
+            # Tensorboard logging
+            # logger.add_scalar('epoch', value=epoch, iteration=epoch)
+            logger.add_scalar("num_turns", withinturn, epoch)
+            logger.add_scalar("total_points", game_points[0], epoch)
+            logger.add_scalar("n_passengers_delivered", game_points[1], epoch)
+            logger.add_scalar("sum_loss", losses, epoch)
+            logger.add_scalar("epsilon", epsilon, epoch)
+            logger.add_scalar("world_size", world_size, epoch)
+
             game_points = [0, 0]
             losses = 0
     return models, env, turn, epsilon
@@ -270,15 +301,7 @@ def run_game(
 
 models = create_models()
 
-run_params = (
-    [0.99, 10, 100, 8],
-    [0.9, 1000, 100, 8],
-    [0.8, 1000, 100, 8],
-    [0.7, 1000, 100, 8],
-    [0.6, 1000, 100, 8],
-    [0.5, 2000, 100, 8],
-    [0.2, 20000, 100, 8],
-)
+run_params = ([0.9, 100000, 100, 8],)
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
@@ -294,13 +317,13 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "taxi_cab_vbasic_" + str(modRun),
+        "taxi_cab_PPO_" + str(modRun),
     )
-    make_video(
-        "taxi_cab_vbasic" + str(modRun),
-        save_dir,
-        models,
-        run_params[modRun][3],
-        env,
-        end_update=False,
-    )
+    # make_video(
+    #    "taxi_cab_PPO_" + str(modRun),
+    #    save_dir,
+    #    models,
+    #    run_params[modRun][3],
+    #    env,
+    #    end_update=False,
+    # )

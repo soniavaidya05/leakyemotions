@@ -20,18 +20,17 @@ from gem.DQN_utils import save_models, load_models, make_video
 from examples.gems_and_wolves.elements import EmptyObject, Wall
 
 
-
 import random
 import torch
 
-# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-#if torch.backends.mps.is_available():
+# if torch.backends.mps.is_available():
 #    device = torch.device("mps")
 
 
@@ -53,7 +52,7 @@ def create_models():
             hid_size1=75,
             hid_size2=30,
             out_size=4,
-            priority_replay=True,
+            priority_replay=False,
             device=device,
         )
     )  # agent model
