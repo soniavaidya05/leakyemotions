@@ -22,6 +22,25 @@ from torch.nn.utils import clip_grad_norm_
 from gem.models.layers import NoisyLinear
 
 
+class CNN_CLD(nn.Module):
+    def __init__(self, in_channels, num_filters):
+        super(CNN_CLD, self).__init__()
+        self.conv_layer1 = nn.Conv2d(
+            in_channels=in_channels, out_channels=num_filters, kernel_size=1
+        )
+        self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
+
+    def forward(self, x):
+        print(x.shape)
+        x = x / 255  # note, a better normalization should be applied
+        y1 = F.relu(self.conv_layer1(x))
+        y2 = self.avg_pool(y1)  # ave pool is intentional (like a count)
+        y2 = torch.flatten(y2, 1)
+        y1 = torch.flatten(y1, 1)
+        y = torch.cat((y1, y2), 1)
+        return y
+
+
 class IQN(nn.Module):
     """The IQN Q-network."""
 
@@ -59,7 +78,14 @@ class IQN(nn.Module):
             linear_layer_cls = nn.Linear
 
         # Network architecture
-        self.head = nn.Linear(self.input_shape[0], layer_size)
+        self.cnn = CNN_CLD(in_channels=4, num_filters=5) # TODO: do this functionally
+        self.rnn = nn.LSTM(
+            input_size=650,
+            hidden_size=100,
+            num_layers=1,
+            batch_first=True,
+        )
+        self.head = nn.Linear(100, layer_size) # TODO: Also don't do this hardcoded...
         self.cos_embedding = nn.Linear(self.n_cos, layer_size)
         self.ff_1 = linear_layer_cls(layer_size, layer_size)
         self.cos_layer_out = layer_size
@@ -95,9 +121,15 @@ class IQN(nn.Module):
         taus [shape of ((batch_size, num_tau, 1))]
 
         """
-        batch_size = input.shape[0]
 
-        x = torch.relu(self.head(input))
+        # init_rnn_state = None if init_rnn_state is None else tuple(init_rnn_state)
+        batch_size, timesteps, C, H, W = input.size()
+        c_in = input.view(batch_size * timesteps, C, H, W)
+        c_out = self.cnn(c_in)
+        r_in = c_out.view(batch_size, timesteps, -1)
+        x, (h_n, h_c) = self.rnn(r_in)
+        x = self.head(x)
+        x = torch.relu(x)
         if self.state_dim == 3:
             x = x.view(input.size(0), -1)
         cos, taus = self.calc_cos(
@@ -109,6 +141,7 @@ class IQN(nn.Module):
         )  # (batch, n_tau, layer)
 
         # x has shape (batch, layer_size) for multiplication –> reshape to (batch, 1, layer)
+        print(x.shape)
         x = (x.unsqueeze(1) * cos_x).view(batch_size * num_tau, self.cos_layer_out)
 
         x = torch.relu(self.ff_1(x))
@@ -290,6 +323,9 @@ class PrioritizedReplay(object):
         )
 
     def add(self, state, action, reward, next_state, done):
+
+        print("state_add_fn", state.shape)
+
         if self.iter_ == self.parallel_env:
             self.iter_ = 0
         assert state.ndim == next_state.ndim
@@ -345,6 +381,8 @@ class PrioritizedReplay(object):
         weights = np.array(weights, dtype=np.float32)
 
         states, actions, rewards, next_states, dones = zip(*samples)
+        print("states", states[0].shape)
+
         return (
             np.concatenate(states),
             actions,
@@ -506,7 +544,7 @@ class IQNModel:
                 return loss
                 # writer.add_scalar("Q_loss", loss, self.Q_updates)
 
-    def act(self, state, eps=0.0, eval=False):
+    def take_action(self, state, eps=0.0, eval=False):
         """Returns actions for given state as per current policy. Acting only every 4 frames!
 
         Params
@@ -692,6 +730,7 @@ class IQNModel:
             weights = torch.FloatTensor(weights).unsqueeze(1).to(self.device)
 
             # Get max predicted Q values (for next states) from target model
+            print("next state", next_states.shape)
             Q_targets_next, _ = self.qnetwork_target(next_states, self.N)
             Q_targets_next = Q_targets_next.detach().cpu()
             action_indx = torch.argmax(Q_targets_next.mean(dim=1), dim=1, keepdim=True)
@@ -845,6 +884,21 @@ class IQNModel:
                 self.TAU * local_param.data + (1.0 - self.TAU) * target_param.data
             )
 
+    def transfer_memories(self, world, loc, extra_reward=True, seqLength=4):
+        """
+        Transfer the indiviudual memories to the model
+        TODO: We need to have a single version that works for both DQN and
+              Actor-criric models (or other types as well)
+        """
+        exp = world[loc].episode_memory[-1]
+        high_reward = exp[1][2]
+        _, (state, action, reward, next_state, done) = exp
+        state = state.squeeze(0)
+        next_state = next_state.squeeze(0)
+        self.memory.add(state, action, reward, next_state, done)
+        if extra_reward == True and abs(high_reward) > 9:
+            for _ in range(seqLength):
+                self.memory.add(state, action, reward, next_state, done)
 
 def calculate_huber_loss(td_errors, k=1.0):
     """
