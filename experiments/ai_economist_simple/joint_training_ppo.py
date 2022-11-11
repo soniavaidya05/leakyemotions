@@ -14,12 +14,9 @@ from experiments.ai_economist_simple.PPO import RolloutBuffer, PPO
 # from examples.ai_economist_simple.market_SL import market
 import itertools 
 
-
-
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
-#save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = "cpu"
+
 print(device)
 
 
@@ -143,17 +140,6 @@ def create_models():
 # AI_econ test game
 
 
-# decider_model =  Model_simple_linear_MLP(
-#             lr=0.0001,
-#             replay_size=262144,  
-#             in_size=18,  
-#             hid_size1=10,  
-#             hid_size2=10,  
-#             out_size=2,
-#             priority_replay=False,
-#             device=device,
-#         )
-
 decider_model = PPO(
             device=device, 
             state_dim=18,
@@ -165,7 +151,6 @@ decider_model = PPO(
             eps_clip=0.2 
         )
 
-# decider_model = load_models(save_dir, "decider_model")
 decider_model.replay = RolloutBuffer() 
 
 decider_model.model1.to(device)
@@ -215,16 +200,14 @@ for indiv in individual_attributes:
 
 num_agents = len(agent_list)
 print(num_agents)
-# for i in range(num_agents):
-#     agent_list[i].init_replay(3)   
+
 
 
 
 rewards = [0,0,0,0,0,0,0,0,0]
 losses = 0
 decider_losses = 0
-# model_learn_rate = 2
-# sync_freq = 500
+
 
 trainable_models = [0,1,2,3,4,5,6,7,8]
 agent1_actions = [0,0,0,0,0,0,0]
@@ -239,10 +222,6 @@ agent9_actions = [0,0,0,0,0,0,0]
 
 decider_matrix = [0,0,0,0]
 
-# epsilon = .99
-
-
-# decider_step = 0
 
 max_turns = 50
 
@@ -258,8 +237,7 @@ for epoch in range(1000000):
         agent_list[agent].stone = 0
         if agent_list[agent].policy == 2:
             agent_list[agent].coin = 6
-        # agent_list[i].init_replay(3)
-        # agent_list[i].state = torch.zeros(6).float()
+
 
     turn = 0
     while done != 1:
@@ -273,12 +251,9 @@ for epoch in range(1000000):
             cur_stone = agent_list[agent].stone
             cur_coin = agent_list[agent].coin
 
-            # state, previous_state = generate_input(agent_list, agent, agent_list[agent].state)
 
             state, previous_state = generate_input(agent_list, agent, agent_list[agent].state)
-            # state_lstm = prepare_lstm(agent_list, agent, state)
             state = state.unsqueeze(0).to(device)
-            # action= models[agent_list[agent].policy].take_action([state_lstm, epsilon])
             action, action_logprob = models[agent_list[agent].policy].take_action(state)
             env, reward, next_state, done, new_loc = agent_list[agent].transition(env, models, action, done, [], agent_list, agent)
 
@@ -304,16 +279,6 @@ for epoch in range(1000000):
                 if decider_action == 1 and agent_action == 1:
                     decider_matrix[3] = decider_matrix[3] + 1
 
-                # exp = (torch.tensor(agent_list[agent].appearance).float(), decider_action, decider_reward, torch.tensor(agent_list[agent].appearance).float(), done)
-                # decider_model.replay.append(exp)
-
-                # if decider_step % 20 == 0:
-                #     decider_loss = decider_model.training(exp)
-                #     decider_losses = decider_losses + decider_loss.detach().cpu().numpy()
-
-                # if decider_step % 500 == 0 and decider_step > 4000:
-                #     print(epoch, "decider maxtrx: ", decider_matrix, decider_losses, epsilon)
-                #     epsilon = epsilon - .01
 
                 decider_model.replay.states.append(decider_state)
                 decider_model.replay.actions.append(decider_action)
@@ -321,8 +286,7 @@ for epoch in range(1000000):
                 decider_model.replay.rewards.append(decider_reward)
                 decider_model.replay.is_terminals.append(done)
 
-                # if turn % max_turns == 0:
-                #     print(epoch, "decider maxtrx: ", decider_matrix)
+
 
             agent_list[agent].episode_memory.states.append(state)
             agent_list[agent].episode_memory.actions.append(action)

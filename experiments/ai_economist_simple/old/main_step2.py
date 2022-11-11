@@ -1,7 +1,7 @@
 from experiments.ai_economist_simple.elements import Agent
 from experiments.ai_economist_simple.env import AIEcon_simple_game
 from experiments.ai_economist_simple.env import generate_input, prepare_lstm, prepare_lstm2
-from experiments.ai_economist_simple.Model_dualing_MLP import Model_linear_MLP_DDQN
+from experiments.ai_economist_simple.old.Model_dualing_MLP import Model_linear_MLP_DDQN
 import numpy as np
 import torch
 from gem.DQN_utils import save_models, load_models, make_video
