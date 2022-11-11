@@ -67,7 +67,7 @@ def create_models():
     models = []
     models.append(
         IQNModel(
-            state_size=[4, 9, 9],
+            state_size=torch.tensor([4, 9, 9]),
             action_size=4,
             network=NETWORK_CONFIG,
             munchausen=False,  # Don't use Munchausen RL loss

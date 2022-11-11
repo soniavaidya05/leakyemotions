@@ -27,6 +27,10 @@ import time
 
 import random
 
+
+from datetime import datetime
+
+
 # save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
@@ -291,6 +295,10 @@ run_params = (
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
+    now = datetime.now()
+
+    current_time = now.strftime("%H:%M:%S")
+    print("Current Time =", current_time)
     models, env, turn, epsilon = run_game(
         models,
         env,
