@@ -159,12 +159,12 @@ def run_game(
             turn = turn + 1
             withinturn = withinturn + 1
 
-            # if epoch % sync_freq == 0:
-            #    # update the double DQN model ever sync_frew
-            #    for mods in trainable_models:
-            #       models[mods].model2.load_state_dict(
-            #            models[mods].model1.state_dict()
-            #        )
+            if epoch % sync_freq == 0:
+                # update the double DQN model ever sync_frew
+                for mods in trainable_models:
+                    models[mods].qnetwork_target.load_state_dict(
+                        models[mods].qnetwork_local.state_dict()
+                    )
 
             agentList = find_instance(env.world, "neural_network")
 
