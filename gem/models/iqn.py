@@ -31,7 +31,7 @@ class CNN_CLD(nn.Module):
         self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
 
     def forward(self, x):
-        print(x.shape)
+        # print(x.shape)
         x = x / 255  # note, a better normalization should be applied
         y1 = F.relu(self.conv_layer1(x))
         y2 = self.avg_pool(y1)  # ave pool is intentional (like a count)
@@ -78,14 +78,14 @@ class IQN(nn.Module):
             linear_layer_cls = nn.Linear
 
         # Network architecture
-        self.cnn = CNN_CLD(in_channels=4, num_filters=5) # TODO: do this functionally
+        self.cnn = CNN_CLD(in_channels=4, num_filters=5)  # TODO: do this functionally
         self.rnn = nn.LSTM(
             input_size=650,
             hidden_size=100,
             num_layers=1,
             batch_first=True,
         )
-        self.head = nn.Linear(100, layer_size) # TODO: Also don't do this hardcoded...
+        self.head = nn.Linear(100, layer_size)  # TODO: Also don't do this hardcoded...
         self.cos_embedding = nn.Linear(self.n_cos, layer_size)
         self.ff_1 = linear_layer_cls(layer_size, layer_size)
         self.cos_layer_out = layer_size
@@ -141,7 +141,7 @@ class IQN(nn.Module):
         )  # (batch, n_tau, layer)
 
         # x has shape (batch, layer_size) for multiplication –> reshape to (batch, 1, layer)
-        print(x.shape)
+        # print(x.shape)
         x = (x.unsqueeze(1) * cos_x).view(batch_size * num_tau, self.cos_layer_out)
 
         x = torch.relu(self.ff_1(x))
@@ -324,7 +324,7 @@ class PrioritizedReplay(object):
 
     def add(self, state, action, reward, next_state, done):
 
-        print("state_add_fn", state.shape)
+        # print("state_add_fn", state.shape)
 
         if self.iter_ == self.parallel_env:
             self.iter_ = 0
@@ -381,7 +381,7 @@ class PrioritizedReplay(object):
         weights = np.array(weights, dtype=np.float32)
 
         states, actions, rewards, next_states, dones = zip(*samples)
-        print("states", states[0].shape)
+        # print("states", states[0].shape)
 
         return (
             np.concatenate(states),
@@ -730,7 +730,7 @@ class IQNModel:
             weights = torch.FloatTensor(weights).unsqueeze(1).to(self.device)
 
             # Get max predicted Q values (for next states) from target model
-            print("next state", next_states.shape)
+            # print("next state", next_states.shape)
             Q_targets_next, _ = self.qnetwork_target(next_states, self.N)
             Q_targets_next = Q_targets_next.detach().cpu()
             action_indx = torch.argmax(Q_targets_next.mean(dim=1), dim=1, keepdim=True)
@@ -899,6 +899,7 @@ class IQNModel:
         if extra_reward == True and abs(high_reward) > 9:
             for _ in range(seqLength):
                 self.memory.add(state, action, reward, next_state, done)
+
 
 def calculate_huber_loss(td_errors, k=1.0):
     """

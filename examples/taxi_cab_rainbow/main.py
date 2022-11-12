@@ -30,9 +30,9 @@ import numpy as np
 import random
 
 # save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
-# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-save_dir = "/Users/ethan/gem_output/"
+# save_dir = "/Users/ethan/gem_output/"
 logger = SummaryWriter(f"{save_dir}/taxicab/", comment=str(time.time))
 
 
@@ -54,7 +54,7 @@ torch.manual_seed(SEED)
 # The configuration of the network
 # One of: "iqn", "iqn+per", "noisy_iqn", "noisy_iqn+per", "dueling", "dueling+per",
 #         "noisy_dueling", "noisy_dueling+per"
-NETWORK_CONFIG = "noisy_iqn+per"
+NETWORK_CONFIG = "noisy_iqn"
 
 
 def create_models():
@@ -107,6 +107,7 @@ env = TaxiCabEnv(
 )
 
 # env.game_test()
+
 
 def run_game(
     models,
@@ -187,7 +188,7 @@ def run_game(
 
                     # set up the right params below
 
-                    action = models[env.world[loc].policy].take_action(state)
+                    action = models[env.world[loc].policy].take_action(state, epsilon)
 
                     # env.world[loc].init_rnn_state = init_rnn_state
                     (
@@ -244,7 +245,7 @@ def run_game(
 
                 # transfer the events for each agent into the appropriate model after all have moved
                 models = transfer_world_memories(
-                   models, env.world, find_instance(env.world, "neural_network")
+                    models, env.world, find_instance(env.world, "neural_network")
                 )
 
             # if withinturn % modelUpdate_freq == 0:
@@ -264,10 +265,10 @@ def run_game(
             # call learn fn on IQN: states, actions, rewards, next_states, dones = experiences
 
             experiences = models[mods].memory.sample()
-            print("experiences", len(experiences))
-            print(experiences[0].shape)
-            loss = models[mods].learn_per(experiences)
-            losses = losses + loss.detach().cpu().numpy()
+            # print("experiences", len(experiences))
+            # print(experiences[0].shape)
+            loss = models[mods].learn(experiences)
+            losses = losses + loss
 
         updateEps = True
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
@@ -325,7 +326,7 @@ for modRun in range(len(run_params)):
     save_models(
         models,
         save_dir,
-        "taxi_cab_PPO_" + str(modRun),
+        "taxi_cab_rainbow_" + str(modRun),
     )
     # make_video(
     #    "taxi_cab_PPO_" + str(modRun),
