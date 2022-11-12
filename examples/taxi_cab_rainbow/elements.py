@@ -181,10 +181,10 @@ class TaxiCab:
         if action in [0, 1, 2, 3]:
 
             if isinstance(env.world[attempted_locaton], TaxiCab):
-                reward = -0.2
+                reward = -2
 
             if isinstance(env.world[attempted_locaton], Wall):
-                reward = -0.2
+                reward = -2
 
             if isinstance(env.world[attempted_locaton], EmptyObject):
                 env.world[attempted_locaton] = self
@@ -198,10 +198,10 @@ class TaxiCab:
                 env.world[location] = EmptyObject()
                 self.has_passenger = 255
                 env.world[self.driving_location] = Destination()
-                reward = -0.1
+                reward = -1
 
             if isinstance(env.world[attempted_locaton], Destination):
-                reward = 2.5
+                reward = 25
                 env.world[attempted_locaton] = self
                 env.world[location] = EmptyObject()
                 new_loc = attempted_locaton
