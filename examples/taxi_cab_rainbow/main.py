@@ -30,9 +30,9 @@ import numpy as np
 import random
 
 # save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-# save_dir = "/Users/ethan/gem_output/"
+save_dir = "/Users/ethan/gem_output/"
 logger = SummaryWriter(f"{save_dir}/taxicab/", comment=str(time.time))
 
 
@@ -86,10 +86,6 @@ def create_models():
         )
     )  # taxi model
 
-    # convert to device
-    for model in range(len(models)):
-        models[model].model1.to(device)
-
     return models
 
 
@@ -111,7 +107,6 @@ env = TaxiCabEnv(
 )
 
 # env.game_test()
-
 
 def run_game(
     models,
@@ -152,10 +147,9 @@ def run_game(
                 env.tile_size[1] * (env.world[loc].vision * 2 + 1),
             )
             env.world[loc].init_replay(
-                numberMemories=3, pov_size=pov_size, visual_depth=4
+                numberMemories=1, pov_size=pov_size, visual_depth=4
             )
             env.world[loc].init_rnn_state = None
-            env.world[loc].episode_memory_PPO = RolloutBuffer()
 
         while done == 0:
             """
@@ -193,10 +187,9 @@ def run_game(
 
                     # set up the right params below
 
-                    action, action_logprob, init_rnn_state = models[
-                        env.world[loc].policy
-                    ].take_action(state, env.world[loc].init_rnn_state)
-                    env.world[loc].init_rnn_state = init_rnn_state
+                    action = models[env.world[loc].policy].take_action(state)
+
+                    # env.world[loc].init_rnn_state = init_rnn_state
                     (
                         env.world,
                         reward,
@@ -208,7 +201,8 @@ def run_game(
                     # these can be included on one replay
 
                     exp = (
-                        models[env.world[new_loc].policy].max_priority,
+                        # models[env.world[new_loc].policy].max_priority,
+                        1,
                         (
                             state,
                             action,
@@ -219,15 +213,6 @@ def run_game(
                             # env.world[new_loc].init_rnn_state[1],
                         ),
                     )
-
-                    # note, these need to get updated for games like gems and wolves. right now it is just EOT
-                    env.world[new_loc].episode_memory_PPO.states.append(state)
-                    env.world[new_loc].episode_memory_PPO.actions.append(action)
-                    env.world[new_loc].episode_memory_PPO.logprobs.append(
-                        action_logprob
-                    )
-                    env.world[new_loc].episode_memory_PPO.rewards.append(reward)
-                    env.world[new_loc].episode_memory_PPO.is_terminals.append(done)
 
                     env.world[new_loc].episode_memory.append(exp)
 
@@ -258,9 +243,9 @@ def run_game(
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved
-                # models = transfer_world_memories(
-                #    models, env.world, find_instance(env.world, "neural_network")
-                # )
+                models = transfer_world_memories(
+                   models, env.world, find_instance(env.world, "neural_network")
+                )
 
             # if withinturn % modelUpdate_freq == 0:
             #    """
@@ -275,10 +260,13 @@ def run_game(
             Train the neural networks at the end of eac epoch
             reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
-            loss = models[mods].training(
-                env.world[new_loc].episode_memory_PPO, entropy_coefficient=0.005
-            )  # entropy_coefficient=0.01 was before
-            env.world[new_loc].episode_memory_PPO.clear()
+            # sample first
+            # call learn fn on IQN: states, actions, rewards, next_states, dones = experiences
+
+            experiences = models[mods].memory.sample()
+            print("experiences", len(experiences))
+            print(experiences[0].shape)
+            loss = models[mods].learn_per(experiences)
             losses = losses + loss.detach().cpu().numpy()
 
         updateEps = True
