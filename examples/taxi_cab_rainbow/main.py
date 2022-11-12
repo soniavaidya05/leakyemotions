@@ -54,7 +54,7 @@ torch.manual_seed(SEED)
 # The configuration of the network
 # One of: "iqn", "iqn+per", "noisy_iqn", "noisy_iqn+per", "dueling", "dueling+per",
 #         "noisy_dueling", "noisy_dueling+per"
-NETWORK_CONFIG = "noisy_iqn"
+NETWORK_CONFIG = "noisy_dueling"
 
 
 def create_models():
@@ -70,16 +70,16 @@ def create_models():
             state_size=torch.tensor([4, 9, 9]),
             action_size=4,
             network=NETWORK_CONFIG,
-            munchausen=False,  # Don't use Munchausen RL loss
+            munchausen=True,  # Don't use Munchausen RL loss
             layer_size=100,
             n_hidden_layers=3,
             n_step=1,  # Multistep IQN
             BATCH_SIZE=32,
             BUFFER_SIZE=1024,
-            LR=0.00025,
+            LR=0.001,  # 0.00025
             TAU=1e-3,  # Soft update parameter
-            GAMMA=0.99,  # Discout factor
-            N=12,  # Number of quantiles
+            GAMMA=0.95,  # Discout factor 0.99
+            N=12,  # Number of quantiles, default was 12
             worker=1,  # number of parallel environments
             device=device,
             seed=SEED,
@@ -273,7 +273,7 @@ def run_game(
             loss = models[mods].learn(experiences)
             losses = losses + loss
 
-        updateEps = True
+        updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
         if updateEps == True:
             # epsilon = update_epsilon(epsilon, turn, epoch)
@@ -314,13 +314,14 @@ def run_game(
 models = create_models()
 
 run_params = (
-    [0.99, 10, 100, 8],
-    [0.9, 10000, 100, 8],
-    [0.8, 10000, 100, 8],
-    [0.7, 10000, 100, 8],
-    [0.6, 10000, 100, 8],
-    [0.5, 20000, 100, 8],
-    [0.2, 20000, 100, 8],
+    # [0.99, 10, 100, 8],
+    # [0.9, 10000, 100, 8],
+    # [0.8, 10000, 100, 8],
+    # [0.7, 10000, 100, 8],
+    # [0.6, 10000, 100, 8],
+    # [0.5, 20000, 100, 8],
+    [0.3, 5000, 100, 8],
+    [0.2, 50000, 100, 8],
 )
 
 # the version below needs to have the keys from above in it
