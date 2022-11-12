@@ -310,7 +310,15 @@ def run_game(
 
 models = create_models()
 
-run_params = ([0.9, 100000, 100, 8],)
+run_params = (
+    [0.99, 10, 100, 8],
+    [0.9, 10000, 100, 8],
+    [0.8, 10000, 100, 8],
+    [0.7, 10000, 100, 8],
+    [0.6, 10000, 100, 8],
+    [0.5, 20000, 100, 8],
+    [0.2, 20000, 100, 8],
+)
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
@@ -323,13 +331,13 @@ for modRun in range(len(run_params)):
         max_turns=run_params[modRun][2],
         world_size=run_params[modRun][3],
     )
-    save_models(
-        models,
-        save_dir,
-        "taxi_cab_rainbow_" + str(modRun),
-    )
+    # save_models(
+    #    models,
+    #    save_dir,
+    #    "taxi_cab_rainbow_" + str(modRun),
+    # )
     # make_video(
-    #    "taxi_cab_PPO_" + str(modRun),
+    #    "taxi_cab_rainbow_" + str(modRun),
     #    save_dir,
     #    models,
     #    run_params[modRun][3],
