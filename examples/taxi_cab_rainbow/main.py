@@ -93,7 +93,7 @@ world_size = 10
 
 trainable_models = [0]
 sync_freq = 500
-modelUpdate_freq = 25
+modelUpdate_freq = 5
 epsilon = 0.99
 
 turn = 1
@@ -248,13 +248,16 @@ def run_game(
                     models, env.world, find_instance(env.world, "neural_network")
                 )
 
-            # if withinturn % modelUpdate_freq == 0:
-            #    """
-            #    Train the neural networks within a eposide at rate of modelUpdate_freq
-            #    """
-            #    for mods in trainable_models:
-            #        loss = models[mods].training(128, 0.9)
-            #        losses = losses + loss.detach().cpu().numpy()
+            if epoch > 200 and withinturn % modelUpdate_freq == 0:
+                """
+                Train the neural networks within a eposide at rate of modelUpdate_freq
+                """
+                for mods in trainable_models:
+                    experiences = models[mods].memory.sample()
+                    # print("experiences", len(experiences))
+                    # print(experiences[0].shape)
+                    loss = models[mods].learn(experiences)
+                    losses = losses + loss
 
         for mods in trainable_models:
             """
