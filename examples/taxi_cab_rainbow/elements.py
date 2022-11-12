@@ -174,7 +174,7 @@ class TaxiCab:
         Changes the world based on the action taken
         """
         done = 0
-        reward = -0.1
+        reward = -1
         new_loc = location
         attempted_locaton = self.movement(action, location)
 
