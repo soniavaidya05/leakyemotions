@@ -320,7 +320,7 @@ run_params = (
     # [0.7, 10000, 100, 8],
     # [0.6, 10000, 100, 8],
     # [0.5, 20000, 100, 8],
-    [0.00, 50000, 100, 8],
+    [0.00, 5000, 100, 8],
 )
 
 # the version below needs to have the keys from above in it
