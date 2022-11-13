@@ -70,7 +70,7 @@ def create_models():
             state_size=torch.tensor([4, 9, 9]),
             action_size=4,
             network=NETWORK_CONFIG,
-            munchausen=True,  # Don't use Munchausen RL loss
+            munchausen=False,  # Don't use Munchausen RL loss
             layer_size=100,
             n_hidden_layers=3,
             n_step=1,  # Multistep IQN
@@ -320,8 +320,7 @@ run_params = (
     # [0.7, 10000, 100, 8],
     # [0.6, 10000, 100, 8],
     # [0.5, 20000, 100, 8],
-    [0.3, 5000, 100, 8],
-    [0.2, 50000, 100, 8],
+    [0.00, 50000, 100, 8],
 )
 
 # the version below needs to have the keys from above in it
