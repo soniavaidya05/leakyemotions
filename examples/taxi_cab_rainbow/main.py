@@ -79,7 +79,7 @@ def create_models():
             LR=0.001,  # 0.00025
             TAU=1e-3,  # Soft update parameter
             GAMMA=0.95,  # Discout factor 0.99
-            N=12,  # Number of quantiles, default was 12
+            N=12,  # Number of quantiles
             worker=1,  # number of parallel environments
             device=device,
             seed=SEED,
@@ -92,8 +92,8 @@ def create_models():
 world_size = 10
 
 trainable_models = [0]
-sync_freq = 500
-modelUpdate_freq = 5
+sync_freq = 200  # https://openreview.net/pdf?id=3UK39iaaVpE
+modelUpdate_freq = 4  # https://openreview.net/pdf?id=3UK39iaaVpE
 epsilon = 0.99
 
 turn = 1
