@@ -74,7 +74,7 @@ def create_models():
             layer_size=100,
             n_hidden_layers=3,
             n_step=3,  # Multistep IQN (rainbow paper uses 3)
-            BATCH_SIZE=32,
+            BATCH_SIZE=64,  # https://arxiv.org/pdf/2011.14826.pdf
             BUFFER_SIZE=1024,
             LR=0.001,  # 0.00025
             TAU=1e-3,  # Soft update parameter
