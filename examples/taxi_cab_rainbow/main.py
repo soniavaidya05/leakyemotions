@@ -73,7 +73,7 @@ def create_models():
             munchausen=False,  # Don't use Munchausen RL loss
             layer_size=100,
             n_hidden_layers=3,
-            n_step=1,  # Multistep IQN
+            n_step=3,  # Multistep IQN (rainbow paper uses 3)
             BATCH_SIZE=32,
             BUFFER_SIZE=1024,
             LR=0.001,  # 0.00025
