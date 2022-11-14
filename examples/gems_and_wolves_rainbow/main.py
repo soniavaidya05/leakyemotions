@@ -260,17 +260,17 @@ def run_game(
                     # print(experiences[0].shape)
                     loss = models[mods].learn(experiences)
                     losses = losses + loss
-
-        for mods in trainable_models:
-            """
-            Train the neural networks at the end of eac epoch
-            reduced to 64 so that the new memories ~200 are slowly added with the priority ones
-            """
-            experiences = models[mods].memory.sample()
-            # print("experiences", len(experiences))
-            # print(experiences[0].shape)
-            loss = models[mods].learn(experiences)
-            losses = losses + loss
+        if epoch > 100:
+            for mods in trainable_models:
+                """
+                Train the neural networks at the end of eac epoch
+                reduced to 64 so that the new memories ~200 are slowly added with the priority ones
+                """
+                experiences = models[mods].memory.sample()
+                # print("experiences", len(experiences))
+                # print(experiences[0].shape)
+                loss = models[mods].learn(experiences)
+                losses = losses + loss
 
         updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
@@ -302,7 +302,12 @@ def run_game(
 
 models = create_models()
 
-run_params = ([0.0, 25000, 35],)
+run_params = (
+    [0, 10000, 5],
+    [0, 10000, 10],
+    [0, 10000, 20],
+    [0, 10000, 35],
+)
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
