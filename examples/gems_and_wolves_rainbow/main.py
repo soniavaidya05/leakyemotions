@@ -337,3 +337,10 @@ for modRun in range(len(run_params)):
 # 1) the LSTM must be set to one or doesn't work
 # 2) the CNN input sizes and input layers must be updated
 # 3) why does action need to be be set to action[0] here but it didn't need to be in taxi cab
+
+# 4) Pickle failing
+torch.save(models[0].qnetwork_target.state_dict(), "./agent_target.pt")
+torch.save(models[1].qnetwork_target.state_dict(), "./wolf_target.pt")
+
+torch.save(models[0].qnetwork_local.state_dict(), "./agent_local.pt")
+torch.save(models[1].qnetwork_local.state_dict(), "./wolf_local.pt")
