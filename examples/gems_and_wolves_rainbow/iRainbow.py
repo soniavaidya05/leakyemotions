@@ -46,6 +46,9 @@ class IQN(nn.Module):
 
     def __init__(
         self,
+        in_channels,
+        num_filters,
+        cnn_out_size,
         state_size: tuple,
         action_size: int,
         layer_size: int,
@@ -78,14 +81,14 @@ class IQN(nn.Module):
             linear_layer_cls = nn.Linear
 
         # Network architecture
-        self.cnn = CNN_CLD(in_channels=3, num_filters=5)  # TODO: do this functionally
+        self.cnn = CNN_CLD(in_channels=in_channels, num_filters=num_filters)  
         self.rnn = nn.LSTM(
-            input_size=650,
-            hidden_size=300,
+            input_size=cnn_out_size,
+            hidden_size=layer_size, # was 300
             num_layers=1,
             batch_first=True,
         )
-        self.head = nn.Linear(300, layer_size)  # TODO: Also don't do this hardcoded...
+        self.head = nn.Linear(layer_size, layer_size)  # TODO: Also don't do this hardcoded... was 300, layer_size
         self.cos_embedding = nn.Linear(self.n_cos, layer_size)
         self.ff_1 = linear_layer_cls(layer_size, layer_size)
         self.cos_layer_out = layer_size
@@ -438,11 +441,14 @@ class PrioritizedReplay(object):
         return len(self.buffer)
 
 
-class IQNModel:
+class iRainbowModel:
     """Interacts with and learns from the environment."""
 
     def __init__(
         self,
+        in_channels,
+        num_filters,
+        cnn_out_size,
         state_size,
         action_size,
         network,
@@ -510,6 +516,9 @@ class IQNModel:
 
         # IQN-Network
         self.qnetwork_local = IQN(
+            in_channels,
+            num_filters,
+            cnn_out_size,
             state_size,
             action_size,
             layer_size,
@@ -522,6 +531,9 @@ class IQNModel:
             device=device,
         ).to(device)
         self.qnetwork_target = IQN(
+            in_channels,
+            num_filters,
+            cnn_out_size,
             state_size,
             action_size,
             layer_size,

@@ -211,7 +211,7 @@ class Wolf:
     def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
         self.appearance = [255.0, 0.0, 0.0]  # agents are red
-        self.vision = 4  # agents can see three radius around them - get this back to 8
+        self.vision = 8  # agents can see three radius around them - get this back to 8
         self.policy = model  # gems do not do anything
         self.value = 0  # agents have no value
         self.reward = 0  # how much reward this agent has collected
@@ -229,7 +229,7 @@ class Wolf:
         Fills in blank images for the LSTM before game play.
         Impicitly defines the number of sequences that the LSTM will be trained on.
         """
-        pov_size = 9  # need to change this back to 17
+        pov_size = 17  # need to change this back to 17
         image = torch.zeros(1, numberMemories, 3, pov_size, pov_size).float()
         priority = torch.tensor(0.1)
         blank = torch.tensor(0.0)

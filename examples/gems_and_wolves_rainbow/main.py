@@ -8,7 +8,7 @@ from gem.utils import (
     find_instance,
 )
 
-from examples.gems_and_wolves_rainbow.iqn_gw import IQNModel, PrioritizedReplay
+from examples.gems_and_wolves_rainbow.iRainbow import iRainbowModel, PrioritizedReplay
 from examples.gems_and_wolves_rainbow.env import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -53,17 +53,20 @@ def create_models():
 
     models = []
     models.append(
-        IQNModel(
+        iRainbowModel(
+            in_channels=3,
+            num_filters=5,
+            cnn_out_size=650,
             state_size=torch.tensor([3, 9, 9]),
             action_size=4,
             network=NETWORK_CONFIG,
             munchausen=False,  # Don't use Munchausen RL loss
             layer_size=100,
-            n_hidden_layers=3,
+            n_hidden_layers=2,
             n_step=3,  # Multistep IQN (rainbow paper uses 3)
             BATCH_SIZE=64,
             BUFFER_SIZE=1024,
-            LR=0.001,  # 0.00025
+            LR=0.00025,  # 0.00025
             TAU=1e-3,  # Soft update parameter
             GAMMA=0.95,  # Discout factor 0.99
             N=12,  # Number of quantiles
@@ -74,17 +77,20 @@ def create_models():
     )
 
     models.append(
-        IQNModel(
+        iRainbowModel(
+            in_channels=3,
+            num_filters=5,
+            cnn_out_size=2570,
             state_size=torch.tensor([3, 9, 9]),
             action_size=4,
             network=NETWORK_CONFIG,
             munchausen=False,  # Don't use Munchausen RL loss
             layer_size=100,
-            n_hidden_layers=3,
+            n_hidden_layers=2,
             n_step=3,  # Multistep IQN (rainbow paper uses 3)
             BATCH_SIZE=64,
             BUFFER_SIZE=1024,
-            LR=0.001,  # 0.00025
+            LR=0.00025,  # 0.00025
             TAU=1e-3,  # Soft update parameter
             GAMMA=0.95,  # Discout factor 0.99
             N=12,  # Number of quantiles
@@ -321,7 +327,6 @@ def eval_game(
     """
     This is the main loop of the game
     """
-    losses = 0
     game_points = [0, 0]
  
 
@@ -334,7 +339,7 @@ def eval_game(
     Creates new gamepoints, resets agents, and runs one episode
     """
 
-    done, withinturn = 0, 0
+    done = 0
 
     # create a new gameboard for each epoch and repopulate
     # the resset does allow for different params, but when the world size changes, odd
@@ -356,8 +361,6 @@ def eval_game(
         """
         Find the agents and wolves and move them
         """
-        turn = turn + 1
-        withinturn = withinturn + 1
 
         image = agent_visualfield(env.world, (0,0), env.tile_size, k=None)
         im = plt.imshow(image, animated=True)
@@ -383,9 +386,8 @@ def eval_game(
 
                 # set up the right params below
 
-                action = models[env.world[loc].policy].take_action(state, epsilon)
+                action = models[env.world[loc].policy].take_action(state, 0)
 
-                # env.world[loc].init_rnn_state = init_rnn_state
                 (
                     env.world,
                     reward,
@@ -396,40 +398,35 @@ def eval_game(
 
                 # these can be included on one replay
 
-                exp = (
-                    # models[env.world[new_loc].policy].max_priority,
-                    1,
-                    (
-                        state,
-                        action,
-                        reward,
-                        next_state,
-                        done,
-                        # env.world[new_loc].init_rnn_state[0],
-                        # env.world[new_loc].init_rnn_state[1],
-                    ),
-                )
+                #exp = (
+                #    1,
+                #    (
+                #        state,
+                #        action,
+                #        reward,
+                #        next_state,
+                #        done,
+                #    ),
+                #)
 
-                env.world[new_loc].episode_memory.append(exp)
+                #env.world[new_loc].episode_memory.append(exp)
 
-                if env.world[new_loc].kind == "agent":
-                    game_points[0] = game_points[0] + reward
-                if env.world[new_loc].kind == "wolf":
-                    game_points[1] = game_points[1] + reward
+                #if env.world[new_loc].kind == "agent":
+                #    game_points[0] = game_points[0] + reward
+                #if env.world[new_loc].kind == "wolf":
+                #    game_points[1] = game_points[1] + reward
 
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
     ani.save(filename, writer="PillowWriter", fps=2)
 
 
-    return ani
-
-
-
 run_params = (
-    [0, 10000, 5],
-    [0, 10000, 15],
-    [0, 10000, 25],
-    [0, 10000, 35],
+    [.5, 10000, 20],
+    [.2, 10000, 20],
+    [.05, 10000, 20],
+    [.5, 10000, 35],
+    [.2, 10000, 35],
+    [.05, 10000, 35],
 )
 
 # the version below needs to have the keys from above in it
@@ -442,14 +439,14 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    ani = eval_game(
+    eval_game(
             models,
             env,
             turn,
             0,
             1,
             35,
-            "/Users/socialai/Documents/GitHub/gem/examples/gems_and_wolves_rainbow/WolvesGems_" + str(modRun) + ".gif",
+            "/Users/socialai/Documents/GitHub/gem/examples/gems_and_wolves_rainbow/WolvesGems_b_" + str(modRun) + ".gif",
         )
 
 
@@ -469,17 +466,12 @@ for modRun in range(len(run_params)):
 
 # NOTES
 # 1) the LSTM must be set to one or doesn't work
-# 2) the CNN input sizes and input layers must be updated
-# 3) why does action need to be be set to action[0] here but it didn't need to be in taxi cab
+# 2) why does action need to be be set to action[0] here but it didn't need to be in taxi cab
 
-# 4) Pickle failing
+# 3) Pickle failing
 torch.save(models[0].qnetwork_target.state_dict(), "./agent_target.pt")
 torch.save(models[1].qnetwork_target.state_dict(), "./wolf_target.pt")
 
 torch.save(models[0].qnetwork_local.state_dict(), "./agent_local.pt")
 torch.save(models[1].qnetwork_local.state_dict(), "./wolf_local.pt")
 
-
-# model = TheModelClass(*args, **kwargs)
-# model.load_state_dict(torch.load(PATH))
-# model.eval()
