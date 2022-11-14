@@ -302,7 +302,7 @@ def run_game(
 
 models = create_models()
 
-run_params = ([0.00, 15000, 100, 8],)
+run_params = ([0.0, 25000, 35],)
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
