@@ -302,10 +302,133 @@ def run_game(
 
 models = create_models()
 
+
+
+
+import matplotlib.animation as animation
+from gem.models.perception import agent_visualfield
+
+
+def eval_game(
+    models,
+    env,
+    turn,
+    epsilon,
+    epochs=10000,
+    max_turns=100,
+    filename = "tmp"
+):
+    """
+    This is the main loop of the game
+    """
+    losses = 0
+    game_points = [0, 0]
+ 
+
+    fig = plt.figure()
+    ims = []
+    env.reset_env(world_size, world_size)
+
+    """
+    Move each agent once and then update the world
+    Creates new gamepoints, resets agents, and runs one episode
+    """
+
+    done, withinturn = 0, 0
+
+    # create a new gameboard for each epoch and repopulate
+    # the resset does allow for different params, but when the world size changes, odd
+    env.reset_env(
+        height=world_size,
+        width=world_size,
+        layers=1,
+        gem1p=0.03,
+        gem2p=0.02,
+        wolf1p=0.01,
+    )
+    for loc in find_instance(env.world, "neural_network"):
+        # reset the memories for all agents
+        # the parameter sets the length of the sequence for LSTM
+        env.world[loc].init_replay(1)
+        env.world[loc].init_rnn_state = None
+
+    for _ in range(max_turns):
+        """
+        Find the agents and wolves and move them
+        """
+        turn = turn + 1
+        withinturn = withinturn + 1
+
+        image = agent_visualfield(env.world, (0,0), env.tile_size, k=None)
+        im = plt.imshow(image, animated=True)
+        ims.append([im])
+
+        agentList = find_instance(env.world, "neural_network")
+
+        random.shuffle(agentList)
+
+        for loc in agentList:
+            """
+            Reset the rewards for the trial to be zero for all agents
+            """
+            env.world[loc].reward = 0
+
+        for loc in agentList:
+            if env.world[loc].kind != "deadAgent":
+
+                holdObject = env.world[loc]
+                device = models[holdObject.policy].device
+                state = env.pov(loc)
+                params = (state.to(device), epsilon, env.world[loc].init_rnn_state)
+
+                # set up the right params below
+
+                action = models[env.world[loc].policy].take_action(state, epsilon)
+
+                # env.world[loc].init_rnn_state = init_rnn_state
+                (
+                    env.world,
+                    reward,
+                    next_state,
+                    done,
+                    new_loc,
+                ) = holdObject.transition(env, models, action[0], loc)
+
+                # these can be included on one replay
+
+                exp = (
+                    # models[env.world[new_loc].policy].max_priority,
+                    1,
+                    (
+                        state,
+                        action,
+                        reward,
+                        next_state,
+                        done,
+                        # env.world[new_loc].init_rnn_state[0],
+                        # env.world[new_loc].init_rnn_state[1],
+                    ),
+                )
+
+                env.world[new_loc].episode_memory.append(exp)
+
+                if env.world[new_loc].kind == "agent":
+                    game_points[0] = game_points[0] + reward
+                if env.world[new_loc].kind == "wolf":
+                    game_points[1] = game_points[1] + reward
+
+    ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
+    ani.save(filename, writer="PillowWriter", fps=2)
+
+
+    return ani
+
+
+
 run_params = (
     [0, 10000, 5],
-    [0, 10000, 10],
-    [0, 10000, 20],
+    [0, 10000, 15],
+    [0, 10000, 25],
     [0, 10000, 35],
 )
 
@@ -319,6 +442,17 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
+    ani = eval_game(
+            models,
+            env,
+            turn,
+            0,
+            1,
+            35,
+            "/Users/socialai/Documents/GitHub/gem/examples/gems_and_wolves_rainbow/WolvesGems_" + str(modRun) + ".gif",
+        )
+
+
     # save_models(
     #    models,
     #    save_dir,
