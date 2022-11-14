@@ -1,50 +1,37 @@
-import argparse
+# from tkinter.tix import Tree
 from gem.utils import (
     update_epsilon,
     update_memories,
     find_moveables,
     transfer_world_memories,
-    update_memories_rnn,
     find_agents,
     find_instance,
 )
-from examples.taxi_cab_rainbow.elements import (
-    TaxiCab,
-    EmptyObject,
-    Wall,
-    Passenger,
-)
-from gem.models.iqn import IQNModel, PrioritizedReplay
 
-from examples.taxi_cab_rainbow.env import TaxiCabEnv
+from examples.gems_and_wolves_rainbow.iqn_gw import IQNModel, PrioritizedReplay
+from examples.gems_and_wolves_rainbow.env import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
-import torch
-from tensorboardX import SummaryWriter
-import time
+
+
+from examples.gems_and_wolves_rainbow.elements import EmptyObject, Wall
+
 import numpy as np
-
 import random
+import torch
 
-# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-# save_dir = "/Users/ethan/gem_output/"
-logger = SummaryWriter(f"{save_dir}/taxicab/", comment=str(time.time))
-
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # if torch.backends.mps.is_available():
 #    device = torch.device("mps")
-
-# device = "mps"
-print(device)
-
 SEED = 1  # Seed for replicating training runs
 np.random.seed(SEED)
 random.seed(SEED)
@@ -67,7 +54,7 @@ def create_models():
     models = []
     models.append(
         IQNModel(
-            state_size=torch.tensor([4, 9, 9]),
+            state_size=torch.tensor([3, 9, 9]),
             action_size=4,
             network=NETWORK_CONFIG,
             munchausen=False,  # Don't use Munchausen RL loss
@@ -84,14 +71,35 @@ def create_models():
             device=device,
             seed=SEED,
         )
-    )  # taxi model
+    )
+
+    models.append(
+        IQNModel(
+            state_size=torch.tensor([3, 9, 9]),
+            action_size=4,
+            network=NETWORK_CONFIG,
+            munchausen=False,  # Don't use Munchausen RL loss
+            layer_size=100,
+            n_hidden_layers=3,
+            n_step=3,  # Multistep IQN (rainbow paper uses 3)
+            BATCH_SIZE=64,
+            BUFFER_SIZE=1024,
+            LR=0.001,  # 0.00025
+            TAU=1e-3,  # Soft update parameter
+            GAMMA=0.95,  # Discout factor 0.99
+            N=12,  # Number of quantiles
+            worker=1,  # number of parallel environments
+            device=device,
+            seed=SEED,
+        )
+    )  # wolf model
 
     return models
 
 
-world_size = 10
+world_size = 15
 
-trainable_models = [0]
+trainable_models = [0, 1]
 sync_freq = 200  # https://openreview.net/pdf?id=3UK39iaaVpE
 modelUpdate_freq = 4  # https://openreview.net/pdf?id=3UK39iaaVpE
 epsilon = 0.99
@@ -99,14 +107,16 @@ epsilon = 0.99
 turn = 1
 
 models = create_models()
-env = TaxiCabEnv(
+env = WolfsAndGems(
     height=world_size,
     width=world_size,
     layers=1,
-    defaultObject=EmptyObject,
+    defaultObject=EmptyObject(),
+    gem1p=0.03,
+    gem2p=0.02,
+    wolf1p=0.01,
 )
-
-# env.game_test()
+env.game_test()
 
 
 def run_game(
@@ -116,7 +126,6 @@ def run_game(
     epsilon,
     epochs=10000,
     max_turns=100,
-    world_size=10,
 ):
     """
     This is the main loop of the game
@@ -138,18 +147,14 @@ def run_game(
             height=world_size,
             width=world_size,
             layers=1,
+            gem1p=0.03,
+            gem2p=0.02,
+            wolf1p=0.01,
         )
-
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            pov_size = (
-                env.tile_size[0] * (env.world[loc].vision * 2 + 1),
-                env.tile_size[1] * (env.world[loc].vision * 2 + 1),
-            )
-            env.world[loc].init_replay(
-                numberMemories=1, pov_size=pov_size, visual_depth=4
-            )
+            env.world[loc].init_replay(1)
             env.world[loc].init_rnn_state = None
 
         while done == 0:
@@ -181,9 +186,7 @@ def run_game(
 
                     holdObject = env.world[loc]
                     device = models[holdObject.policy].device
-                    state = env.pov(
-                        loc, inventory=[holdObject.has_passenger], layers=[0]
-                    )
+                    state = env.pov(loc)
                     params = (state.to(device), epsilon, env.world[loc].init_rnn_state)
 
                     # set up the right params below
@@ -197,7 +200,7 @@ def run_game(
                         next_state,
                         done,
                         new_loc,
-                    ) = holdObject.transition(env, models, action, loc)
+                    ) = holdObject.transition(env, models, action[0], loc)
 
                     # these can be included on one replay
 
@@ -217,16 +220,15 @@ def run_game(
 
                     env.world[new_loc].episode_memory.append(exp)
 
-                    if env.world[new_loc].kind == "taxi_cab":
+                    if env.world[new_loc].kind == "agent":
                         game_points[0] = game_points[0] + reward
-                    if env.world[new_loc].kind == "taxi_cab" and reward > 2:
-                        game_points[1] = game_points[1] + 1
+                    if env.world[new_loc].kind == "wolf":
+                        game_points[1] = game_points[1] + reward
 
             # determine whether the game is finished (either max length or all agents are dead)
             if (
                 withinturn > max_turns
                 or len(find_instance(env.world, "neural_network")) == 0
-                # or reward > 0
             ):
                 done = 1
 
@@ -240,7 +242,7 @@ def run_game(
                     env,
                     find_instance(env.world, "neural_network"),
                     done,
-                    end_update=False,  # the end update fails with non standard inputs. this needs to be fixed
+                    end_update=True,
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved
@@ -264,9 +266,6 @@ def run_game(
             Train the neural networks at the end of eac epoch
             reduced to 64 so that the new memories ~200 are slowly added with the priority ones
             """
-            # sample first
-            # call learn fn on IQN: states, actions, rewards, next_states, dones = experiences
-
             experiences = models[mods].memory.sample()
             # print("experiences", len(experiences))
             # print(experiences[0].shape)
@@ -277,7 +276,7 @@ def run_game(
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
         if updateEps == True:
             # epsilon = update_epsilon(epsilon, turn, epoch)
-            epsilon = max(epsilon - (0.1 / epochs), 0.2)
+            epsilon = max(epsilon - 0.00003, 0.2)
 
         if epoch % 100 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
@@ -288,17 +287,7 @@ def run_game(
                 round(game_points[1]),
                 losses,
                 epsilon,
-                world_size,
             )
-            # Tensorboard logging
-            # logger.add_scalar('epoch', value=epoch, iteration=epoch)
-            logger.add_scalar("num_turns", withinturn, epoch)
-            logger.add_scalar("total_points", game_points[0], epoch)
-            logger.add_scalar("n_passengers_delivered", game_points[1], epoch)
-            logger.add_scalar("sum_loss", losses, epoch)
-            logger.add_scalar("epsilon", epsilon, epoch)
-            logger.add_scalar("world_size", world_size, epoch)
-
             game_points = [0, 0]
             losses = 0
     return models, env, turn, epsilon
@@ -313,15 +302,7 @@ def run_game(
 
 models = create_models()
 
-run_params = (
-    # [0.99, 10, 100, 8],
-    # [0.9, 10000, 100, 8],
-    # [0.8, 10000, 100, 8],
-    # [0.7, 10000, 100, 8],
-    # [0.6, 10000, 100, 8],
-    # [0.5, 20000, 100, 8],
-    [0.00, 5000, 100, 8],
-)
+run_params = ([0.00, 15000, 100, 8],)
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
@@ -329,21 +310,19 @@ for modRun in range(len(run_params)):
         models,
         env,
         turn,
-        epsilon=run_params[modRun][0],
+        run_params[modRun][0],
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
-        world_size=run_params[modRun][3],
     )
     # save_models(
     #    models,
     #    save_dir,
-    #    "taxi_cab_rainbow_" + str(modRun),
+    #    "WolvesGems_" + str(modRun),
     # )
     # make_video(
-    #    "taxi_cab_rainbow_" + str(modRun),
+    #    "WolvesGems_" + str(modRun),
     #    save_dir,
     #    models,
-    #    run_params[modRun][3],
+    #    20,
     #    env,
-    #    end_update=False,
     # )
