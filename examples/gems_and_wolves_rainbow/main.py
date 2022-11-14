@@ -344,3 +344,8 @@ torch.save(models[1].qnetwork_target.state_dict(), "./wolf_target.pt")
 
 torch.save(models[0].qnetwork_local.state_dict(), "./agent_local.pt")
 torch.save(models[1].qnetwork_local.state_dict(), "./wolf_local.pt")
+
+
+# model = TheModelClass(*args, **kwargs)
+# model.load_state_dict(torch.load(PATH))
+# model.eval()
