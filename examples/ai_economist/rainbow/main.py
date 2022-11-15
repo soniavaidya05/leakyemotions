@@ -184,7 +184,7 @@ def run_game(
     This is the main loop of the game
     """
     losses = 0
-    game_points = [0, 0]
+    game_points = [0, 0, 0]
     for epoch in range(epochs):
 
         """
@@ -299,7 +299,9 @@ def run_game(
                     env.world[new_loc].episode_memory.append(exp)
 
                     if env.world[new_loc].kind == "agent":
-                        game_points[0] = game_points[0] + reward
+                        game_points[env.world[new_loc].policy] = (
+                            game_points[env.world[new_loc].policy] + reward
+                        )
 
             # note that with the current setup, the world is not generating new wood and stone
             # we will need to consider where to add the transitions that do not have movement or neural networks
@@ -358,11 +360,11 @@ def run_game(
             print(
                 epoch,
                 withinturn,
-                round(game_points[0]),
+                game_points,
                 losses,
                 epsilon,
             )
-            game_points = [0, 0]
+            game_points = [0, 0, 0]
             losses = 0
     return models, env, turn, epsilon
 
