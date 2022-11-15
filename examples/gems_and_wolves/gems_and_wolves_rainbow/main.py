@@ -9,7 +9,7 @@ from gem.utils import (
 )
 
 from gem.models.iRainbow import iRainbowModel, PrioritizedReplay
-from examples.gems_and_wolves_rainbow.env import WolfsAndGems
+from examples.gems_and_wolves.gems_and_wolves_rainbow.env import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -17,7 +17,7 @@ import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
 
 
-from examples.gems_and_wolves_rainbow.elements import EmptyObject, Wall
+from examples.gems_and_wolves.gems_and_wolves_rainbow.elements import EmptyObject, Wall
 
 import numpy as np
 import random
@@ -57,7 +57,9 @@ def create_models():
             in_channels=3,
             num_filters=5,
             cnn_out_size=650,
-            state_size=torch.tensor([3, 9, 9]),
+            state_size=torch.tensor(
+                [3, 9, 9]
+            ),  # this seems to only be reading the first value
             action_size=4,
             network=NETWORK_CONFIG,
             munchausen=False,  # Don't use Munchausen RL loss

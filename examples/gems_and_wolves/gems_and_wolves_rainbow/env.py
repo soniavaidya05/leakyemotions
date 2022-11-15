@@ -1,4 +1,4 @@
-from examples.gems_and_wolves_rainbow.elements import (
+from examples.gems_and_wolves.gems_and_wolves_rainbow.elements import (
     Agent,
     Wolf,
     Gem,

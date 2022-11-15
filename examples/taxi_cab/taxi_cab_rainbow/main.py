@@ -8,7 +8,7 @@ from gem.utils import (
     find_agents,
     find_instance,
 )
-from examples.taxi_cab_rainbow.elements import (
+from examples.taxi_cab.taxi_cab_rainbow.elements import (
     TaxiCab,
     EmptyObject,
     Wall,
@@ -16,7 +16,7 @@ from examples.taxi_cab_rainbow.elements import (
 )
 from gem.models.iqn import IQNModel, PrioritizedReplay
 
-from examples.taxi_cab_rainbow.env import TaxiCabEnv
+from examples.taxi_cab.taxi_cab_rainbow.env import TaxiCabEnv
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn

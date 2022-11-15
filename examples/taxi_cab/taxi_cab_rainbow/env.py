@@ -1,4 +1,4 @@
-from examples.taxi_cab_rainbow.elements import (
+from examples.taxi_cab.taxi_cab_rainbow.elements import (
     TaxiCab,
     EmptyObject,
     Wall,
