@@ -264,8 +264,6 @@ def run_game(
                 """
                 for mods in trainable_models:
                     experiences = models[mods].memory.sample()
-                    # print("experiences", len(experiences))
-                    # print(experiences[0].shape)
                     loss = models[mods].learn(experiences)
                     losses = losses + loss
         if epoch > 100:
