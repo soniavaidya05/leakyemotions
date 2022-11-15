@@ -269,31 +269,24 @@ def run_game(
                         ],
                         layers=[0, 1],
                     )
-                    state = state.float()
-                    print(state[:, :, 8, :, :])
-                    print(state.shape)
-                    state2 = state.numpy()
-                    state2 = np.array(state2)
 
                     # params = (state.to(device), epsilon, env.world[loc].init_rnn_state)
                     # print(state.shape)
                     # set up the right params below
 
-                    action = models[env.world[loc].policy].take_action(state2)
+                    action = models[env.world[loc].policy].take_action(state)
 
                     (
-                        state,
-                        action,
+                        env.world,
                         reward,
                         next_state,
                         done,
                         new_loc,
-                        info,
-                    ) = env.step(models, loc, epsilon)
+                    ) = holdObject.transition(env, models, action, loc)
 
                     next_state = fix_next_state(state, next_state)
 
-                    exp = models[env.world[new_loc].policy].max_priority, (
+                    exp = 1, (
                         state,
                         action,
                         reward,
@@ -328,7 +321,7 @@ def run_game(
                 And then transfer the local memory to the model memory
                 """
                 # this updates the last memory to be the final state of the game board
-                env.world = update_memories_rnn(
+                env.world = update_memories(
                     env, find_moveables(env.world), done, end_update=False
                 )
 
@@ -337,7 +330,7 @@ def run_game(
                     models, env.world, find_moveables(env.world), extra_reward=False
                 )
 
-            if withinturn % modelUpdate_freq == 0:
+            if epoch > 200 and withinturn % modelUpdate_freq == 0:
                 """
                 Train the neural networks within a eposide at rate of modelUpdate_freq
                 """
@@ -346,13 +339,14 @@ def run_game(
                     loss = models[mods].learn(experiences)
                     losses = losses + loss
 
-        for mods in trainable_models:
-            """
-            Train the neural networks at the end of eac epoch
-            """
-            experiences = models[mods].memory.sample()
-            loss = models[mods].learn(experiences)
-            losses = losses + loss
+        if epoch > 200:
+            for mods in trainable_models:
+                """
+                Train the neural networks at the end of eac epoch
+                """
+                experiences = models[mods].memory.sample()
+                loss = models[mods].learn(experiences)
+                losses = losses + loss
 
         updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
@@ -376,21 +370,14 @@ def run_game(
 models = create_models()
 
 run_params = (
-    [0.9, 10, 30],
-    [0.9, 10000, 30],
-    [0.8, 10000, 30],
-    [0.7, 10000, 30],
+    # [0.9, 10, 30],
+    [0.5, 10000, 30],
     [0.2, 10000, 30],
-    [0.8, 10000, 50],
-    [0.7, 10000, 50],
-    [0.2, 10000, 50],
-    [0.2, 10000, 50],
-    [0.8, 15000, 75],
-    [0.7, 15000, 75],
-    [0.2, 15000, 75],
-    [0.8, 20000, 75],
-    [0.7, 20000, 75],
-    [0.2, 20000, 75],
+    [0.1, 10000, 30],
+    [0.5, 10000, 75],
+    [0.2, 10000, 75],
+    [0.1, 10000, 75],
+    [0.01, 40000, 75],
 )
 
 
@@ -404,8 +391,8 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(models, save_dir, "AI_econ_PER" + str(modRun))
-    make_video2("AI_econ_PER" + str(modRun), save_dir, models, 30, env)
+    # save_models(models, save_dir, "AI_econ_PER" + str(modRun))
+    # make_video2("AI_econ_PER" + str(modRun), save_dir, models, 30, env)
 
 
 # models = load_models(save_dir, "AI_econ_test28")

@@ -196,7 +196,6 @@ def run_game(
                     device = models[holdObject.policy].device
                     state = env.pov(loc)
                     params = (state.to(device), epsilon, env.world[loc].init_rnn_state)
-
                     # set up the right params below
 
                     action = models[env.world[loc].policy].take_action(state, epsilon)
