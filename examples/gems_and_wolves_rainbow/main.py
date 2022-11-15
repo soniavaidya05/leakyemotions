@@ -8,7 +8,7 @@ from gem.utils import (
     find_instance,
 )
 
-from examples.gems_and_wolves_rainbow.iRainbow import iRainbowModel, PrioritizedReplay
+from gem.models.iRainbow import iRainbowModel, PrioritizedReplay
 from examples.gems_and_wolves_rainbow.env import WolfsAndGems
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -81,7 +81,7 @@ def create_models():
             in_channels=3,
             num_filters=5,
             cnn_out_size=2570,
-            state_size=torch.tensor([3, 9, 9]),
+            state_size=torch.tensor([3, 17, 17]),
             action_size=4,
             network=NETWORK_CONFIG,
             munchausen=False,  # Don't use Munchausen RL loss
@@ -309,26 +309,15 @@ def run_game(
 models = create_models()
 
 
-
-
 import matplotlib.animation as animation
 from gem.models.perception import agent_visualfield
 
 
-def eval_game(
-    models,
-    env,
-    turn,
-    epsilon,
-    epochs=10000,
-    max_turns=100,
-    filename = "tmp"
-):
+def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename="tmp"):
     """
     This is the main loop of the game
     """
     game_points = [0, 0]
- 
 
     fig = plt.figure()
     ims = []
@@ -362,7 +351,7 @@ def eval_game(
         Find the agents and wolves and move them
         """
 
-        image = agent_visualfield(env.world, (0,0), env.tile_size, k=None)
+        image = agent_visualfield(env.world, (0, 0), env.tile_size, k=None)
         im = plt.imshow(image, animated=True)
         ims.append([im])
 
@@ -398,7 +387,7 @@ def eval_game(
 
                 # these can be included on one replay
 
-                #exp = (
+                # exp = (
                 #    1,
                 #    (
                 #        state,
@@ -407,13 +396,13 @@ def eval_game(
                 #        next_state,
                 #        done,
                 #    ),
-                #)
+                # )
 
-                #env.world[new_loc].episode_memory.append(exp)
+                # env.world[new_loc].episode_memory.append(exp)
 
-                #if env.world[new_loc].kind == "agent":
+                # if env.world[new_loc].kind == "agent":
                 #    game_points[0] = game_points[0] + reward
-                #if env.world[new_loc].kind == "wolf":
+                # if env.world[new_loc].kind == "wolf":
                 #    game_points[1] = game_points[1] + reward
 
     ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
@@ -421,12 +410,12 @@ def eval_game(
 
 
 run_params = (
-    [.5, 10000, 20],
-    [.2, 10000, 20],
-    [.05, 10000, 20],
-    [.5, 10000, 35],
-    [.2, 10000, 35],
-    [.05, 10000, 35],
+    [0.5, 2000, 20],
+    [0.2, 2000, 20],
+    [0.05, 2000, 20],
+    [0.5, 2000, 35],
+    [0.2, 2000, 35],
+    [0.05, 2000, 35],
 )
 
 # the version below needs to have the keys from above in it
@@ -439,16 +428,18 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    eval_game(
-            models,
-            env,
-            turn,
-            0,
-            1,
-            35,
-            "/Users/socialai/Documents/GitHub/gem/examples/gems_and_wolves_rainbow/WolvesGems_b_" + str(modRun) + ".gif",
-        )
+    filename = save_dir + "WolvesGems_" + str(modRun) + ".gif"
+    eval_game(models, env, turn, 0, 1, 35, filename)
+    f0_t = save_dir + "WolvesGems_" + str(modRun) + "agent_target.pt"
+    f1_t = save_dir + "WolvesGems_" + str(modRun) + "wolf_target.pt"
+    f0_l = save_dir + "WolvesGems_" + str(modRun) + "agent_local.pt"
+    f1_l = save_dir + "WolvesGems_" + str(modRun) + "wolf_local.pt"
 
+    torch.save(models[0].qnetwork_target.state_dict(), f0_t)
+    torch.save(models[1].qnetwork_target.state_dict(), f1_t)
+
+    torch.save(models[0].qnetwork_local.state_dict(), f0_l)
+    torch.save(models[1].qnetwork_local.state_dict(), f1_l)
 
     # save_models(
     #    models,
@@ -469,9 +460,8 @@ for modRun in range(len(run_params)):
 # 2) why does action need to be be set to action[0] here but it didn't need to be in taxi cab
 
 # 3) Pickle failing
-torch.save(models[0].qnetwork_target.state_dict(), "./agent_target.pt")
-torch.save(models[1].qnetwork_target.state_dict(), "./wolf_target.pt")
+# torch.save(models[0].qnetwork_target.state_dict(), "./agent_target.pt")
+# torch.save(models[1].qnetwork_target.state_dict(), "./wolf_target.pt")
 
-torch.save(models[0].qnetwork_local.state_dict(), "./agent_local.pt")
-torch.save(models[1].qnetwork_local.state_dict(), "./wolf_local.pt")
-
+# torch.save(models[0].qnetwork_local.state_dict(), "./agent_local.pt")
+# torch.save(models[1].qnetwork_local.state_dict(), "./wolf_local.pt")

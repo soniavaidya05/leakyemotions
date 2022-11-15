@@ -81,14 +81,16 @@ class IQN(nn.Module):
             linear_layer_cls = nn.Linear
 
         # Network architecture
-        self.cnn = CNN_CLD(in_channels=in_channels, num_filters=num_filters)  
+        self.cnn = CNN_CLD(in_channels=in_channels, num_filters=num_filters)
         self.rnn = nn.LSTM(
             input_size=cnn_out_size,
-            hidden_size=layer_size, # was 300
+            hidden_size=layer_size,  # was 300
             num_layers=1,
             batch_first=True,
         )
-        self.head = nn.Linear(layer_size, layer_size)  # TODO: Also don't do this hardcoded... was 300, layer_size
+        self.head = nn.Linear(
+            layer_size, layer_size
+        )  # TODO: Also don't do this hardcoded... was 300, layer_size
         self.cos_embedding = nn.Linear(self.n_cos, layer_size)
         self.ff_1 = linear_layer_cls(layer_size, layer_size)
         self.cos_layer_out = layer_size
