@@ -15,7 +15,7 @@ from examples.ai_economist.elements import (
     Wall,
 )
 from examples.ai_economist.PPO.cnn_PPO import PPO, RolloutBuffer
-from examples.ai_economist.env import AI_Econ
+from examples.ai_economist.PPO.env import AI_Econ
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -133,6 +133,10 @@ def run_game(
     """
     losses = 0
     game_points = [0, 0, 0]
+    outcomes1 = [0,0,0,0,0,0,0,0,0,0,0]
+    outcomes2 = [0,0,0,0,0,0,0,0,0,0,0]
+    outcomes3 = [0,0,0,0,0,0,0,0,0,0,0]
+
     for epoch in range(epochs):
 
         """
@@ -233,7 +237,18 @@ def run_game(
                         next_state,
                         done,
                         new_loc,
+                        outcome
                     ) = holdObject.transition(env, models, action, loc)
+
+                    if holdObject.policy == 0:
+                        outcomes1[outcome] = outcomes1[outcome] + 1
+
+                    if holdObject.policy == 1:
+                        outcomes2[outcome] = outcomes2[outcome] + 1
+
+                    if holdObject.policy == 2:
+                        outcomes3[outcome] = outcomes3[outcome] + 1
+
 
 
                     next_state = fix_next_state(state, next_state)
@@ -329,7 +344,13 @@ def run_game(
                 losses,
                 epsilon,
             )
+            print(outcomes1)
+            print(outcomes2)
+            print(outcomes3)
             game_points = [0, 0, 0]
+            outcomes1 = [0,0,0,0,0,0,0,0,0,0,0]
+            outcomes2 = [0,0,0,0,0,0,0,0,0,0,0]
+            outcomes3 = [0,0,0,0,0,0,0,0,0,0,0]
             losses = 0
     return models, env, turn, epsilon
 
@@ -337,7 +358,8 @@ def run_game(
 models = create_models()
 
 
-run_params = ([0.9, 100000, 100, 31],)
+run_params = ([0.9, 1000, 100, 31],[0.9, 1000, 100, 31],[0.9, 1000, 100, 31],[0.9, 1000, 100, 31],[0.9, 1000, 100, 31],)
+
 
 
 # the version below needs to have the keys from above in it

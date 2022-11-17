@@ -154,7 +154,9 @@ class Agent:
         new_loc = location
         attempted_locaton = self.movement(action, location)
 
+
         if action in [0, 1, 2, 3]:
+            outcome = 10
             attempted_location_l0 = (attempted_locaton[0], attempted_locaton[1], 0)
             attempted_location_l1 = (attempted_locaton[0], attempted_locaton[1], 1)
 
@@ -164,12 +166,15 @@ class Agent:
             # and deleting each other.
             if isinstance(env.world[attempted_location_l0], Agent):
                 reward = -0.1
+                outcome = 0
 
             if isinstance(env.world[attempted_location_l1], Agent):
-                reward = -0.1
+                reward = -0.1                
+                outcome = 0
 
             if isinstance(env.world[attempted_locaton], Agent):
                 reward = -0.1
+                outcome = 0
 
             if isinstance(env.world[attempted_location_l0], EmptyObject) and isinstance(
                 env.world[attempted_location_l1], EmptyObject
@@ -177,14 +182,19 @@ class Agent:
                 env.world[attempted_location_l1] = self
                 new_loc = attempted_location_l1
                 env.world[location] = EmptyObject()
+                outcome = 1
 
-            if isinstance(env.world[attempted_location_l0], Wall):
+            if isinstance(env.world[attempted_location_l0], Wall) or isinstance(env.world[attempted_location_l1], Wall) or isinstance(env.world[attempted_locaton], Wall):
                 reward = -0.1
+                outcome = 2
 
-            if isinstance(env.world[attempted_location_l0], House):
+
+            if isinstance(env.world[attempted_location_l0], House) or isinstance(env.world[attempted_location_l1], House) or isinstance(env.world[attempted_locaton], House):
                 reward = -0.1
+                outcome = 3
 
-            if isinstance(env.world[attempted_location_l0], Wood):
+
+            if isinstance(env.world[attempted_location_l0], Wood) or isinstance(env.world[attempted_location_l1], Wood) or isinstance(env.world[attempted_locaton], Wood):
                 if self.wood_skill < random.random():
                     # once this works, we need to set the reward to be 0 for collecting
                     # labour costs need to be implimented
@@ -194,8 +204,12 @@ class Agent:
                     env.world[attempted_location_l0] = EmptyObject()
                     env.world[location] = EmptyObject()
                     new_loc = attempted_location_l1
+                    outcome = 4
+                else:
+                    outcome = 5                    
 
-            if isinstance(env.world[attempted_location_l0], Stone):
+
+            if isinstance(env.world[attempted_location_l0], Stone) or isinstance(env.world[attempted_location_l1], Stone) or isinstance(env.world[attempted_locaton], Stone):
                 if self.stone_skill < random.random():
                     reward = 1
                     self.stone += 1
@@ -203,16 +217,22 @@ class Agent:
                     env.world[attempted_location_l0] = EmptyObject()
                     env.world[location] = EmptyObject()
                     new_loc = attempted_location_l1
+                    outcome = 6
+                else:
+                    outcome = 7   
 
         if action == 4:
             # note, you should not be able to build on top of another house
             reward = -0.1
+            outcome = 9
             if self.stone > 0 and self.wood > 0 and self.house_skill < random.random():
                 if isinstance(env.world[location[0], location[1], 0], EmptyObject):
                     reward = 20
                     self.stone -= 1
                     self.wood -= 1
                     env.world[location[0], location[1], 0] = House()
+                    outcome = 8
+
 
         if action == 5:  # sell wood
             if self.wood > 1:
@@ -250,7 +270,7 @@ class Agent:
         )
         self.reward += reward
 
-        return env.world, reward, next_state, done, new_loc
+        return env.world, reward, next_state, done, new_loc, outcome
 
 
 class Wall:

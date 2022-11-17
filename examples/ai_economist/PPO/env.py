@@ -1,4 +1,4 @@
-from examples.ai_economist.rainbow.elements import (
+from examples.ai_economist.PPO.elements import (
     Agent,
     Wood,
     Stone,
@@ -44,6 +44,13 @@ class AI_Econ:
         Creates a world of the specified size with a default object
         """
         self.world = np.full((height, width, layers), self.defaultObject)
+        for i in range(height):
+            for j in range(width):
+                for l in range(layers):
+                    loc = (i,j,l)
+                    self.world[loc] = EmptyObject()
+
+
 
     def reset_env(self, height=30, width=30, layers=1, wood1p=0.04, stone1p=0.04):
         """
