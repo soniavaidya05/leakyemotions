@@ -44,6 +44,10 @@ class AI_Econ:
         Creates a world of the specified size with a default object
         """
         self.world = np.full((height, width, layers), self.defaultObject)
+        for i in range(height):
+            for j in range(width):
+                for k in range(layers):
+                    self.world[i, j, k] = EmptyObject()
 
     def reset_env(self, height=30, width=30, layers=1, wood1p=0.04, stone1p=0.04):
         """
@@ -131,23 +135,23 @@ class AI_Econ:
         self.world[loc] = Agent(
             model=0,
             stone_skill=0.9,
-            wood_skill=0.25,
-            house_skill=0.25,
+            wood_skill=0.75,
+            house_skill=0.75,
             appearance=apperence1,
         )
         loc = (3, 4, 1)
         self.world[loc] = Agent(
             model=1,
-            stone_skill=0.25,
+            stone_skill=0.75,
             wood_skill=0.9,
-            house_skill=0.25,
+            house_skill=0.75,
             appearance=apperence2,
         )
         loc = (7, 4, 1)
         self.world[loc] = Agent(
             model=2,
-            stone_skill=0.25,
-            wood_skill=0.25,
+            stone_skill=0.75,
+            wood_skill=0.75,
             house_skill=0.9,
             appearance=apperence3,
         )
@@ -156,23 +160,23 @@ class AI_Econ:
         self.world[loc] = Agent(
             model=0,
             stone_skill=0.9,
-            wood_skill=0.25,
-            house_skill=0.25,
+            wood_skill=0.75,
+            house_skill=0.75,
             appearance=apperence1,
         )
         loc = (23, 4, 1)
         self.world[loc] = Agent(
             model=1,
-            stone_skill=0.25,
+            stone_skill=0.75,
             wood_skill=0.9,
-            house_skill=0.25,
+            house_skill=0.75,
             appearance=apperence2,
         )
         loc = (27, 4, 1)
         self.world[loc] = Agent(
             model=2,
-            stone_skill=0.25,
-            wood_skill=0.25,
+            stone_skill=0.75,
+            wood_skill=0.75,
             house_skill=0.9,
             appearance=apperence3,
         )
@@ -181,23 +185,23 @@ class AI_Econ:
         self.world[loc] = Agent(
             model=0,
             stone_skill=0.9,
-            wood_skill=0.25,
-            house_skill=0.25,
+            wood_skill=0.75,
+            house_skill=0.75,
             appearance=apperence1,
         )
         loc = (23, 24, 1)
         self.world[loc] = Agent(
             model=1,
-            stone_skill=0.25,
+            stone_skill=0.75,
             wood_skill=0.9,
-            house_skill=0.25,
+            house_skill=0.75,
             appearance=apperence2,
         )
         loc = (27, 24, 1)
         self.world[loc] = Agent(
             model=2,
-            stone_skill=0.25,
-            wood_skill=0.25,
+            stone_skill=0.75,
+            wood_skill=0.75,
             house_skill=0.9,
             appearance=apperence3,
         )
@@ -206,23 +210,23 @@ class AI_Econ:
         self.world[loc] = Agent(
             model=0,
             stone_skill=0.9,
-            wood_skill=0.25,
-            house_skill=0.25,
+            wood_skill=0.75,
+            house_skill=0.75,
             appearance=apperence1,
         )
         loc = (3, 27, 1)
         self.world[loc] = Agent(
             model=1,
-            stone_skill=0.25,
+            stone_skill=0.75,
             wood_skill=0.9,
-            house_skill=0.25,
+            house_skill=0.75,
             appearance=apperence2,
         )
         loc = (7, 24, 1)
         self.world[loc] = Agent(
             model=2,
-            stone_skill=0.25,
-            wood_skill=0.25,
+            stone_skill=0.75,
+            wood_skill=0.75,
             house_skill=0.9,
             appearance=apperence3,
         )

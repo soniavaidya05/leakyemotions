@@ -66,17 +66,17 @@ def create_models():
             state_size=torch.tensor(
                 [9, 9, 9]
             ),  # this seems to only be reading the first value
-            action_size=9,
+            action_size=5,
             network=NETWORK_CONFIG,
-            munchausen=False,  # Don't use Munchausen RL loss
+            munchausen=True,  # Don't use Munchausen RL loss
             layer_size=100,
             n_hidden_layers=2,
-            n_step=3,  # Multistep IQN (rainbow paper uses 3)
+            n_step=1,  # Multistep IQN (rainbow paper uses 3)
             BATCH_SIZE=64,
             BUFFER_SIZE=1024,
-            LR=0.00025,  # 0.00025
+            LR=0.0001,  # 0.00025
             TAU=1e-3,  # Soft update parameter
-            GAMMA=0.95,  # Discout factor 0.99
+            GAMMA=0.99,  # Discout factor 0.99
             N=12,  # Number of quantiles
             worker=1,  # number of parallel environments
             device=device,
@@ -92,17 +92,17 @@ def create_models():
             state_size=torch.tensor(
                 [9, 9, 9]
             ),  # this seems to only be reading the first value
-            action_size=9,
+            action_size=5,
             network=NETWORK_CONFIG,
-            munchausen=False,  # Don't use Munchausen RL loss
+            munchausen=True,  # Don't use Munchausen RL loss
             layer_size=100,
             n_hidden_layers=2,
-            n_step=3,  # Multistep IQN (rainbow paper uses 3)
+            n_step=1,  # Multistep IQN (rainbow paper uses 3)
             BATCH_SIZE=64,
             BUFFER_SIZE=1024,
-            LR=0.00025,  # 0.00025
+            LR=0.0001,  # 0.00025
             TAU=1e-3,  # Soft update parameter
-            GAMMA=0.95,  # Discout factor 0.99
+            GAMMA=0.99,  # Discout factor 0.99
             N=12,  # Number of quantiles
             worker=1,  # number of parallel environments
             device=device,
@@ -118,17 +118,17 @@ def create_models():
             state_size=torch.tensor(
                 [9, 9, 9]
             ),  # this seems to only be reading the first value
-            action_size=9,
+            action_size=5,
             network=NETWORK_CONFIG,
-            munchausen=False,  # Don't use Munchausen RL loss
+            munchausen=True,  # Don't use Munchausen RL loss
             layer_size=100,
             n_hidden_layers=2,
-            n_step=3,  # Multistep IQN (rainbow paper uses 3)
+            n_step=1,  # Multistep IQN (rainbow paper uses 3)
             BATCH_SIZE=64,
             BUFFER_SIZE=1024,
-            LR=0.00025,  # 0.00025
+            LR=0.0001,  # 0.00025
             TAU=1e-3,  # Soft update parameter
-            GAMMA=0.95,  # Discout factor 0.99
+            GAMMA=0.99,  # Discout factor 0.99
             N=12,  # Number of quantiles
             worker=1,  # number of parallel environments
             device=device,
@@ -154,8 +154,8 @@ def fix_next_state(state, next_state):
 world_size = 30
 
 trainable_models = [0, 1, 2]
-sync_freq = 500
-modelUpdate_freq = 5
+sync_freq = 200
+modelUpdate_freq = 4
 epsilon = 0.99
 
 turn = 1
@@ -183,6 +183,7 @@ def run_game(
     """
     This is the main loop of the game
     """
+    rewards = []
     losses = 0
     game_points = [0, 0, 0]
     for epoch in range(epochs):
@@ -283,6 +284,7 @@ def run_game(
                         done,
                         new_loc,
                     ) = holdObject.transition(env, models, action, loc)
+                    rewards.append(reward)
 
                     next_state = fix_next_state(state, next_state)
 
@@ -355,7 +357,26 @@ def run_game(
         if updateEps == True:
             epsilon = update_epsilon(epsilon, turn, epoch)
 
-        if epoch % 100 == 0 and len(trainable_models) > 0:
+        if epoch % 50 == 0 and len(trainable_models) > 0:
+            print(
+                len(rewards),
+                "nothing: ",
+                rewards.count(0),
+                "bump: ",
+                rewards.count(-1),
+                "extract: ",
+                rewards.count(1),
+                "sell: ",
+                rewards.count(5),
+                "buy: ",
+                rewards.count(-0.75),
+                "build: ",
+                rewards.count(20),
+                "fail house: ",
+                rewards.count(-0.5),
+            )
+            rewards = []
+
             # print the state and update the counters. This should be made to be tensorboard instead
             print(
                 epoch,
@@ -372,14 +393,9 @@ def run_game(
 models = create_models()
 
 run_params = (
-    # [0.9, 10, 30],
-    [0.5, 10000, 30],
-    [0.2, 10000, 30],
-    [0.1, 10000, 30],
-    [0.5, 10000, 75],
-    [0.2, 10000, 75],
-    [0.1, 10000, 75],
-    [0.01, 40000, 75],
+    [0.2, 20000, 50],
+    [0.1, 20000, 50],
+    [0.01, 100000, 50],
 )
 
 

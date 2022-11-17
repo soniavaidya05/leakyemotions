@@ -3,7 +3,8 @@ from collections import deque
 import numpy as np
 import torch
 
-class Wood():
+
+class Wood:
 
     kind = "wood"  # class variable shared by all instances
 
@@ -23,7 +24,7 @@ class Wood():
         self.action_type = "static"
 
 
-class Stone():
+class Stone:
 
     kind = "stone"  # class variable shared by all instances
 
@@ -43,7 +44,7 @@ class Stone():
         self.action_type = "static"
 
 
-class House():
+class House:
 
     kind = "house"  # class variable shared by all instances
 
@@ -63,7 +64,7 @@ class House():
         self.action_type = "static"
 
 
-class EmptyObject():
+class EmptyObject:
 
     kind = "empty"  # class variable shared by all instances
 
@@ -117,8 +118,7 @@ class Agent:
         self.coin = 0
         self.init_rnn_state = None
 
-
-    def init_replay(self, numberMemories, pov_size = 9, visual_depth = 9):
+    def init_replay(self, numberMemories, pov_size=9, visual_depth=9):
         """
         Fills in blank images for the LSTM before game play.
         Impicitly defines the number of sequences that the LSTM will be trained on.
@@ -126,8 +126,8 @@ class Agent:
         pov_size = 9
         visual_depth = 3 + 3 + 3
         image = torch.zeros(1, numberMemories, visual_depth, pov_size, pov_size).float()
-        rnn_init = (torch.zeros([1,1,150]), torch.zeros([1,1,150]))
-        exp = 1, (image, 0, 0, image, 0, rnn_init )
+        rnn_init = (torch.zeros([1, 1, 150]), torch.zeros([1, 1, 150]))
+        exp = 1, (image, 0, 0, image, 0, rnn_init)
         self.episode_memory.append(exp)
 
     def movement(self, action, location):
@@ -152,9 +152,9 @@ class Agent:
         done = 0
         reward = 0
         new_loc = location
-        attempted_locaton = self.movement(action, location)
 
         if action in [0, 1, 2, 3]:
+            attempted_locaton = self.movement(action, location)
             attempted_location_l0 = (attempted_locaton[0], attempted_locaton[1], 0)
             attempted_location_l1 = (attempted_locaton[0], attempted_locaton[1], 1)
 
@@ -163,13 +163,13 @@ class Agent:
             # below is repeated code because agents keep going on top of each other
             # and deleting each other.
             if isinstance(env.world[attempted_location_l0], Agent):
-                reward = -0.1
+                reward = -1
 
             if isinstance(env.world[attempted_location_l1], Agent):
-                reward = -0.1
+                reward = -1
 
             if isinstance(env.world[attempted_locaton], Agent):
-                reward = -0.1
+                reward = -1
 
             if isinstance(env.world[attempted_location_l0], EmptyObject) and isinstance(
                 env.world[attempted_location_l1], EmptyObject
@@ -179,10 +179,10 @@ class Agent:
                 env.world[location] = EmptyObject()
 
             if isinstance(env.world[attempted_location_l0], Wall):
-                reward = -0.1
+                reward = -1
 
             if isinstance(env.world[attempted_location_l0], House):
-                reward = -0.1
+                reward = -1
 
             if isinstance(env.world[attempted_location_l0], Wood):
                 if self.wood_skill < random.random():
@@ -206,7 +206,7 @@ class Agent:
 
         if action == 4:
             # note, you should not be able to build on top of another house
-            reward = -0.1
+            reward = -0.5
             if self.stone > 0 and self.wood > 0 and self.house_skill < random.random():
                 if isinstance(env.world[location[0], location[1], 0], EmptyObject):
                     reward = 20
@@ -230,13 +230,13 @@ class Agent:
             if self.coin > 2:
                 self.coin -= 2
                 self.wood += 1
-                reward = -1
+                reward = -0.75
 
         if action == 8:  # buy stone
             if self.coin > 2:
                 self.coin -= 2
                 self.stone += 1
-                reward = -1
+                reward = -0.75
 
         if action == 9:  # do nothing
             pass
