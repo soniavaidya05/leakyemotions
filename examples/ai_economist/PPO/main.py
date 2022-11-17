@@ -320,7 +320,7 @@ def run_game(
         if updateEps == True:
             epsilon = update_epsilon(epsilon, turn, epoch)
 
-        if epoch % 100 == 0 and len(trainable_models) > 0:
+        if epoch % 10 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
             print(
                 epoch,
@@ -359,4 +359,3 @@ for modRun in range(len(run_params)):
 
 
 
-# NOTE, fixed the loop through models above. should check that on rainbow to see if it is a similar problem for mod in models may be an issue
