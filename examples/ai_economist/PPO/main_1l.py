@@ -6,7 +6,7 @@ from gem.utils import (
     find_instance,
     update_memories_rnn,
 )
-from examples.ai_economist.PPO.elements import (
+from examples.ai_economist.PPO.elements_1l import (
     Agent,
     Wood,
     Stone,
@@ -14,8 +14,8 @@ from examples.ai_economist.PPO.elements import (
     EmptyObject,
     Wall,
 )
-from examples.ai_economist.PPO.cnn_PPO import PPO, RolloutBuffer
-from examples.ai_economist.PPO.env import AI_Econ
+from examples.ai_economist.PPO.cnn_PPO_l1 import PPO, RolloutBuffer
+from examples.ai_economist.PPO.env_1l import AI_Econ
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -50,7 +50,7 @@ def create_models():
         PPO(
             device=device,
             state_dim=1300,
-            action_dim=5,
+            action_dim=4,
             lr_actor=0.0001,  # .001
             lr_critic=0.0005,  # .0005
             gamma=0.92,  # was .9
@@ -63,7 +63,7 @@ def create_models():
         PPO(
             device=device,
             state_dim=1300,
-            action_dim=5,
+            action_dim=4,
             lr_actor=0.0001,  # .001
             lr_critic=0.0005,  # .0005
             gamma=0.92,  # was .9
@@ -76,7 +76,7 @@ def create_models():
         PPO(
             device=device,
             state_dim=1300,
-            action_dim=5,
+            action_dim=4,
             lr_actor=0.0001,  # .001
             lr_critic=0.0005,  # .0005
             gamma=0.92,  # was .9
@@ -99,7 +99,7 @@ def fix_next_state(state, next_state):
     return state_
 
 
-world_size = 30
+world_size = 100
 
 trainable_models = [0, 1, 2]
 sync_freq = 500
@@ -158,7 +158,7 @@ def run_game(
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[loc].init_replay(3)
+            env.world[loc].init_replay(2)
             env.world[loc].reward = 0
             env.world[loc].wood = 0
             env.world[loc].stone = 0
@@ -221,7 +221,7 @@ def run_game(
                             float(env.world[loc].wood),
                             float(env.world[loc].coin),
                         ],
-                        layers=[0, 1],
+                        layers=[0],
                     )
 
                     action, action_logprob, init_rnn_state = models[
@@ -258,20 +258,21 @@ def run_game(
                         # env.world[new_loc].init_rnn_state[0],
                         # env.world[new_loc].init_rnn_state[1],
                     )
-                    env.world[new_loc].episode_memory_PPO.states.append(state)
-                    env.world[new_loc].episode_memory_PPO.actions.append(action)
-                    env.world[new_loc].episode_memory_PPO.logprobs.append(
-                        action_logprob
-                    )
-
-                    env.world[new_loc].episode_memory_PPO.rewards.append(reward)
-                    env.world[new_loc].episode_memory_PPO.is_terminals.append(done)
-                    env.world[new_loc].episode_memory.append(exp)
-
-                    if env.world[new_loc].kind == "agent":
-                        game_points[env.world[new_loc].policy] = (
-                            game_points[env.world[new_loc].policy] + reward
+                    if env.world[new_loc].action_type == "neural_network":
+                        env.world[new_loc].episode_memory_PPO.states.append(state)
+                        env.world[new_loc].episode_memory_PPO.actions.append(action)
+                        env.world[new_loc].episode_memory_PPO.logprobs.append(
+                            action_logprob
                         )
+
+                        env.world[new_loc].episode_memory_PPO.rewards.append(reward)
+                        env.world[new_loc].episode_memory_PPO.is_terminals.append(done)
+                        env.world[new_loc].episode_memory.append(exp)
+
+                        if env.world[new_loc].kind == "agent":
+                            game_points[env.world[new_loc].policy] = (
+                                game_points[env.world[new_loc].policy] + reward
+                            )
 
             # note that with the current setup, the world is not generating new wood and stone
             # we will need to consider where to add the transitions that do not have movement or neural networks
@@ -360,6 +361,11 @@ run_params = (
     [0.9, 1000, 100, 31],
     [0.9, 1000, 100, 31],
     [0.9, 1000, 100, 31],
+    [0.9, 1000, 100, 31],
+    [0.9, 1000, 100, 31],
+    [0.9, 1000, 100, 31],
+    [0.9, 1000, 100, 31],
+    [0.9, 1000, 100, 31],
 )
 
 
@@ -373,8 +379,8 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    save_models(models, save_dir, "AI_econ_PER" + str(modRun))
-    make_video2("AI_econ_PER" + str(modRun), save_dir, models, 30, env)
+    # save_models(models, save_dir, "AI_econ_PER" + str(modRun))
+    # make_video2("AI_econ_PER" + str(modRun), save_dir, models, 30, env)
 
 
 # models = load_models(save_dir, "AI_econ_test28")
