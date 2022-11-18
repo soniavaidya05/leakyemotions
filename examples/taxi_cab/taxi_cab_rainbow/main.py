@@ -206,7 +206,7 @@ def run_game(
                         1,
                         (
                             state,
-                            action,
+                            action[0],
                             reward,
                             next_state,
                             done,
