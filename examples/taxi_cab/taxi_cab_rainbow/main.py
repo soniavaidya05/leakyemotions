@@ -30,9 +30,9 @@ import numpy as np
 import random
 
 # save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+# save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-# save_dir = "/Users/ethan/gem_output/"
+save_dir = "/Users/ethan/gem_output/"
 logger = SummaryWriter(f"{save_dir}/taxicab/", comment=str(time.time))
 
 
@@ -54,7 +54,7 @@ torch.manual_seed(SEED)
 # The configuration of the network
 # One of: "iqn", "iqn+per", "noisy_iqn", "noisy_iqn+per", "dueling", "dueling+per",
 #         "noisy_dueling", "noisy_dueling+per"
-NETWORK_CONFIG = "noisy_dueling"
+NETWORK_CONFIG = "noisy_dueling+per"
 
 
 def create_models():
@@ -270,7 +270,7 @@ def run_game(
             experiences = models[mods].memory.sample()
             # print("experiences", len(experiences))
             # print(experiences[0].shape)
-            loss = models[mods].learn(experiences)
+            loss = models[mods].learn_per(experiences)
             losses = losses + loss
 
         updateEps = False
