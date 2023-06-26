@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 
 # from models.memory import Memory
-from gem.models.perception import agent_visualfield
+# from gem.models.perception import agent_visualfield
 
 
 import random
@@ -17,10 +17,10 @@ from gem.models.priority_replay import Memory, SumTree
 
 
 class CNN_CLD(nn.Module):
-    def __init__(self, in_channels, num_filters):
+    def __init__(self, in_channels, num_filters, tile_size):
         super(CNN_CLD, self).__init__()
         self.conv_layer1 = nn.Conv2d(
-            in_channels=in_channels, out_channels=num_filters, kernel_size=1
+            in_channels=in_channels, out_channels=num_filters, kernel_size=tile_size[0], stride=tile_size[0]
         )
         self.avg_pool = nn.MaxPool2d(3, 1, padding=0)
 
@@ -49,11 +49,12 @@ class Combine_CLD(nn.Module):
         hid_size1,
         hid_size2,
         out_size,
+        tile_size=(1, 1),
         n_layers=2,
         batch_first=True,
     ):
         super(Combine_CLD, self).__init__()
-        self.cnn = CNN_CLD(in_channels, num_filters)
+        self.cnn = CNN_CLD(in_channels, num_filters, tile_size)
         self.rnn = nn.LSTM(
             input_size=in_size,
             hidden_size=hid_size1,
@@ -100,15 +101,16 @@ class Model_CNN_LSTM_DQN:
         hid_size1,
         hid_size2,
         out_size,
+        tile_size,
         priority_replay=True,
         device="cpu",
     ):
         self.modeltype = "cnn_lstm_dqn"
         self.model1 = Combine_CLD(
-            in_channels, num_filters, in_size, hid_size1, hid_size2, out_size
+            in_channels, num_filters, in_size, hid_size1, hid_size2, out_size, tile_size
         )
         self.model2 = Combine_CLD(
-            in_channels, num_filters, in_size, hid_size1, hid_size2, out_size
+            in_channels, num_filters, in_size, hid_size1, hid_size2, out_size, tile_size
         )
         self.optimizer = torch.optim.Adam(
             self.model1.parameters(), lr=lr, weight_decay=0.01
@@ -136,13 +138,13 @@ class Model_CNN_LSTM_DQN:
             )
         self.device = device
 
-    def pov(self, world, location, holdObject, inventory=[], layers=[0]):
+    def pov(self, env, location, holdObject, inventory=[], layers=[0]):
         """
         Creates outputs of a single frame, and also a multiple image sequence
         TODO: get rid of the holdObject input throughout the code
         TODO: to get better flexibility, this code should be moved to env
         """
-
+        world = env.world
         previous_state = holdObject.episode_memory[-1][1][0]
         current_state = previous_state.clone()
 
@@ -154,7 +156,7 @@ class Model_CNN_LSTM_DQN:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            img = agent_visualfield(world, loc, tile_size=(1,1), k=holdObject.vision)
+            img = env.agent_visualfield(world, loc, k=holdObject.vision)
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
 
@@ -168,7 +170,6 @@ class Model_CNN_LSTM_DQN:
                 inventory_var = torch.cat((inventory_var, tmp), dim=0)
             inventory_var = inventory_var.unsqueeze(0).unsqueeze(0)
             state_now = torch.cat((state_now, inventory_var), dim=2)
-
         current_state[:, -1, :, :, :] = state_now
 
         return current_state
@@ -177,7 +178,6 @@ class Model_CNN_LSTM_DQN:
         """
         Takes action from the input
         """
-
         inp, epsilon, init_rnn_state = params
         Q, (c, h) = self.model1(inp, init_rnn_state)
 

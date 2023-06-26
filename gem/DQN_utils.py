@@ -4,7 +4,7 @@ from gem.game_utils import create_world, create_world_image
 import matplotlib.animation as animation
 import random
 import pickle
-from gem.models.perception import agent_visualfield
+# from gem.models.perception import agent_visualfield
 
 from gem.utils import (
     find_instance,
@@ -29,7 +29,8 @@ def create_video(
     game_points = [0, 0]
     for _ in range(num):
         # image = create_world_image(env.world)
-        image = agent_visualfield(env.world, (0,0), env.tile_size, k=None)
+        # image = env.agent_visualfield(env.world, (0,0), k=int(world_size/2))
+        image = env.plot_alt(0)
         im = plt.imshow(image, animated=True)
         ims.append([im])
 
@@ -104,7 +105,7 @@ def load_models(save_dir, filename):
 
 def make_video(filename, save_dir, models, world_size, env, end_update=True):
     epoch = 10000
-    for video_num in range(5):
+    for video_num in range(1):
         vfilename = (
             save_dir
             + filename
@@ -115,7 +116,7 @@ def make_video(filename, save_dir, models, world_size, env, end_update=True):
             + ".gif"
         )
         create_video(
-            models, world_size, 100, env, filename=vfilename, end_update=end_update
+            models, world_size, 50, env, filename=vfilename, end_update=end_update
         )
 
 
