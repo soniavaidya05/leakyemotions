@@ -23,10 +23,7 @@ from examples.RPG.elements import EmptyObject, Wall
 import random
 import torch
 
-save_dir = "/Users/yumozi/Projects/gem_data/sprite_data/"
-# save_dir = "/Users/socialai/Dropbox/M1_ultra/"
-# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
-
+save_dir = "/Users/yumozi/Projects/gem_data/RPG_shon_visual/"
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -64,7 +61,7 @@ def create_models():
         models[model].model2.to(device)
     return models
 
-world_size = 15
+world_size = 11
 trainable_models = [0]
 sync_freq = 500
 modelUpdate_freq = 25
@@ -173,8 +170,11 @@ def run_game(
 
                     if env.world[new_loc].kind == "agent":
                         game_points[0] = game_points[0] + reward
-                    if env.world[new_loc].kind == "wolf":
-                        game_points[1] = game_points[1] + reward
+
+            # if turn % 3 == 0:
+            #     agentList = find_instance(env.world, "neural_network")
+            #     loc = agentList[0]
+            #     models[env.world[loc].policy].view_memory(env, loc, env.world[loc])
 
             # determine whether the game is finished (either max length or all agents are dead)
             if (
@@ -226,12 +226,11 @@ def run_game(
         if epoch % 10 == 0 and len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
             print(
-                epoch,
-                withinturn,
-                round(game_points[0]),
-                round(game_points[1]),
-                losses,
-                epsilon,
+                f'epoch: {epoch} ' +
+                f'withinturn: {withinturn} ' + 
+                f'gp1: {round(game_points[0])} ' +
+                f'losses: {round(losses, 2)} ' +
+                f'epsilon: {round(epsilon, 2)} '
             )
             game_points = [0, 0]
             losses = 0
@@ -248,22 +247,25 @@ def run_game(
 models = create_models()
 
 run_params = (
-    # [0.9, 1000, 5],
-    # [0.9, 10000, 5],
-    # [0.8, 10000, 5],
-    # [0.7, 10000, 5],
-    # [0.2, 10000, 5],
-    # [0.8, 25000, 25],
-    # [0.6, 25000, 35],
-    # [0.2, 25000, 35],
-    # [0.2, 25000, 50],
-    [0.9, 1000, 10],
-    [0.8, 1000, 10],
-    [0.7, 1000, 10],
-    [0.6, 1000, 10],
-    [0.5, 1000, 10],
-    [0.4, 1000, 10],
-    [0.2, 1000, 10],
+    [0.9, 1, 25],
+    # [0.9, 2500, 25],
+    # [0.8, 2500, 25],
+    # [0.7, 2500, 25],
+    # [0.6, 2500, 25],
+    # [0.5, 2500, 25],
+    # [0.4, 2500, 25],
+    # [0.3, 2500, 25],
+    # [0.2, 2500, 25],
+    # [0.1, 2500, 25],
+    # [0.01, 2500, 25],
+    # [0.9, 1, 100],
+    [0.9, 1000, 100],
+    [0.8, 1000, 100],
+    [0.7, 1000, 100],
+    [0.6, 1000, 100],
+    [0.4, 1000, 100],
+    [0.2, 1000, 100],
+    [0.01, 1000, 100],
 )
 
 # the version below needs to have the keys from above in it
@@ -284,8 +286,6 @@ for modRun in range(len(run_params)):
         save_dir,
         "WolvesGems_" + str(modRun),
     )
-
-    world_size = 15
 
     make_video(
         "WolvesGems_" + str(modRun),

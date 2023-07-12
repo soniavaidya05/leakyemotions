@@ -133,8 +133,11 @@ class RPG:
             image_i += 1
             image_j = 0
         
+        image = np.zeros((image_r.shape[0], image_r.shape[1], 3))
+        image[:, :, 0] = image_r
+        image[:, :, 1] = image_g
+        image[:, :, 2] = image_b
 
-        image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
         return image
     
     def init_elements(self):
@@ -222,6 +225,19 @@ class RPG:
                         self.world[i, j, 0] = Food(1, [255.0, 0.0, 0.0]) # food is red, worth 1
                     if obj == 3:
                         self.world[i, j, 0] = Bone(-4, [0, 0, 0]) # bomb is black, worth -4
+
+                # # hack: make fixed objects based on location for now
+                # if i == 9 and j == 1:
+                #     self.world[i, j, 0] = Gem(10, [0.0, 255.0, 0.0])
+                # if j == 2:
+                #     self.world[i, j, 0] = Coin(2, [255.0, 255.0, 0.0])
+                # if j == 9:
+                #     self.world[i, j, 0] = Bone(-4, [0, 0, 0])
+                # if j == 10:
+                #     self.world[i, j, 0] = Food(1, [255.0, 0.0, 0.0])
+
+                    
+                    
         
         cBal = np.random.choice([0, 1])
         if cBal == 0:
@@ -247,7 +263,7 @@ class RPG:
             self.world[i, 0, 0] = Wall()
             self.world[i, height - 1, 0] = Wall()
 
-    def step(self, models, loc, epsilon=0.85, device=None):
+    def step(self, models, loc, epsilon=0.01, device=None):
         """
         This is an example script for an alternative step function
         It does not account for the fact that an agent can die before
@@ -280,8 +296,8 @@ class RPG:
             """
             state = models[holdObject.policy].pov(self, loc, holdObject)
             params = (state.to(device), epsilon, None)
+            # action = models[holdObject.policy].take_action(params)
             action, init_rnn_state = models[holdObject.policy].take_action(params)
-
         if holdObject.has_transitions == True:
             """
             Updates the world given an action

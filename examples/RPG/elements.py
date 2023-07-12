@@ -165,6 +165,11 @@ class Agent:
         exp = (priority, (image, blank, blank, image, blank))
         self.episode_memory.append(exp)
 
+
+        # memory: (priority, (state, action, reward, next_state, done))
+        # episode_memory[memory_num][1][0] is the state
+        # episode_memory[memory_num][1][3] is the next_state
+
     def died(
         self, models, world, attempted_locaton_1, attempted_locaton_2, extra_reward=True
     ):
@@ -232,7 +237,7 @@ class Agent:
             if isinstance(
                 env.world[attempted_locaton], Wall
             ):  # Replacing comparison with string 'kind'
-                reward = -0.1
+                reward = 10
 
         next_state = models[self.policy].pov(env, new_loc, self)
         self.reward += reward
