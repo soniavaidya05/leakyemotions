@@ -8,7 +8,7 @@ from gem.utils import (
     find_instance,
 )
 
-from gem.models.dualing_cnn_lstm_dqn import Model_CNN_LSTM_DQN
+from gem.models.dualing_cnn_mlp_dqn import Model_CNN_LSTM_DQN
 from examples.RPG.env import RPG
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -23,7 +23,10 @@ from examples.RPG.elements import EmptyObject, Wall
 import random
 import torch
 
-save_dir = "/Users/yumozi/Projects/gem_data/no_stack/"
+save_dir = "/Users/yumozi/Projects/gem_data/mlp_test/"
+# save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+# save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
+
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -42,15 +45,15 @@ def create_models():
     models.append(
         Model_CNN_LSTM_DQN(
             in_channels=3,
-            num_filters=5,
+            num_filters=10,
             lr=0.001,
             replay_size=2048,
-            in_size=1450, #650 
-            hid_size1=75,
-            hid_size2=30,
+            in_size=2900,  # 650
+            hid_size1=512,
+            hid_size2=512,
             out_size=4,
             tile_size=(16, 16),
-            priority_replay=False,
+            priority_replay=True,
             device=device,
         )
     )  # agent model
@@ -61,7 +64,7 @@ def create_models():
         models[model].model2.to(device)
     return models
 
-world_size = 11
+world_size = 15
 trainable_models = [0]
 sync_freq = 500
 modelUpdate_freq = 25
@@ -171,11 +174,6 @@ def run_game(
                     if env.world[new_loc].kind == "agent":
                         game_points[0] = game_points[0] + reward
 
-            # if turn % 3 == 0:
-            #     agentList = find_instance(env.world, "neural_network")
-            #     loc = agentList[0]
-            #     models[env.world[loc].policy].view_memory(env, loc, env.world[loc])
-
             # determine whether the game is finished (either max length or all agents are dead)
             if (
                 withinturn > max_turns
@@ -248,24 +246,13 @@ models = create_models()
 
 run_params = (
     [0.9, 1, 25],
-    # [0.9, 2500, 25],
-    # [0.8, 2500, 25],
-    # [0.7, 2500, 25],
-    # [0.6, 2500, 25],
-    # [0.5, 2500, 25],
-    # [0.4, 2500, 25],
-    # [0.3, 2500, 25],
-    # [0.2, 2500, 25],
-    # [0.1, 2500, 25],
-    # [0.01, 2500, 25],
-    # [0.9, 1, 100],
-    [0.9, 1000, 100],
-    [0.8, 1000, 100],
-    [0.7, 1000, 100],
-    [0.6, 1000, 100],
-    [0.4, 1000, 100],
-    [0.2, 1000, 100],
-    [0.01, 1000, 100],
+    [0.9, 1000, 25],
+    [0.8, 1000, 25],
+    [0.7, 1000, 25],
+    [0.6, 1000, 25],
+    [0.4, 1000, 25],
+    [0.2, 1000, 25],
+    [0.01, 100, 25],
 )
 
 # the version below needs to have the keys from above in it
@@ -286,6 +273,8 @@ for modRun in range(len(run_params)):
         save_dir,
         "WolvesGems_" + str(modRun),
     )
+
+    world_size = 15
 
     make_video(
         "WolvesGems_" + str(modRun),

@@ -170,10 +170,10 @@ class RPG:
         TODO: to get better flexibility, this code should be moved to env
         """
 
-        previous_state = self.world[location].episode_memory[-1][1][0]
-        current_state = previous_state.clone()
+        # previous_state = self.world[location].episode_memory[-1][1][0]
+        # current_state = previous_state.clone()
 
-        current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
+        # current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
 
         state_now = torch.tensor([])
         for layer in layers:
@@ -196,7 +196,8 @@ class RPG:
             inventory_var = inventory_var.unsqueeze(0).unsqueeze(0)
             state_now = torch.cat((state_now, inventory_var), dim=2)
 
-        current_state[:, -1, :, :, :] = state_now
+        # current_state[:, -1, :, :, :] = state_now
+        current_state = state_now
 
         return current_state
 

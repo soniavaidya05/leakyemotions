@@ -159,12 +159,12 @@ class Agent:
         Fills in blank images for the LSTM before game play.
         Impicitly defines the number of sequences that the LSTM will be trained on.
         """
-        image = torch.zeros(1, numberMemories, 3, self.tile_size[0] * (2 * self.vision + 1), self.tile_size[1] * (2 * self.vision + 1)).float()
+        # image = torch.zeros(1, numberMemories, 3, self.tile_size[0] * (2 * self.vision + 1), self.tile_size[1] * (2 * self.vision + 1)).float()
+        image = torch.zeros(1, 3, self.tile_size[0] * (2 * self.vision + 1), self.tile_size[1] * (2 * self.vision + 1)).float()
         priority = torch.tensor(0.1)
         blank = torch.tensor(0.0)
         exp = (priority, (image, blank, blank, image, blank))
         self.episode_memory.append(exp)
-
 
         # memory: (priority, (state, action, reward, next_state, done))
         # episode_memory[memory_num][1][0] is the state
