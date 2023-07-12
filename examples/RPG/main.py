@@ -23,7 +23,7 @@ from examples.RPG.elements import EmptyObject, Wall
 import random
 import torch
 
-save_dir = "/Users/yumozi/Projects/gem_data/no_stack/"
+save_dir = "/Users/yumozi/Projects/gem_data/oob/"
 # choose device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

@@ -93,7 +93,7 @@ class RPG:
         image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
         return image
     
-    def agent_visualfield(self, world, location, k, wall_sprite="examples/RPG/assets/pink.png"):
+    def agent_visualfield(self, world, location, k, oob_sprite="examples/RPG/assets/black.png"):
         """
         Create an agent visual field of size (2k + 1, 2k + 1) tiles
         """
@@ -103,7 +103,6 @@ class RPG:
             layer = 0
 
         # world_shape = self.world.shape
-
         bounds = (location[0] - k, location[0] + k, location[1] - k, location[1] + k)
 
         image_r = np.zeros(((2 * k + 1) * self.tile_size[0], (2 * k + 1) * self.tile_size[1]))
@@ -116,8 +115,9 @@ class RPG:
         for i in range(bounds[0], bounds[1] + 1):
             for j in range(bounds[2], bounds[3] + 1):
                 if i < 0 or j < 0 or i >= world.shape[0] or j >= world.shape[1]:
-                    # Tile is out of bounds, use wall_app
-                    tile_image = Image.open(wall_sprite).resize(self.tile_size).convert('RGBA')
+                    # Tile is out of bounds, use oob_sprite
+                    tile_appearance = oob_sprite
+                    tile_image = Image.open(tile_appearance).resize(self.tile_size).convert('RGBA')
                 else:
                     tile_appearance = world[i, j, layer].sprite
                     tile_image = Image.open(tile_appearance).resize(self.tile_size).convert('RGBA')
