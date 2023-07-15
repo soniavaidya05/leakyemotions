@@ -41,7 +41,7 @@ torch.manual_seed(SEED)
 # The configuration of the network
 # One of: "iqn", "iqn+per", "noisy_iqn", "noisy_iqn+per", "dueling", "dueling+per",
 #         "noisy_dueling", "noisy_dueling+per"
-NETWORK_CONFIG = "noisy_iqn"
+NETWORK_CONFIG = "noisy_dueling"
 
 
 def create_models():
@@ -389,7 +389,7 @@ for modRun in range(len(run_params)):
         epochs=run_params[modRun][1],
         max_turns=run_params[modRun][2],
     )
-    filename = save_dir + "RPG2_" + str(modRun) + ".gif"
+    filename = save_dir + "RPG2d_" + str(modRun) + ".gif"
     eval_game(models, env, turn, 0, 1, 35, filename)
 
     # save_models(
