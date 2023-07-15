@@ -41,7 +41,7 @@ torch.manual_seed(SEED)
 # The configuration of the network
 # One of: "iqn", "iqn+per", "noisy_iqn", "noisy_iqn+per", "dueling", "dueling+per",
 #         "noisy_dueling", "noisy_dueling+per"
-NETWORK_CONFIG = "noisy_dueling"
+NETWORK_CONFIG = "noisy_iqn"
 
 
 def create_models():
@@ -260,7 +260,7 @@ def run_game(
             # epsilon = update_epsilon(epsilon, turn, epoch)
             epsilon = max(epsilon - 0.00003, 0.2)
 
-        if epoch % 100 == 0 and len(trainable_models) > 0:
+        if epoch % 100 == 0 and len(trainable_models) > 0 and epoch != 0:
             # print the state and update the counters. This should be made to be tensorboard instead
             print(
                 epoch,
@@ -366,12 +366,17 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
 
 
 run_params = (
-    [0.5, 2000, 20],
-    [0.2, 2000, 20],
-    [0.05, 2000, 20],
-    [0.5, 2000, 35],
-    [0.2, 2000, 35],
-    [0.05, 2000, 35],
+    [0.9, 2000, 20],
+    [0.5, 5000, 20],
+    [0.3, 5000, 20],
+    [0.1, 10000, 20],
+    [0.1, 10000, 20],
+    [0.1, 10000, 20],
+    [0.1, 10000, 20],
+    [0.1, 10000, 35],
+    [0.1, 10000, 35],
+    [0.1, 10000, 35],
+    [0.1, 10000, 35],
 )
 
 # the version below needs to have the keys from above in it
