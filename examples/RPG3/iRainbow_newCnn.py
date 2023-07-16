@@ -222,9 +222,16 @@ class IQN(nn.Module):
         """
 
         # init_rnn_state = None if init_rnn_state is None else tuple(init_rnn_state)
-        batch_size, timesteps, C, H, W = input.size()
-        c_in = input.view(batch_size * timesteps, C, H, W)
-        c_out = self.cnn(c_in)
+
+        use_cnn = False
+        if use_cnn:
+            batch_size, timesteps, C, H, W = input.size()
+            c_in = input.view(batch_size * timesteps, C, H, W)
+            c_out = self.cnn(c_in)
+        else:
+            input = input / 255.0
+            batch_size, timesteps, C, H, W = input.size()
+            c_out = input.view(batch_size * timesteps, C, H, W)
         r_in = c_out.view(batch_size, timesteps, -1)
         x, (h_n, h_c) = self.rnn(r_in)
         x = self.head(x)
