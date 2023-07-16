@@ -1,4 +1,4 @@
-from examples.RPG2.elements import (
+from examples.RPG3.elements import (
     Agent,
     Gem,
     EmptyObject,
@@ -88,7 +88,13 @@ class RPG:
 
         moveList = find_instance(self.world, "neural_network")
 
-        img = agent_visualfield(self.world, moveList[0], k=4)
+        img = agent_visualfield(
+            self.world,
+            moveList[0],
+            k=4,
+            wall_app=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+            num_channels=7,
+        )
 
         plt.subplot(1, 2, 1)
         plt.imshow(image)
@@ -114,7 +120,13 @@ class RPG:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            img = agent_visualfield(self.world, loc, k=self.world[location].vision)
+            img = agent_visualfield(
+                self.world,
+                loc,
+                k=self.world[location].vision,
+                wall_app=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+                num_channels=7,
+            )
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
 
@@ -151,11 +163,11 @@ class RPG:
                     ],
                 )
                 if obj == 0:
-                    self.world[i, j, 0] = Gem(5, [0.0, 255.0, 0.0])
+                    self.world[i, j, 0] = Gem(5, [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
                 if obj == 1:
-                    self.world[i, j, 0] = Gem(15, [255.0, 255.0, 0.0])
+                    self.world[i, j, 0] = Gem(15, [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0])
                 if obj == 2:
-                    self.world[i, j, 0] = Gem(-5, [255.0, 0.0, 0.0])
+                    self.world[i, j, 0] = Gem(-5, [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0])
 
         player1_location1 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
         player1_location2 = np.random.choice(np.arange(1, self.world.shape[1] - 1))

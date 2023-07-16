@@ -8,6 +8,7 @@ def agent_visualfield(
     Create an agent visual field of size (2k + 1, 2k + 1) pixels
     Layer = location[2] and layer in the else are added to this function
     """
+
     if len(location) > 2:
         layer = location[2]
     else:
@@ -17,24 +18,22 @@ def agent_visualfield(
     # instantiate image
     images = []
 
-    for _ in range(num_channels):
+    for channel in range(num_channels):
         image = np.random.random((bounds[1] - bounds[0] + 1, bounds[3] - bounds[2] + 1))
         images.append(image)
 
     for i in range(bounds[0], bounds[1] + 1):
         for j in range(bounds[2], bounds[3] + 1):
             # while outside the world array index...
-            if i < 0 or j < 0 or i >= world.shanhape[0] - 1 or j >= world.shape[1]:
+            if i < 0 or j < 0 or i >= world.shape[0] - 1 or j >= world.shape[1]:
                 # image has shape bounds[1] - bounds[0], bounds[3] - bounds[2]
                 # visual appearance = wall
                 for channel in range(num_channels):
-                    images[num_channels][i - bounds[0], j - bounds[2]] = wall_app[
-                        channel
-                    ]
+                    images[channel][i - bounds[0], j - bounds[2]] = wall_app[channel]
 
             else:
                 for channel in range(num_channels):
-                    images[num_channels][i - bounds[0], j - bounds[2]] = world[
+                    images[channel][i - bounds[0], j - bounds[2]] = world[
                         i, j, layer
                     ].appearance[channel]
 
