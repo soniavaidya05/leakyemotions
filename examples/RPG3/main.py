@@ -8,7 +8,7 @@ from gem.utils import (
     find_instance,
 )
 
-from gem.models.iRainbow import iRainbowModel, PrioritizedReplay
+from examples.RPG3.iRainbow_newCnn import iRainbowModel, PrioritizedReplay
 from examples.RPG3.env import RPG
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -56,14 +56,14 @@ def create_models():
         iRainbowModel(
             in_channels=7,
             num_filters=7,
-            cnn_out_size=910,
+            cnn_out_size=910,  # 910
             state_size=torch.tensor(
                 [7, 9, 9]
             ),  # this seems to only be reading the first value
             action_size=4,
             network=NETWORK_CONFIG,
             munchausen=False,  # Don't use Munchausen RL loss
-            layer_size=100,
+            layer_size=250,  # 100
             n_hidden_layers=2,
             n_step=3,  # Multistep IQN (rainbow paper uses 3)
             BATCH_SIZE=64,
