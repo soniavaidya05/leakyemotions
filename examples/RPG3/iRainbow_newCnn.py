@@ -229,7 +229,18 @@ class IQN(nn.Module):
             c_in = input.view(batch_size * timesteps, C, H, W)
             c_out = self.cnn(c_in)
         else:
+            # Define a small range for the random float
+            eps = 0.01
+
+            # Normalize the input
             input = input / 255.0
+
+            # Create a tensor of the same shape as the input, filled with random numbers
+            noise = torch.rand_like(input) * eps
+
+            # Add the noise to the input
+            input = input + noise
+
             batch_size, timesteps, C, H, W = input.size()
             c_out = input.view(batch_size * timesteps, C, H, W)
         r_in = c_out.view(batch_size, timesteps, -1)
