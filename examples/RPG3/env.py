@@ -92,7 +92,7 @@ class RPG:
             self.world,
             moveList[0],
             k=4,
-            wall_app=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+            wall_app=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 255.0],
             num_channels=7,
         )
 
@@ -124,7 +124,7 @@ class RPG:
                 self.world,
                 loc,
                 k=self.world[location].vision,
-                wall_app=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+                wall_app=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 255.0],
                 num_channels=7,
             )
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
@@ -163,11 +163,11 @@ class RPG:
                     ],
                 )
                 if obj == 0:
-                    self.world[i, j, 0] = Gem(5, [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+                    self.world[i, j, 0] = Gem(5, [0.0, 0.0, 0.0, 255.0, 0.0, 0.0, 0.0])
                 if obj == 1:
-                    self.world[i, j, 0] = Gem(15, [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0])
+                    self.world[i, j, 0] = Gem(15, [0.0, 0.0, 0.0, 0.0, 255.0, 0.0, 0.0])
                 if obj == 2:
-                    self.world[i, j, 0] = Gem(-5, [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0])
+                    self.world[i, j, 0] = Gem(-5, [0.0, 0.0, 0.0, 0.0, 0.0, 255.0, 0.0])
 
         player1_location1 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
         player1_location2 = np.random.choice(np.arange(1, self.world.shape[1] - 1))

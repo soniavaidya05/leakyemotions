@@ -40,7 +40,7 @@ class Wall:
 
     def __init__(self):
         self.health = 0  # wall stuff is basically empty
-        self.appearance = [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # walls are purple
+        self.appearance = [0.0, 255.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # walls are purple
         self.vision = 0  # wall stuff is basically empty
         self.policy = "NA"  # walls do not do anything
         self.value = 0  # wall stuff is basically empty
@@ -77,7 +77,7 @@ class Agent:
 
     def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
-        self.appearance = [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]  # agents are blue
+        self.appearance = [0.0, 0.0, 255.0, 0.0, 0.0, 0.0, 0.0]  # agents are blue
         self.vision = 4  # agents can see three radius around them
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.value = 0  # agents have no value
