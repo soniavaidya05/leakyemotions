@@ -135,7 +135,7 @@ class Agent:
             if isinstance(
                 env.world[attempted_location], Wall
             ):  # Replacing comparison with string 'kind'
-                reward = -0.1
+                reward = -1
 
         next_state = env.pov(new_loc)
         self.reward += reward
