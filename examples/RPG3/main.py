@@ -367,16 +367,8 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
 
 run_params = (
     [0.5, 2000, 20],
-    [0.1, 5000, 20],
-    [0.1, 5000, 20],
     [0.1, 10000, 20],
-    [0.1, 10000, 20],
-    [0.1, 10000, 20],
-    [0.1, 10000, 20],
-    [0.1, 10000, 20],
-    [0.1, 10000, 20],
-    [0.1, 10000, 20],
-    [0.1, 10000, 20],
+    [0.0, 10000, 20],
 )
 
 # the version below needs to have the keys from above in it
