@@ -8,7 +8,7 @@ from gem.utils import (
     find_instance,
 )
 
-from examples.RPG3.iRainbow_newCnn import iRainbowModel, PrioritizedReplay
+from examples.RPG3.iRainbow_noCnn import iRainbowModel, PrioritizedReplay
 from examples.RPG3.env import RPG
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -138,7 +138,7 @@ def run_game(
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[loc].init_replay(1)
+            env.world[loc].init_replay(2)
             env.world[loc].init_rnn_state = None
 
         while done == 0:
