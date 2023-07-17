@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 
 def agent_visualfield(
@@ -40,6 +41,24 @@ def agent_visualfield(
     # Composite image by interlacing the red, green, and blue channels, or one hots
     state = np.dstack(tuple(images))
     return state
+
+
+def full_visualfield(env, depth, channels):
+    (
+        H,
+        W,
+        _,
+    ) = (
+        env.world.shape
+    )  # Assuming env.world is a numpy ndarray or has a similar interface.
+    tensor = torch.zeros((1, 1, channels, H, W))  # Initialize the tensor with zeros.
+
+    for h in range(H):
+        for w in range(W):
+            appearance = env.world[h, w, depth].appearance
+            tensor[0, 0, :, h, w] = torch.tensor(appearance)
+
+    return tensor
 
 
 def agent_visualfield_experimental(world, location, k=4, wall_app=[50.0, 50.0, 50.0]):
