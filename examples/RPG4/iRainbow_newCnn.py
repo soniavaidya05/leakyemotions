@@ -30,7 +30,7 @@ class CNN_CLD(nn.Module):
 
         if type == 0:
             self.conv_layer1 = nn.Conv2d(
-                in_channels=in_channels, out_channels=num_filters, kernel_size=1
+                in_channels=in_channels, out_channels=64, kernel_size=3
             )
 
         if type == 1:
@@ -223,7 +223,7 @@ class IQN(nn.Module):
 
         # init_rnn_state = None if init_rnn_state is None else tuple(init_rnn_state)
 
-        use_cnn = False
+        use_cnn = True
         if use_cnn:
             batch_size, timesteps, C, H, W = input.size()
             c_in = input.view(batch_size * timesteps, C, H, W)

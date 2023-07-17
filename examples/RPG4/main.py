@@ -59,7 +59,7 @@ def create_models():
         iRainbowModel(
             in_channels=7,
             num_filters=7,
-            cnn_out_size=4375,  # 910
+            cnn_out_size=62080,  # 910
             state_size=torch.tensor(
                 [7, 25, 25]
             ),  # this seems to only be reading the first value
