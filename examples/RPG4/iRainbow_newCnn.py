@@ -26,7 +26,7 @@ class CNN_CLD(nn.Module):
     def __init__(self, in_channels, num_filters):
         super(CNN_CLD, self).__init__()
 
-        type = 0
+        type = 1
 
         if type == 0:
             self.conv_layer1 = nn.Conv2d(
@@ -65,7 +65,7 @@ class CNN_CLD(nn.Module):
         # print(x.shape)
         x = x / 255  # note, a better normalization should be applied
 
-        type = 0
+        type = 1
 
         if type == 0:
             y1 = F.relu(self.conv_layer1(x))
