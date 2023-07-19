@@ -50,7 +50,7 @@ def create_models():
         PPO(
             device=device,
             state_dim=1300,
-            action_dim=5,
+            action_dim=4,
             lr_actor=0.0001,  # .001
             lr_critic=0.0005,  # .0005
             gamma=0.92,  # was .9
@@ -123,6 +123,8 @@ def run_game(
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
+            env.world[loc].init_replay(2)
+            env.world[loc].init_rnn_state = None
             env.world[loc].episode_memory_PPO = RolloutBuffer()
 
         while done == 0:
@@ -132,12 +134,12 @@ def run_game(
             turn = turn + 1
             withinturn = withinturn + 1
 
-            if epoch % sync_freq == 0:
-                # update the double DQN model ever sync_frew
-                for mods in trainable_models:
-                    models[mods].qnetwork_target.load_state_dict(
-                        models[mods].qnetwork_local.state_dict()
-                    )
+            # if epoch % sync_freq == 0:
+            #    # update the double DQN model ever sync_frew
+            #    for mods in trainable_models:
+            #        models[mods].qnetwork_target.load_state_dict(
+            #            models[mods].qnetwork_local.state_dict()
+            #        )
 
             agentList = find_instance(env.world, "neural_network")
 
@@ -229,27 +231,42 @@ def run_game(
                 )
 
                 # transfer the events for each agent into the appropriate model after all have moved
-                models = transfer_world_memories(
-                    models, env.world, find_instance(env.world, "neural_network")
-                )
+                # models = transfer_world_memories(
+                #    models, env.world, find_instance(env.world, "neural_network")
+                # )
 
             if epoch > 200 and withinturn % modelUpdate_freq == 0:
                 """
                 Train the neural networks within a eposide at rate of modelUpdate_freq
                 """
                 for mods in trainable_models:
-                    experiences = models[mods].memory.sample()
-                    loss = models[mods].learn(experiences)
-                    losses = losses + loss
+                    pass
+
+                    # loss = models[env.world[loc].policy].training(
+                    #    env.world[loc].episode_memory_PPO, entropy_coefficient=0.005
+                    # )  # entropy_coefficient=0.01 was before
+                    # env.world[loc].episode_memory_PPO.clear()
+                    # losses = losses + loss.detach().cpu().numpy()
+
+                    # experiences = models[mods].memory.sample()
+                    # loss = models[mods].learn(experiences)
+                    # losses = losses + loss
         if epoch > 100:
-            for mods in trainable_models:
+            agentList = find_instance(env.world, "neural_network")
+            for loc in agentList:
                 """
                 Train the neural networks at the end of eac epoch
                 reduced to 64 so that the new memories ~200 are slowly added with the priority ones
                 """
-                experiences = models[mods].memory.sample()
-                loss = models[mods].learn(experiences)
-                losses = losses + loss
+                loss = models[env.world[loc].policy].training(
+                    env.world[loc].episode_memory_PPO, entropy_coefficient=0.005
+                )  # entropy_coefficient=0.01 was before
+                env.world[loc].episode_memory_PPO.clear()
+                losses = losses + loss.detach().cpu().numpy()
+
+                # experiences = models[mods].memory.sample()
+                # loss = models[mods].learn(experiences)
+                # losses = losses + loss
 
         updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
