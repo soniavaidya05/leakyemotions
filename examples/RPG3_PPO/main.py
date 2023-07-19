@@ -8,19 +8,17 @@ from gem.utils import (
     find_instance,
 )
 
-from examples.RPG4.iRainbow_newCnn import iRainbowModel, PrioritizedReplay
-from examples.RPG4.env import RPG
+
+from examples.RPG3_PPO.PPO import PPO, RolloutBuffer
+from examples.RPG3_PPO.env import RPG
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
 import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
-from gem.models.perception_singlePixel_categories import (
-    agent_visualfield,
-    full_visualfield,
-)
 
-from examples.RPG4.elements import EmptyObject, Wall
+
+from examples.RPG3_PPO.elements import EmptyObject, Wall
 
 import numpy as np
 import random
@@ -41,45 +39,29 @@ random.seed(SEED)
 torch.manual_seed(SEED)
 
 
-# The configuration of the network
-# One of: "iqn", "iqn+per", "noisy_iqn", "noisy_iqn+per", "dueling", "dueling+per",
-#         "noisy_dueling", "noisy_dueling+per"
-NETWORK_CONFIG = "noisy_dueling"
-
-
 def create_models():
     """
     Should make the sequence length of the LSTM part of the model and an input here
     Should also set up so that the number of hidden laters can be added to dynamically
     in this function. Below should fully set up the NN in a flexible way for the studies
     """
-
     models = []
     models.append(
-        iRainbowModel(
-            in_channels=7,
-            num_filters=7,
-            cnn_out_size=67840,  # 910
-            state_size=torch.tensor(
-                [7, 25, 25]
-            ),  # this seems to only be reading the first value
-            action_size=4,
-            network=NETWORK_CONFIG,
-            munchausen=False,  # Don't use Munchausen RL loss
-            layer_size=250,  # 100
-            n_hidden_layers=2,
-            n_step=3,  # Multistep IQN (rainbow paper uses 3)
-            BATCH_SIZE=64,
-            BUFFER_SIZE=1024,
-            LR=0.00025,  # 0.00025
-            TAU=1e-3,  # Soft update parameter
-            GAMMA=0.95,  # Discout factor 0.99
-            N=12,  # Number of quantiles
-            worker=1,  # number of parallel environments
+        PPO(
             device=device,
-            seed=SEED,
+            state_dim=1300,
+            action_dim=5,
+            lr_actor=0.0001,  # .001
+            lr_critic=0.0005,  # .0005
+            gamma=0.92,  # was .9
+            K_epochs=10,  # was 10
+            eps_clip=0.2,
         )
-    )
+    )  # agent model 1
+
+    # convert to device
+    for model in range(len(models)):
+        models[model].model1.to(device)
 
     return models
 
@@ -138,11 +120,10 @@ def run_game(
             gem2p=0.02,
             gem3p=0.03,
         )
-        # for loc in find_instance(env.world, "neural_network"):
-        #    # reset the memories for all agents
-        #    # the parameter sets the length of the sequence for LSTM
-        #    env.world[loc].init_replay(2)
-        #    env.world[loc].init_rnn_state = None
+        for loc in find_instance(env.world, "neural_network"):
+            # reset the memories for all agents
+            # the parameter sets the length of the sequence for LSTM
+            env.world[loc].episode_memory_PPO = RolloutBuffer()
 
         while done == 0:
             """
@@ -172,12 +153,14 @@ def run_game(
                 if env.world[loc].kind != "deadAgent":
                     holdObject = env.world[loc]
                     device = models[holdObject.policy].device
-                    # state = env.pov(loc)
-                    state = full_visualfield(env, 0, 7)
+                    state = env.pov(loc)
                     # params = (state.to(device), epsilon, env.world[loc].init_rnn_state)
                     # set up the right params below
 
-                    action = models[env.world[loc].policy].take_action(state, epsilon)
+                    action, action_logprob, init_rnn_state = models[
+                        env.world[loc].policy
+                    ].take_action(state, env.world[loc].init_rnn_state)
+                    env.world[loc].init_rnn_state = init_rnn_state
 
                     (
                         env.world,
@@ -210,7 +193,17 @@ def run_game(
                         ),
                     )
 
+                    env.world[new_loc].episode_memory_PPO.states.append(state)
+                    env.world[new_loc].episode_memory_PPO.actions.append(action)
+                    env.world[new_loc].episode_memory_PPO.logprobs.append(
+                        action_logprob
+                    )
+
+                    env.world[new_loc].episode_memory_PPO.rewards.append(reward)
+                    env.world[new_loc].episode_memory_PPO.is_terminals.append(done)
                     env.world[new_loc].episode_memory.append(exp)
+
+                    # env.world[new_loc].episode_memory.append(exp)
 
                     if env.world[new_loc].kind == "agent":
                         game_points[0] = game_points[0] + reward
@@ -228,12 +221,12 @@ def run_game(
                 And then transfer the local memory to the model memory
                 """
                 # this updates the last memory to be the final state of the game board
-                # env.world = update_memories(
-                #    env,
-                #    find_instance(env.world, "neural_network"),
-                #    done,
-                #    end_update=True,
-                # )
+                env.world = update_memories(
+                    env,
+                    find_instance(env.world, "neural_network"),
+                    done,
+                    end_update=True,
+                )
 
                 # transfer the events for each agent into the appropriate model after all have moved
                 models = transfer_world_memories(
@@ -324,7 +317,7 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
     for loc in find_instance(env.world, "neural_network"):
         # reset the memories for all agents
         # the parameter sets the length of the sequence for LSTM
-        # env.world[loc].init_replay(1)
+        env.world[loc].init_replay(1)
         env.world[loc].init_rnn_state = None
 
     for _ in range(max_turns):
@@ -350,8 +343,7 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
             if env.world[loc].kind != "deadAgent":
                 holdObject = env.world[loc]
                 device = models[holdObject.policy].device
-                # state = env.pov(loc)
-                state = full_visualfield(env, 0, 7)
+                state = env.pov(loc)
                 params = (state.to(device), epsilon, env.world[loc].init_rnn_state)
 
                 # set up the right params below
@@ -371,10 +363,9 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
 
 
 run_params = (
-    [0.5, 25000, 20],
-    [0.3, 25000, 20],
-    [0.1, 30000, 20],
-    [0.0, 30000, 20],
+    [0.5, 2000, 20],
+    [0.1, 10000, 20],
+    [0.0, 10000, 20],
 )
 
 # the version below needs to have the keys from above in it

@@ -30,20 +30,20 @@ class CNN_CLD(nn.Module):
 
         if type == 0:
             self.conv_layer1 = nn.Conv2d(
-                in_channels=in_channels, out_channels=64, kernel_size=3
+                in_channels=in_channels, out_channels=64, kernel_size=2
             )
 
         if type == 1:
             self.conv_layer1 = nn.Conv2d(
                 in_channels=num_filters,
-                out_channels=num_filters * 15,
-                kernel_size=3,
+                out_channels=64,
+                kernel_size=2,
                 padding=1,
             )
             self.conv_layer2 = nn.Conv2d(
-                in_channels=105,
+                in_channels=64,
                 out_channels=num_filters * 10,
-                kernel_size=3,
+                kernel_size=2,
                 padding=1,
             )
             self.conv_layer3 = nn.Conv2d(
@@ -76,7 +76,9 @@ class CNN_CLD(nn.Module):
 
         if type == 1:
             y1 = F.relu(self.conv_layer1(x))
+            # y1 = self.max_pool(y1)
             y2 = F.relu(self.conv_layer2(y1))
+            # y2 = self.max_pool(y2)
             y3 = F.relu(self.conv_layer3(y2))
 
         if type == 2:
