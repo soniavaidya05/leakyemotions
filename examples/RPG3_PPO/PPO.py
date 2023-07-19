@@ -45,12 +45,12 @@ class ActorCritic(nn.Module):
         super(ActorCritic, self).__init__()
 
         self.cnn = CNN_CLD(
-            in_channels=7, num_filters=10
+            in_channels=7, num_filters=7
         )  # make this general once working
         self.rnn = nn.LSTM(
             input_size=state_dim,
             hidden_size=64,  # make this general once working
-            num_layers=1,
+            num_layers=2,
             batch_first=True,
         )
         self.l1 = nn.Linear(64, 64)  # right here?

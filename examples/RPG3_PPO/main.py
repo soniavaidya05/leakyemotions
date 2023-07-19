@@ -49,7 +49,7 @@ def create_models():
     models.append(
         PPO(
             device=device,
-            state_dim=1300,
+            state_dim=910,
             action_dim=4,
             lr_actor=0.0001,  # .001
             lr_critic=0.0005,  # .0005
@@ -123,9 +123,9 @@ def run_game(
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
+            env.world[loc].episode_memory_PPO = RolloutBuffer()
             env.world[loc].init_replay(2)
             env.world[loc].init_rnn_state = None
-            env.world[loc].episode_memory_PPO = RolloutBuffer()
 
         while done == 0:
             """
