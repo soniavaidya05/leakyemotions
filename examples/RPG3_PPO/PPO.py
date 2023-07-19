@@ -50,7 +50,7 @@ class ActorCritic(nn.Module):
         self.rnn = nn.LSTM(
             input_size=state_dim,
             hidden_size=64,  # make this general once working
-            num_layers=2,
+            num_layers=1,
             batch_first=True,
         )
         self.l1 = nn.Linear(64, 64)  # right here?
@@ -59,8 +59,10 @@ class ActorCritic(nn.Module):
         self.actor = nn.Sequential(
             nn.Linear(64, 64),
             nn.Tanh(),
+            # nn.Relu(),
             nn.Linear(64, 64),
             nn.Tanh(),
+            # nn.Relu(),
             nn.Linear(64, action_dim),
             nn.Softmax(dim=-1),
         )
@@ -68,8 +70,10 @@ class ActorCritic(nn.Module):
         self.critic = nn.Sequential(
             nn.Linear(64, 64),
             nn.Tanh(),
+            # nn.Relu(),
             nn.Linear(64, 64),
             nn.Tanh(),
+            # nn.Relu(),
             nn.Linear(64, 1),
         )
 

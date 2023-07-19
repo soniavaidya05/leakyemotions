@@ -51,9 +51,9 @@ def create_models():
             device=device,
             state_dim=910,
             action_dim=4,
-            lr_actor=0.0001,  # .001
-            lr_critic=0.0005,  # .0005
-            gamma=0.92,  # was .9
+            lr_actor=0.001,  # .001
+            lr_critic=0.005,  # .0005
+            gamma=0.95,  # was .9
             K_epochs=10,  # was 10
             eps_clip=0.2,
         )
