@@ -169,18 +169,12 @@ class RPG:
                 if obj == 2:
                     self.world[i, j, 0] = Gem(-5, [0.0, 0.0, 0.0, 0.0, 0.0, 255.0, 0.0])
 
-        player1_location1 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
-        player1_location2 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
+        num_players = 2
+        for player in range(num_players):
+            player_location1 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
+            player_location2 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
 
-        player2_location1 = 0
-        player2_location2 = 0
-
-        while player1_location1 != player2_location1:
-            player2_location1 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
-            player2_location2 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
-
-        self.world[player1_location1, player1_location2, 0] = Agent(0)
-        self.world[player2_location1, player2_location2, 0] = Agent(0)
+            self.world[player_location1, player_location2, 0] = Agent(0)
 
     def insert_walls(self, height, width):
         """

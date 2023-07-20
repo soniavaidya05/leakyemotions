@@ -9,7 +9,7 @@ from gem.utils import (
 )
 
 
-from examples.RPG3_PPO.PPO import PPO, RolloutBuffer
+from examples.RPG3_PPO.PPO_CPC import PPO, RolloutBuffer
 from examples.RPG3_PPO.env import RPG
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -66,7 +66,7 @@ def create_models():
     return models
 
 
-world_size = 25
+world_size = 75
 
 trainable_models = [0]
 sync_freq = 200  # https://openreview.net/pdf?id=3UK39iaaVpE
@@ -180,6 +180,8 @@ def run_game(
                         gems[2] = gems[2] + 1
                     if reward == -1:
                         gems[3] = gems[3] + 1
+
+                    reward = reward / 10
 
                     # these can be included on one replay
 
