@@ -1,3 +1,10 @@
+import os
+import sys
+module_path = os.path.abspath('../..')
+if module_path not in sys.path:
+    sys.path.append(module_path)
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
 # from tkinter.tix import Tree
 from gem.utils import (
     update_epsilon,
@@ -159,7 +166,7 @@ def run_game(
                     # params = (state.to(device), epsilon, env.world[loc].init_rnn_state)
                     # set up the right params below
 
-                    action, action_logprob, init_rnn_state = models[
+                    action, action_logprob, init_rnn_state, cpc_context = models[
                         env.world[loc].policy
                     ].take_action(state, env.world[loc].init_rnn_state)
                     env.world[loc].init_rnn_state = init_rnn_state
@@ -204,6 +211,7 @@ def run_game(
                     )
 
                     env.world[new_loc].episode_memory_PPO.rewards.append(reward)
+                    env.world[new_loc].episode_memory_PPO.nextstates.append(next_state)
                     env.world[new_loc].episode_memory_PPO.is_terminals.append(done)
                     env.world[new_loc].episode_memory.append(exp)
 

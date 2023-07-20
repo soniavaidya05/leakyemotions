@@ -9,6 +9,7 @@ class RolloutBuffer:
     def __init__(self):
         self.actions = []
         self.states = []
+        self.nextstates = []
         self.logprobs = []
         self.rewards = []
         self.is_terminals = []
@@ -16,6 +17,7 @@ class RolloutBuffer:
     def clear(self):
         del self.actions[:]
         del self.states[:]
+        del self.nextstates[:]
         del self.logprobs[:]
         del self.rewards[:]
         del self.is_terminals[:]
@@ -119,16 +121,14 @@ class ActorCritic(nn.Module):
 
     def evaluate(self, state, action, init_rnn_state=None):
         init_rnn_state = None if init_rnn_state is None else tuple(init_rnn_state)
-        print("state size: ", state.size())
-        print("state shape: ", state.shape)
+        # print("state size: ", state.size())
         batch_size, timesteps, C, H, W = state.size()
         c_in = state.view(batch_size * timesteps, C, H, W)
         c_out = self.cnn(c_in)
         r_in = c_out.view(batch_size, timesteps, -1)
         r_out, (h_n, h_c) = self.rnn(r_in, init_rnn_state)
         state = F.relu(self.l1(r_out[:, -1, :]))
-        print("state size: ", state.size())
-        print("state shape: ", state.shape)
+        # print("state size: ", state.size())
 
         action_probs = self.actor(state)
         dist = Categorical(action_probs)
@@ -137,7 +137,7 @@ class ActorCritic(nn.Module):
         state_values = self.critic(state)
 
         cpc_context = self.cpc(state)
-        print("cpc_context size: ", cpc_context.size())
+        # print("cpc_context size: ", cpc_context.size())
 
         return (
             action_logprobs,
@@ -185,8 +185,8 @@ class PPO:
     def take_action(self, state, hidden_state=None):
         with torch.no_grad():
             state = torch.FloatTensor(state).to(self.device)
-            action, action_logprob, hidden, _ = self.model1.act(state, hidden_state)
-        return action, action_logprob, hidden
+            action, action_logprob, hidden, cpc_context = self.model1.act(state, hidden_state)
+        return action, action_logprob, hidden, cpc_context
 
     def compute_cpc_loss(self, cpc_context, future_embedding):
         # dot product between context and future (positive sample)
@@ -230,6 +230,9 @@ class PPO:
         old_logprobs = (
             torch.squeeze(torch.stack(buffer.logprobs, dim=0)).detach().to(self.device)
         )
+        future_state = (
+            torch.squeeze(torch.stack(buffer.nextstates, dim=0)).detach().to(self.device)
+        )
 
         hidden = None  # Add this line before your loop
         future_states = []  # Placeholder for future_states
@@ -243,13 +246,11 @@ class PPO:
                 hidden,
                 cpc_context,
             ) = self.model1.evaluate(old_states, old_actions, hidden)
-            print("got here 0")
-            print("hidden: ", hidden)
-            future_state, future_action, _ = self.take_action(old_states[-1], hidden)
-            print("got here 1")
-            future_states.append(future_state)
-            future_actions.append(future_action)
-            print("got here 2")
+            # print("got here 0")
+            # print(f"Old states: {old_states.size()}")
+            future_action, future_action_logprob, _, _ = self.take_action(old_states, hidden)
+
+            # print("got here 2")
             (
                 future_logprobs,
                 future_values,
@@ -257,11 +258,11 @@ class PPO:
                 _,
                 future_embedding,
             ) = self.model1.evaluate(
-                torch.stack(future_states).detach(),
-                torch.stack(future_actions).detach(),
+                future_state.detach(),
+                future_action.detach(),
                 hidden,
             )
-            print("got here 3")
+            # print("got here 3")
 
             cpc_loss = self.compute_cpc_loss(cpc_context, future_embedding)
 

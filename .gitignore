@@ -137,3 +137,4 @@ dmypy.json
 # Output files
 output/
 logs/
+gem/.DS_Store
