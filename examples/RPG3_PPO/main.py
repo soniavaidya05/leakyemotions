@@ -1,9 +1,9 @@
-import os
-import sys
-module_path = os.path.abspath('../..')
-if module_path not in sys.path:
-    sys.path.append(module_path)
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
+# import os
+# import sys
+# module_path = os.path.abspath('../..')
+# if module_path not in sys.path:
+#     sys.path.append(module_path)
+# os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 # from tkinter.tix import Tree
 from gem.utils import (
