@@ -8,7 +8,7 @@ from gem.utils import (
     find_instance,
 )
 
-from examples.RPG3.iRainbow_noCnn import iRainbowModel, PrioritizedReplay
+from examples.RPG3.iRainbow_clean import iRainbowModel
 from examples.RPG3.env import RPG
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
@@ -23,7 +23,7 @@ import numpy as np
 import random
 import torch
 
-save_dir = "/Users/wil/Dropbox/Mac/Documents/gemOutput_experimental/"
+save_dir = "/Users/yumozi/Projects/gem_data/RPG3_test/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
 # save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
@@ -38,10 +38,7 @@ random.seed(SEED)
 torch.manual_seed(SEED)
 
 
-# The configuration of the network
-# One of: "iqn", "iqn+per", "noisy_iqn", "noisy_iqn+per", "dueling", "dueling+per",
-#         "noisy_dueling", "noisy_dueling+per"
-NETWORK_CONFIG = "noisy_dueling"
+# noisy_dueling
 
 
 def create_models():
@@ -61,10 +58,7 @@ def create_models():
                 [7, 9, 9]
             ),  # this seems to only be reading the first value
             action_size=4,
-            network=NETWORK_CONFIG,
-            munchausen=False,  # Don't use Munchausen RL loss
             layer_size=250,  # 100
-            n_hidden_layers=2,
             n_step=3,  # Multistep IQN (rainbow paper uses 3)
             BATCH_SIZE=64,
             BUFFER_SIZE=1024,
@@ -72,7 +66,6 @@ def create_models():
             TAU=1e-3,  # Soft update parameter
             GAMMA=0.95,  # Discout factor 0.99
             N=12,  # Number of quantiles
-            worker=1,  # number of parallel environments
             device=device,
             seed=SEED,
         )
@@ -244,6 +237,7 @@ def run_game(
                     experiences = models[mods].memory.sample()
                     loss = models[mods].learn(experiences)
                     losses = losses + loss
+
         if epoch > 100:
             for mods in trainable_models:
                 """
