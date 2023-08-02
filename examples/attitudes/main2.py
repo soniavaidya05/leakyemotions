@@ -147,6 +147,8 @@ def run_game(
     losses = 0
     game_points = [0, 0]
     gems = [0, 0, 0, 0]
+    decay_rate = 0.9  # Adjust as needed
+
     for epoch in range(epochs):
         """
         Move each agent once and then update the world
@@ -207,7 +209,6 @@ def run_game(
                     batch, timesteps, channels, height, width = state.shape
 
                     if len(object_memory) > 1000:
-                        decay_rate = 0.5  # Adjust as needed
                         sampled_memories_batch = k_most_similar_recent_states_batch(
                             state, object_memory, decay_rate
                         )
@@ -249,7 +250,6 @@ def run_game(
                     # these can be included on one replay
 
                     if len(object_memory) > 1000:
-                        decay_rate = 0.5  # Adjust as needed
                         sampled_memories_batch = k_most_similar_recent_states_batch(
                             next_state, object_memory, decay_rate
                         )
@@ -431,8 +431,6 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
     ani.save(filename, writer="PillowWriter", fps=2)
 
 
-print("------------ TEST 1 --------------")
-
 models = create_models()
 # for mod in range(len(models)):
 #    models[mod].new_memory_buffer(1024, SEED, 3)
@@ -458,78 +456,3 @@ for modRun in range(len(run_params)):
     )
     # for mod in range(len(models)):
     #    models[mod].new_memory_buffer(1024, SEED, 3)
-
-
-print("------------ TEST 3 --------------")
-
-models = create_models()
-
-run_params = (
-    [0.5, 500, 20, False, True],
-    [0.1, 5000, 20, False, True],
-    [0.0, 5000, 20, False, True],
-    [0.0, 5000, 20, True, True],
-)
-
-# the version below needs to have the keys from above in it
-for modRun in range(len(run_params)):
-    models, env, turn, epsilon = run_game(
-        models,
-        env,
-        turn,
-        run_params[modRun][0],
-        epochs=run_params[modRun][1],
-        max_turns=run_params[modRun][2],
-        change=run_params[modRun][3],
-        masked_attitude=run_params[modRun][4],
-    )
-
-
-print("------------ TEST 2 --------------")
-
-models = create_models()
-
-run_params = (
-    [0.5, 500, 20, False, False],
-    [0.1, 5000, 20, False, False],
-    [0.0, 5000, 20, False, False],
-    [0.0, 5000, 20, False, False],
-)
-
-# the version below needs to have the keys from above in it
-for modRun in range(len(run_params)):
-    models, env, turn, epsilon = run_game(
-        models,
-        env,
-        turn,
-        run_params[modRun][0],
-        epochs=run_params[modRun][1],
-        max_turns=run_params[modRun][2],
-        change=run_params[modRun][3],
-        masked_attitude=run_params[modRun][4],
-    )
-
-
-print("------------ TEST 4 --------------")
-
-models = create_models()
-
-run_params = (
-    [0.5, 500, 20, False, True],
-    [0.1, 5000, 20, False, True],
-    [0.0, 5000, 20, False, True],
-    [0.0, 5000, 20, False, True],
-)
-
-# the version below needs to have the keys from above in it
-for modRun in range(len(run_params)):
-    models, env, turn, epsilon = run_game(
-        models,
-        env,
-        turn,
-        run_params[modRun][0],
-        epochs=run_params[modRun][1],
-        max_turns=run_params[modRun][2],
-        change=run_params[modRun][3],
-        masked_attitude=run_params[modRun][4],
-    )
