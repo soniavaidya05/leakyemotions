@@ -116,7 +116,7 @@ epsilon = 0.99
 
 turn = 1
 
-object_memory = deque(maxlen=10000)
+object_memory = deque(maxlen=500)
 
 models = create_models()
 env = RPG(
@@ -140,6 +140,7 @@ def run_game(
     max_turns=100,
     change=False,
     masked_attitude=False,
+    attitude_layer=False,
 ):
     """
     This is the main loop of the game
@@ -147,7 +148,7 @@ def run_game(
     losses = 0
     game_points = [0, 0]
     gems = [0, 0, 0, 0]
-    decay_rate = 0.9  # Adjust as needed
+    decay_rate = 0.3  # Adjust as needed
 
     for epoch in range(epochs):
         """
@@ -208,14 +209,21 @@ def run_game(
                     state = env.pov(loc)
                     batch, timesteps, channels, height, width = state.shape
 
-                    if len(object_memory) > 1000:
-                        sampled_memories_batch = k_most_similar_recent_states_batch(
-                            state, object_memory, decay_rate
-                        )
-                        for idx, sampled_memories in enumerate(sampled_memories_batch):
-                            ave_rewards = average_rewards(sampled_memories)
-                            t, h, w = np.unravel_index(idx, (timesteps, height, width))
-                            state[0, t, 7, h, w] = ave_rewards * 255
+                    attitude_memory = attitude_layer
+                    if attitude_layer:
+                        if len(object_memory) > 1000:
+                            sampled_memories_batch = k_most_similar_recent_states_batch(
+                                state, object_memory, decay_rate
+                            )
+                            for idx, sampled_memories in enumerate(
+                                sampled_memories_batch
+                            ):
+                                ave_rewards = average_rewards(sampled_memories)
+                                t, h, w = np.unravel_index(
+                                    idx, (timesteps, height, width)
+                                )
+                                next_state[0, t, 7, h, w] = ave_rewards * 255
+
                     # channels = state[0, 0, :7, 0, 0]
                     # result_tuple = tuple(map(float, channels))
 
@@ -235,7 +243,10 @@ def run_game(
 
                     # create object memory
                     state_object = object_info[0:7]
-                    object_exp = (state_object, reward)
+                    if attitude_layer:
+                        object_exp = (state_object, reward)
+                    else:
+                        object_exp = (state_object, 0)
                     object_memory.append(object_exp)
 
                     if reward == 15:
@@ -249,14 +260,19 @@ def run_game(
 
                     # these can be included on one replay
 
-                    if len(object_memory) > 1000:
-                        sampled_memories_batch = k_most_similar_recent_states_batch(
-                            next_state, object_memory, decay_rate
-                        )
-                        for idx, sampled_memories in enumerate(sampled_memories_batch):
-                            ave_rewards = average_rewards(sampled_memories)
-                            t, h, w = np.unravel_index(idx, (timesteps, height, width))
-                            next_state[0, t, 7, h, w] = ave_rewards * 255
+                    if attitude_layer:
+                        if len(object_memory) > 1000:
+                            sampled_memories_batch = k_most_similar_recent_states_batch(
+                                next_state, object_memory, decay_rate
+                            )
+                            for idx, sampled_memories in enumerate(
+                                sampled_memories_batch
+                            ):
+                                ave_rewards = average_rewards(sampled_memories)
+                                t, h, w = np.unravel_index(
+                                    idx, (timesteps, height, width)
+                                )
+                                next_state[0, t, 7, h, w] = ave_rewards * 255
 
                     exp = (
                         # models[env.world[new_loc].policy].max_priority,
@@ -436,10 +452,10 @@ models = create_models()
 #    models[mod].new_memory_buffer(1024, SEED, 3)
 
 run_params = (
-    [0.5, 500, 20, False, False],
-    [0.1, 5000, 20, False, False],
-    [0.0, 5000, 20, False, False],
-    [0.0, 5000, 20, True, False],
+    [0.5, 500, 20, False, True, False],
+    [0.1, 2000, 20, False, True, False],
+    [0.0, 1000, 20, False, True, False],
+    [0.0, 1000, 20, True, True, False],
 )
 
 # the version below needs to have the keys from above in it
@@ -453,6 +469,7 @@ for modRun in range(len(run_params)):
         max_turns=run_params[modRun][2],
         change=run_params[modRun][3],
         masked_attitude=run_params[modRun][4],
+        attitude_layer=run_params[modRun][5],
     )
     # for mod in range(len(models)):
     #    models[mod].new_memory_buffer(1024, SEED, 3)
