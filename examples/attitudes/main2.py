@@ -248,6 +248,16 @@ def run_game(
 
                     # these can be included on one replay
 
+                    if len(object_memory) > 1000:
+                        decay_rate = 0.5  # Adjust as needed
+                        sampled_memories_batch = k_most_similar_recent_states_batch(
+                            next_state, object_memory, decay_rate
+                        )
+                        for idx, sampled_memories in enumerate(sampled_memories_batch):
+                            ave_rewards = average_rewards(sampled_memories)
+                            t, h, w = np.unravel_index(idx, (timesteps, height, width))
+                            next_state[0, t, 7, h, w] = ave_rewards * 255
+
                     exp = (
                         # models[env.world[new_loc].policy].max_priority,
                         1,
