@@ -236,7 +236,7 @@ def run_game(
                     # create object memory
                     state_object = object_info[0:7]
                     object_exp = (state_object, reward)
-                    object_memory.appendleft(object_exp)
+                    object_memory.append(object_exp)
 
                     if reward == 15:
                         gems[0] = gems[0] + 1
