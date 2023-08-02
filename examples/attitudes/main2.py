@@ -214,7 +214,7 @@ def run_game(
                         for idx, sampled_memories in enumerate(sampled_memories_batch):
                             ave_rewards = average_rewards(sampled_memories)
                             t, h, w = np.unravel_index(idx, (timesteps, height, width))
-                            state[0, t, 7, h, w] = ave_rewards
+                            state[0, t, 7, h, w] = ave_rewards * 255
                     # channels = state[0, 0, :7, 0, 0]
                     # result_tuple = tuple(map(float, channels))
 
