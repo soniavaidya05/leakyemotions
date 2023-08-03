@@ -423,7 +423,7 @@ def run_game(
             # epsilon = update_epsilon(epsilon, turn, epoch)
             epsilon = max(epsilon - 0.00003, 0.2)
 
-        if epoch % 25 == 0 and len(trainable_models) > 0 and epoch != 0:
+        if epoch % 100 == 0 and len(trainable_models) > 0 and epoch != 0:
             # print the state and update the counters. This should be made to be tensorboard instead
             print(
                 epoch,
