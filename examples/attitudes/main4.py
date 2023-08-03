@@ -480,10 +480,12 @@ def test_memory(env=env, object_memory=object_memory, new_env=False):
 
                     if flagged:
                         object_kind = "outside"
+                        object_value = 0
                     else:
                         object_kind = env.world[i2, j2, 0].kind
+                        object_value = env.world[i2, j2, 0].value
 
-                    print(loc, t, i, j, object_kind, state[0, t, 7, i, j])
+                    print(loc, t, i, j, object_kind, state[0, t, 7, i, j], object_value)
 
 
 models = create_models()
@@ -495,6 +497,7 @@ run_params = (
     [0.5, 500, 20, False, True, True],
     [0.1, 500, 20, False, True, True],
     [0.0, 1000, 20, False, True, True],
+    [0.0, 200, 20, True, True, True],
     [0.0, 1000, 20, True, True, True],
 )
 
