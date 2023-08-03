@@ -46,84 +46,8 @@ from collections import deque, namedtuple
 # noisy_dueling
 
 
-def k_most_similar_recent_states_batch_newer(state_batch, memories, decay_rate, k=5):
-    state_batch_reshaped = state_batch[0, :, :7, :, :].reshape(-1, 7)
-    memory_states = [memory[0] for memory in memories]
-
-    # Compute the distances
-    distances = cdist(state_batch_reshaped, memory_states, "euclidean")
-
-    # Apply weights to the distances based on recency
-    weights = [decay_rate**i for i in range(len(memories) - 1, -1, -1)]
-    weighted_distances = distances * np.array(weights)
-
-    # Find the k most similar states using the weighted distances
-    k_indices = np.argpartition(weighted_distances, k, axis=1)[:, :k]
-    sampled_memories = [[memories[i] for i in row] for row in k_indices]
-
-    return sampled_memories
-
-
-def k_most_similar_recent_states_batch_old(state_batch, memories, decay_rate=1.0, k=5):
-    state_batch_reshaped = state_batch[0, :, :7, :, :].reshape(-1, 7)
-    memory_states = [memory[0] for memory in memories]
-
-    # Compute the distances
-    distances = cdist(state_batch_reshaped, memory_states, "euclidean")
-
-    # Find the k most similar states
-    k_indices = np.argpartition(distances, k, axis=1)[:, :k]
-    sampled_memories = [[memories[i] for i in row] for row in k_indices]
-
-    return sampled_memories
-
-
 import numpy as np
 from scipy.spatial.distance import cdist
-
-
-def k_most_similar_recent_states_batch(state_batch, memories, decay_rate, k=5):
-    search_k = 4 * k
-    state_batch_reshaped = state_batch[0, :, :7, :, :].reshape(-1, 7)
-    memory_states = [memory[0][:7] for memory in memories]
-
-    # Compute the distances
-    distances = cdist(state_batch_reshaped, memory_states, "euclidean")
-
-    # Apply weights to the distances based on recency
-    weights = [decay_rate**i for i in range(len(memories) - 1, -1, -1)]
-    weighted_distances = distances * np.array(weights)
-
-    # Find the 4k most similar states using the weighted distances
-    k_indices = np.argpartition(weighted_distances, search_k, axis=1)[:, :search_k]
-
-    # Create a list to store the final k sampled memories
-    sampled_memories_batch = []
-
-    # Iterate through the k_indices and apply decay-based sampling
-    for indices in k_indices:
-        sampled_indices = np.random.choice(
-            indices, size=k, p=weights[:search_k] / np.sum(weights[:search_k])
-        )
-        sampled_memories = [memories[i] for i in sampled_indices]
-        sampled_memories_batch.append(sampled_memories)
-
-    return sampled_memories_batch
-
-
-def average_rewards(memories):
-    # Extract the rewards from the tuples (assuming reward is the second element in each tuple)
-    rewards = [memory[1] for memory in memories]
-
-    # Calculate the average reward
-    average_reward = sum(rewards) / len(rewards)
-
-    return average_reward
-
-
-from scipy.spatial import distance
-import numpy as np
-import random
 
 
 def k_most_similar_recent_states(state, memories, decay_rate, k=5):
@@ -301,10 +225,11 @@ def run_game(
                                         if env.world[h, w, 0].kind != "empty":
                                             object_state = state[0, t, :7, h, w]
                                             mems = k_most_similar_recent_states(
-                                                object_state, object_memory, 1, k=5
+                                                object_state, object_memory, 0.5, k=5
                                             )
                                             r = average_reward(mems)
                                             state[0, t, 7, h, w] = r * 255
+                                            r = 0
 
                     # channels = state[0, 0, :7, 0, 0]
                     # result_tuple = tuple(map(float, channels))
@@ -354,10 +279,11 @@ def run_game(
                                         ):
                                             object_state = state[0, t, :7, h, w]
                                             mems = k_most_similar_recent_states(
-                                                object_state, object_memory, 1, k=5
+                                                object_state, object_memory, 0.5, k=5
                                             )
                                             r = average_reward(mems)
                                             next_state[0, t, 7, h, w] = r * 255
+                                            r = 0
 
                     exp = (
                         # models[env.world[new_loc].policy].max_priority,
@@ -546,10 +472,13 @@ def view_state(env, object_memory=object_memory, decay_rate=1.0, attitudes=True)
                 for h in range(height):
                     for w in range(width):
                         state[0, t, 7, h, w] = 0
-                        if env.world[h, w, 0].kind != "empty":
+                        if (
+                            env.world[h, w, 0].kind != "empty"
+                            or env.world[h, w, 0].kind != "agent"
+                        ):
                             object_state = state[0, t, :7, h, w]
                             mems = k_most_similar_recent_states(
-                                object_state, object_memory, 1, k=5
+                                object_state, object_memory, 0.5, k=5
                             )
                             r = average_reward(mems)
                             state[0, t, 7, h, w] = r * 255
@@ -567,9 +496,9 @@ models = create_models()
 run_params = (
     [0.5, 50, 20, False, True, True],
     [0.5, 500, 20, False, True, True],
-    [0.1, 2000, 20, False, True, True],
-    [0.0, 2000, 20, False, True, True],
-    # [0.0, 2500, 20, True, True, True],
+    [0.1, 1000, 20, False, True, True],
+    [0.0, 1000, 20, False, True, True],
+    [0.0, 1000, 20, True, True, True],
 )
 
 # the version below needs to have the keys from above in it
