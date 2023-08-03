@@ -5,8 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from models.memory import Memory
-from models.perception import agent_visualfield
+from gem.models.memory import Memory
+from gem.models.perception import agent_visualfield
 
 import matplotlib.pyplot as plt
 
@@ -27,7 +27,7 @@ class ModelClassPlayer:
         """
 
         pytorchInput, epsilon = params
-        inp = pytorchInput.permute(0, 3, 1, 2).numpy()
+        inp = pytorchInput.squeeze(0).permute(0, 3, 1, 2).numpy()
         img = np.squeeze(inp)
 
         # something like above
