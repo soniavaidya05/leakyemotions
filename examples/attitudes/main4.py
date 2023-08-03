@@ -52,14 +52,16 @@ import random
 # If True, use the KNN model when computing k-most similar recent states. Otherwise, use a brute-force search.
 USE_KNN_MODEL = True
 # Run profiling on the RL agent to see how long it takes per step
-RUN_PROFILING = True
+RUN_PROFILING = False
 
-print(f'Using device: {device}')
-print(f'Using KNN model: {USE_KNN_MODEL}')
-print(f'Running profiling: {RUN_PROFILING}')
+print(f"Using device: {device}")
+print(f"Using KNN model: {USE_KNN_MODEL}")
+print(f"Running profiling: {RUN_PROFILING}")
 
 
-def k_most_similar_recent_states(state, knn: NearestNeighbors, memories, decay_rate, k=5):
+def k_most_similar_recent_states(
+    state, knn: NearestNeighbors, memories, decay_rate, k=5
+):
     if USE_KNN_MODEL:
         # Get the indices of the k most similar states (without selecting them yet)
         state = state.cpu().detach().numpy().reshape(1, -1)
@@ -135,7 +137,7 @@ epsilon = 0.99
 
 turn = 1
 
-object_memory = deque(maxlen=250)
+object_memory = deque(maxlen=1000)
 state_knn = NearestNeighbors(n_neighbors=5)
 
 models = create_models()
@@ -239,7 +241,13 @@ def run_game(
                                         state[0, t, 7, h, w] = 0
                                         if env.world[h, w, 0].kind != "empty":
                                             object_state = state[0, t, :7, h, w]
-                                            mems = k_most_similar_recent_states(object_state, state_knn, object_memory, 1, k=5)
+                                            mems = k_most_similar_recent_states(
+                                                object_state,
+                                                state_knn,
+                                                object_memory,
+                                                1,
+                                                k=5,
+                                            )
                                             r = average_reward(mems)
                                             state[0, t, 7, h, w] = r * 255
                                             r = 0
@@ -294,7 +302,13 @@ def run_game(
                                             or env.world[h, w, 0].kind != "agent"
                                         ):
                                             object_state = state[0, t, :7, h, w]
-                                            mems = k_most_similar_recent_states(object_state, state_knn, object_memory, 1, k=5)
+                                            mems = k_most_similar_recent_states(
+                                                object_state,
+                                                state_knn,
+                                                object_memory,
+                                                1,
+                                                k=5,
+                                            )
                                             r = average_reward(mems)
                                             next_state[0, t, 7, h, w] = r * 255
                                             r = 0
@@ -362,7 +376,7 @@ def run_game(
 
         end_time = time.time()
         if RUN_PROFILING:
-            print(f'Epoch {epoch} took {end_time - start_time} seconds')
+            print(f"Epoch {epoch} took {end_time - start_time} seconds")
 
         updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
@@ -476,35 +490,72 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
     ani.save(filename, writer="PillowWriter", fps=2)
 
 
-def view_state(env, object_memory=object_memory, state_knn=state_knn, decay_rate=1.0, attitudes=True):
-    """
-    This is a function to view the state of the world from the perspective of a single agent
-    """
-    a_locs = find_instance(env.world, "neural_network")
-    loc = a_locs[0]
-    state = env.pov(loc)
+def load_attitudes(
+    state, env=env, object_memory=object_memory, state_knn=state_knn, decay_rate=1.0
+):
     batch, timesteps, channels, height, width = state.shape
-    if attitudes:
-        if len(object_memory) > 50:
-            for t in range(timesteps):
-                for h in range(height):
-                    for w in range(width):
-                        state[0, t, 7, h, w] = 0
-                        if (
-                            env.world[h, w, 0].kind != "empty"
-                            or env.world[h, w, 0].kind != "agent"
-                        ):
-                            object_state = state[0, t, :7, h, w]
-                            mems = k_most_similar_recent_states(
-                                object_state, state_knn, object_memory, 1, k=5
-                            )
-                            r = average_reward(mems)
-                            state[0, t, 7, h, w] = r * 255
+    if len(object_memory) > 50:
+        for t in range(timesteps):
+            for h in range(height):
+                for w in range(width):
+                    state[0, t, 7, h, w] = 0
+                    if env.world[h, w, 0].kind != "empty":
+                        object_state = state[0, t, :7, h, w]
+                        mems = k_most_similar_recent_states(
+                            object_state,
+                            state_knn,
+                            object_memory,
+                            decay_rate,
+                            k=5,
+                        )
+                        r = average_reward(mems)
+                        state[0, t, 7, h, w] = r * 255
+    return state
 
+
+def test_memory(env=env, object_memory=object_memory, new_env=False):
+    if new_env:
+        env.reset_env(
+            height=world_size,
+            width=world_size,
+            layers=1,
+            gem1p=0.03,
+            gem2p=0.02,
+            gem3p=0.03,
+        )
+    agentList = find_instance(env.world, "neural_network")
+    for loc in find_instance(env.world, "neural_network"):
+        # reset the memories for all agents
+        # the parameter sets the length of the sequence for LSTM
+        env.world[loc].init_replay(1)
+        env.world[loc].init_rnn_state = None
+
+    loc = agentList[0]
+    state = env.pov(loc)
+
+    batch, timesteps, channels, height, width = state.shape
+    state_attitudes = load_attitudes(state)
     for i in range(state.shape[3]):
         for j in range(state.shape[4]):
             for t in range(state.shape[1]):
-                print(t, i, j, env.world[i, j, 0].kind, state[0, t, 7, i, j])
+                i2 = loc[0] - 4 + i
+                j2 = loc[1] - 4 + j
+                flagged = False
+                if i2 < 0:
+                    flagged = True
+                if i2 >= world_size:
+                    flagged = True
+                if j2 < 0:
+                    flagged = True
+                if j2 >= world_size:
+                    flagged = True
+
+                if flagged:
+                    object_kind = "outside"
+                else:
+                    object_kind = env.world[i2, j2, 0].kind
+
+                print(t, i, j, object_kind, state[0, t, 7, i, j])
 
 
 models = create_models()
@@ -532,6 +583,6 @@ for modRun in range(len(run_params)):
         masked_attitude=run_params[modRun][4],
         attitude_layer=run_params[modRun][5],
     )
-    view_state(env, object_memory, state_knn, decay_rate=1.0, attitudes=True)
+    test_memory(env, object_memory, new_env=False)
     # for mod in range(len(models)):
     #    models[mod].new_memory_buffer(1024, SEED, 3)
