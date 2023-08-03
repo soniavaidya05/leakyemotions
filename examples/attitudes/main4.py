@@ -464,7 +464,6 @@ def test_memory(env=env, object_memory=object_memory, new_env=False):
         env.world[loc].init_rnn_state = None
 
     for loc in find_instance(env.world, "neural_network"):
-        loc = agentList[0]
         state = env.pov(loc)
 
         batch, timesteps, channels, height, width = state.shape
@@ -499,11 +498,11 @@ models = create_models()
 #    models[mod].new_memory_buffer(1024, SEED, 3)
 
 run_params = (
-    [0.5, 50, 20, False, False, True],
+    # [0.5, 50, 20, False, False, True],
     [0.5, 500, 20, False, False, True],
     [0.1, 500, 20, False, False, True],
-    [0.0, 1000, 20, False, False, True],
-    [0.0, 200, 20, True, False, True],
+    [0.0, 200, 20, False, False, True],
+    [0.0, 1000, 20, True, False, True],
     [0.0, 1000, 20, True, False, True],
 )
 
