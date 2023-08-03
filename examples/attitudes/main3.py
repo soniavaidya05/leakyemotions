@@ -46,7 +46,7 @@ from collections import deque, namedtuple
 # noisy_dueling
 
 
-def k_most_similar_recent_states_batch(state_batch, memories, decay_rate, k=5):
+def k_most_similar_recent_states_batch_newer(state_batch, memories, decay_rate, k=5):
     state_batch_reshaped = state_batch[0, :, :7, :, :].reshape(-1, 7)
     memory_states = [memory[0] for memory in memories]
 
@@ -62,6 +62,53 @@ def k_most_similar_recent_states_batch(state_batch, memories, decay_rate, k=5):
     sampled_memories = [[memories[i] for i in row] for row in k_indices]
 
     return sampled_memories
+
+
+def k_most_similar_recent_states_batch_old(state_batch, memories, decay_rate=1.0, k=5):
+    state_batch_reshaped = state_batch[0, :, :7, :, :].reshape(-1, 7)
+    memory_states = [memory[0] for memory in memories]
+
+    # Compute the distances
+    distances = cdist(state_batch_reshaped, memory_states, "euclidean")
+
+    # Find the k most similar states
+    k_indices = np.argpartition(distances, k, axis=1)[:, :k]
+    sampled_memories = [[memories[i] for i in row] for row in k_indices]
+
+    return sampled_memories
+
+
+import numpy as np
+from scipy.spatial.distance import cdist
+
+
+def k_most_similar_recent_states_batch(state_batch, memories, decay_rate, k=5):
+    search_k = 4 * k
+    state_batch_reshaped = state_batch[0, :, :7, :, :].reshape(-1, 7)
+    memory_states = [memory[0][:7] for memory in memories]
+
+    # Compute the distances
+    distances = cdist(state_batch_reshaped, memory_states, "euclidean")
+
+    # Apply weights to the distances based on recency
+    weights = [decay_rate**i for i in range(len(memories) - 1, -1, -1)]
+    weighted_distances = distances * np.array(weights)
+
+    # Find the 4k most similar states using the weighted distances
+    k_indices = np.argpartition(weighted_distances, search_k, axis=1)[:, :search_k]
+
+    # Create a list to store the final k sampled memories
+    sampled_memories_batch = []
+
+    # Iterate through the k_indices and apply decay-based sampling
+    for indices in k_indices:
+        sampled_indices = np.random.choice(
+            indices, size=k, p=weights[:search_k] / np.sum(weights[:search_k])
+        )
+        sampled_memories = [memories[i] for i in sampled_indices]
+        sampled_memories_batch.append(sampled_memories)
+
+    return sampled_memories_batch
 
 
 def average_rewards(memories):
@@ -116,7 +163,7 @@ epsilon = 0.99
 
 turn = 1
 
-object_memory = deque(maxlen=500)
+object_memory = deque(maxlen=250)
 
 models = create_models()
 env = RPG(
@@ -148,7 +195,7 @@ def run_game(
     losses = 0
     game_points = [0, 0]
     gems = [0, 0, 0, 0]
-    decay_rate = 0.3  # Adjust as needed
+    decay_rate = 1.0  # Adjust as needed
 
     for epoch in range(epochs):
         """
@@ -173,7 +220,7 @@ def run_game(
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[loc].init_replay(2)
+            env.world[loc].init_replay(1)
             env.world[loc].init_rnn_state = None
 
         turn = 0
@@ -209,9 +256,13 @@ def run_game(
                     state = env.pov(loc)
                     batch, timesteps, channels, height, width = state.shape
 
-                    attitude_memory = attitude_layer
                     if attitude_layer:
-                        if len(object_memory) > 1000:
+                        if len(object_memory) > 50:
+                            for t in range(timesteps):
+                                for h in range(height):
+                                    for w in range(width):
+                                        state[0, t, 7, h, w] = 0
+
                             sampled_memories_batch = k_most_similar_recent_states_batch(
                                 state, object_memory, decay_rate
                             )
@@ -219,10 +270,11 @@ def run_game(
                                 sampled_memories_batch
                             ):
                                 ave_rewards = average_rewards(sampled_memories)
+
                                 t, h, w = np.unravel_index(
                                     idx, (timesteps, height, width)
                                 )
-                                next_state[0, t, 7, h, w] = ave_rewards * 255
+                                state[0, t, 7, h, w] = ave_rewards * 255
 
                     # channels = state[0, 0, :7, 0, 0]
                     # result_tuple = tuple(map(float, channels))
@@ -261,7 +313,12 @@ def run_game(
                     # these can be included on one replay
 
                     if attitude_layer:
-                        if len(object_memory) > 1000:
+                        if len(object_memory) > 50:
+                            for t in range(timesteps):
+                                for h in range(height):
+                                    for w in range(width):
+                                        next_state[0, t, 7, h, w] = 0
+
                             sampled_memories_batch = k_most_similar_recent_states_batch(
                                 next_state, object_memory, decay_rate
                             )
@@ -447,6 +504,38 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
     ani.save(filename, writer="PillowWriter", fps=2)
 
 
+def view_state(env, object_memory=object_memory, decay_rate=1.0, attitudes=True):
+    """
+    This is a function to view the state of the world from the perspective of a single agent
+    """
+    a_locs = find_instance(env.world, "neural_network")
+    loc = a_locs[0]
+    state = env.pov(loc)
+    batch, timesteps, channels, height, width = state.shape
+
+    for i in range(state.shape[3]):
+        for j in range(state.shape[4]):
+            for t in range(state.shape[1]):
+                state[0, t, 7, i, j] = 0
+                print(t, i, j, env.world[i, j, 0].kind, state[0, t, 7, i, j])
+
+    if attitudes:
+        if len(object_memory) > 50:
+            sampled_memories_batch = k_most_similar_recent_states_batch(
+                state, object_memory, decay_rate
+            )
+            for idx, sampled_memories in enumerate(sampled_memories_batch):
+                ave_rewards = average_rewards(sampled_memories)
+
+                t, h, w = np.unravel_index(idx, (timesteps, height, width))
+                state[0, t, 7, h, w] = ave_rewards * 255
+
+    for i in range(state.shape[3]):
+        for j in range(state.shape[4]):
+            for t in range(state.shape[1]):
+                print(t, i, j, env.world[i, j, 0].kind, state[0, t, 7, i, j])
+
+
 models = create_models()
 # for mod in range(len(models)):
 #    models[mod].new_memory_buffer(1024, SEED, 3)
@@ -454,8 +543,8 @@ models = create_models()
 run_params = (
     [0.5, 500, 20, False, True, True],
     [0.1, 2000, 20, False, True, True],
-    [0.0, 1000, 20, False, True, True],
-    [0.0, 1000, 20, True, True, True],
+    [0.0, 2000, 20, False, True, True],
+    # [0.0, 2500, 20, True, True, True],
 )
 
 # the version below needs to have the keys from above in it
@@ -471,5 +560,6 @@ for modRun in range(len(run_params)):
         masked_attitude=run_params[modRun][4],
         attitude_layer=run_params[modRun][5],
     )
+    view_state(env, object_memory, decay_rate=1.0, attitudes=True)
     # for mod in range(len(models)):
     #    models[mod].new_memory_buffer(1024, SEED, 3)

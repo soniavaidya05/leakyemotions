@@ -65,7 +65,7 @@ class IQN(nn.Module):
         self.device = device
 
         # Network architecture
-        self.head1 = nn.Linear(1296, layer_size)
+        self.head1 = nn.Linear(648, layer_size)
 
         self.cos_embedding = nn.Linear(self.n_cos, layer_size)
         self.ff_1 = NoisyLinear(layer_size, layer_size)
