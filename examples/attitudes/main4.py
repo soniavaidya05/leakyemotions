@@ -52,7 +52,7 @@ import random
 # If True, use the KNN model when computing k-most similar recent states. Otherwise, use a brute-force search.
 USE_KNN_MODEL = True
 # Run profiling on the RL agent to see how long it takes per step
-RUN_PROFILING = False
+RUN_PROFILING = True
 
 print(f'Using device: {device}')
 print(f'Using KNN model: {USE_KNN_MODEL}')
@@ -242,6 +242,7 @@ def run_game(
                                             mems = k_most_similar_recent_states(object_state, state_knn, object_memory, 1, k=5)
                                             r = average_reward(mems)
                                             state[0, t, 7, h, w] = r * 255
+                                            r = 0
 
                     # channels = state[0, 0, :7, 0, 0]
                     # result_tuple = tuple(map(float, channels))
@@ -267,8 +268,9 @@ def run_game(
                     else:
                         object_exp = (state_object, 0)
                     object_memory.append(object_exp)
-                    # Fit a k-NN model to states extracted from the replay buffer
-                    state_knn.fit([exp[0] for exp in object_memory])
+                    if USE_KNN_MODEL:
+                        # Fit a k-NN model to states extracted from the replay buffer
+                        state_knn.fit([exp[0] for exp in object_memory])
 
                     if reward == 15:
                         gems[0] = gems[0] + 1
@@ -287,11 +289,15 @@ def run_game(
                                 for h in range(height):
                                     for w in range(width):
                                         next_state[0, t, 7, h, w] = 0
-                                        if env.world[h, w, 0].kind != "empty":
+                                        if (
+                                            env.world[h, w, 0].kind != "empty"
+                                            or env.world[h, w, 0].kind != "agent"
+                                        ):
                                             object_state = state[0, t, :7, h, w]
                                             mems = k_most_similar_recent_states(object_state, state_knn, object_memory, 1, k=5)
                                             r = average_reward(mems)
                                             next_state[0, t, 7, h, w] = r * 255
+                                            r = 0
 
                     exp = (
                         # models[env.world[new_loc].policy].max_priority,
@@ -484,7 +490,10 @@ def view_state(env, object_memory=object_memory, state_knn=state_knn, decay_rate
                 for h in range(height):
                     for w in range(width):
                         state[0, t, 7, h, w] = 0
-                        if env.world[h, w, 0].kind != "empty":
+                        if (
+                            env.world[h, w, 0].kind != "empty"
+                            or env.world[h, w, 0].kind != "agent"
+                        ):
                             object_state = state[0, t, :7, h, w]
                             mems = k_most_similar_recent_states(
                                 object_state, state_knn, object_memory, 1, k=5
@@ -505,9 +514,9 @@ models = create_models()
 run_params = (
     [0.5, 50, 20, False, True, True],
     [0.5, 500, 20, False, True, True],
-    [0.1, 2000, 20, False, True, True],
-    [0.0, 2000, 20, False, True, True],
-    # [0.0, 2500, 20, True, True, True],
+    [0.1, 1000, 20, False, True, True],
+    [0.0, 1000, 20, False, True, True],
+    [0.0, 1000, 20, True, True, True],
 )
 
 # the version below needs to have the keys from above in it
