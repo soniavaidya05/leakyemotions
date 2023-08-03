@@ -19,13 +19,12 @@ from gem.DQN_utils import save_models, load_models, make_video
 
 from examples.attitudes.elements import EmptyObject, Wall
 
+import time
 import numpy as np
 import random
 import torch
 
-from scipy.spatial import distance
-from scipy.spatial.distance import cdist
-
+from sklearn.neighbors import NearestNeighbors
 
 # save_dir = "/Users/yumozi/Projects/gem_data/RPG3_test/"
 save_dir = "/Users/socialai/Dropbox/M1_ultra/"
@@ -45,93 +44,30 @@ from collections import deque, namedtuple
 
 # noisy_dueling
 
-
-def k_most_similar_recent_states_batch_newer(state_batch, memories, decay_rate, k=5):
-    state_batch_reshaped = state_batch[0, :, :7, :, :].reshape(-1, 7)
-    memory_states = [memory[0] for memory in memories]
-
-    # Compute the distances
-    distances = cdist(state_batch_reshaped, memory_states, "euclidean")
-
-    # Apply weights to the distances based on recency
-    weights = [decay_rate**i for i in range(len(memories) - 1, -1, -1)]
-    weighted_distances = distances * np.array(weights)
-
-    # Find the k most similar states using the weighted distances
-    k_indices = np.argpartition(weighted_distances, k, axis=1)[:, :k]
-    sampled_memories = [[memories[i] for i in row] for row in k_indices]
-
-    return sampled_memories
-
-
-def k_most_similar_recent_states_batch_old(state_batch, memories, decay_rate=1.0, k=5):
-    state_batch_reshaped = state_batch[0, :, :7, :, :].reshape(-1, 7)
-    memory_states = [memory[0] for memory in memories]
-
-    # Compute the distances
-    distances = cdist(state_batch_reshaped, memory_states, "euclidean")
-
-    # Find the k most similar states
-    k_indices = np.argpartition(distances, k, axis=1)[:, :k]
-    sampled_memories = [[memories[i] for i in row] for row in k_indices]
-
-    return sampled_memories
-
-
-import numpy as np
-from scipy.spatial.distance import cdist
-
-
-def k_most_similar_recent_states_batch(state_batch, memories, decay_rate, k=5):
-    search_k = 4 * k
-    state_batch_reshaped = state_batch[0, :, :7, :, :].reshape(-1, 7)
-    memory_states = [memory[0][:7] for memory in memories]
-
-    # Compute the distances
-    distances = cdist(state_batch_reshaped, memory_states, "euclidean")
-
-    # Apply weights to the distances based on recency
-    weights = [decay_rate**i for i in range(len(memories) - 1, -1, -1)]
-    weighted_distances = distances * np.array(weights)
-
-    # Find the 4k most similar states using the weighted distances
-    k_indices = np.argpartition(weighted_distances, search_k, axis=1)[:, :search_k]
-
-    # Create a list to store the final k sampled memories
-    sampled_memories_batch = []
-
-    # Iterate through the k_indices and apply decay-based sampling
-    for indices in k_indices:
-        sampled_indices = np.random.choice(
-            indices, size=k, p=weights[:search_k] / np.sum(weights[:search_k])
-        )
-        sampled_memories = [memories[i] for i in sampled_indices]
-        sampled_memories_batch.append(sampled_memories)
-
-    return sampled_memories_batch
-
-
-def average_rewards(memories):
-    # Extract the rewards from the tuples (assuming reward is the second element in each tuple)
-    rewards = [memory[1] for memory in memories]
-
-    # Calculate the average reward
-    average_reward = sum(rewards) / len(rewards)
-
-    return average_reward
-
-
 from scipy.spatial import distance
 import numpy as np
 import random
 
 
-def k_most_similar_recent_states(state, memories, decay_rate, k=5):
-    # Calculate the Euclidean distance between the given state and each state in memories
-    distances = [distance.euclidean(state, memory[0]) for memory in memories]
+# If True, use the KNN model when computing k-most similar recent states. Otherwise, use a brute-force search.
+USE_KNN_MODEL = True
+# Run profiling on the RL agent to see how long it takes per step
+RUN_PROFILING = False
 
-    # Get the indices of the k most similar states (without selecting them yet)
-    k_indices = np.argsort(distances)[:k]
+print(f'Using device: {device}')
+print(f'Using KNN model: {USE_KNN_MODEL}')
+print(f'Running profiling: {RUN_PROFILING}')
+
+
+def k_most_similar_recent_states(state, knn: NearestNeighbors, memories, decay_rate, k=5):
+    if USE_KNN_MODEL:
+        # Get the indices of the k most similar states (without selecting them yet)
+        state = state.cpu().detach().numpy().reshape(1, -1)
+        k_indices = knn.kneighbors(state, n_neighbors=k, return_distance=False)[0]
+    else:
+        # Perform a brute-force search for the k most similar states
+        distances = [distance.euclidean(state, memory[0]) for memory in memories]
+        k_indices = np.argsort(distances)[:k]
 
     # Create a list of weights based on the decay rate, but only for the k most similar states
     weights = [decay_rate**i for i in k_indices]
@@ -200,6 +136,7 @@ epsilon = 0.99
 turn = 1
 
 object_memory = deque(maxlen=250)
+state_knn = NearestNeighbors(n_neighbors=5)
 
 models = create_models()
 env = RPG(
@@ -261,6 +198,8 @@ def run_game(
 
         turn = 0
 
+        start_time = time.time()
+
         while done == 0:
             """
             Find the agents and wolves and move them
@@ -300,9 +239,7 @@ def run_game(
                                         state[0, t, 7, h, w] = 0
                                         if env.world[h, w, 0].kind != "empty":
                                             object_state = state[0, t, :7, h, w]
-                                            mems = k_most_similar_recent_states(
-                                                object_state, object_memory, 1, k=5
-                                            )
+                                            mems = k_most_similar_recent_states(object_state, state_knn, object_memory, 1, k=5)
                                             r = average_reward(mems)
                                             state[0, t, 7, h, w] = r * 255
 
@@ -330,6 +267,8 @@ def run_game(
                     else:
                         object_exp = (state_object, 0)
                     object_memory.append(object_exp)
+                    # Fit a k-NN model to states extracted from the replay buffer
+                    state_knn.fit([exp[0] for exp in object_memory])
 
                     if reward == 15:
                         gems[0] = gems[0] + 1
@@ -350,9 +289,7 @@ def run_game(
                                         next_state[0, t, 7, h, w] = 0
                                         if env.world[h, w, 0].kind != "empty":
                                             object_state = state[0, t, :7, h, w]
-                                            mems = k_most_similar_recent_states(
-                                                object_state, object_memory, 1, k=5
-                                            )
+                                            mems = k_most_similar_recent_states(object_state, state_knn, object_memory, 1, k=5)
                                             r = average_reward(mems)
                                             next_state[0, t, 7, h, w] = r * 255
 
@@ -416,6 +353,10 @@ def run_game(
                 experiences = models[mods].memory.sample()
                 loss = models[mods].learn(experiences)
                 losses = losses + loss
+
+        end_time = time.time()
+        if RUN_PROFILING:
+            print(f'Epoch {epoch} took {end_time - start_time} seconds')
 
         updateEps = False
         # TODO: the update_epsilon often does strange things. Needs to be reconceptualized
@@ -529,7 +470,7 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
     ani.save(filename, writer="PillowWriter", fps=2)
 
 
-def view_state(env, object_memory=object_memory, decay_rate=1.0, attitudes=True):
+def view_state(env, object_memory=object_memory, state_knn=state_knn, decay_rate=1.0, attitudes=True):
     """
     This is a function to view the state of the world from the perspective of a single agent
     """
@@ -546,7 +487,7 @@ def view_state(env, object_memory=object_memory, decay_rate=1.0, attitudes=True)
                         if env.world[h, w, 0].kind != "empty":
                             object_state = state[0, t, :7, h, w]
                             mems = k_most_similar_recent_states(
-                                object_state, object_memory, 1, k=5
+                                object_state, state_knn, object_memory, 1, k=5
                             )
                             r = average_reward(mems)
                             state[0, t, 7, h, w] = r * 255
@@ -582,6 +523,6 @@ for modRun in range(len(run_params)):
         masked_attitude=run_params[modRun][4],
         attitude_layer=run_params[modRun][5],
     )
-    view_state(env, object_memory, decay_rate=1.0, attitudes=True)
+    view_state(env, object_memory, state_knn, decay_rate=1.0, attitudes=True)
     # for mod in range(len(models)):
     #    models[mod].new_memory_buffer(1024, SEED, 3)
