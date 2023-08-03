@@ -348,7 +348,10 @@ def run_game(
                                 for h in range(height):
                                     for w in range(width):
                                         next_state[0, t, 7, h, w] = 0
-                                        if env.world[h, w, 0].kind != "empty":
+                                        if (
+                                            env.world[h, w, 0].kind != "empty"
+                                            or env.world[h, w, 0].kind != "agent"
+                                        ):
                                             object_state = state[0, t, :7, h, w]
                                             mems = k_most_similar_recent_states(
                                                 object_state, object_memory, 1, k=5
