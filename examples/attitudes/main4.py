@@ -137,7 +137,7 @@ epsilon = 0.99
 
 turn = 1
 
-object_memory = deque(maxlen=1000)
+object_memory = deque(maxlen=2000)
 state_knn = NearestNeighbors(n_neighbors=5)
 
 models = create_models()
@@ -407,87 +407,9 @@ def run_game(
 # env, epsilon, params = setup_game(world_size=15)
 
 
-import matplotlib.animation as animation
-from gem.models.perception import agent_visualfield
-
-
-def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename="tmp"):
-    """
-    This is the main loop of the game
-    """
-    game_points = [0, 0]
-
-    fig = plt.figure()
-    ims = []
-    env.reset_env(world_size, world_size)
-
-    """
-    Move each agent once and then update the world
-    Creates new gamepoints, resets agents, and runs one episode
-    """
-
-    done = 0
-
-    # create a new gameboard for each epoch and repopulate
-    # the resset does allow for different params, but when the world size changes, odd
-    env.reset_env(
-        height=world_size,
-        width=world_size,
-        layers=1,
-        gem1p=0.03,
-        gem2p=0.02,
-        gem3p=0.03,
-    )
-    for loc in find_instance(env.world, "neural_network"):
-        # reset the memories for all agents
-        # the parameter sets the length of the sequence for LSTM
-        env.world[loc].init_replay(1)
-        env.world[loc].init_rnn_state = None
-
-    for _ in range(max_turns):
-        """
-        Find the agents and wolves and move them
-        """
-
-        image = agent_visualfield(env.world, (0, 0), env.tile_size, k=None)
-        im = plt.imshow(image, animated=True)
-        ims.append([im])
-
-        agentList = find_instance(env.world, "neural_network")
-
-        random.shuffle(agentList)
-
-        for loc in agentList:
-            """
-            Reset the rewards for the trial to be zero for all agents
-            """
-            env.world[loc].reward = 0
-
-        for loc in agentList:
-            if env.world[loc].kind != "deadAgent":
-                holdObject = env.world[loc]
-                device = models[holdObject.policy].device
-                state = env.pov(loc)
-
-                # state = fill_in_rewards(state)
-                channels = state[0, 0, :7, 0, 0]
-
-                params = (state.to(device), epsilon, env.world[loc].init_rnn_state)
-
-                # set up the right params below
-
-                action = models[env.world[loc].policy].take_action(state, 0)
-
-                (
-                    env.world,
-                    reward,
-                    next_state,
-                    done,
-                    new_loc,
-                ) = holdObject.transition(env, models, action[0], loc)
-
-    ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
-    ani.save(filename, writer="PillowWriter", fps=2)
+# import matplotlib.animation as animation
+# from gem.models.perception import agent_visualfield
+#
 
 
 def load_attitudes(
