@@ -53,7 +53,7 @@ def create_models():
         iRainbowModel(
             in_channels=7,
             num_filters=7,
-            cnn_out_size=567,  # 910
+            cnn_out_size=224,  # 910
             state_size=torch.tensor(
                 [7, 9, 9]
             ),  # this seems to only be reading the first value
@@ -66,6 +66,7 @@ def create_models():
             TAU=1e-3,  # Soft update parameter
             GAMMA=0.95,  # Discout factor 0.99
             N=12,  # Number of quantiles
+            use_cnn=True,
             device=device,
             seed=SEED,
         )
@@ -359,11 +360,19 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
     ani.save(filename, writer="PillowWriter", fps=2)
 
 
+# run_params = (
+#     [0.5, 2000, 20],
+#     [0.1, 10000, 20],
+#     [0.0, 10000, 20],
+# )
+
 run_params = (
+    [0.8, 2000, 20],
     [0.5, 2000, 20],
     [0.1, 10000, 20],
     [0.0, 10000, 20],
 )
+
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
