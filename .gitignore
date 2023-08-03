@@ -138,3 +138,4 @@ dmypy.json
 output/
 logs/
 gem/.DS_Store
+examples/food_trucks/runs/
