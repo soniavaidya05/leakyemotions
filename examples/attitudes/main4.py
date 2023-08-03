@@ -140,7 +140,7 @@ epsilon = 0.99
 
 turn = 1
 
-object_memory = deque(maxlen=500)
+object_memory = deque(maxlen=5000)
 state_knn = NearestNeighbors(n_neighbors=5)
 
 models = create_models()
@@ -165,7 +165,7 @@ def run_game(
     max_turns=100,
     change=False,
     masked_attitude=False,
-    attitude_layer=False,
+    attitude_layer=True,
 ):
     """
     This is the main loop of the game
@@ -173,7 +173,7 @@ def run_game(
     losses = 0
     game_points = [0, 0]
     gems = [0, 0, 0, 0]
-    decay_rate = 1.0  # Adjust as needed
+    decay_rate = 0.5  # Adjust as needed
 
     for epoch in range(epochs):
         """
@@ -242,21 +242,27 @@ def run_game(
                                 for h in range(height):
                                     for w in range(width):
                                         state[0, t, 7, h, w] = 0
-                                        if env.world[h, w, 0].kind != "empty":
-                                            object_state = state[0, t, :7, h, w]
-                                            mems = k_most_similar_recent_states(
-                                                object_state,
-                                                state_knn,
-                                                object_memory,
-                                                1,
-                                                k=5,
-                                            )
+                                        # if env.world[h, w, 0].kind != "empty":
+                                        object_state = state[0, t, :7, h, w]
+                                        mems = k_most_similar_recent_states(
+                                            object_state,
+                                            state_knn,
+                                            object_memory,
+                                            1,
+                                            k=5,
+                                        )
 
-                                            r = average_reward(mems)
-                                            state[0, t, 7, h, w] = r * 255
-                                            # if random.random() < 0.1:
-                                            #    print(mems)
-                                            #    print(r, state[0, t, :, h, w])
+                                        r = average_reward(mems)
+                                        state[0, t, 7, h, w] = r * 255
+                                        # if random.random() < 0.1:
+                                        #    print(mems)
+                                        #    print(r, state[0, t, :, h, w])
+
+                        # if random.random() < 0.01:
+                        #    for t in range(timesteps):
+                        #        for h in range(height):
+                        #            for w in range(width):
+                        #                print(t, h, w, state[0, t, :, h, w])
 
                     # channels = state[0, 0, :7, 0, 0]
                     # result_tuple = tuple(map(float, channels))
@@ -303,21 +309,21 @@ def run_game(
                                 for h in range(height):
                                     for w in range(width):
                                         next_state[0, t, 7, h, w] = 0
-                                        if (
-                                            env.world[h, w, 0].kind != "empty"
-                                            or env.world[h, w, 0].kind != "agent"
-                                        ):
-                                            object_state = state[0, t, :7, h, w]
-                                            mems = k_most_similar_recent_states(
-                                                object_state,
-                                                state_knn,
-                                                object_memory,
-                                                1,
-                                                k=5,
-                                            )
-                                            r = average_reward(mems)
-                                            next_state[0, t, 7, h, w] = r * 255
-                                            r = 0
+                                        # if (
+                                        #    env.world[h, w, 0].kind != "empty"
+                                        #    or env.world[h, w, 0].kind != "agent"
+                                        # ):
+                                        object_state = state[0, t, :7, h, w]
+                                        mems = k_most_similar_recent_states(
+                                            object_state,
+                                            state_knn,
+                                            object_memory,
+                                            1,
+                                            k=5,
+                                        )
+                                        r = average_reward(mems)
+                                        next_state[0, t, 7, h, w] = r * 255
+                                        r = 0
 
                     exp = (
                         # models[env.world[new_loc].policy].max_priority,
@@ -419,7 +425,7 @@ def run_game(
 
 
 def load_attitudes(
-    state, env=env, object_memory=object_memory, state_knn=state_knn, decay_rate=1.0
+    state, env=env, object_memory=object_memory, state_knn=state_knn, decay_rate=0.5
 ):
     batch, timesteps, channels, height, width = state.shape
     if len(object_memory) > 50:
@@ -493,12 +499,12 @@ models = create_models()
 #    models[mod].new_memory_buffer(1024, SEED, 3)
 
 run_params = (
-    [0.5, 50, 20, False, True, True],
-    [0.5, 500, 20, False, True, True],
-    [0.1, 500, 20, False, True, True],
-    [0.0, 1000, 20, False, True, True],
-    [0.0, 200, 20, True, True, True],
-    [0.0, 1000, 20, True, True, True],
+    [0.5, 50, 20, False, False, True],
+    [0.5, 500, 20, False, False, True],
+    [0.1, 500, 20, False, False, True],
+    [0.0, 1000, 20, False, False, True],
+    [0.0, 200, 20, True, False, True],
+    [0.0, 1000, 20, True, False, True],
 )
 
 # the version below needs to have the keys from above in it
