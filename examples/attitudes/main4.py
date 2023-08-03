@@ -85,6 +85,9 @@ def k_most_similar_recent_states(
     return sampled_memories
 
 
+from sklearn.neighbors import NearestNeighbors
+
+
 def average_reward(memories):
     # Extract the rewards from the tuples (assuming reward is the second element in each tuple)
     rewards = [memory[1] for memory in memories]
@@ -137,7 +140,7 @@ epsilon = 0.99
 
 turn = 1
 
-object_memory = deque(maxlen=2000)
+object_memory = deque(maxlen=500)
 state_knn = NearestNeighbors(n_neighbors=5)
 
 models = create_models()
@@ -248,9 +251,12 @@ def run_game(
                                                 1,
                                                 k=5,
                                             )
+
                                             r = average_reward(mems)
                                             state[0, t, 7, h, w] = r * 255
-                                            r = 0
+                                            # if random.random() < 0.1:
+                                            #    print(mems)
+                                            #    print(r, state[0, t, :, h, w])
 
                     # channels = state[0, 0, :7, 0, 0]
                     # result_tuple = tuple(map(float, channels))
@@ -421,17 +427,16 @@ def load_attitudes(
             for h in range(height):
                 for w in range(width):
                     state[0, t, 7, h, w] = 0
-                    if env.world[h, w, 0].kind != "empty":
-                        object_state = state[0, t, :7, h, w]
-                        mems = k_most_similar_recent_states(
-                            object_state,
-                            state_knn,
-                            object_memory,
-                            decay_rate,
-                            k=5,
-                        )
-                        r = average_reward(mems)
-                        state[0, t, 7, h, w] = r * 255
+                    object_state = state[0, t, :7, h, w]
+                    mems = k_most_similar_recent_states(
+                        object_state,
+                        state_knn,
+                        object_memory,
+                        decay_rate,
+                        k=5,
+                    )
+                    r = average_reward(mems)
+                    state[0, t, 7, h, w] = r * 255
     return state
 
 
@@ -452,32 +457,33 @@ def test_memory(env=env, object_memory=object_memory, new_env=False):
         env.world[loc].init_replay(1)
         env.world[loc].init_rnn_state = None
 
-    loc = agentList[0]
-    state = env.pov(loc)
+    for loc in find_instance(env.world, "neural_network"):
+        loc = agentList[0]
+        state = env.pov(loc)
 
-    batch, timesteps, channels, height, width = state.shape
-    state_attitudes = load_attitudes(state)
-    for i in range(state.shape[3]):
-        for j in range(state.shape[4]):
-            for t in range(state.shape[1]):
-                i2 = loc[0] - 4 + i
-                j2 = loc[1] - 4 + j
-                flagged = False
-                if i2 < 0:
-                    flagged = True
-                if i2 >= world_size:
-                    flagged = True
-                if j2 < 0:
-                    flagged = True
-                if j2 >= world_size:
-                    flagged = True
+        batch, timesteps, channels, height, width = state.shape
+        state_attitudes = load_attitudes(state)
+        for i in range(state.shape[3]):
+            for j in range(state.shape[4]):
+                for t in range(state.shape[1]):
+                    i2 = loc[0] - 4 + i
+                    j2 = loc[1] - 4 + j
+                    flagged = False
+                    if i2 < 0:
+                        flagged = True
+                    if i2 >= world_size:
+                        flagged = True
+                    if j2 < 0:
+                        flagged = True
+                    if j2 >= world_size:
+                        flagged = True
 
-                if flagged:
-                    object_kind = "outside"
-                else:
-                    object_kind = env.world[i2, j2, 0].kind
+                    if flagged:
+                        object_kind = "outside"
+                    else:
+                        object_kind = env.world[i2, j2, 0].kind
 
-                print(t, i, j, object_kind, state[0, t, 7, i, j])
+                    print(loc, t, i, j, object_kind, state[0, t, 7, i, j])
 
 
 models = create_models()
@@ -487,7 +493,7 @@ models = create_models()
 run_params = (
     [0.5, 50, 20, False, True, True],
     [0.5, 500, 20, False, True, True],
-    [0.1, 1000, 20, False, True, True],
+    [0.1, 500, 20, False, True, True],
     [0.0, 1000, 20, False, True, True],
     [0.0, 1000, 20, True, True, True],
 )
