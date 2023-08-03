@@ -33,19 +33,92 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
+import torch.nn.functional as F
 
 from gem.models.layers import NoisyLinear
+
+
+class CNN_CLD(nn.Module):
+    def __init__(self, in_channels, num_filters):
+        super(CNN_CLD, self).__init__()
+        type = 2
+
+        if type == 0:
+            self.conv_layer1 = nn.Conv2d(
+                in_channels=in_channels, out_channels=num_filters, kernel_size=1
+            )
+        if type == 1:
+            self.conv_layer1 = nn.Conv2d(
+                in_channels=num_filters,
+                out_channels=num_filters * 15,
+                kernel_size=3,
+                padding=1,
+            )
+            self.conv_layer2 = nn.Conv2d(
+                in_channels=105,
+                out_channels=num_filters * 10,
+                kernel_size=3,
+                padding=1,
+            )
+            self.conv_layer3 = nn.Conv2d(
+                in_channels=70,
+                out_channels=num_filters * 10,
+                kernel_size=2,
+                padding=0,
+            )
+        if type == 2:
+            self.conv1 = nn.Conv2d(7, 7, kernel_size=3, stride=1, padding=1)
+            self.relu = nn.ReLU()
+            self.maxpool = nn.MaxPool2d(kernel_size=2)
+        if type == 3:
+            self.conv1 = nn.Conv2d(7, 7, kernel_size=1, stride=1, padding=1)
+            self.relu = nn.ReLU()
+
+        self.max_pool = nn.MaxPool2d(3, 1, padding=0)
+        self.avg_pool = nn.AvgPool2d(3, 1, padding=0)
+
+    def forward(self, x):
+        # print(x.shape)
+        x = x / 255  # note, a better normalization should be applied
+        type = 2
+
+        if type == 0:
+            y1 = F.relu(self.conv_layer1(x))
+            y2 = self.avg_pool(y1)  # ave pool is intentional (like a count)
+            y2 = torch.flatten(y2, 1)
+            y1 = torch.flatten(y1, 1)
+            y3 = torch.cat((y1, y2), 1)
+
+        if type == 1:
+            y1 = F.relu(self.conv_layer1(x))
+            y2 = F.relu(self.conv_layer2(y1))
+            y3 = F.relu(self.conv_layer3(y2))
+
+        if type == 2:
+            y1 = self.conv1(x)
+            y2 = self.relu(y1)
+            y3 = self.maxpool(y2)
+
+        if type == 3:
+            y3 = self.conv1(x)
+            y3 = self.relu(y3)
+  
+        return y3
 
 class IQN(nn.Module):
     """The IQN Q-network."""
 
     def __init__(
         self,
+        in_channels,
+        num_filters,
+        cnn_out_size,
         state_size: tuple,
         action_size: int,
         layer_size: int,
         seed: int,
         n_quantiles: int,
+        use_cnn: bool,
         device: Optional[torch.device] = None,
     ) -> None:
         super().__init__()
@@ -61,10 +134,15 @@ class IQN(nn.Module):
             .view(1, 1, self.n_cos)
             .to(device)
         )
+        self.use_cnn = use_cnn
         self.device = device
 
         # Network architecture
-        self.head1 = nn.Linear(1134, layer_size)
+        if use_cnn:
+            self.cnn = CNN_CLD(in_channels=in_channels, num_filters=num_filters)
+            self.head1 = nn.Linear(cnn_out_size, layer_size)
+        else:
+            self.head1 = nn.Linear(1134, layer_size)
 
         self.cos_embedding = nn.Linear(self.n_cos, layer_size)
         self.ff_1 = NoisyLinear(layer_size, layer_size)
@@ -96,10 +174,15 @@ class IQN(nn.Module):
         noise = torch.rand_like(input) * eps
         input = input / 255.0
         input = input + noise
-
-        # Flatten the input from [1, 2, 7, 9, 9] to [1, 1134]
         batch_size, timesteps, C, H, W = input.size()
-        c_out = input.view(batch_size * timesteps, C, H, W)
+
+        if self.use_cnn:
+            c_in = input.view(batch_size * timesteps, C, H, W)
+            c_out = self.cnn(c_in)
+        else:
+            # Flatten the input from [1, 2, 7, 9, 9] to [1, 1134]
+            c_out = input.view(batch_size * timesteps, C, H, W)
+
         r_in = c_out.view(batch_size, -1)
 
         # Pass input through linear layer and activation function ([1, 250])
@@ -154,50 +237,50 @@ class ReplayBuffer:
         )
         self.seed = random.seed(seed)
         self.gamma = gamma
-        # self.n_step = n_step
-        # self.n_step_buffer = deque(maxlen=self.n_step)
+        self.n_step = n_step
+        self.n_step_buffer = deque(maxlen=self.n_step)
 
     def add(self, state, action, reward, next_state, done):
         """
         Add a new experience to memory.
         """
-        # # Add the new experience to buffer
-        # self.n_step_buffer.append((state, action, reward, next_state, done))
+        # Add the new experience to buffer
+        self.n_step_buffer.append((state, action, reward, next_state, done))
 
-        # # If there are enough steps in the buffer, append to the memory
-        # if len(self.n_step_buffer) == self.n_step:
+        # If there are enough steps in the buffer, append to the memory
+        if len(self.n_step_buffer) == self.n_step:
 
-        #     # Set the experience as the return and state change over multiple steps 
-        #     state, action, reward, next_state, done = self.calc_multistep_return(self.n_step_buffer)
-        #     e = self.experience(state, action, reward, next_state, done)
+            # Set the experience as the return and state change over multiple steps 
+            state, action, reward, next_state, done = self.calc_multistep_return(self.n_step_buffer)
+            e = self.experience(state, action, reward, next_state, done)
 
-        #     # Add the experience to the memory
-        #     self.memory.append(e)
+            # Add the experience to the memory
+            self.memory.append(e)
 
         # NOTE: multistep return seem to have little/negative effect on the performance
         # NOTE: removing multistep return also bounds the loss to a lower number
         e = self.experience(state, action, reward, next_state, done)
         self.memory.append(e)
 
-    # def calc_multistep_return(self, n_step_buffer):
-    #     Return = 0
-    #     for idx in range(self.n_step):
-    #         Return += self.gamma**idx * n_step_buffer[idx][2]
+    def calc_multistep_return(self, n_step_buffer):
+        Return = 0
+        for idx in range(self.n_step):
+            Return += self.gamma**idx * n_step_buffer[idx][2]
 
-    #     # There are 3 steps in the buffer
-    #     # - state = state of first step
-    #     # - action = action of first step
-    #     # - reward = sum of rewards of all steps
-    #     # - next_state = state of last step
-    #     # - done = done of last step
+        # There are 3 steps in the buffer
+        # - state = state of first step
+        # - action = action of first step
+        # - reward = sum of rewards of all steps
+        # - next_state = state of last step
+        # - done = done of last step
     
-    #     return (
-    #         n_step_buffer[0][0],
-    #         n_step_buffer[0][1],
-    #         Return,
-    #         n_step_buffer[-1][3],
-    #         n_step_buffer[-1][4],
-    #     )
+        return (
+            n_step_buffer[0][0],
+            n_step_buffer[0][1],
+            Return,
+            n_step_buffer[-1][3],
+            n_step_buffer[-1][4],
+        )
 
     def sample(self):
         """Randomly sample a batch of experiences from memory."""
@@ -263,6 +346,7 @@ class iRainbowModel:
         TAU,
         GAMMA,
         N,
+        use_cnn,
         device,
         seed,
     ):
@@ -294,25 +378,27 @@ class iRainbowModel:
 
         # IQN-Network
         self.qnetwork_local = IQN(
-            # in_channels,
-            # num_filters,
-            # cnn_out_size,
+            in_channels,
+            num_filters,
+            cnn_out_size,
             state_size,
             action_size,
             layer_size,
             seed,
             N,
+            use_cnn,
             device=device,
         ).to(device)
         self.qnetwork_target = IQN(
-            # in_channels,
-            # num_filters,
-            # cnn_out_size,
+            in_channels,
+            num_filters,
+            cnn_out_size,
             state_size,
             action_size,
             layer_size,
             seed,
             N,
+            use_cnn,
             device=device,
         ).to(device)
 
