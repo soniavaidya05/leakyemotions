@@ -280,14 +280,22 @@ def run_game(
         #                r = average_reward(mems)
         #                env.world[i, j, 0].appearance[7] = r * 255
 
-        if epoch > 2:
+        experimental = True
+        if experimental == True:
+            if epoch > 2:
+                for i in range(world_size):
+                    for j in range(world_size):
+                        object_state = torch.tensor(
+                            env.world[i, j, 0].appearance[:7]
+                        ).float()
+                        r = value_model(object_state)
+                        env.world[i, j, 0].appearance[7] = r.item() * 255
+        if (
+            experimental == False
+        ):  # this sets a control condition where no attitudes are used
             for i in range(world_size):
                 for j in range(world_size):
-                    object_state = torch.tensor(
-                        env.world[i, j, 0].appearance[:7]
-                    ).float()
-                    r = value_model(object_state)
-                    env.world[i, j, 0].appearance[7] = r.item() * 255
+                    env.world[i, j, 0].appearance[7] = 0.0
 
         turn = 0
 
