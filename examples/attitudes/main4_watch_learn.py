@@ -7,6 +7,7 @@ from examples.attitudes.utils import (
     find_agents,
     find_instance,
 )
+import matplotlib.pyplot as plt
 
 from examples.attitudes.iRainbow_clean import iRainbowModel
 from examples.attitudes.env_noStoredValue import RPG
@@ -16,7 +17,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
 
-
+import torch.optim as optim
 from examples.attitudes.elements import EmptyObject, Wall
 
 import time
@@ -98,6 +99,49 @@ def average_reward(memories):
     return average_reward
 
 
+class ValueModel(nn.Module):
+    def __init__(self, state_dim, hidden_dim=64, memory_size=5000, learning_rate=0.001):
+        super(ValueModel, self).__init__()
+        self.fc1 = nn.Linear(state_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc4 = nn.Linear(hidden_dim, 1)
+        self.replay_buffer = deque(maxlen=memory_size)
+        self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = torch.relu(self.fc3(x))
+        x = self.fc4(x)
+        return x
+
+    def sample(self, num_memories):
+        return random.sample(
+            self.replay_buffer, min(num_memories, len(self.replay_buffer))
+        )
+
+    def learn(self, memories, batch_size=32):
+        for _ in range(len(memories) // batch_size):
+            batch = random.sample(memories, batch_size)
+            states, rewards = zip(*batch)
+            states = torch.tensor(states, dtype=torch.float32)
+            rewards = torch.tensor(rewards, dtype=torch.float32).view(-1, 1)
+
+            self.optimizer.zero_grad()
+            predictions = self.forward(states)
+            loss = nn.MSELoss()(predictions, rewards)
+            loss.backward()
+            self.optimizer.step()
+        return loss.item()
+
+    def add_memory(self, state, reward):
+        self.replay_buffer.append((state, reward))
+
+
+value_model = ValueModel(state_dim=7, memory_size=250)
+
+
 def create_models():
     """
     Should make the sequence length of the LSTM part of the model and an input here
@@ -132,13 +176,27 @@ def create_models():
 
 
 world_size = 25
-
+value_losses = []
 trainable_models = [0]
 sync_freq = 200  # https://openreview.net/pdf?id=3UK39iaaVpE
 modelUpdate_freq = 4  # https://openreview.net/pdf?id=3UK39iaaVpE
 epsilon = 0.99
 
 turn = 1
+
+
+def eval_attiude_model(value_model=value_model):
+    atts = []
+    s = torch.zeros(7)
+    r = value_model(s)
+    atts.append(round(r.item(), 2))
+    for a in range(7):
+        s = torch.zeros(7)
+        s[a] = 255.0
+        r = value_model(s)
+        atts.append(round(r.item(), 2))
+    return atts
+
 
 object_memory = deque(maxlen=5000)
 state_knn = NearestNeighbors(n_neighbors=5)
@@ -171,6 +229,7 @@ def run_game(
     This is the main loop of the game
     """
     losses = 0
+    local_value_losses = 0
     game_points = [0, 0]
     gems = [0, 0, 0, 0]
     decay_rate = 1.0  # Adjust as needed
@@ -248,8 +307,9 @@ def run_game(
                 Reset the rewards for the trial to be zero for all agents
                 """
                 env.world[loc].reward = 0
-
+            agent_num = 0
             for loc in agentList:
+                agent_num = agent_num + 1
                 if env.world[loc].kind != "deadAgent":
                     holdObject = env.world[loc]
                     device = models[holdObject.policy].device
@@ -305,6 +365,18 @@ def run_game(
                     state_object = object_info[0:7]
                     if attitude_layer:
                         object_exp = (state_object, reward)
+                        value_model.add_memory(state_object, reward)
+                        if len(value_model.replay_buffer) > 51 and turn % 2 == 0:
+                            memories = value_model.sample(50)
+                            value_loss = value_model.learn(memories, 25)
+                            # local_value_losses = local_value_losses + value_loss
+                            if turn == 2 and epoch % 20 == 0 and agent_num == 1:
+                                atts = eval_attiude_model()
+                                print(epoch, atts)
+                            #    value_losses.append(local_value_losses)
+                            #    print(epoch, local_value_losses)
+                            #    local_value_losses = 0
+
                     else:
                         object_exp = (state_object, 0)
                     object_memory.append(object_exp)
@@ -535,3 +607,16 @@ for modRun in range(len(run_params)):
     # test_memory(env, object_memory, new_env=False)
     # for mod in range(len(models)):
     #    models[mod].new_memory_buffer(1024, SEED, 3)
+
+
+# window_size = 5
+# smoothed_losses = [
+#    sum(value_losses[max(i - window_size + 1, 0) : i + 1])
+#    / (i - max(i - window_size + 1, 0) + 1)
+#    for i in range(len(value_losses))
+# ]
+
+# plt.plot(smoothed_losses)
+# plt.xlabel("Training Iteration")
+# plt.ylabel("Smoothed Loss")
+# plt.show()
