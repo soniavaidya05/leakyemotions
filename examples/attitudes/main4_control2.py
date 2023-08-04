@@ -195,11 +195,27 @@ def run_game(
             change=change,
             masked_attitude=masked_attitude,
         )
+
+        working_memory = 1
+
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
-            env.world[loc].init_replay(1)
+            env.world[loc].init_replay(working_memory)
             env.world[loc].init_rnn_state = None
+
+        for i in range(world_size):
+            for j in range(world_size):
+                if env.world[i, j, 0].kind == "wall":
+                    for k in range(working_memory):
+                        env.world[i, j, 0].appearance[7] = -1 * 255
+                        # print(env.world[i, j, 0].kind, env.world[i, j, 0].appearance[7])
+                if env.world[i, j, 0].kind == "gem":
+                    for k in range(working_memory):
+                        env.world[i, j, 0].appearance[7] = (
+                            env.world[i, j, 0].value * 255
+                        )
+                        # print(env.world[i, j, 0].kind, env.world[i, j, 0].appearance[7])
 
         turn = 0
 
@@ -236,33 +252,33 @@ def run_game(
                     state = env.pov(loc)
                     batch, timesteps, channels, height, width = state.shape
 
-                    if attitude_layer:
-                        if len(object_memory) > 50:
-                            for t in range(timesteps):
-                                for h in range(height):
-                                    for w in range(width):
-                                        state[0, t, 7, h, w] = 0
-                                        # if env.world[h, w, 0].kind != "empty":
-                                        object_state = state[0, t, :7, h, w]
-                                        mems = k_most_similar_recent_states(
-                                            object_state,
-                                            state_knn,
-                                            object_memory,
-                                            1,
-                                            k=5,
-                                        )
+                    # if attitude_layer:
+                    #    if len(object_memory) > 50:
+                    #        for t in range(timesteps):
+                    #            for h in range(height):
+                    #                for w in range(width):
+                    #                    state[0, t, 7, h, w] = 0
+                    #                    # if env.world[h, w, 0].kind != "empty":
+                    #                    object_state = state[0, t, :7, h, w]
+                    #                    mems = k_most_similar_recent_states(
+                    #                        object_state,
+                    #                        state_knn,
+                    #                        object_memory,
+                    #                        1,
+                    #                        k=5,
+                    #                    )
 
-                                        r = average_reward(mems)
-                                        state[0, t, 7, h, w] = r * 255
-                                        # if random.random() < 0.1:
-                                        #    print(mems)
-                                        #    print(r, state[0, t, :, h, w])
+                    #                    r = average_reward(mems)
+                    #                    state[0, t, 7, h, w] = r * 0
+                    # if random.random() < 0.1:
+                    #    print(mems)
+                    #    print(r, state[0, t, :, h, w])
 
-                        # if random.random() < 0.01:
-                        #    for t in range(timesteps):
-                        #        for h in range(height):
-                        #            for w in range(width):
-                        #                print(t, h, w, state[0, t, :, h, w])
+                    # if random.random() < 0.01:
+                    #    for t in range(timesteps):
+                    #        for h in range(height):
+                    #            for w in range(width):
+                    #                print(t, h, w, state[0, t, :, h, w])
 
                     # channels = state[0, 0, :7, 0, 0]
                     # result_tuple = tuple(map(float, channels))
@@ -303,21 +319,27 @@ def run_game(
 
                     # these can be included on one replay
 
-                    if attitude_layer:
-                        if len(object_memory) > 50:
-                            for t in range(timesteps):
-                                for h in range(height):
-                                    for w in range(width):
-                                        object_state = state[0, t, :7, h, w]
-                                        mems = k_most_similar_recent_states(
-                                            object_state,
-                                            state_knn,
-                                            object_memory,
-                                            1,
-                                            k=5,
-                                        )
-                                        r = average_reward(mems)
-                                        next_state[0, t, 7, h, w] = r * 255
+                    # if attitude_layer:
+                    #    if len(object_memory) > 50:
+                    #        for t in range(timesteps):
+                    #            for h in range(height):
+                    #                for w in range(width):
+                    #                    next_state[0, t, 7, h, w] = 0
+                    #                    # if (
+                    #                    #    env.world[h, w, 0].kind != "empty"
+                    #                    #    or env.world[h, w, 0].kind != "agent"
+                    #                    # ):
+                    #                    object_state = state[0, t, :7, h, w]
+                    #                    mems = k_most_similar_recent_states(
+                    #                        object_state,
+                    #                        state_knn,
+                    #                        object_memory,
+                    #                        1,
+                    #                        k=5,
+                    #                    )
+                    #                    r = average_reward(mems)
+                    #                    next_state[0, t, 7, h, w] = r * 0
+                    #                    r = 0
 
                     exp = (
                         # models[env.world[new_loc].policy].max_priority,
@@ -431,7 +453,7 @@ def load_attitudes(
                         k=5,
                     )
                     r = average_reward(mems)
-                    state[0, t, 7, h, w] = r * 255
+                    state[0, t, 7, h, w] = r * 0
     return state
 
 

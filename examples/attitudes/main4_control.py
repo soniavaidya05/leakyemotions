@@ -253,7 +253,7 @@ def run_game(
                                         )
 
                                         r = average_reward(mems)
-                                        state[0, t, 7, h, w] = r * 255
+                                        state[0, t, 7, h, w] = r * 0
                                         # if random.random() < 0.1:
                                         #    print(mems)
                                         #    print(r, state[0, t, :, h, w])
@@ -308,6 +308,11 @@ def run_game(
                             for t in range(timesteps):
                                 for h in range(height):
                                     for w in range(width):
+                                        next_state[0, t, 7, h, w] = 0
+                                        # if (
+                                        #    env.world[h, w, 0].kind != "empty"
+                                        #    or env.world[h, w, 0].kind != "agent"
+                                        # ):
                                         object_state = state[0, t, :7, h, w]
                                         mems = k_most_similar_recent_states(
                                             object_state,
@@ -317,7 +322,8 @@ def run_game(
                                             k=5,
                                         )
                                         r = average_reward(mems)
-                                        next_state[0, t, 7, h, w] = r * 255
+                                        next_state[0, t, 7, h, w] = r * 0
+                                        r = 0
 
                     exp = (
                         # models[env.world[new_loc].policy].max_priority,
@@ -431,7 +437,7 @@ def load_attitudes(
                         k=5,
                     )
                     r = average_reward(mems)
-                    state[0, t, 7, h, w] = r * 255
+                    state[0, t, 7, h, w] = r * 0
     return state
 
 
