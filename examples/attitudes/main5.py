@@ -10,7 +10,7 @@ from examples.attitudes.utils import (
 import matplotlib.pyplot as plt
 
 from examples.attitudes.iRainbow_clean import iRainbowModel
-from examples.attitudes.env_noStoredValue import RPG
+from examples.attitudes.env import RPG
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -478,7 +478,7 @@ def run_game(
             # epsilon = update_epsilon(epsilon, turn, epoch)
             epsilon = max(epsilon - 0.00003, 0.2)
 
-        if epoch % 100 == 0 and len(trainable_models) > 0 and epoch != 0:
+        if epoch % 20 == 0 and len(trainable_models) > 0 and epoch != 0:
             # print the state and update the counters. This should be made to be tensorboard instead
             print(
                 epoch, withinturn, round(game_points[0]), gems, losses, epsilon, change

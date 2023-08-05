@@ -55,7 +55,7 @@ class RPG:
         gem2p=0.04,
         gem3p=0.005,
         change=False,
-        masked_attitude=False,
+        masked_attitude=True,
     ):
         """
         Resets the environment and repopulates it
@@ -173,95 +173,92 @@ class RPG:
                     ],
                 )
 
-                just_attitude = False
-
-                if just_attitude == False:
-                    if masked_attitude == False:
-                        if change:
-                            if obj == 0:
-                                self.world[i, j, 0] = Gem(
-                                    5, [0.0, 0.0, 0.0, 255.0, 0.0, 0.0, 0.0, 5 * 255.0]
-                                )
-                            if obj == 1:
-                                self.world[i, j, 0] = Gem(
-                                    15,
-                                    [0.0, 0.0, 0.0, 0.0, 255.0, 0.0, 0.0, 15 * 255.0],
-                                )
-                            if obj == 2:
-                                self.world[i, j, 0] = Gem(
-                                    -5,
-                                    [0.0, 0.0, 0.0, 0.0, 0.0, 255.0, 0.0, -5 * 255.0],
-                                )
-                        else:
-                            if obj == 0:
-                                self.world[i, j, 0] = Gem(
-                                    5, [0.0, 0.0, 0.0, 0.0, 255.0, 0.0, 0.0, 5 * 255.0]
-                                )
-                            if obj == 1:
-                                self.world[i, j, 0] = Gem(
-                                    15,
-                                    [0.0, 0.0, 0.0, 0.0, 0.0, 255.0, 0.0, 15 * 255.0],
-                                )
-                            if obj == 2:
-                                self.world[i, j, 0] = Gem(
-                                    -5,
-                                    [0.0, 0.0, 0.0, 255.0, 0.0, 0.0, 0.0, -5 * 255.0],
-                                )
-                    else:
-                        if obj == 0:
-                            self.world[i, j, 0] = Gem(
-                                5, [0.0, 0.0, 0.0, 255.0, 0.0, 0.0, 0.0, 0.0]
-                            )
-                        if obj == 1:
-                            self.world[i, j, 0] = Gem(
-                                15, [0.0, 0.0, 0.0, 0.0, 255.0, 0.0, 0.0, 0.0]
-                            )
-                        if obj == 2:
-                            self.world[i, j, 0] = Gem(
-                                -5, [0.0, 0.0, 0.0, 0.0, 0.0, 255.0, 0.0, 0.0]
-                            )
-
-                if just_attitude == True:
-                    if masked_attitude == False:
-                        if change:
-                            if obj == 0:
-                                self.world[i, j, 0] = Gem(
-                                    5, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5 * 255.0]
-                                )
-                            if obj == 1:
-                                self.world[i, j, 0] = Gem(
-                                    15, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15 * 255.0]
-                                )
-                            if obj == 2:
-                                self.world[i, j, 0] = Gem(
-                                    -5, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -5 * 255.0]
-                                )
-                        else:
-                            if obj == 0:
-                                self.world[i, j, 0] = Gem(
-                                    5, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5 * 255.0]
-                                )
-                            if obj == 1:
-                                self.world[i, j, 0] = Gem(
-                                    15, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15 * 255.0]
-                                )
-                            if obj == 2:
-                                self.world[i, j, 0] = Gem(
-                                    -5, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -5 * 255.0]
-                                )
-                    else:
-                        if obj == 0:
-                            self.world[i, j, 0] = Gem(
-                                5, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-                            )
-                        if obj == 1:
-                            self.world[i, j, 0] = Gem(
-                                15, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-                            )
-                        if obj == 2:
-                            self.world[i, j, 0] = Gem(
-                                -5, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-                            )
+                if change:
+                    if obj == 0:
+                        self.world[i, j, 0] = Gem(
+                            5,
+                            [
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0 + 255.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                            ],
+                        )
+                    if obj == 1:
+                        self.world[i, j, 0] = Gem(
+                            15,
+                            [
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0 + 255.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                            ],
+                        )
+                    if obj == 2:
+                        self.world[i, j, 0] = Gem(
+                            -5,
+                            [
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0 + 255.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                            ],
+                        )
+                else:
+                    if obj == 0:
+                        self.world[i, j, 0] = Gem(
+                            -5,
+                            [
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0 + 255.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                            ],
+                        )
+                    if obj == 1:
+                        self.world[i, j, 0] = Gem(
+                            5,
+                            [
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0 + 255.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                            ],
+                        )
+                    if obj == 2:
+                        self.world[i, j, 0] = Gem(
+                            15,
+                            [
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0 + 255.0,
+                                np.random.rand() * 0.0,
+                                np.random.rand() * 0.0,
+                            ],
+                        )
 
         player1_location1 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
         player1_location2 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
