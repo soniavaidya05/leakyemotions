@@ -328,11 +328,32 @@ def run_game(
                 """
                 env.world[loc].reward = 0
             agent_num = 0
+
             for loc in agentList:
                 agent_num = agent_num + 1
                 if env.world[loc].kind != "deadAgent":
                     holdObject = env.world[loc]
                     device = models[holdObject.policy].device
+
+                    # rather than just the state, compute the whole map as a test
+                    if attitude_condition == "construct_attitude_slow":
+                        if len(object_memory) > 50:
+                            for i in range(world_size):
+                                for j in range(world_size):
+                                    for k in range(working_memory):
+                                        object_state = torch.tensor(
+                                            env.world[i, j, 0].appearance[:7]
+                                        ).float()
+                                        mems = k_most_similar_recent_states(
+                                            object_state,
+                                            state_knn,
+                                            object_memory,
+                                            1,
+                                            k=5,
+                                        )
+                                        r = average_reward(mems)
+                                        env.world[i, j, 0].appearance[7] = r * 255
+
                     state = env.pov(loc)
                     batch, timesteps, channels, height, width = state.shape
 
@@ -481,7 +502,14 @@ def run_game(
         if epoch % 20 == 0 and len(trainable_models) > 0 and epoch != 0:
             # print the state and update the counters. This should be made to be tensorboard instead
             print(
-                epoch, withinturn, round(game_points[0]), gems, losses, epsilon, change
+                epoch,
+                withinturn,
+                round(game_points[0]),
+                gems,
+                losses,
+                epsilon,
+                change,
+                attitude_condition,
             )
             game_points = [0, 0]
             gems = [0, 0, 0, 0]
@@ -565,8 +593,13 @@ models = create_models()
 #       episodic_attitude
 #       implicit_attitude
 #       construct_attitude
+#       construct_attitude_slow (does all mappings at the beginning of the agents turn)
 
-run_params = ([0.5, 5000, 20, 0.999, "implicit_attitude", 2000],)
+#       construct_attitude_slow works and construct_attitude does not,
+#       suggesting that construct_attitude has a bug in it
+
+
+run_params = ([0.5, 5000, 20, 0.999, "construct_attitude_slow", 2000],)
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
