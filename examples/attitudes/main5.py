@@ -560,6 +560,11 @@ def test_memory(env=env, object_memory=object_memory, new_env=False):
 
 models = create_models()
 
+# options here are:
+#       no_attitude
+#       episodic_attitude
+#       implicit_attitude
+#       construct_attitude
 
 run_params = ([0.5, 5000, 20, 0.999, "implicit_attitude", 2000],)
 
