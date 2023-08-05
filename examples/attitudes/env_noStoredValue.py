@@ -55,7 +55,7 @@ class RPG:
         gem2p=0.04,
         gem3p=0.005,
         change=False,
-        masked_attitude=False,
+        masked_attitude=True,
     ):
         """
         Resets the environment and repopulates it
