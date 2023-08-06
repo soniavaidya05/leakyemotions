@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 def process_files(file_pattern="study*.txt", smoothing=1, time_range=None):
     # Dictionary to store data
     data_dict = {}
+    change_points = set()
 
     # Function for smoothing
     def smooth(data, window_size):
@@ -16,6 +17,7 @@ def process_files(file_pattern="study*.txt", smoothing=1, time_range=None):
         plt.errorbar(time_steps[: len(averages)], averages, yerr=stderrs, label=label)
 
     # Iterate over each file matching the pattern
+    prev_condition = None
     for filename in glob.glob(file_pattern):
         with open(filename, "r") as file:
             for line in file:
@@ -25,12 +27,18 @@ def process_files(file_pattern="study*.txt", smoothing=1, time_range=None):
                     time_step = int(parts[0])
                     third_integer = int(parts[2])
                     last_string = parts[-1]
+                    condition = parts[-2]  # second to last column
 
                     # Check if the time_step is within the specified range, if provided
                     if time_range and (
                         time_step < time_range[0] or time_step > time_range[1]
                     ):
                         continue
+
+                    # Check if the condition changes
+                    if prev_condition is not None and condition != prev_condition:
+                        change_points.add(time_step)
+                    prev_condition = condition
 
                     # Add data to dictionary
                     if last_string not in data_dict:
@@ -61,6 +69,10 @@ def process_files(file_pattern="study*.txt", smoothing=1, time_range=None):
 
         plot_results(time_steps, averages, stderrs, key)
         print()
+
+    # Draw vertical lines at change points
+    for change_point in change_points:
+        plt.axvline(x=change_point, color="grey", linestyle="--")
 
     # Add legend and labels, and show plot
     plt.legend()
