@@ -216,7 +216,7 @@ env = RPG(
     layers=1,
     defaultObject=EmptyObject(),
     gem1p=0.03,
-    gem2p=0.02,
+    gem2p=0.03,
     wolf1p=0.03,  # rename gem3p
 )
 # env.game_test()
@@ -232,6 +232,7 @@ def run_game(
     epsilon_decay=0.9999,
     attitude_condition="implicit_attitude",
     switch_epoch=1000,
+    episodic_decay_rate=0.2,
 ):
     """
     This is the main loop of the game
@@ -241,16 +242,15 @@ def run_game(
     game_points = [0, 0]
     gems = [0, 0, 0, 0]
     decay_rate = 0.2  # Adjust as needed
-    change = False
+    change = True
 
     for epoch in range(epochs):
         """
         Move each agent once and then update the world
         Creates new gamepoints, resets agents, and runs one episode
         """
-        change = False
-        if epoch > switch_epoch:
-            change = True
+        if epoch % switch_epoch == 0:
+            change = not change
         epsilon = epsilon * epsilon_decay
         done, withinturn = 0, 0
 
@@ -274,12 +274,7 @@ def run_game(
             env.world[loc].init_replay(working_memory)
             env.world[loc].init_rnn_state = None
 
-            if attitude_condition == "episodic_attitude":
-                episodic_decay_rate = 1.0
-            else:
-                episodic_decay_rate = 0.2
-
-        if attitude_condition == "episodic_attitude" or "episodic_attitude_decay":
+        if "episodic_attitude" in attitude_condition:
             if len(object_memory) > 50:
                 for i in range(world_size):
                     for j in range(world_size):
@@ -559,7 +554,7 @@ def test_memory(env=env, object_memory=object_memory, new_env=False):
             width=world_size,
             layers=1,
             gem1p=0.03,
-            gem2p=0.02,
+            gem2p=0.03,
             gem3p=0.03,
         )
     # agentList = find_instance(env.world, "neural_network")
@@ -613,13 +608,37 @@ models = create_models()
 
 
 run_params = (
-    [0.5, 5000, 20, 0.999, "episodic_attitude_decay", 2000, 250],
-    [0.5, 5000, 20, 0.999, "episodic_attitude", 2000, 5000],
-    [0.5, 5000, 20, 0.999, "no_attitude", 2000, 250],
-    [0.5, 5000, 20, 0.999, "implicit_attitude", 2000, 250],
+    [0.5, 7999, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
+    [0.5, 7999, 20, 0.999, "episodic_attitude", 2000, 5000, 1.0],
+    [0.5, 7999, 20, 0.999, "no_attitude", 2000, 250, 1.0],
+    [0.5, 7999, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
     # [0.5, 5000, 20, 0.999, "construct_attitude", 2000],
     # [0.5, 5000, 20, 0.999, "construct_attitude_slow", 2000],
 )
+
+run_params = (
+    [0.5, 8100, 20, 0.999, "episodic_attitude_250_10", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_250_8", 2000, 250, 0.8],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_250_5", 2000, 250, 0.5],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_250_2", 2000, 250, 0.2],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_10", 2000, 1000, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_8", 2000, 1000, 0.8],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_5", 2000, 1000, 0.5],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_2", 2000, 1000, 0.2],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_10", 2000, 2500, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_8", 2000, 2500, 0.8],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_5", 2000, 2500, 0.5],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_2", 2000, 2500, 0.2],
+)
+
+# Convert the tuple of lists to a list of lists
+# run_params_list = list(run_params)
+
+# Shuffle the list of lists
+# random.shuffle(run_params_list)
+
+# If you need the result as a tuple again
+# run_params_list = tuple(run_params_list)
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
@@ -636,6 +655,7 @@ for modRun in range(len(run_params)):
         epsilon_decay=run_params[modRun][3],
         attitude_condition=run_params[modRun][4],
         switch_epoch=run_params[modRun][5],
+        episodic_decay_rate=run_params[modRun][7],
     )
     # atts = eval_attiude_model()
     # print(atts)
