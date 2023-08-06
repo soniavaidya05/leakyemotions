@@ -261,7 +261,7 @@ def run_game(
             width=world_size,
             layers=1,
             gem1p=0.03,
-            gem2p=0.02,
+            gem2p=0.03,
             gem3p=0.03,
             change=change,
         )
@@ -607,16 +607,16 @@ models = create_models()
 #       suggesting that construct_attitude has a bug in it
 
 
-run_params = (
-    [0.5, 7999, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
-    [0.5, 7999, 20, 0.999, "episodic_attitude", 2000, 5000, 1.0],
-    [0.5, 7999, 20, 0.999, "no_attitude", 2000, 250, 1.0],
-    [0.5, 7999, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
+run_params1 = (
+    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude", 2000, 5000, 1.0],
+    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
     # [0.5, 5000, 20, 0.999, "construct_attitude", 2000],
     # [0.5, 5000, 20, 0.999, "construct_attitude_slow", 2000],
 )
 
-run_params = (
+run_params2 = (
     [0.5, 8100, 20, 0.999, "episodic_attitude_250_10", 2000, 250, 1.0],
     [0.5, 8100, 20, 0.999, "episodic_attitude_250_8", 2000, 250, 0.8],
     [0.5, 8100, 20, 0.999, "episodic_attitude_250_5", 2000, 250, 0.5],
@@ -630,6 +630,8 @@ run_params = (
     [0.5, 8100, 20, 0.999, "episodic_attitude_2500_5", 2000, 2500, 0.5],
     [0.5, 8100, 20, 0.999, "episodic_attitude_2500_2", 2000, 2500, 0.2],
 )
+
+run_params = run_params2
 
 # Convert the tuple of lists to a list of lists
 # run_params_list = list(run_params)
