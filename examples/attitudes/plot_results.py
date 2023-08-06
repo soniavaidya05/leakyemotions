@@ -1,10 +1,19 @@
 import glob
 import numpy as np
+import matplotlib.pyplot as plt
 
 
-def process_files(file_pattern="rs*p2.txt", smoothing=1):
+def process_files(file_pattern="study*.txt", smoothing=1, time_range=None):
     # Dictionary to store data
     data_dict = {}
+
+    # Function for smoothing
+    def smooth(data, window_size):
+        return np.convolve(data, np.ones(window_size) / window_size, mode="valid")
+
+    # Function to plot results
+    def plot_results(time_steps, averages, stderrs, label):
+        plt.errorbar(time_steps[: len(averages)], averages, yerr=stderrs, label=label)
 
     # Iterate over each file matching the pattern
     for filename in glob.glob(file_pattern):
@@ -17,6 +26,12 @@ def process_files(file_pattern="rs*p2.txt", smoothing=1):
                     third_integer = int(parts[2])
                     last_string = parts[-1]
 
+                    # Check if the time_step is within the specified range, if provided
+                    if time_range and (
+                        time_step < time_range[0] or time_step > time_range[1]
+                    ):
+                        continue
+
                     # Add data to dictionary
                     if last_string not in data_dict:
                         data_dict[last_string] = {}
@@ -24,11 +39,7 @@ def process_files(file_pattern="rs*p2.txt", smoothing=1):
                         data_dict[last_string][time_step] = []
                     data_dict[last_string][time_step].append(third_integer)
 
-    # Function for smoothing
-    def smooth(data, window_size):
-        return np.convolve(data, np.ones(window_size) / window_size, mode="valid")
-
-    # Process and print results
+    # Process and print results, and plot
     for key, value in data_dict.items():
         print(f"Results for {key}:")
         time_steps = sorted(value.keys())
@@ -48,8 +59,17 @@ def process_files(file_pattern="rs*p2.txt", smoothing=1):
         for t, avg, err in zip(time_steps[: len(averages)], averages, stderrs):
             print(f"Time step: {t}, Average: {avg}, Standard Error: {err}")
 
+        plot_results(time_steps, averages, stderrs, key)
         print()
 
+    # Add legend and labels, and show plot
+    plt.legend()
+    plt.xlabel("Time Step")
+    plt.ylabel("Value")
+    plt.title("Results")
+    plt.show()
 
-# Example usage
+
+# Example usage for time steps between 100 and 300
+process_files(smoothing=5, time_range=(1500, 3000))
 process_files(smoothing=5)
