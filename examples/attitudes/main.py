@@ -661,3 +661,10 @@ for modRun in range(len(run_params)):
     )
     # atts = eval_attiude_model()
     # print(atts)
+
+
+# notes:
+#      retreived memorories can be put back into a replay buffer
+#      need to have long term memories that get stored somehow
+#      if we can get the decay to work right, decay can be something that
+#      is modulated (and maybe learned) to retain memories for longer
