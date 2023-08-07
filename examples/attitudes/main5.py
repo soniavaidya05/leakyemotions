@@ -293,6 +293,7 @@ def run_game(
                         ).float()
                         r = value_model(object_state)
                         env.world[i, j, 0].appearance[7] = r.item() * 255
+
         if (
             attitude_condition == "no_attitude"
         ):  # this sets a control condition where no attitudes are used

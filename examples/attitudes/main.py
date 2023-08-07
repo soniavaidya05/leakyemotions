@@ -301,6 +301,11 @@ def run_game(
                         ).float()
                         r = value_model(object_state)
                         env.world[i, j, 0].appearance[7] = r.item() * 255
+            testing = False
+            if testing and epoch % 100 == 0:
+                atts = eval_attiude_model()
+                print(epoch, atts)
+
         if (
             attitude_condition == "no_attitude"
         ):  # this sets a control condition where no attitudes are used
@@ -612,8 +617,6 @@ run_params1 = (
     [0.5, 8100, 20, 0.999, "episodic_attitude", 2000, 5000, 1.0],
     [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
     [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
-    # [0.5, 5000, 20, 0.999, "construct_attitude", 2000],
-    # [0.5, 5000, 20, 0.999, "construct_attitude_slow", 2000],
 )
 
 run_params2 = (
@@ -631,7 +634,43 @@ run_params2 = (
     [0.5, 8100, 20, 0.999, "episodic_attitude_2500_2", 2000, 2500, 0.2],
 )
 
-run_params = run_params2
+run_params2b = (
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_10", 2000, 2500, 1.0],
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_8", 2000, 2500, 0.8],
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_5", 2000, 2500, 0.5],
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_2", 2000, 2500, 0.2],
+)
+
+
+run_params1a = (
+    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
+)
+
+run_params1b = (
+    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
+)
+
+run_params1c = (
+    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
+)
+
+order = np.random.choice([0, 1, 2])
+
+if order == 0:
+    run_params = run_params1a
+if order == 1:
+    run_params = run_params1b
+if order == 2:
+    run_params = run_params1c
+
+# run_params = run_params1a
+
 
 # Convert the tuple of lists to a list of lists
 # run_params_list = list(run_params)
