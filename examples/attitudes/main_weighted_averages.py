@@ -40,7 +40,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 import time
 
 
-def compute_weighted_average(state, memories):
+def compute_weighted_average_old(state, memories):
     total_weight = 0
     weighted_sum = 0
     N = len(memories)
@@ -62,6 +62,40 @@ def compute_weighted_average(state, memories):
 
         weighted_sum += weight * reward
         total_weight += weight
+
+    return weighted_sum / total_weight if total_weight != 0 else 0
+
+
+import numpy as np
+
+
+def compute_weighted_average(state, memories):
+    if not memories:
+        return 0
+
+    memory_states, rewards = zip(*memories)
+    memory_states = np.array(memory_states)
+    state = np.array(state)
+
+    # Compute Euclidean distances
+    distances = np.linalg.norm(memory_states - state, axis=1)
+    max_distance = np.max(distances) if distances.size else 1
+
+    # Compute similarity weights
+    similarity_weights = (
+        1 - distances / max_distance if max_distance != 0 else np.ones_like(distances)
+    )
+
+    # Compute time weights
+    N = len(memories)
+    time_weights = np.arange(N) / (N - 1)
+
+    # Combine the weights
+    weights = similarity_weights * time_weights
+
+    # Compute the weighted sum
+    weighted_sum = np.dot(weights, rewards)
+    total_weight = np.sum(weights)
 
     return weighted_sum / total_weight if total_weight != 0 else 0
 
@@ -727,7 +761,7 @@ if order == 2:
 run_params = run_params2b
 
 run_params = (
-    [0.5, 8100, 20, 0.999, "weighted_average_attitude", 2000, 2500, 1.0],
+    [0.5, 8100, 20, 0.999, "weighted_average_attitude", 200, 2500, 1.0],
     [0.5, 8100, 20, 0.999, "no_attitude", 2000, 2500, 1.0],
     [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0],
 )
