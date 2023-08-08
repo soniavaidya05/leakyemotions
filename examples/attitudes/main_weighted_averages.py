@@ -8,7 +8,7 @@ from examples.attitudes.utils import (
     find_instance,
 )
 import matplotlib.pyplot as plt
-
+from scipy.spatial.distance import euclidean
 from examples.attitudes.iRainbow_clean import iRainbowModel
 from examples.attitudes.env import RPG
 import matplotlib.pyplot as plt
@@ -38,6 +38,43 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #    device = torch.device("mps")
 
 import time
+
+
+def compute_weighted_average(state, memories):
+    total_weight = 0
+    weighted_sum = 0
+    N = len(memories)
+
+    # Calculate max_distance for normalization
+    distances = [euclidean(state, memory_state) for memory_state, _ in memories]
+    max_distance = max(distances) if distances else 1
+
+    for i, (memory_state, reward) in enumerate(memories):
+        # Compute the similarity weight based on Euclidean distance
+        distance = euclidean(state, memory_state)
+        similarity_weight = 1 - distance / max_distance if max_distance != 0 else 1
+
+        # Compute the time weight (most recent has weight 1, oldest has weight 0)
+        time_weight = i / (N - 1)
+
+        # Combine the weights (you can adjust how you combine them if needed)
+        weight = similarity_weight * time_weight
+
+        weighted_sum += weight * reward
+        total_weight += weight
+
+    return weighted_sum / total_weight if total_weight != 0 else 0
+
+
+def show_weighted_averaged(memories):
+    rs = []
+    for i in range(7):
+        state = np.zeros(7)
+        state[i] = 255
+        r = compute_weighted_average(state, object_memory)
+        rs.append(r)
+    print(rs)
+
 
 SEED = time.time()  # Seed for replicating training runs
 # np.random.seed(SEED)
@@ -95,125 +132,6 @@ def k_most_similar_recent_states(
 
 
 from sklearn.neighbors import NearestNeighbors
-
-
-class RewardPredictor(nn.Module):
-    def __init__(self, input_dim, nhead, num_layers, dim_feedforward, sequence_length):
-        super(RewardPredictor, self).__init__()
-
-        self.encoder_layer = nn.TransformerEncoderLayer(
-            d_model=input_dim, nhead=nhead, dim_feedforward=dim_feedforward
-        )
-        self.transformer_encoder = nn.TransformerEncoder(
-            self.encoder_layer, num_layers=num_layers
-        )
-        self.linear = nn.Linear(input_dim * sequence_length, sequence_length)
-
-        self.loss_function = nn.MSELoss()
-        self.optimizer = optim.Adam(self.parameters(), lr=0.001)
-
-    def forward(self, x):
-        x = x.permute(1, 0, 2)
-        x = self.transformer_encoder(x)
-        x = x.permute(1, 0, 2).contiguous()
-        x = x.view(x.size(0), -1)
-        x = self.linear(x)
-        return x
-
-    def learn(self, states_batch, rewards_batch, lr=0.001):
-        predictions = self(states_batch)
-        loss = self.loss_function(predictions, rewards_batch)
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-        return loss.item()
-
-
-class RewardLearningAgent:
-    def __init__(
-        self, buffer_size, sequence_length, state_length, batch_size, learning_rate
-    ):
-        self.buffer_size = buffer_size
-        self.sequence_length = sequence_length
-        self.state_length = state_length
-        self.replay_buffer = []
-        self.current_sequence = [
-            ([0.0] * state_length, 0) for _ in range(sequence_length)
-        ]
-        self.model = RewardPredictor(
-            state_length,
-            nhead=1,
-            num_layers=1,
-            dim_feedforward=2048,
-            sequence_length=sequence_length,
-        )
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-
-    def add_to_buffer(self, state, reward):
-        self.current_sequence.pop(0)
-        self.current_sequence.append((state, reward))
-        sequence_copy = list(self.current_sequence)
-        self.replay_buffer.append(sequence_copy)
-        if len(self.replay_buffer) > self.buffer_size:
-            self.replay_buffer.pop(0)
-
-    def learn(self):
-        if len(self.replay_buffer) < self.batch_size:
-            return
-
-        batch = random.sample(self.replay_buffer, self.batch_size)
-        states_batch = torch.stack(
-            [
-                torch.tensor([state for state, _ in sequence], dtype=torch.float32)
-                for sequence in batch
-            ]
-        )
-        rewards_batch = torch.stack(
-            [
-                torch.tensor([reward for _, reward in sequence], dtype=torch.float32)
-                for sequence in batch
-            ]
-        )
-
-        loss = self.model.learn(states_batch, rewards_batch, lr=self.learning_rate)
-        return loss
-
-    def test_single_state_prediction(self, state, state_length=7, sequence_length=100):
-        # Assuming `state_length` and `sequence_length` are accessible here; adjust as needed
-        # state_length = 7
-        # sequence_length = 100
-
-        # Make sure the given state has the correct length
-        assert (
-            len(state) == state_length
-        ), "State must have length equal to state_length"
-
-        # Pad the state to the expected sequence length
-        padded_sequence = [
-            ([0.0] * state_length, 0) for _ in range(sequence_length - 1)
-        ]
-        padded_sequence.append((state, 0))  # Add the given state
-
-        # Convert to a batch of size 1
-        states_batch = torch.stack(
-            [torch.tensor([state for state, _ in padded_sequence], dtype=torch.float32)]
-        )
-
-        # Forward pass through the model
-        predictions = self.model(states_batch)
-
-        # print("Predictions:", predictions)
-        return predictions
-
-
-reward_agent = RewardLearningAgent(
-    buffer_size=1000,
-    sequence_length=100,
-    state_length=7,
-    batch_size=32,
-    learning_rate=0.001,
-)
 
 
 def average_reward(memories):
@@ -310,7 +228,6 @@ modelUpdate_freq = 4  # https://openreview.net/pdf?id=3UK39iaaVpE
 epsilon = 0.99
 
 turn = 1
-tranformer_loss = 0
 
 
 def eval_attiude_model(value_model=value_model):
@@ -358,7 +275,6 @@ def run_game(
     This is the main loop of the game
     """
     losses = 0
-    tranformer_loss = 0
     local_value_losses = 0
     game_points = [0, 0]
     gems = [0, 0, 0, 0]
@@ -434,13 +350,19 @@ def run_game(
                 for j in range(world_size):
                     env.world[i, j, 0].appearance[7] = 0.0
 
+        if (
+            attitude_condition == "weighted_average_attitude" and epoch > 2
+        ):  # this sets a control condition where no attitudes are used
+            for i in range(world_size):
+                for j in range(world_size):
+                    o_state = env.world[i, j, 0].appearance[:7]
+                    env.world[i, j, 0].appearance[7] = compute_weighted_average(
+                        o_state, object_memory
+                    )
+
         turn = 0
 
         start_time = time.time()
-
-        if epoch > 100:
-            reward_agent_loss = reward_agent.learn()
-            tranformer_loss = tranformer_loss + reward_agent_loss
 
         while done == 0:
             """
@@ -534,28 +456,6 @@ def run_game(
                         memories = value_model.sample(50)
                         value_loss = value_model.learn(memories, 25)
                     object_memory.append(object_exp)
-
-                    reward_agent.add_to_buffer(state_object, reward)
-                    if epoch % 10 == 0 and turn == 10:
-                        p1 = reward_agent.test_single_state_prediction(
-                            (0, 0, 0, 0, 255, 0, 0)
-                        )
-                        print(
-                            "epoch: ", epoch, "turn: ", turn, "p1_99", p1[0][99], reward
-                        )
-                        p1 = reward_agent.test_single_state_prediction(
-                            (0, 0, 0, 255, 0, 0, 0)
-                        )
-                        print(
-                            "epoch: ", epoch, "turn: ", turn, "p1_99", p1[0][99], reward
-                        )
-                        p1 = reward_agent.test_single_state_prediction(
-                            (0, 0, 0, 0, 0, 255, 0)
-                        )
-                        print(
-                            "epoch: ", epoch, "turn: ", turn, "p1_99", p1[0][99], reward
-                        )
-
                     if USE_KNN_MODEL:
                         # Fit a k-NN model to states extracted from the replay buffer
                         state_knn.fit([exp[0] for exp in object_memory])
@@ -670,9 +570,9 @@ def run_game(
                 epsilon,
                 change,
                 attitude_condition,
-                tranformer_loss,
             )
-            tranformer_loss = 0
+            rs = show_weighted_averaged(object_memory)
+            print(epoch, rs)
             game_points = [0, 0]
             gems = [0, 0, 0, 0]
             losses = 0
@@ -761,7 +661,76 @@ models = create_models()
 #       suggesting that construct_attitude has a bug in it
 
 
-run_params = ([0.5, 8000, 20, 0.999, "no_attitude", 1000, 2500, 1.0],)
+run_params1 = (
+    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude", 2000, 5000, 1.0],
+    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
+)
+
+run_params2 = (
+    [0.5, 8100, 20, 0.999, "episodic_attitude_250_10", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_250_8", 2000, 250, 0.8],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_250_5", 2000, 250, 0.5],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_250_2", 2000, 250, 0.2],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_10", 2000, 1000, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_8", 2000, 1000, 0.8],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_5", 2000, 1000, 0.5],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_2", 2000, 1000, 0.2],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_10", 2000, 2500, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_8", 2000, 2500, 0.8],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_5", 2000, 2500, 0.5],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_2", 2000, 2500, 0.2],
+)
+
+run_params2b = (
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_10", 2000, 2500, 1.0],
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_8", 2000, 2500, 0.8],
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_5", 2000, 2500, 0.5],
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_2", 2000, 2500, 0.2],
+)
+
+run_params2b = (
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_10", 2000, 250, 1.0],
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_8", 2000, 250, 0.8],
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_5", 2000, 250, 0.5],
+    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_2", 2000, 250, 0.2],
+)
+
+run_params1a = (
+    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
+)
+
+run_params1b = (
+    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
+)
+
+run_params1c = (
+    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
+    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
+)
+
+order = np.random.choice([0, 1, 2])
+
+if order == 0:
+    run_params = run_params1a
+if order == 1:
+    run_params = run_params1b
+if order == 2:
+    run_params = run_params1c
+
+run_params = run_params2b
+
+run_params = (
+    [0.5, 8100, 20, 0.999, "weighted_average_attitude", 2000, 2500, 1.0],
+    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 2500, 1.0],
+    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0],
+)
 
 
 # Convert the tuple of lists to a list of lists
@@ -799,41 +768,3 @@ for modRun in range(len(run_params)):
 #      need to have long term memories that get stored somehow
 #      if we can get the decay to work right, decay can be something that
 #      is modulated (and maybe learned) to retain memories for longer
-
-from scipy.spatial.distance import euclidean
-
-
-def compute_weighted_average(state, memories):
-    total_weight = 0
-    weighted_sum = 0
-    N = len(memories)
-
-    # Calculate max_distance for normalization
-    distances = [euclidean(state, memory_state) for memory_state, _ in memories]
-    max_distance = max(distances) if distances else 1
-
-    for i, (memory_state, reward) in enumerate(memories):
-        # Compute the similarity weight based on Euclidean distance
-        distance = euclidean(state, memory_state)
-        similarity_weight = 1 - distance / max_distance if max_distance != 0 else 1
-
-        # Compute the time weight (most recent has weight 1, oldest has weight 0)
-        time_weight = i / (N - 1)
-
-        # Combine the weights (you can adjust how you combine them if needed)
-        weight = similarity_weight * time_weight
-
-        weighted_sum += weight * reward
-        total_weight += weight
-
-    return weighted_sum / total_weight if total_weight != 0 else 0
-
-
-def show_weighted_averaged(memories):
-    rs = []
-    for i in range(7):
-        state = np.zeros(7)
-        state[i] = 255
-        r = compute_weighted_average(state, object_memory) * 5
-        rs.append(r)
-    print(rs)
