@@ -97,6 +97,98 @@ def k_most_similar_recent_states(
 from sklearn.neighbors import NearestNeighbors
 
 
+class RewardPredictor(nn.Module):
+    def __init__(self, input_dim, nhead, num_layers, dim_feedforward, sequence_length):
+        super(RewardPredictor, self).__init__()
+
+        self.encoder_layer = nn.TransformerEncoderLayer(
+            d_model=input_dim, nhead=nhead, dim_feedforward=dim_feedforward
+        )
+        self.transformer_encoder = nn.TransformerEncoder(
+            self.encoder_layer, num_layers=num_layers
+        )
+        self.linear = nn.Linear(input_dim * sequence_length, sequence_length)
+
+        self.loss_function = nn.MSELoss()
+        self.optimizer = optim.Adam(self.parameters(), lr=0.001)
+
+    def forward(self, x):
+        x = x.permute(1, 0, 2)
+        x = self.transformer_encoder(x)
+        x = x.permute(1, 0, 2).contiguous()
+        x = x.view(x.size(0), -1)
+        x = self.linear(x)
+        return x
+
+    def learn(self, states_batch, rewards_batch, lr=0.001):
+        predictions = self(states_batch)
+        loss = self.loss_function(predictions, rewards_batch)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        return loss.item()
+
+
+class RewardLearningAgent:
+    def __init__(
+        self, buffer_size, sequence_length, state_length, batch_size, learning_rate
+    ):
+        self.buffer_size = buffer_size
+        self.sequence_length = sequence_length
+        self.state_length = state_length
+        self.replay_buffer = []
+        self.current_sequence = [
+            ([0.0] * state_length, 0) for _ in range(sequence_length)
+        ]
+        self.model = RewardPredictor(
+            state_length,
+            nhead=1,
+            num_layers=5,
+            dim_feedforward=2048,
+            sequence_length=sequence_length,
+        )
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+
+    def add_to_buffer(self, state, reward):
+        self.current_sequence.pop(0)
+        self.current_sequence.append((state, reward))
+        sequence_copy = list(self.current_sequence)
+        self.replay_buffer.append(sequence_copy)
+        if len(self.replay_buffer) > self.buffer_size:
+            self.replay_buffer.pop(0)
+
+    def learn(self):
+        if len(self.replay_buffer) < self.batch_size:
+            return
+
+        batch = random.sample(self.replay_buffer, self.batch_size)
+        states_batch = torch.stack(
+            [
+                torch.tensor([state for state, _ in sequence], dtype=torch.float32)
+                for sequence in batch
+            ]
+        )
+        rewards_batch = torch.stack(
+            [
+                torch.tensor([reward for _, reward in sequence], dtype=torch.float32)
+                for sequence in batch
+            ]
+        )
+
+        loss = self.model.learn(states_batch, rewards_batch, lr=self.learning_rate)
+        return loss
+
+
+reward_agent = RewardLearningAgent(
+    buffer_size=250,
+    sequence_length=50,
+    state_length=7,
+    batch_size=32,
+    learning_rate=0.001,
+)
+
+
 def average_reward(memories):
     # Extract the rewards from the tuples (assuming reward is the second element in each tuple)
     rewards = [memory[1] for memory in memories]
@@ -191,6 +283,7 @@ modelUpdate_freq = 4  # https://openreview.net/pdf?id=3UK39iaaVpE
 epsilon = 0.99
 
 turn = 1
+tranformer_loss = 0
 
 
 def eval_attiude_model(value_model=value_model):
@@ -238,6 +331,7 @@ def run_game(
     This is the main loop of the game
     """
     losses = 0
+    tranformer_loss = 0
     local_value_losses = 0
     game_points = [0, 0]
     gems = [0, 0, 0, 0]
@@ -316,6 +410,10 @@ def run_game(
         turn = 0
 
         start_time = time.time()
+
+        if epoch > 100:
+            reward_agent_loss = reward_agent.learn()
+            tranformer_loss = tranformer_loss + reward_agent_loss
 
         while done == 0:
             """
@@ -409,6 +507,9 @@ def run_game(
                         memories = value_model.sample(50)
                         value_loss = value_model.learn(memories, 25)
                     object_memory.append(object_exp)
+
+                    reward_agent.add_to_buffer(state_object, reward)
+
                     if USE_KNN_MODEL:
                         # Fit a k-NN model to states extracted from the replay buffer
                         state_knn.fit([exp[0] for exp in object_memory])
@@ -523,7 +624,9 @@ def run_game(
                 epsilon,
                 change,
                 attitude_condition,
+                tranformer_loss,
             )
+            tranformer_loss = 0
             game_points = [0, 0]
             gems = [0, 0, 0, 0]
             losses = 0

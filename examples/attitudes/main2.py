@@ -65,44 +65,52 @@ print(f"Using KNN model: {USE_KNN_MODEL}")
 print(f"Running profiling: {RUN_PROFILING}")
 
 
-def k_most_similar_recent_states(
-    state, knn: NearestNeighbors, memories, decay_rate, k=5
+from sklearn.neighbors import NearestNeighbors
+import numpy as np
+import random
+
+
+def sample_and_average_memories(
+    state,
+    knn: NearestNeighbors,
+    memories,
+    num_samples,
+    similarity_weight=1.0,
+    time_weight=1.0,
 ):
-    if USE_KNN_MODEL:
-        # Get the indices of the k most similar states (without selecting them yet)
-        state = state.cpu().detach().numpy().reshape(1, -1)
-        k_indices = knn.kneighbors(state, n_neighbors=k, return_distance=False)[0]
-    else:
-        # Perform a brute-force search for the k most similar states
-        distances = [distance.euclidean(state, memory[0]) for memory in memories]
-        k_indices = np.argsort(distances)[:k]
+    state = state.cpu().detach().numpy().reshape(1, -1)
 
-    # Create a list of weights based on the decay rate, but only for the k most similar states
-    # weights = [decay_rate**i for i in k_indices]
+    # Get the indices and distances of the num_samples most similar states
+    distances, indices = knn.kneighbors(
+        state, n_neighbors=num_samples, return_distance=True
+    )
+    distances, indices = distances[0], indices[0]
 
-    EPSILON = 1e-10  # A small constant
-    weights = [decay_rate**i + EPSILON for i in k_indices]
+    # Calculate weights based on similarity (lower distance means higher weight)
+    similarity_weights = [1 / (distance + 1e-10) for distance in distances]
 
-    # Normalize the weights
-    weights = [w / sum(weights) for w in weights]
+    # Calculate weights based on time (newer memories have lower indices)
+    time_weights = [len(memories) - i for i in indices]
 
-    # Sample from the k most similar memories with the given weights
+    # Combine the weights using the provided weight parameters
+    combined_weights = [
+        sim_w**similarity_weight * time_w**time_weight
+        for sim_w, time_w in zip(similarity_weights, time_weights)
+    ]
+
+    # Normalize the combined weights
+    combined_weights = [w / sum(combined_weights) for w in combined_weights]
+
+    # Sample the memories using the combined weights
     sampled_memories = random.choices(
-        [memories[i] for i in k_indices], weights=weights, k=k
+        [memories[i] for i in indices], weights=combined_weights, k=num_samples
     )
 
-    return sampled_memories
-
-
-from sklearn.neighbors import NearestNeighbors
-
-
-def average_reward(memories):
-    # Extract the rewards from the tuples (assuming reward is the second element in each tuple)
-    rewards = [memory[1] for memory in memories]
-
-    # Calculate the average reward
-    average_reward = sum(rewards) / len(rewards)
+    # Extract the rewards and calculate the weighted average
+    rewards = [memory[1] for memory in sampled_memories]
+    average_reward = sum(r * w for r, w in zip(rewards, combined_weights)) / sum(
+        combined_weights
+    )
 
     return average_reward
 
@@ -282,14 +290,24 @@ def run_game(
                             object_state = torch.tensor(
                                 env.world[i, j, 0].appearance[:7]
                             ).float()
-                            mems = k_most_similar_recent_states(
+
+                            r = sample_and_average_memories(
                                 object_state,
                                 state_knn,
                                 object_memory,
-                                decay_rate=episodic_decay_rate,
-                                k=5,
+                                num_samples=20,
+                                similarity_weight=1.0,
+                                time_weight=episodic_decay_rate,
                             )
-                            r = average_reward(mems)
+
+                            # mems = k_most_similar_recent_states(
+                            #    object_state,
+                            #    state_knn,
+                            #    object_memory,
+                            #    decay_rate=episodic_decay_rate,
+                            #    k=5,
+                            # )
+                            # r = average_reward(mems)
                             env.world[i, j, 0].appearance[7] = r * 255
 
         if attitude_condition == "implicit_attitude":
@@ -612,70 +630,10 @@ models = create_models()
 #       suggesting that construct_attitude has a bug in it
 
 
-run_params1 = (
-    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude", 2000, 5000, 1.0],
-    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
+run_params = (
+    [0.5, 2500, 20, 0.999, "episodic_attitude_2500_200", 2000, 2500, 10],
+    [0.5, 2500, 20, 0.999, "episodic_attitude_2500_150", 2000, 2500, 0.1],
 )
-
-run_params2 = (
-    [0.5, 8100, 20, 0.999, "episodic_attitude_250_10", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_250_8", 2000, 250, 0.8],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_250_5", 2000, 250, 0.5],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_250_2", 2000, 250, 0.2],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_10", 2000, 1000, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_8", 2000, 1000, 0.8],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_5", 2000, 1000, 0.5],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_2", 2000, 1000, 0.2],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_10", 2000, 2500, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_8", 2000, 2500, 0.8],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_5", 2000, 2500, 0.5],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_2", 2000, 2500, 0.2],
-)
-
-run_params2b = (
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_10", 2000, 2500, 1.0],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_8", 2000, 2500, 0.8],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_5", 2000, 2500, 0.5],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_2", 2000, 2500, 0.2],
-)
-
-run_params2b = (
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_10", 2000, 250, 1.0],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_8", 2000, 250, 0.8],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_5", 2000, 250, 0.5],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_2", 2000, 250, 0.2],
-)
-
-run_params1a = (
-    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
-)
-
-run_params1b = (
-    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
-)
-
-run_params1c = (
-    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
-)
-
-order = np.random.choice([0, 1, 2])
-
-if order == 0:
-    run_params = run_params1a
-if order == 1:
-    run_params = run_params1b
-if order == 2:
-    run_params = run_params1c
-
-run_params = run_params2b
 
 
 # Convert the tuple of lists to a list of lists
