@@ -69,6 +69,53 @@ def compute_weighted_average_old(state, memories):
 import numpy as np
 
 
+def k_most_similar_recent_states2(
+    state, knn: NearestNeighbors, memories, decay_rate, k=5
+):
+    if USE_KNN_MODEL:
+        # Get the indices of the k most similar states (without selecting them yet)
+        state = state.cpu().detach().numpy().reshape(1, -1)
+        k_indices = knn.kneighbors(state, n_neighbors=k, return_distance=False)[0]
+    else:
+        # Perform a brute-force search for the k most similar states
+        distances = [distance.euclidean(state, memory[0]) for memory in memories]
+        k_indices = np.argsort(distances)[:k]
+
+    # Create a list of weights based on the decay rate, but only for the k most similar states
+    # weights = [decay_rate**i for i in k_indices]
+
+    EPSILON = 1e-10  # A small constant
+    weights = [decay_rate**i + EPSILON for i in k_indices]
+
+    # Normalize the weights
+    weights = [w / sum(weights) for w in weights]
+
+    # Sample from the k most similar memories with the given weights
+    sampled_memories = random.choices(
+        [memories[i] for i in k_indices], weights=weights, k=k
+    )
+
+    return sampled_memories
+
+
+def k_most_similar_recent_states(
+    state, knn: NearestNeighbors, memories, decay_rate, k=5
+):
+    if USE_KNN_MODEL:
+        # Get the indices of the k most similar states (without selecting them yet)
+        state = state.cpu().detach().numpy().reshape(1, -1)
+        k_indices = knn.kneighbors(state, n_neighbors=k, return_distance=False)[0]
+    else:
+        # Perform a brute-force search for the k most similar states
+        distances = [distance.euclidean(state, memory[0]) for memory in memories]
+        k_indices = np.argsort(distances)[:k]
+
+    # Gather the k most similar memories based on the indices, preserving the order
+    most_similar_memories = [memories[i] for i in k_indices]
+
+    return most_similar_memories
+
+
 def compute_weighted_average(state, memories):
     if not memories:
         return 0
@@ -105,7 +152,15 @@ def show_weighted_averaged(memories):
     for i in range(7):
         state = np.zeros(7)
         state[i] = 255
-        r = compute_weighted_average(state, object_memory)
+
+        mems = k_most_similar_recent_states(
+            torch.tensor(state),
+            state_knn,
+            object_memory,
+            decay_rate=1.0,
+            k=250,
+        )
+        r = compute_weighted_average(state, mems)
         rs.append(r)
     print(rs)
 
@@ -385,13 +440,20 @@ def run_game(
                     env.world[i, j, 0].appearance[7] = 0.0
 
         if (
-            attitude_condition == "weighted_average_attitude" and epoch > 2
+            attitude_condition == "weighted_average_attitude" and epoch > 10
         ):  # this sets a control condition where no attitudes are used
             for i in range(world_size):
                 for j in range(world_size):
                     o_state = env.world[i, j, 0].appearance[:7]
-                    env.world[i, j, 0].appearance[7] = compute_weighted_average(
-                        o_state, object_memory
+                    mems = k_most_similar_recent_states(
+                        torch.tensor(o_state),
+                        state_knn,
+                        object_memory,
+                        decay_rate=1.0,
+                        k=250,
+                    )
+                    env.world[i, j, 0].appearance[7] = (
+                        compute_weighted_average(o_state, mems) * 255
                     )
 
         turn = 0
@@ -764,6 +826,7 @@ run_params = (
     [0.5, 8100, 20, 0.999, "weighted_average_attitude", 2000, 2500, 1.0],
     [0.5, 8100, 20, 0.999, "no_attitude", 2000, 2500, 1.0],
     [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0],
+    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
 )
 
 

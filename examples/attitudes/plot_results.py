@@ -85,3 +85,10 @@ def process_files(file_pattern="*.txt", smoothing=1, time_range=None):
 # Example usage for time steps between 100 and 300
 # process_files(smoothing=5, time_range=(1500, 3000))
 process_files(file_pattern="study1*.txt", smoothing=5)
+process_files(file_pattern="implicit_pilot*.txt", smoothing=5)
+process_files(file_pattern="study1_cb*.txt", smoothing=5)
+process_files(file_pattern="study2_250*.txt", smoothing=5)
+process_files(file_pattern="study2b*.txt", smoothing=5)
+process_files(file_pattern="study3_*.txt", smoothing=5)
+process_files(file_pattern="study3b*.txt", smoothing=5)
+process_files(file_pattern="test_imp*.txt", smoothing=5)
