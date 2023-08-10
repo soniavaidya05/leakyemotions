@@ -61,23 +61,23 @@ def create_models():
     models.append(
         iRainbowModel(
             in_channels=9,
-            num_filters=10,
-            cnn_out_size=1300,
+            num_filters=20,
+            cnn_out_size=2600,
             state_size=torch.tensor(
                 [9, 9, 9]
             ),  # this seems to only be reading the first value
             action_size=5,
             network=NETWORK_CONFIG,
-            munchausen=True,  # Don't use Munchausen RL loss
+            munchausen=False,  # Don't use Munchausen RL loss
             layer_size=100,
             n_hidden_layers=2,
             n_step=1,  # Multistep IQN (rainbow paper uses 3)
-            BATCH_SIZE=64,
+            BATCH_SIZE=32,
             BUFFER_SIZE=1024,
             LR=0.0001,  # 0.00025
             TAU=1e-3,  # Soft update parameter
-            GAMMA=0.99,  # Discout factor 0.99
-            N=12,  # Number of quantiles
+            GAMMA=0.95,  # Discout factor 0.99
+            N=32,  # Number of quantiles
             worker=1,  # number of parallel environments
             device=device,
             seed=SEED,
@@ -87,23 +87,23 @@ def create_models():
     models.append(
         iRainbowModel(
             in_channels=9,
-            num_filters=10,
-            cnn_out_size=1300,
+            num_filters=20,
+            cnn_out_size=2600,
             state_size=torch.tensor(
                 [9, 9, 9]
             ),  # this seems to only be reading the first value
             action_size=5,
             network=NETWORK_CONFIG,
-            munchausen=True,  # Don't use Munchausen RL loss
+            munchausen=False,  # Don't use Munchausen RL loss
             layer_size=100,
             n_hidden_layers=2,
             n_step=1,  # Multistep IQN (rainbow paper uses 3)
-            BATCH_SIZE=64,
+            BATCH_SIZE=32,
             BUFFER_SIZE=1024,
             LR=0.0001,  # 0.00025
             TAU=1e-3,  # Soft update parameter
-            GAMMA=0.99,  # Discout factor 0.99
-            N=12,  # Number of quantiles
+            GAMMA=0.95,  # Discout factor 0.99
+            N=32,  # Number of quantiles
             worker=1,  # number of parallel environments
             device=device,
             seed=SEED,
@@ -113,22 +113,22 @@ def create_models():
     models.append(
         iRainbowModel(
             in_channels=9,
-            num_filters=10,
-            cnn_out_size=1300,
+            num_filters=20,
+            cnn_out_size=2600,
             state_size=torch.tensor(
                 [9, 9, 9]
             ),  # this seems to only be reading the first value
             action_size=5,
             network=NETWORK_CONFIG,
-            munchausen=True,  # Don't use Munchausen RL loss
+            munchausen=False,  # Don't use Munchausen RL loss
             layer_size=100,
             n_hidden_layers=2,
             n_step=1,  # Multistep IQN (rainbow paper uses 3)
-            BATCH_SIZE=64,
+            BATCH_SIZE=32,
             BUFFER_SIZE=1024,
             LR=0.0001,  # 0.00025
             TAU=1e-3,  # Soft update parameter
-            GAMMA=0.99,  # Discout factor 0.99
+            GAMMA=0.95,  # Discout factor 0.99
             N=12,  # Number of quantiles
             worker=1,  # number of parallel environments
             device=device,
@@ -187,7 +187,6 @@ def run_game(
     losses = 0
     game_points = [0, 0, 0]
     for epoch in range(epochs):
-
         """
         Move each agent once and then update the world
         Creates new gamepoints, resets agents, and runs one episode
@@ -221,12 +220,12 @@ def run_game(
             turn = turn + 1
             withinturn = withinturn + 1
 
-            if epoch % sync_freq == 0:
-                # update the double DQN model ever sync_frew
-                for mods in trainable_models:
-                    models[mods].qnetwork_target.load_state_dict(
-                        models[mods].qnetwork_local.state_dict()
-                    )
+            # if epoch % sync_freq == 0:
+            #    # update the double DQN model ever sync_frew
+            #    for mods in trainable_models:
+            #        models[mods].qnetwork_target.load_state_dict(
+            #            models[mods].qnetwork_local.state_dict()
+            #        )
 
             use_labour = False
             if use_labour == True:
@@ -255,7 +254,6 @@ def run_game(
 
             for loc in agentList:
                 if env.world[loc].static != 1:
-
                     holdObject = env.world[loc]
 
                     device = models[holdObject.policy].device
