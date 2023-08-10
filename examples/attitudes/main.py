@@ -34,7 +34,8 @@ from sklearn.neighbors import NearestNeighbors
 
 
 # save_dir = "/Users/yumozi/Projects/gem_data/RPG3_test/"
-save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+# save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+save_dir = "/Users/ethan/attitudes-output"
 # save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
@@ -45,18 +46,27 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 import time
 
-
 def k_most_similar_recent_states(
-    state, knn: NearestNeighbors, memories, decay_rate, k=5
+    state, knn: NearestNeighbors, memories, object_memory_states_tensor, decay_rate, k=5
 ):
+
     if USE_KNN_MODEL:
         # Get the indices of the k most similar states (without selecting them yet)
         state = state.cpu().detach().numpy().reshape(1, -1)
         k_indices = knn.kneighbors(state, n_neighbors=k, return_distance=False)[0]
     else:
         # Perform a brute-force search for the k most similar states
-        distances = [distance.euclidean(state, memory[0]) for memory in memories]
-        k_indices = np.argsort(distances)[:k]
+        # distances = [distance.euclidean(state, memory[0]) for memory in memories]
+        # k_indices = np.argsort(distances)[:k]
+
+        # let's try another way using torch operations...
+
+        # Calculate the squared Euclidean distance
+        squared_diff = torch.sum((object_memory_states_tensor - state)**2, dim=1)
+        # Take the square root to get the Euclidean distance
+        distance = torch.sqrt(squared_diff)
+        # Argsort and take top-k
+        k_indices = torch.argsort(distance, dim=0)[:k]
 
     # Gather the k most similar memories based on the indices, preserving the order
     most_similar_memories = [memories[i] for i in k_indices]
@@ -102,7 +112,7 @@ torch.manual_seed(SEED)
 
 
 # If True, use the KNN model when computing k-most similar recent states. Otherwise, use a brute-force search.
-USE_KNN_MODEL = True
+USE_KNN_MODEL = False
 # Run profiling on the RL agent to see how long it takes per step
 RUN_PROFILING = False
 
@@ -323,6 +333,7 @@ def run_game(
         if (
             attitude_condition == "weighted_average_attitude" and epoch > 10
         ):  # this sets a control condition where no attitudes are used
+            object_memory_states_tensor = torch.tensor([obj_mem[0] for obj_mem in object_memory])
             for i in range(world_size):
                 for j in range(world_size):
                     o_state = env.world[i, j, 0].appearance[:7]
@@ -330,6 +341,7 @@ def run_game(
                         torch.tensor(o_state),
                         state_knn,
                         object_memory,
+                        object_memory_states_tensor,
                         decay_rate=1.0,
                         k=250,
                     )
@@ -524,8 +536,8 @@ models = create_models()
 
 run_params = (
     [0.5, 4100, 20, 0.999, "weighted_average_attitude", 2000, 2500, 1.0],
-    [0.5, 4100, 20, 0.999, "no_attitude", 2000, 2500, 1.0],
-    [0.5, 4100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0],
+    # [0.5, 4100, 20, 0.999, "no_attitude", 2000, 2500, 1.0],
+    # [0.5, 4100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0],
 )
 
 
