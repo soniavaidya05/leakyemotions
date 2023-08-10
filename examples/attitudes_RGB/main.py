@@ -442,12 +442,14 @@ def run_game(
                         state_knn.fit([exp[0] for exp in object_memory])
 
                     # --------------------------------------------------------------
+                    reward_values = env.gem_values
+                    reward_values = sorted(reward_values, reverse=True)
 
-                    if reward == 15:
+                    if reward == reward_values[0]:
                         gems[0] = gems[0] + 1
-                    if reward == 5:
+                    if reward == reward_values[1]:
                         gems[1] = gems[1] + 1
-                    if reward == -5:
+                    if reward == reward_values[2]:
                         gems[2] = gems[2] + 1
                     if reward == -1:
                         gems[3] = gems[3] + 1
@@ -470,7 +472,7 @@ def run_game(
                     env.world[new_loc].episode_memory.append(exp)
 
                     if env.world[new_loc].kind == "agent":
-                        game_points[0] = game_points[0] + reward
+                        game_points[0] = game_points[0] + reward / reward_values[0]
 
             # determine whether the game is finished (either max length or all agents are dead)
             if (
@@ -537,9 +539,9 @@ def run_game(
                 epsilon,
                 str(gem_changes),
                 attitude_condition,
-                env.gem1_value,
-                env.gem2_value,
-                env.gem3_value,
+                # env.gem1_value,
+                # env.gem2_value,
+                # env.gem3_value,
             )
             # rs = show_weighted_averaged(object_memory)
             # print(epoch, rs)
@@ -554,7 +556,7 @@ models = create_models()
 # options here are. these are experiments that we ran
 
 run_params = (
-    [0.5, 4100, 20, 0.999, "weighted_average_attitude", 2000, 2500, 20.0, 5.0],
+    [0.5, 4100, 20, 0.999, "weighted_average_attitude", 2000, 2500, 20.0, 20.0],
     [0.5, 4100, 20, 0.999, "no_attitude", 2000, 2500, 1.0, 1.0],
     [0.5, 4100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0, 1.0],
 )

@@ -37,9 +37,9 @@ class RPG:
         self.create_world(self.height, self.width, self.layers)
         self.init_elements()
         self.tile_size = tile_size
-        self.gem1_value = ((np.random.random() - 0.5) * 10) + 5
-        self.gem2_value = ((np.random.random() - 0.5) * 10) + 5
-        self.gem3_value = ((np.random.random() - 0.5) * 10) + 5
+        self.gem1_value = ((np.random.random() - 0.5) * 30) + 1
+        self.gem2_value = ((np.random.random() - 0.5) * 30) + 1
+        self.gem3_value = ((np.random.random() - 0.5) * 30) + 1
         self.gem1_apperance = [
             np.random.random() * 255,
             np.random.random() * 255,
@@ -59,7 +59,9 @@ class RPG:
             0,
         ]
         self.populate(self.gem1p, self.gem2p, self.wolf1p)
+        self.gem_values = [self.gem1_value, self.gem2_value, self.gem3_value]
         self.insert_walls(self.height, self.width)
+        self.change_gem_values()
 
     def create_world(self, height=15, width=15, layers=1):
         """
@@ -68,9 +70,31 @@ class RPG:
         self.world = np.full((height, width, layers), self.defaultObject)
 
     def change_gem_values(self):
-        self.gem1_value = ((np.random.random() - 0.5) * 10) + 5
-        self.gem2_value = ((np.random.random() - 0.5) * 10) + 5
-        self.gem3_value = ((np.random.random() - 0.5) * 10) + 5
+        val1 = np.random.random() * 15
+        val2 = np.random.random() * 15
+        val3 = np.random.random() * 15
+
+        flip_neg = np.random.choice([0, 1, 2])
+        if flip_neg == 0:
+            val1 = (val2 + val3) * -0.5
+        if flip_neg == 1:
+            val2 = (val1 + val3) * -0.5
+        if flip_neg == 2:
+            val3 = (val1 + val2) * -0.5
+
+        # total_reward = val1 + val2 + val3
+        # print("pre-normal: ", val1, val2, val3)
+        # val1 = val1 / total_reward
+        # val2 = val2 / total_reward
+        # val3 = val3 / total_reward
+        # val1 = val1 * 15
+        # val2 = val2 * 15
+        # val3 = val3 * 15
+
+        # print("post-normal: ", val1, val2, val3)
+        self.gem1_value = val1
+        self.gem2_value = val2
+        self.gem3_value = val3
         self.gem1_apperance = [
             np.random.random() * 255,
             np.random.random() * 255,
@@ -89,6 +113,7 @@ class RPG:
             np.random.random() * 255,
             0,
         ]
+        self.gem_values = [self.gem1_value, self.gem2_value, self.gem3_value]
 
     def reset_env(
         self,

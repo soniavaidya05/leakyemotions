@@ -88,3 +88,5 @@ def process_files(file_pattern="*.txt", smoothing=1, time_range=None):
 # process_files(file_pattern="study2b_*.txt", smoothing=5)
 # process_files(file_pattern="test*.txt", smoothing=5)
 process_files(file_pattern="RGB_*.txt", smoothing=1)
+process_files(file_pattern="RGB2_*.txt", smoothing=1)
+process_files(file_pattern="RGB3_*.txt", smoothing=1)
