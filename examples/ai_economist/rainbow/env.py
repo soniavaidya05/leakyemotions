@@ -135,23 +135,23 @@ class AI_Econ:
         self.world[loc] = Agent(
             model=0,
             stone_skill=0.9,
-            wood_skill=0.75,
-            house_skill=0.75,
+            wood_skill=0.25,
+            house_skill=0.25,
             appearance=apperence1,
         )
         loc = (3, 4, 1)
         self.world[loc] = Agent(
             model=1,
-            stone_skill=0.75,
+            stone_skill=0.25,
             wood_skill=0.9,
-            house_skill=0.75,
+            house_skill=0.25,
             appearance=apperence2,
         )
         loc = (7, 4, 1)
         self.world[loc] = Agent(
             model=2,
-            stone_skill=0.75,
-            wood_skill=0.75,
+            stone_skill=0.25,
+            wood_skill=0.25,
             house_skill=0.9,
             appearance=apperence3,
         )
@@ -160,23 +160,23 @@ class AI_Econ:
         self.world[loc] = Agent(
             model=0,
             stone_skill=0.9,
-            wood_skill=0.75,
-            house_skill=0.75,
+            wood_skill=0.25,
+            house_skill=0.25,
             appearance=apperence1,
         )
         loc = (23, 4, 1)
         self.world[loc] = Agent(
             model=1,
-            stone_skill=0.75,
+            stone_skill=0.25,
             wood_skill=0.9,
-            house_skill=0.75,
+            house_skill=0.25,
             appearance=apperence2,
         )
         loc = (27, 4, 1)
         self.world[loc] = Agent(
             model=2,
-            stone_skill=0.75,
-            wood_skill=0.75,
+            stone_skill=0.25,
+            wood_skill=0.25,
             house_skill=0.9,
             appearance=apperence3,
         )
@@ -185,23 +185,23 @@ class AI_Econ:
         self.world[loc] = Agent(
             model=0,
             stone_skill=0.9,
-            wood_skill=0.75,
-            house_skill=0.75,
+            wood_skill=0.25,
+            house_skill=0.25,
             appearance=apperence1,
         )
         loc = (23, 24, 1)
         self.world[loc] = Agent(
             model=1,
-            stone_skill=0.75,
+            stone_skill=0.25,
             wood_skill=0.9,
-            house_skill=0.75,
+            house_skill=0.25,
             appearance=apperence2,
         )
         loc = (27, 24, 1)
         self.world[loc] = Agent(
             model=2,
-            stone_skill=0.75,
-            wood_skill=0.75,
+            stone_skill=0.25,
+            wood_skill=0.25,
             house_skill=0.9,
             appearance=apperence3,
         )
@@ -210,23 +210,23 @@ class AI_Econ:
         self.world[loc] = Agent(
             model=0,
             stone_skill=0.9,
-            wood_skill=0.75,
-            house_skill=0.75,
+            wood_skill=0.25,
+            house_skill=0.25,
             appearance=apperence1,
         )
         loc = (3, 27, 1)
         self.world[loc] = Agent(
             model=1,
-            stone_skill=0.75,
+            stone_skill=0.25,
             wood_skill=0.9,
-            house_skill=0.75,
+            house_skill=0.25,
             appearance=apperence2,
         )
         loc = (7, 24, 1)
         self.world[loc] = Agent(
             model=2,
-            stone_skill=0.75,
-            wood_skill=0.75,
+            stone_skill=0.25,
+            wood_skill=0.25,
             house_skill=0.9,
             appearance=apperence3,
         )
@@ -237,7 +237,6 @@ class AI_Econ:
         Assumes that the world is square - fixme.
         """
         for layer in range(layers):
-
             for i in range(height):
                 self.world[0, i, layer] = Wall()
                 self.world[height - 1, i, layer] = Wall()
