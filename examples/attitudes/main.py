@@ -64,7 +64,9 @@ def k_most_similar_recent_states(
     return most_similar_memories
 
 
-def compute_weighted_average(state, memories):
+def compute_weighted_average(
+    state, memories, similarity_decay_rate=1, time_decay_rate=1
+):
     if not memories:
         return 0
 
@@ -76,14 +78,16 @@ def compute_weighted_average(state, memories):
     distances = np.linalg.norm(memory_states - state, axis=1)
     max_distance = np.max(distances) if distances.size else 1
 
-    # Compute similarity weights
+    # Compute similarity weights with exponential decay
     similarity_weights = (
-        1 - distances / max_distance if max_distance != 0 else np.ones_like(distances)
+        np.exp(-distances / max_distance * similarity_decay_rate)
+        if max_distance != 0
+        else np.ones_like(distances)
     )
 
-    # Compute time weights
+    # Compute time weights with exponential decay
     N = len(memories)
-    time_weights = np.arange(N) / (N - 1)
+    time_weights = np.exp(-np.arange(N) / (N - 1) * time_decay_rate)
 
     # Combine the weights
     weights = similarity_weights * time_weights
@@ -334,7 +338,10 @@ def run_game(
                         k=250,
                     )
                     env.world[i, j, 0].appearance[7] = (
-                        compute_weighted_average(o_state, mems) * 255
+                        compute_weighted_average(
+                            o_state, mems, similarity_decay_rate=2, time_decay_rate=2
+                        )
+                        * 255
                     )
 
         turn = 0
