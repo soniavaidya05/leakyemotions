@@ -337,7 +337,7 @@ def run_game(
         # --------------------------------------------------------------
 
         if (
-            attitude_condition == "weighted_average_attitude" and epoch > 10
+            "weighted_average_attitude" in attitude_condition and epoch > 10
         ):  # this sets a control condition where no attitudes are used
             object_memory_states_tensor = torch.tensor(
                 [obj_mem[0] for obj_mem in object_memory]
@@ -552,6 +552,54 @@ run_params = (
     [0.5, 4100, 20, 0.999, "weighted_average_attitude", 2000, 2500, 20.0, 5.0],
     # [0.5, 4100, 20, 0.999, "no_attitude", 2000, 2500, 1.0, 1.0],
     # [0.5, 4100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0, 1.0],
+)
+
+
+run_params = (
+    [
+        0.5,
+        4100,
+        20,
+        0.999,
+        "weighted_average_attitude_2500_20_5",
+        2000,
+        25000,
+        20.0,
+        5.0,
+    ],
+    [
+        0.5,
+        4100,
+        20,
+        0.999,
+        "weighted_average_attitude_2500_1_1",
+        2000,
+        25000,
+        20.0,
+        5.0,
+    ],
+    [
+        0.5,
+        4100,
+        20,
+        0.999,
+        "weighted_average_attitude_2500_20_2",
+        2000,
+        25000,
+        20.0,
+        5.0,
+    ],
+    [
+        0.5,
+        4100,
+        20,
+        0.999,
+        "weighted_average_attitude_2500_10_2",
+        2000,
+        25000,
+        20.0,
+        5.0,
+    ],
 )
 
 
