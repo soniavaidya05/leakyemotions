@@ -537,6 +537,9 @@ def run_game(
                 epsilon,
                 str(gem_changes),
                 attitude_condition,
+                env.gem1_value,
+                env.gem2_value,
+                env.gem3_value,
             )
             # rs = show_weighted_averaged(object_memory)
             # print(epoch, rs)

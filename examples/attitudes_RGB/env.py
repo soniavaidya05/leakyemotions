@@ -36,21 +36,7 @@ class RPG:
         self.defaultObject = defaultObject
         self.create_world(self.height, self.width, self.layers)
         self.init_elements()
-        self.populate(self.gem1p, self.gem2p, self.wolf1p)
-        self.insert_walls(self.height, self.width)
         self.tile_size = tile_size
-        self.gem1_value = 0
-        self.gem2_value = 0
-        self.gem3_value = 0
-        self.gem1_apperance = [0, 0, 0, 0]
-        self.gem2_apperance = [0, 0, 0, 0]
-        self.gem3_apperance = [0, 0, 0, 0]
-
-    def create_world(self, height=15, width=15, layers=1):
-        """
-        Creates a world of the specified size with a default object
-        """
-        self.world = np.full((height, width, layers), self.defaultObject)
         self.gem1_value = ((np.random.random() - 0.5) * 10) + 5
         self.gem2_value = ((np.random.random() - 0.5) * 10) + 5
         self.gem3_value = ((np.random.random() - 0.5) * 10) + 5
@@ -72,6 +58,14 @@ class RPG:
             np.random.random() * 255,
             0,
         ]
+        self.populate(self.gem1p, self.gem2p, self.wolf1p)
+        self.insert_walls(self.height, self.width)
+
+    def create_world(self, height=15, width=15, layers=1):
+        """
+        Creates a world of the specified size with a default object
+        """
+        self.world = np.full((height, width, layers), self.defaultObject)
 
     def change_gem_values(self):
         self.gem1_value = ((np.random.random() - 0.5) * 10) + 5
