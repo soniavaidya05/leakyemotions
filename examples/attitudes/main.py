@@ -251,7 +251,8 @@ def run_game(
     epsilon_decay=0.9999,
     attitude_condition="implicit_attitude",
     switch_epoch=1000,
-    episodic_decay_rate=0.2,
+    episodic_decay_rate=1.0,
+    similarity_decay_rate=1.0,
 ):
     """
     This is the main loop of the game
@@ -354,7 +355,10 @@ def run_game(
                     )
                     env.world[i, j, 0].appearance[7] = (
                         compute_weighted_average(
-                            o_state, mems, similarity_decay_rate=5, time_decay_rate=20
+                            o_state,
+                            mems,
+                            similarity_decay_rate=similarity_decay_rate,
+                            time_decay_rate=episodic_decay_rate,
                         )
                         * 255
                     )
@@ -545,9 +549,9 @@ models = create_models()
 # options here are. these are experiments that we ran
 
 run_params = (
-    [0.5, 4100, 20, 0.999, "weighted_average_attitude", 2000, 2500, 1.0],
-    # [0.5, 4100, 20, 0.999, "no_attitude", 2000, 2500, 1.0],
-    # [0.5, 4100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0],
+    [0.5, 4100, 20, 0.999, "weighted_average_attitude", 2000, 2500, 20.0, 5.0],
+    # [0.5, 4100, 20, 0.999, "no_attitude", 2000, 2500, 1.0, 1.0],
+    # [0.5, 4100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0, 1.0],
 )
 
 
@@ -576,6 +580,7 @@ for modRun in range(len(run_params)):
         attitude_condition=run_params[modRun][4],
         switch_epoch=run_params[modRun][5],
         episodic_decay_rate=run_params[modRun][7],
+        similarity_decay_rate=run_params[modRun][8],
     )
     # atts = eval_attiude_model()
     # print(atts)
