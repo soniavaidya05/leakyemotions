@@ -6,6 +6,7 @@ from examples.attitudes.utils import (
     transfer_world_memories,
     find_agents,
     find_instance,
+    plot_time_decay,
 )
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import euclidean
@@ -46,10 +47,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 import time
 
+
 def k_most_similar_recent_states(
     state, knn: NearestNeighbors, memories, object_memory_states_tensor, decay_rate, k=5
 ):
-
     if USE_KNN_MODEL:
         # Get the indices of the k most similar states (without selecting them yet)
         state = state.cpu().detach().numpy().reshape(1, -1)
@@ -62,7 +63,7 @@ def k_most_similar_recent_states(
         # let's try another way using torch operations...
 
         # Calculate the squared Euclidean distance
-        squared_diff = torch.sum((object_memory_states_tensor - state)**2, dim=1)
+        squared_diff = torch.sum((object_memory_states_tensor - state) ** 2, dim=1)
         # Take the square root to get the Euclidean distance
         distance = torch.sqrt(squared_diff)
         # Argsort and take top-k
@@ -337,7 +338,9 @@ def run_game(
         if (
             attitude_condition == "weighted_average_attitude" and epoch > 10
         ):  # this sets a control condition where no attitudes are used
-            object_memory_states_tensor = torch.tensor([obj_mem[0] for obj_mem in object_memory])
+            object_memory_states_tensor = torch.tensor(
+                [obj_mem[0] for obj_mem in object_memory]
+            )
             for i in range(world_size):
                 for j in range(world_size):
                     o_state = env.world[i, j, 0].appearance[:7]
@@ -351,7 +354,7 @@ def run_game(
                     )
                     env.world[i, j, 0].appearance[7] = (
                         compute_weighted_average(
-                            o_state, mems, similarity_decay_rate=2, time_decay_rate=2
+                            o_state, mems, similarity_decay_rate=5, time_decay_rate=20
                         )
                         * 255
                     )

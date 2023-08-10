@@ -205,3 +205,23 @@ def update_memories_rnn(env, expList, done, end_update=True):
             )
         env.world[loc].episode_memory[-1] = exp
     return env.world
+
+
+def plot_time_decay(input_size, time_decay_rate=1):
+    N = input_size
+    time_weights_linear = np.arange(N) / (N - 1)
+    time_weights_exp = np.exp(-np.arange(N) / (N - 1) * time_decay_rate)
+
+    plt.plot(time_weights_linear, label="Linear Decay")
+    plt.plot(
+        time_weights_exp, label="Exponential Decay (rate={})".format(time_decay_rate)
+    )
+    plt.xlabel("Time Step")
+    plt.ylabel("Weight")
+    plt.legend()
+    plt.title("Time Decay Comparison")
+    plt.show()
+
+
+# Example usage
+# plot_time_decay(100, time_decay_rate=2)
