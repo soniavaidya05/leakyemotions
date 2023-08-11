@@ -117,7 +117,7 @@ torch.manual_seed(SEED)
 
 
 # If True, use the KNN model when computing k-most similar recent states. Otherwise, use a brute-force search.
-USE_KNN_MODEL = False
+USE_KNN_MODEL = True
 # Run profiling on the RL agent to see how long it takes per step
 RUN_PROFILING = False
 
@@ -273,7 +273,8 @@ def eval_attiude_model(value_model=value_model):
 
 object_exp2 = deque(maxlen=2500)
 object_memory = deque(maxlen=250)
-state_knn = NearestNeighbors(n_neighbors=5)
+state_knn = NearestNeighbors(n_neighbors=100)
+state_knn_CMS = NearestNeighbors(n_neighbors=100)
 
 models = create_models()
 env = RPG(
@@ -428,7 +429,7 @@ def run_game(
                     o_state = env.world[i, j, 0].appearance[:3]
                     mems = k_most_similar_recent_states(
                         torch.tensor(o_state),
-                        state_knn,
+                        state_knn_CMS,  # HERE IS THE ERROR!
                         object_exp2,
                         object_memory_states_tensor,
                         decay_rate=1.0,
@@ -529,6 +530,7 @@ def run_game(
                     if USE_KNN_MODEL:
                         # Fit a k-NN model to states extracted from the replay buffer
                         state_knn.fit([exp[0] for exp in object_memory])
+                        state_knn_CMS.fit([exp[0] for exp in object_exp2])
 
                     # --------------------------------------------------------------
                     reward_values = env.gem_values
@@ -645,11 +647,12 @@ models = create_models()
 # options here are. these are experiments that we ran
 
 run_params = (
-    [0.5, 4010, 20, 0.999, "implicit_attitude+CMS", 2000, 2500, 20.0, 20.0],
-    [0.5, 4010, 20, 0.999, "implicit_attitude+EWA", 2000, 2500, 20.0, 20.0],
-    [0.5, 4010, 20, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0],
-    [0.5, 4010, 20, 0.999, "CMS", 2000, 2500, 20.0, 20.0],
-    [0.5, 4010, 20, 0.999, "EWA", 2000, 2500, 20.0, 20.0],
+    [0.5, 8010, 20, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0],
+    [0.5, 8010, 20, 0.999, "None", 2000, 2500, 20.0, 20.0],
+    [0.5, 8010, 20, 0.999, "implicit_attitude+CMS", 2000, 2500, 20.0, 20.0],
+    [0.5, 8010, 20, 0.999, "implicit_attitude+EWA", 2000, 2500, 20.0, 20.0],
+    [0.5, 8010, 20, 0.999, "CMS", 2000, 2500, 20.0, 20.0],
+    [0.5, 8010, 20, 0.999, "EWA", 2000, 2500, 20.0, 20.0],
 )
 
 
