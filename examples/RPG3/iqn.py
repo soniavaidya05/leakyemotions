@@ -18,7 +18,7 @@ ReplayBuffer
  - add: add new experience to memory (multistep return is disabled for now)
  - sample: sample a batch of experiences from memory
 
-iRainbowModel (contains two IQN networks; one for local and one for target)
+iqnModel (contains two IQN networks; one for local and one for target)
  - take_action: standard epsilon greedy action selection
  - learn: train the model using quantile huber loss from IQN
  - soft_update: set weights of target network to be a mixture of weights from local and target network
@@ -39,8 +39,11 @@ from gem.models.layers import NoisyLinear
 
 
 class CNN_CLD(nn.Module):
-    def __init__(self, config=None, normalization_value=255):
+    def __init__(self, config=None, normalization_value=255.0):
         super(CNN_CLD, self).__init__()
+
+        # question: rather than having the if then for cnn or not, can we just call this
+        # feature extractor and if we just use layer["type"] == "flatten" to flatten if no CNN
 
         self.normalization_value = normalization_value
 
@@ -322,7 +325,7 @@ class ReplayBuffer:
         return len(self.memory)
 
 
-class iRainbowModel:
+class iqnModel:
     """Interacts with and learns from the environment."""
 
     def __init__(
