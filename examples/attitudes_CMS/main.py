@@ -356,7 +356,7 @@ def run_game(
         # this model creates a neural network to learn the reward values
         # --------------------------------------------------------------
 
-        if attitude_condition == "implicit_attitude":
+        if "implicit_attitude" in attitude_condition:
             if epoch > 2:
                 for i in range(world_size):
                     for j in range(world_size):
