@@ -487,6 +487,10 @@ def run_game(
                     device = models[holdObject.policy].device
 
                     state = env.pov(loc)
+                    # if epoch > 100 and turn == 10:
+                    #    print(state.shape)
+                    #    print(state[0, 0, 3, 2, 2], state[0, 0, 4, 2, 2])
+                    #    print(state[0, 0, 3, 1, 2], state[0, 0, 4, 1, 2])
                     batch, timesteps, channels, height, width = state.shape
 
                     action = models[env.world[loc].policy].take_action(state, epsilon)
@@ -647,9 +651,9 @@ models = create_models()
 # options here are. these are experiments that we ran
 
 run_params = (
+    [0.5, 8010, 20, 0.999, "implicit_attitude+CMS", 2000, 2500, 20.0, 20.0],
     [0.5, 8010, 20, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0],
     [0.5, 8010, 20, 0.999, "None", 2000, 2500, 20.0, 20.0],
-    [0.5, 8010, 20, 0.999, "implicit_attitude+CMS", 2000, 2500, 20.0, 20.0],
     [0.5, 8010, 20, 0.999, "implicit_attitude+EWA", 2000, 2500, 20.0, 20.0],
     [0.5, 8010, 20, 0.999, "CMS", 2000, 2500, 20.0, 20.0],
     [0.5, 8010, 20, 0.999, "EWA", 2000, 2500, 20.0, 20.0],
