@@ -66,14 +66,47 @@ class RPG:
         self.insert_walls(self.height, self.width)
         self.change_gem_values()
 
+    def rotate_rgb(self, rgb, angle):
+        # Convert angle to radians
+        angle = np.radians(angle)
+
+        # Define the rotation matrix
+        rotation_matrix = np.array(
+            [
+                [
+                    np.cos(angle) + 1 / 3 * (1 - np.cos(angle)),
+                    1 / 3 * (1 - np.cos(angle)) - np.sqrt(1 / 3) * np.sin(angle),
+                    1 / 3 * (1 - np.cos(angle)) + np.sqrt(1 / 3) * np.sin(angle),
+                ],
+                [
+                    1 / 3 * (1 - np.cos(angle)) + np.sqrt(1 / 3) * np.sin(angle),
+                    np.cos(angle) + 1 / 3 * (1 - np.cos(angle)),
+                    1 / 3 * (1 - np.cos(angle)) - np.sqrt(1 / 3) * np.sin(angle),
+                ],
+                [
+                    1 / 3 * (1 - np.cos(angle)) - np.sqrt(1 / 3) * np.sin(angle),
+                    1 / 3 * (1 - np.cos(angle)) + np.sqrt(1 / 3) * np.sin(angle),
+                    np.cos(angle) + 1 / 3 * (1 - np.cos(angle)),
+                ],
+            ]
+        )
+
+        # Multiply the rotation matrix with the RGB values
+        rotated_rgb = rotation_matrix.dot(rgb)
+
+        # Clamp the values between 0 and 255
+        rotated_rgb = np.clip(rotated_rgb, 0, 255)
+
+        return tuple(rotated_rgb)
+
     def create_world(self, height=15, width=15, layers=1):
         """
         Creates a world of the specified size with a default object
         """
         self.world = np.full((height, width, layers), self.defaultObject)
 
-    def change_gem_values(self, random_values=False, new_colours=False):
-        if random_values:
+    def change_gem_values(self, new_values="Shuffled", new_colours="Correlated"):
+        if new_values == "Random":
             val1 = np.random.random() * 15
             val2 = np.random.random() * 15
             val3 = np.random.random() * 15
@@ -90,12 +123,38 @@ class RPG:
             self.gem2_value = val2
             self.gem3_value = val3
 
-        else:
-            self.gem1_value = 15
-            self.gem2_value = 5
-            self.gem3_value = -5
+        if new_values == "Shuffled":
+            gem_values = np.random.choice([0, 1, 2])
 
-        if new_colours:
+            if gem_values == 0:
+                self.gem1_value = 15
+                gem_values2 = np.random.choice([0, 1])
+                if gem_values2 == 0:
+                    self.gem2_value = 5
+                    self.gem3_value = -5
+                else:
+                    self.gem2_value = -5
+                    self.gem3_value = 5
+            elif gem_values == 1:
+                self.gem1_value = 5
+                gem_values2 = np.random.choice([0, 1])
+                if gem_values2 == 0:
+                    self.gem2_value = 15
+                    self.gem3_value = -5
+                else:
+                    self.gem2_value = -5
+                    self.gem3_value = 15
+            elif gem_values == 2:
+                self.gem1_value = -5
+                gem_values2 = np.random.choice([0, 1])
+                if gem_values2 == 0:
+                    self.gem2_value = -5
+                    self.gem3_value = 15
+                else:
+                    self.gem2_value = 15
+                    self.gem3_value = -5
+
+        if new_colours == "Random":
             self.gem1_apperance = [
                 np.random.random() * 255,
                 np.random.random() * 255,
@@ -118,7 +177,7 @@ class RPG:
                 0,
             ]
 
-        else:
+        if new_colours == "Shuffled":
             color1 = [200, 50, 100, 0, 0]
             color2 = [50, 100, 200, 0, 0]
             color3 = [100, 200, 50, 0, 0]
@@ -140,12 +199,63 @@ class RPG:
                 if gem_colours2 == 0:
                     self.gem2_apperance = color1
                     self.gem3_apperance = color3
+                else:
+                    self.gem2_apperance = color3
+                    self.gem3_apperance = color1
             elif gem_colours == 2:
                 self.gem1_apperance = color3
                 gem_colours2 = np.random.choice([0, 1])
                 if gem_colours2 == 0:
                     self.gem2_apperance = color1
                     self.gem3_apperance = color2
+                else:
+                    self.gem2_apperance = color2
+                    self.gem3_apperance = color1
+
+        if new_colours == "Correlated":
+            g1 = tuple(self.gem1_apperance[0:3])
+            g2 = tuple(self.gem2_apperance[0:3])
+            g3 = tuple(self.gem3_apperance[0:3])
+
+            # g1 = (g1t[0], g1t[1], g1t[2])
+
+            direction = np.random.choice([0, 1])
+            if direction == 0:
+                g1n = self.rotate_rgb(g1, 45)
+            else:
+                g1n = self.rotate_rgb(g1, -45)
+
+            direction = np.random.choice([0, 1])
+            if direction == 0:
+                g2n = self.rotate_rgb(g2, 45)
+            else:
+                g2n = self.rotate_rgb(g2, -45)
+
+            direction = np.random.choice([0, 1])
+            if direction == 0:
+                g3n = self.rotate_rgb(g3, 45)
+            else:
+                g3n = self.rotate_rgb(g3, -45)
+
+            self.gem1_apperance[0] = g1n[0]
+            self.gem2_apperance[0] = g2n[0]
+            self.gem3_apperance[0] = g3n[0]
+
+            self.gem1_apperance[1] = g1n[1]
+            self.gem2_apperance[1] = g2n[1]
+            self.gem3_apperance[1] = g3n[1]
+
+            self.gem1_apperance[2] = g1n[2]
+            self.gem2_apperance[2] = g2n[2]
+            self.gem3_apperance[2] = g3n[2]
+
+            self.gem1_apperance[3] = 0
+            self.gem2_apperance[3] = 0
+            self.gem3_apperance[3] = 0
+
+            self.gem1_apperance[4] = 0
+            self.gem2_apperance[4] = 0
+            self.gem3_apperance[4] = 0
 
         self.gem_values = [self.gem1_value, self.gem2_value, self.gem3_value]
 
