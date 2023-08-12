@@ -72,53 +72,81 @@ class RPG:
         """
         self.world = np.full((height, width, layers), self.defaultObject)
 
-    def change_gem_values(self):
-        val1 = np.random.random() * 15
-        val2 = np.random.random() * 15
-        val3 = np.random.random() * 15
+    def change_gem_values(self, random_values=False, new_colours=False):
+        if random_values:
+            val1 = np.random.random() * 15
+            val2 = np.random.random() * 15
+            val3 = np.random.random() * 15
 
-        flip_neg = np.random.choice([0, 1, 2])
-        if flip_neg == 0:
-            val1 = (val2 + val3) * -0.5
-        if flip_neg == 1:
-            val2 = (val1 + val3) * -0.5
-        if flip_neg == 2:
-            val3 = (val1 + val2) * -0.5
+            flip_neg = np.random.choice([0, 1, 2])
+            if flip_neg == 0:
+                val1 = (val2 + val3) * -0.5
+            if flip_neg == 1:
+                val2 = (val1 + val3) * -0.5
+            if flip_neg == 2:
+                val3 = (val1 + val2) * -0.5
 
-        # total_reward = val1 + val2 + val3
-        # print("pre-normal: ", val1, val2, val3)
-        # val1 = val1 / total_reward
-        # val2 = val2 / total_reward
-        # val3 = val3 / total_reward
-        # val1 = val1 * 15
-        # val2 = val2 * 15
-        # val3 = val3 * 15
+            self.gem1_value = val1
+            self.gem2_value = val2
+            self.gem3_value = val3
 
-        # print("post-normal: ", val1, val2, val3)
-        self.gem1_value = val1
-        self.gem2_value = val2
-        self.gem3_value = val3
-        self.gem1_apperance = [
-            np.random.random() * 255,
-            np.random.random() * 255,
-            np.random.random() * 255,
-            0,
-            0,
-        ]
-        self.gem2_apperance = [
-            np.random.random() * 255,
-            np.random.random() * 255,
-            np.random.random() * 255,
-            0,
-            0,
-        ]
-        self.gem3_apperance = [
-            np.random.random() * 255,
-            np.random.random() * 255,
-            np.random.random() * 255,
-            0,
-            0,
-        ]
+        else:
+            self.gem1_value = 15
+            self.gem2_value = 5
+            self.gem3_value = -5
+
+        if new_colours:
+            self.gem1_apperance = [
+                np.random.random() * 255,
+                np.random.random() * 255,
+                np.random.random() * 255,
+                0,
+                0,
+            ]
+            self.gem2_apperance = [
+                np.random.random() * 255,
+                np.random.random() * 255,
+                np.random.random() * 255,
+                0,
+                0,
+            ]
+            self.gem3_apperance = [
+                np.random.random() * 255,
+                np.random.random() * 255,
+                np.random.random() * 255,
+                0,
+                0,
+            ]
+
+        else:
+            color1 = [200, 50, 100, 0, 0]
+            color2 = [50, 100, 200, 0, 0]
+            color3 = [100, 200, 50, 0, 0]
+
+            gem_colours = np.random.choice([0, 1, 2])
+
+            if gem_colours == 0:
+                self.gem1_apperance = color1
+                gem_colours2 = np.random.choice([0, 1])
+                if gem_colours2 == 0:
+                    self.gem2_apperance = color2
+                    self.gem3_apperance = color3
+                else:
+                    self.gem2_apperance = color3
+                    self.gem3_apperance = color2
+            elif gem_colours == 1:
+                self.gem1_apperance = color2
+                gem_colours2 = np.random.choice([0, 1])
+                if gem_colours2 == 0:
+                    self.gem2_apperance = color1
+                    self.gem3_apperance = color3
+            elif gem_colours == 2:
+                self.gem1_apperance = color3
+                gem_colours2 = np.random.choice([0, 1])
+                if gem_colours2 == 0:
+                    self.gem2_apperance = color1
+                    self.gem3_apperance = color2
+
         self.gem_values = [self.gem1_value, self.gem2_value, self.gem3_value]
 
     def reset_env(
