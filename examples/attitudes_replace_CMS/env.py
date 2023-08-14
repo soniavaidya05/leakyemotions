@@ -1,4 +1,4 @@
-from examples.attitudes_CMS.elements import (
+from examples.attitudes_replace_CMS.elements import (
     Agent,
     Gem,
     EmptyObject,
@@ -104,6 +104,51 @@ class RPG:
         Creates a world of the specified size with a default object
         """
         self.world = np.full((height, width, layers), self.defaultObject)
+
+    def add_object(self):
+        """
+        Adds an object to the world
+        """
+
+        gem1p = 0.03
+        gem2p = 0.03
+        gem3p = 0.03
+
+        obj = np.random.choice(
+            [0, 1, 2, 3],
+            p=[
+                gem1p,
+                gem2p,
+                gem3p,
+                1 - gem2p - gem1p - gem3p,
+            ],
+        )
+        placed = False
+
+        counter = 0
+
+        while not placed:
+            object_location1 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
+            object_location2 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
+            object_location = (object_location1, object_location2, 0)
+            if self.world[object_location1, object_location2, 0].kind == "empty":
+                if obj == 0:
+                    self.world[object_location] = Gem(
+                        self.gem1_value, self.gem1_apperance
+                    )
+                if obj == 1:
+                    self.world[object_location] = Gem(
+                        self.gem2_value, self.gem2_apperance
+                    )
+                if obj == 2:
+                    self.world[object_location] = Gem(
+                        self.gem3_value, self.gem3_apperance
+                    )
+                placed = True
+            counter += 1
+            if counter > 100:
+                print("Could not place object")
+                break
 
     def change_gem_values(self, new_values="None", new_colours="Shuffled"):
         if new_values == "Random":
