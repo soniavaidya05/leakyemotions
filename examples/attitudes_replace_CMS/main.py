@@ -666,7 +666,7 @@ run_params = (
         40,
         0.999,
         "implicit_attitude+EWA+attack",
-        10000,
+        2000,
         2500,
         20.0,
         20.0,
