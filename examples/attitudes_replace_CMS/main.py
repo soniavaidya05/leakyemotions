@@ -431,7 +431,7 @@ def run_game(
                     o_state = env.world[i, j, 0].appearance[:3]
                     mems = k_most_similar_recent_states(
                         torch.tensor(o_state),
-                        state_knn_CMS,  # HERE IS THE ERROR!
+                        state_knn_CMS,
                         object_exp2,
                         object_memory_states_tensor,
                         decay_rate=1.0,
@@ -659,8 +659,6 @@ def run_game(
 # options here are. these are experiments that we ran
 
 run_params = (
-    [0.5, 8010, 40, 0.999, "none+attack", 2000, 2500, 20.0, 20.0, True],
-    [0.5, 8010, 40, 0.999, "none", 2000, 2500, 20.0, 20.0, False],
     # [0.5, 8010, 20, 0.999, "None", 2000, 2500, 20.0, 20.0, False],
     [
         0.5,
@@ -688,6 +686,8 @@ run_params = (
         20.0,
         True,
     ],
+    [0.5, 8010, 40, 0.999, "none", 2000, 2500, 20.0, 20.0, False],
+    [0.5, 8010, 40, 0.999, "none+attack", 2000, 2500, 20.0, 20.0, True],
     # [0.5, 8010, 20, 0.999, "implicit_attitude+CMS", 2000, 2500, 20.0, 20.0],
     # [0.5, 8010, 20, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0],
     # [0.5, 8010, 20, 0.999, "None", 2000, 2500, 20.0, 20.0],
