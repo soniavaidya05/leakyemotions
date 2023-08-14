@@ -7,6 +7,7 @@ import torch
 class Element(ABC):
     def __init__(self):
         self.appearance = None  # how to display this agent
+        self.tile = None  # how to display this agent
         self.vision = None  # visual radius
         self.policy = None  # policy function or model
         self.value = None  # reward given to another agent
@@ -23,6 +24,22 @@ class EmptyObject:
     def __init__(self):
         self.health = 0  # empty stuff is basically empty
         self.appearance = [0.0, 0.0, 0.0, 0.0, 0.0]  # empty is well, blank
+        black = [0, 0, 0]
+        self.tile = (
+            [
+                black,
+                black,
+                black,
+                black,
+                black,
+                black,
+                black,
+                black,
+                black,
+            ],
+            0,
+            0,
+        )  # empty is well, blank
         self.vision = 1  # empty stuff is basically empty
         self.policy = "NA"  # empty stuff is basically empty
         self.value = 0  # empty stuff is basically empty
@@ -41,6 +58,22 @@ class Wall:
     def __init__(self):
         self.health = 0  # wall stuff is basically empty
         self.appearance = [0.0, 255.0, 0.0, 0.0, 0.0]  # walls are purple
+        green = [0, 255, 0]
+        self.tile = (
+            [
+                green,
+                green,
+                green,
+                green,
+                green,
+                green,
+                green,
+                green,
+                green,
+            ],
+            0,
+            0,
+        )  # empty is well, blank
         self.vision = 0  # wall stuff is basically empty
         self.policy = "NA"  # walls do not do anything
         self.value = 0  # wall stuff is basically empty
@@ -60,6 +93,21 @@ class Gem:
         super().__init__()
         self.health = 1  # for the gem, whether it has been mined or not
         self.appearance = color  # gems are green
+        self.tile = (
+            [
+                color,
+                color,
+                color,
+                color,
+                color,
+                color,
+                color,
+                color,
+                color,
+            ],
+            0,
+            0,
+        )  # empty is well, blank
         self.vision = 1  # gems can see one radius around them
         self.policy = "NA"  # gems do not do anything
         self.value = value  # the value of this gem
@@ -78,6 +126,22 @@ class Agent:
     def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
         self.appearance = [255.0, 0.0, 0.0, 0.0, 0.0]  # agents are blue
+        blue = [255, 0, 0]
+        self.tile = (
+            [
+                blue,
+                blue,
+                blue,
+                blue,
+                blue,
+                blue,
+                blue,
+                blue,
+                blue,
+            ],
+            0,
+            0,
+        )  # empty is well, blank
         self.vision = 4  # agents can see three radius around them
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.value = 0  # agents have no value
