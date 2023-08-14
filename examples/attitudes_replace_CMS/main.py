@@ -508,7 +508,6 @@ def run_game(
                     ) = holdObject.transition(
                         env, models, action[0], loc, replace_object
                     )
-                    print("replace_object", replace_object)
 
                     # --------------------------------------------------------------
                     # create object memory
@@ -660,6 +659,8 @@ def run_game(
 # options here are. these are experiments that we ran
 
 run_params = (
+    [0.5, 8010, 40, 0.999, "none+attack", 2000, 2500, 20.0, 20.0, True],
+    [0.5, 8010, 40, 0.999, "none", 2000, 2500, 20.0, 20.0, False],
     # [0.5, 8010, 20, 0.999, "None", 2000, 2500, 20.0, 20.0, False],
     [
         0.5,
@@ -673,15 +674,15 @@ run_params = (
         20.0,
         True,
     ],
-    [0.5, 8010, 40, 0.999, "implicit_attitude+EWA", 10000, 2500, 20.0, 20.0, False],
-    [0.5, 8010, 40, 0.999, "implicit_attitude+EWA", 10000, 2500, 20.0, 20.0, False],
+    [0.5, 8010, 40, 0.999, "implicit_attitude+EWA", 2000, 2500, 20.0, 20.0, False],
+    [0.5, 8010, 40, 0.999, "implicit_attitude+EWA", 2000, 2500, 20.0, 20.0, False],
     [
         0.5,
         8010,
         40,
         0.999,
         "implicit_attitude+EWA+attack",
-        10000,
+        2000,
         2500,
         20.0,
         20.0,
