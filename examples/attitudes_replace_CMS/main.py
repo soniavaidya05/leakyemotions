@@ -312,6 +312,7 @@ def run_game(
     decay_rate = 0.2  # Adjust as needed
     change = True
     gem_changes = 0
+    replace_object = [0, 0, 0, 0]
 
     for epoch in range(epochs):
         """
@@ -503,7 +504,11 @@ def run_game(
                         done,
                         new_loc,
                         object_info,
-                    ) = holdObject.transition(env, models, action[0], loc)
+                        replace_object,
+                    ) = holdObject.transition(
+                        env, models, action[0], loc, replace_object
+                    )
+                    print("replace_object", replace_object)
 
                     # --------------------------------------------------------------
                     # create object memory
@@ -635,6 +640,7 @@ def run_game(
                 epsilon,
                 str(gem_changes),
                 attitude_condition,
+                replace_object
                 # env.gem1_value,
                 # env.gem2_value,
                 # env.gem3_value,
@@ -644,6 +650,8 @@ def run_game(
             game_points = [0, 0]
             gems = [0, 0, 0, 0]
             losses = 0
+            replace_object = [0, 0, 0, 0]
+
     return models, env, turn, epsilon
 
 

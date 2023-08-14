@@ -125,7 +125,7 @@ class Agent:
 
         return new_location
 
-    def transition(self, env, models, action, location):
+    def transition(self, env, models, action, location, replace_object):
         """
         Changes the world based on the action taken
         """
@@ -157,18 +157,26 @@ class Agent:
         if replace_gems == True:
             if found_gem == True:
                 env.add_object()
-
                 if action in [0, 1, 2, 3]:
-                    self.reward += reward
+                    if reward > 0:
+                        replace_object[0] = replace_object[0] + 1
+                    if reward < 0:
+                        replace_object[1] = replace_object[1] + 1
+
                 if action in [4, 5, 6, 7]:
+                    if reward > 0:
+                        replace_object[2] = replace_object[2] + 1
+
+                    if reward < 0:
+                        replace_object[3] = replace_object[3] + 1
+
                     self.reward = 0
                     reward = 0
 
-        else:
-            self.reward += reward
+        self.reward += reward
 
         next_state = env.pov(new_loc)
         # if reward == -1:
         #    print("You hit a wall!", object_info)
 
-        return env.world, reward, next_state, done, new_loc, object_info
+        return env.world, reward, next_state, done, new_loc, object_info, replace_object
