@@ -87,6 +87,4 @@ def process_files(file_pattern="*.txt", smoothing=1, time_range=None):
 # process_files(file_pattern="study1_*.txt", smoothing=5)
 # process_files(file_pattern="study2b_*.txt", smoothing=5)
 # process_files(file_pattern="test*.txt", smoothing=5)
-process_files(file_pattern="CMS_corr1*.txt", smoothing=1)
-process_files(file_pattern="CMS_corr2*.txt", smoothing=1)
-process_files(file_pattern="CMS_sh*.txt", smoothing=1)
+process_files(file_pattern="replace_*.py", smoothing=1)
