@@ -752,112 +752,105 @@ for modRun in range(len(run_params)):
 from gem.models.perception_singlePixel_categories import agent_visualfield
 
 
-def make_Q_map(env, models):
-    pass
+def make_Q_map(env, models, value_model):
+    Q_array1 = np.zeros((world_size, world_size))
+    R_array1 = np.zeros((world_size, world_size))
+    QR_array1 = np.zeros((world_size, world_size))
 
+    Q_array2 = np.zeros((world_size, world_size))
+    R_array2 = np.zeros((world_size, world_size))
+    QR_array2 = np.zeros((world_size, world_size))
 
-Q_array = np.zeros((world_size, world_size))
-R_array = np.zeros((world_size, world_size))
-QR_array = np.zeros((world_size, world_size))
+    env.reset_env(
+        height=world_size,
+        width=world_size,
+        layers=1,
+        gem1p=0.03,
+        gem2p=0.03,
+        gem3p=0.03,
+        change=False,
+    )
+    env.change_gem_values()
 
+    for loc in find_instance(env.world, "neural_network"):
+        # reset the memories for all agents
+        # the parameter sets the length of the sequence for LSTM
+        env.world[loc].init_replay(1)
+        env.world[loc].init_rnn_state = None
 
-env.reset_env(
-    height=world_size,
-    width=world_size,
-    layers=1,
-    gem1p=0.03,
-    gem2p=0.03,
-    gem3p=0.03,
-    change=False,
-)
+    agentList = find_instance(env.world, "neural_network")
+    agent = env.world[agentList[0]]
+    env.world[agentList[0]] = EmptyObject()
 
+    # pass 1
 
-for loc in find_instance(env.world, "neural_network"):
-    # reset the memories for all agents
-    # the parameter sets the length of the sequence for LSTM
-    env.world[loc].init_replay(1)
-    env.world[loc].init_rnn_state = None
+    for i in range(world_size - 2):
+        for j in range(world_size - 2):
+            env2 = env
+            loc = (i + 1, j + 1, 0)
+            locReward = env.world[loc].value
+            R_array1[i + 1, j + 1] = locReward
 
-agentList = find_instance(env.world, "neural_network")
-agent = env.world[agentList[0]]
-env.world[agentList[0]] = EmptyObject()
+            env2.world[loc] = agent
+            state = env.pov(loc)
+            Qs = models[0].qnetwork_local.get_qvalues(state)
+            Q = torch.max(Qs).detach().item()
+            Q_array1[i + 1, j + 1] = Q
+            QR_array1[i + 1, j + 1] = Q + locReward
 
+    # pass 2
 
-# pass 1
+    env3 = env
 
-for i in range(world_size - 2):
-    for j in range(world_size - 2):
-        env2 = env
-        loc = (i + 1, j + 1, 0)
-        locReward = env.world[loc].value
-        R_array[i + 1, j + 1] = locReward
+    for i in range(world_size):
+        for j in range(world_size):
+            object_state = torch.tensor(env3.world[i, j, 0].appearance[:3]).float()
+            rs, _ = value_model(object_state.unsqueeze(0))
+            r = rs[0][1]
+            env3.world[i, j, 0].appearance[3] = r.item() * 255
 
-        env2.world[loc] = agent
-        state = env.pov(loc)
-        Qs = models[0].qnetwork_local.get_qvalues(state)
-        Q = torch.max(Qs).detach().item()
-        Q_array[i + 1, j + 1] = Q
-        QR_array[i + 1, j + 1] = Q + locReward
+    for i in range(world_size - 2):
+        for j in range(world_size - 2):
+            env2 = env3
+            loc = (i + 1, j + 1, 0)
+            locReward = env.world[loc].value
+            R_array2[i + 1, j + 1] = locReward
 
-plt.subplot(1, 3, 1)  # First subplot
-plt.imshow(Q_array, cmap="viridis")  # Plot the first array
-# plt.colorbar() # To add a color scale
-plt.title("Q")  # Title for the first plot
+            env2.world[loc] = agent
+            state = env.pov(loc)
+            Qs = models[0].qnetwork_local.get_qvalues(state)
+            Q = torch.max(Qs).detach().item()
+            Q_array2[i + 1, j + 1] = Q
+            QR_array2[i + 1, j + 1] = Q + locReward
 
-plt.subplot(1, 3, 2)  # Second subplot
-plt.imshow(R_array, cmap="viridis")  # Plot the second array
-# plt.colorbar() # To add a color scale
-plt.title("R")  # Title for the second plot
+    plt.subplot(2, 3, 1)  # First subplot
+    plt.imshow(Q_array1, cmap="viridis")  # Plot the first array
+    # plt.colorbar() # To add a color scale
+    plt.title("Q1")  # Title for the first plot
 
-plt.subplot(1, 3, 3)  # Third subplot
-plt.imshow(QR_array, cmap="viridis")  # Plot the second array
-# plt.colorbar() # To add a color scale
-plt.title("QR")  # Title for the third plot
+    plt.subplot(2, 3, 2)  # Second subplot
+    plt.imshow(R_array1, cmap="viridis")  # Plot the second array
+    # plt.colorbar() # To add a color scale
+    plt.title("R11")  # Title for the second plot
 
-plt.show()
+    plt.subplot(2, 3, 3)  # Third subplot
+    plt.imshow(QR_array1, cmap="viridis")  # Plot the second array
+    # plt.colorbar() # To add a color scale
+    plt.title("QR1")  # Title for the third plot
 
+    plt.subplot(2, 3, 4)  # First subplot
+    plt.imshow(Q_array2, cmap="viridis")  # Plot the first array
+    # plt.colorbar() # To add a color scale
+    plt.title("Q2")  # Title for the first plot
 
-# pass 2
-Q_array = np.zeros((world_size, world_size))
-R_array = np.zeros((world_size, world_size))
-QR_array = np.zeros((world_size, world_size))
-env3 = env
+    plt.subplot(2, 3, 5)  # Second subplot
+    plt.imshow(R_array2, cmap="viridis")  # Plot the second array
+    # plt.colorbar() # To add a color scale
+    plt.title("R2")  # Title for the second plot
 
-for i in range(world_size):
-    for j in range(world_size):
-        object_state = torch.tensor(env3.world[i, j, 0].appearance[:3]).float()
-        rs, _ = value_model(object_state.unsqueeze(0))
-        r = rs[0][1]
-        env3.world[i, j, 0].appearance[3] = r.item() * 255
+    plt.subplot(2, 3, 6)  # Third subplot
+    plt.imshow(QR_array2, cmap="viridis")  # Plot the second array
+    # plt.colorbar() # To add a color scale
+    plt.title("QR2")  # Title for the third plot
 
-
-for i in range(world_size - 2):
-    for j in range(world_size - 2):
-        env2 = env3
-        loc = (i + 1, j + 1, 0)
-        locReward = env.world[loc].value
-        R_array[i + 1, j + 1] = locReward
-
-        env2.world[loc] = agent
-        state = env.pov(loc)
-        Qs = models[0].qnetwork_local.get_qvalues(state)
-        Q = torch.max(Qs).detach().item()
-        Q_array[i + 1, j + 1] = Q
-        QR_array[i + 1, j + 1] = Q + locReward
-
-plt.subplot(1, 3, 1)  # First subplot
-plt.imshow(Q_array, cmap="viridis")  # Plot the first array
-# plt.colorbar() # To add a color scale
-plt.title("Q")  # Title for the first plot
-
-plt.subplot(1, 3, 2)  # Second subplot
-plt.imshow(R_array, cmap="viridis")  # Plot the second array
-# plt.colorbar() # To add a color scale
-plt.title("R")  # Title for the second plot
-
-plt.subplot(1, 3, 3)  # Third subplot
-plt.imshow(QR_array, cmap="viridis")  # Plot the second array
-# plt.colorbar() # To add a color scale
-plt.title("QR")  # Title for the third plot
-
-plt.show()
+    plt.show()
