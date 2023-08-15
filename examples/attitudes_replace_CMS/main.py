@@ -687,8 +687,10 @@ run_params = (
         20.0,
         True,
     ],
+    [0.5, 8010, 40, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0, False],
+    [0.5, 8010, 40, 0.999, "implicit_attitude+attack", 2000, 2500, 20.0, 20.0, False],
     [0.5, 8010, 40, 0.999, "none", 2000, 2500, 20.0, 20.0, False],
-    [0.5, 8010, 40, 0.999, "none+attack", 2000, 2500, 20.0, 20.0, True],
+    [0.5, 8010, 40, 0.999, "none+attack", 2000, 2500, 20.0, 20.0, False],
     # [0.5, 8010, 20, 0.999, "implicit_attitude+CMS", 2000, 2500, 20.0, 20.0],
     # [0.5, 8010, 20, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0],
     # [0.5, 8010, 20, 0.999, "None", 2000, 2500, 20.0, 20.0],
@@ -697,9 +699,9 @@ run_params = (
     # [0.5, 8010, 20, 0.999, "EWA", 2000, 2500, 20.0, 20.0],
 )
 
-run_params = (
-    [0.5, 1999, 40, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0, False],
-)
+# run_params = (
+#    [0.5, 1999, 40, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0, False],
+# )
 
 
 # Convert the tuple of lists to a list of lists
