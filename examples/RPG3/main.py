@@ -53,7 +53,7 @@ def create_models():
         iRainbowModel(
             in_channels=7,
             num_filters=7,
-            cnn_out_size=224,  # 910
+            cnn_out_size=1134,  # 910
             state_size=torch.tensor(
                 [7, 9, 9]
             ),  # this seems to only be reading the first value
@@ -67,6 +67,7 @@ def create_models():
             GAMMA=0.95,  # Discout factor 0.99
             N=12,  # Number of quantiles
             use_cnn=True,
+            use_per=False,
             device=device,
             seed=SEED,
         )
