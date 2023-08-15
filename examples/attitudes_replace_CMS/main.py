@@ -291,6 +291,7 @@ env = RPG(
 
 def run_game(
     models,
+    value_model,
     env,
     turn,
     epsilon,
@@ -651,7 +652,7 @@ def run_game(
             losses = 0
             replace_object = [0, 0, 0, 0]
 
-    return models, env, turn, epsilon
+    return models, value_model, env, turn, epsilon
 
 
 # models = create_models()
@@ -696,6 +697,10 @@ run_params = (
     # [0.5, 8010, 20, 0.999, "EWA", 2000, 2500, 20.0, 20.0],
 )
 
+run_params = (
+    [0.5, 1999, 40, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0, False],
+)
+
 
 # Convert the tuple of lists to a list of lists
 # run_params_list = list(run_params)
@@ -716,8 +721,9 @@ for modRun in range(len(run_params)):
     value_model = ValueModel(state_dim=3, memory_size=250)
     object_memory = deque(maxlen=run_params[modRun][6])
     state_knn = NearestNeighbors(n_neighbors=5)
-    models, env, turn, epsilon = run_game(
+    models, value_model, env, turn, epsilon = run_game(
         models,
+        value_model,
         env,
         turn,
         run_params[modRun][0],
@@ -739,3 +745,117 @@ for modRun in range(len(run_params)):
 #      need to have long term memories that get stored somehow
 #      if we can get the decay to work right, decay can be something that
 #      is modulated (and maybe learned) to retain memories for longer
+
+
+from gem.models.perception_singlePixel_categories import agent_visualfield
+
+
+def make_Q_map(env, models):
+    pass
+
+
+Q_array = np.zeros((world_size, world_size))
+R_array = np.zeros((world_size, world_size))
+QR_array = np.zeros((world_size, world_size))
+
+
+env.reset_env(
+    height=world_size,
+    width=world_size,
+    layers=1,
+    gem1p=0.03,
+    gem2p=0.03,
+    gem3p=0.03,
+    change=False,
+)
+
+
+for loc in find_instance(env.world, "neural_network"):
+    # reset the memories for all agents
+    # the parameter sets the length of the sequence for LSTM
+    env.world[loc].init_replay(1)
+    env.world[loc].init_rnn_state = None
+
+agentList = find_instance(env.world, "neural_network")
+agent = env.world[agentList[0]]
+env.world[agentList[0]] = EmptyObject()
+
+
+# pass 1
+
+for i in range(world_size - 2):
+    for j in range(world_size - 2):
+        env2 = env
+        loc = (i + 1, j + 1, 0)
+        locReward = env.world[loc].value
+        R_array[i + 1, j + 1] = locReward
+
+        env2.world[loc] = agent
+        state = env.pov(loc)
+        Qs = models[0].qnetwork_local.get_qvalues(state)
+        Q = torch.max(Qs).detach().item()
+        Q_array[i + 1, j + 1] = Q
+        QR_array[i + 1, j + 1] = Q + locReward
+
+plt.subplot(1, 3, 1)  # First subplot
+plt.imshow(Q_array, cmap="viridis")  # Plot the first array
+# plt.colorbar() # To add a color scale
+plt.title("Q")  # Title for the first plot
+
+plt.subplot(1, 3, 2)  # Second subplot
+plt.imshow(R_array, cmap="viridis")  # Plot the second array
+# plt.colorbar() # To add a color scale
+plt.title("R")  # Title for the second plot
+
+plt.subplot(1, 3, 3)  # Third subplot
+plt.imshow(QR_array, cmap="viridis")  # Plot the second array
+# plt.colorbar() # To add a color scale
+plt.title("QR")  # Title for the third plot
+
+plt.show()
+
+
+# pass 2
+Q_array = np.zeros((world_size, world_size))
+R_array = np.zeros((world_size, world_size))
+QR_array = np.zeros((world_size, world_size))
+env3 = env
+
+for i in range(world_size):
+    for j in range(world_size):
+        object_state = torch.tensor(env3.world[i, j, 0].appearance[:3]).float()
+        rs, _ = value_model(object_state.unsqueeze(0))
+        r = rs[0][1]
+        env3.world[i, j, 0].appearance[3] = r.item() * 255
+
+
+for i in range(world_size - 2):
+    for j in range(world_size - 2):
+        env2 = env3
+        loc = (i + 1, j + 1, 0)
+        locReward = env.world[loc].value
+        R_array[i + 1, j + 1] = locReward
+
+        env2.world[loc] = agent
+        state = env.pov(loc)
+        Qs = models[0].qnetwork_local.get_qvalues(state)
+        Q = torch.max(Qs).detach().item()
+        Q_array[i + 1, j + 1] = Q
+        QR_array[i + 1, j + 1] = Q + locReward
+
+plt.subplot(1, 3, 1)  # First subplot
+plt.imshow(Q_array, cmap="viridis")  # Plot the first array
+# plt.colorbar() # To add a color scale
+plt.title("Q")  # Title for the first plot
+
+plt.subplot(1, 3, 2)  # Second subplot
+plt.imshow(R_array, cmap="viridis")  # Plot the second array
+# plt.colorbar() # To add a color scale
+plt.title("R")  # Title for the second plot
+
+plt.subplot(1, 3, 3)  # Third subplot
+plt.imshow(QR_array, cmap="viridis")  # Plot the second array
+# plt.colorbar() # To add a color scale
+plt.title("QR")  # Title for the third plot
+
+plt.show()

@@ -150,7 +150,7 @@ class RPG:
                 print("Could not place object")
                 break
 
-    def change_gem_values(self, new_values="None", new_colours="Shuffled"):
+    def change_gem_values(self, new_values="Shuffled", new_colours="Shuffled"):
         if new_values == "Random":
             val1 = np.random.random() * 15
             val2 = np.random.random() * 15
