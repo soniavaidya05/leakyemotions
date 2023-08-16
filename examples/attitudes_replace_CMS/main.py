@@ -937,3 +937,117 @@ for modRun in range(len(run_params)):
 #      need to have long term memories that get stored somehow
 #      if we can get the decay to work right, decay can be something that
 #      is modulated (and maybe learned) to retain memories for longer
+
+
+### Neural Network Epsiodic Memory
+
+
+class ObjectMemoryEncoder(nn.Module):
+    def __init__(self, input_size, embedding_size):
+        super(ObjectMemoryEncoder, self).__init__()
+        self.fc1 = nn.Linear(input_size, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, embedding_size)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+
+class ObjectMemoryBuffer:
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.memory = []  # Will store tuples of (embedding, reward, timestamp)
+        self.timestamp = 0  # Initializes a counter to track when the memory was added
+
+    def push(self, embedding, reward):
+        self.timestamp += 1
+        if len(self.memory) < self.capacity:
+            self.memory.append((embedding, reward, self.timestamp))
+        else:
+            self.memory.pop(0)  # remove the oldest memory
+            self.memory.append((embedding, reward, self.timestamp))
+
+    def get_closest_memories(self, query_embedding, n=1):
+        # Calculate distances based on the embedding (state part)
+        distances = [(torch.dist(query_embedding, mem[0]), mem) for mem in self.memory]
+        # Sort primarily by distance, but use timestamp as a secondary criterion
+        sorted_memories = sorted(distances, key=lambda x: (x[0], -x[1][2]))
+        closest_memories = [mem[1] for mem in sorted_memories[:n]]
+        closest_distances = [dist[0] for dist in sorted_memories[:n]]
+        return closest_memories, closest_distances
+
+
+def compute_weighted_avg_object_reward(
+    memories, distances, recency_discount, similarity_discount
+):
+    total_reward = 0.0
+    total_weight = 0.0
+    recency_weight = 1.0  # Start with the full weight for the most recent memory
+
+    for (embedding, reward, timestamp), distance in zip(memories, distances):
+        similarity_weight = 1 / (
+            1 + distance
+        )  # Inverse relationship. Closer (smaller) distances have larger weights.
+
+        # The combined weight is a product of recency and similarity weights
+        combined_weight = recency_weight * similarity_weight
+
+        total_reward += reward * combined_weight
+        total_weight += combined_weight
+
+        recency_weight *= recency_discount
+
+    return total_reward / total_weight if total_weight != 0 else 0
+
+
+# Initialize the neural network and memory buffer
+input_size = 3
+embedding_size = 2
+encoder = ObjectMemoryEncoder(input_size, embedding_size)
+memory_buffer = ObjectMemoryBuffer(capacity=2500)
+
+
+for mem in range(
+    len(object_memory)
+):  # transfer the memories from the game to the memory buffer
+    state = torch.tensor(object_memory[mem][0]).float()
+    reward = torch.tensor([object_memory[mem][1]])
+    embedding = encoder(state)
+    memory_buffer.push(embedding, reward)
+
+
+# usage:
+# note: need to play with the recency and teh similarity discounts
+
+query_state = torch.tensor([255.0, 100.0, 100.0])
+query_embedding = encoder(query_state)
+closest_memories, closest_distances = memory_buffer.get_closest_memories(
+    query_embedding, n=100
+)
+avg_reward = compute_weighted_avg_object_reward(
+    closest_memories, closest_distances, recency_discount=0.9, similarity_discount=0.9
+)
+print(avg_reward)
+
+query_state = torch.tensor([200.0, 50.0, 100.0])
+query_embedding = encoder(query_state)
+closest_memories, closest_distances = memory_buffer.get_closest_memories(
+    query_embedding, n=100
+)
+avg_reward = compute_weighted_avg_object_reward(
+    closest_memories, closest_distances, recency_discount=0.9, similarity_discount=0.9
+)
+print(avg_reward)
+
+query_state = torch.tensor([225.0, 50.0, 100.0])
+query_embedding = encoder(query_state)
+closest_memories, closest_distances = memory_buffer.get_closest_memories(
+    query_embedding, n=100
+)
+avg_reward = compute_weighted_avg_object_reward(
+    closest_memories, closest_distances, recency_discount=0.9, similarity_discount=0.9
+)
+print(avg_reward)
