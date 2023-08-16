@@ -7,7 +7,9 @@ from examples.attitudes_replace_CMS_tile_PER.utils import (
     find_agents,
     find_instance,
     plot_time_decay,
+    # make_Q_map,
 )
+
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import euclidean
 from examples.attitudes_replace_CMS_tile_PER.iRainbow_clean import iRainbowModel
@@ -234,7 +236,7 @@ def create_models(action_space):
             action_size=action_space,
             layer_size=250,  # 100
             n_step=3,  # Multistep IQN (rainbow paper uses 3)
-            use_per=False,
+            use_per=True,
             BATCH_SIZE=64,
             BUFFER_SIZE=1024,
             LR=0.00025,  # 0.00025
@@ -366,7 +368,7 @@ def run_game(
                 for i in range(world_size):
                     for j in range(world_size):
                         object_state = torch.tensor(
-                            env.world[i, j, 0].appearance[:3]
+                            env.world[i, j, 0].appearance[:-2]
                         ).float()
                         rs, _ = value_model(object_state.unsqueeze(0))
                         r = rs[0][1]
@@ -385,7 +387,8 @@ def run_game(
         ):  # this sets a control condition where no attitudes are used
             for i in range(world_size):
                 for j in range(world_size):
-                    env.world[i, j, 0].appearance[3] = 0.0
+                    env.world[i, j, 0].appearance[-2] = 0.0
+                    env.world[i, j, 0].appearance[-1] = 0.0
 
         # --------------------------------------------------------------
         # this is our episodic memory model with search and weighting
@@ -399,7 +402,7 @@ def run_game(
             )
             for i in range(world_size):
                 for j in range(world_size):
-                    o_state = env.world[i, j, 0].appearance[:3]
+                    o_state = env.world[i, j, 0].appearance[:-2]
                     mems = k_most_similar_recent_states(
                         torch.tensor(o_state),
                         state_knn,
@@ -408,7 +411,7 @@ def run_game(
                         decay_rate=1.0,
                         k=100,
                     )
-                    env.world[i, j, 0].appearance[4] = (
+                    env.world[i, j, 0].appearance[-1] = (
                         compute_weighted_average(
                             o_state,
                             mems,
@@ -430,7 +433,7 @@ def run_game(
             )
             for i in range(world_size):
                 for j in range(world_size):
-                    o_state = env.world[i, j, 0].appearance[:3]
+                    o_state = env.world[i, j, 0].appearance[:-2]
                     mems = k_most_similar_recent_states(
                         torch.tensor(o_state),
                         state_knn_CMS,
@@ -439,7 +442,7 @@ def run_game(
                         decay_rate=1.0,
                         k=100,
                     )
-                    env.world[i, j, 0].appearance[4] = (
+                    env.world[i, j, 0].appearance[-1] = (
                         compute_weighted_average(
                             o_state,
                             mems,
@@ -516,7 +519,7 @@ def run_game(
                     # this sets up the direct reward experience and state information
                     # to be saved in a replay and also learned from
 
-                    state_object = object_info[0:3]
+                    state_object = object_info[0:-2]
                     state_object_input = torch.tensor(state_object).float()
 
                     rs, _ = value_model(state_object_input.unsqueeze(0))
@@ -748,171 +751,3 @@ for modRun in range(len(run_params)):
 #      need to have long term memories that get stored somehow
 #      if we can get the decay to work right, decay can be something that
 #      is modulated (and maybe learned) to retain memories for longer
-
-
-from gem.models.perception_singlePixel_categories import agent_visualfield
-import copy
-
-
-def make_Q_map(env, models, value_model, sparce=0.01):
-    Q_array1 = np.zeros((world_size, world_size))
-    R_array1 = np.zeros((world_size, world_size))
-    QR_array1 = np.zeros((world_size, world_size))
-
-    Q_array2 = np.zeros((world_size, world_size))
-    R_array2 = np.zeros((world_size, world_size))
-    QR_array2 = np.zeros((world_size, world_size))
-
-    Q_array3 = np.zeros((world_size, world_size))
-    R_array3 = np.zeros((world_size, world_size))
-    QR_array3 = np.zeros((world_size, world_size))
-
-    env.reset_env(
-        height=world_size,
-        width=world_size,
-        layers=1,
-        gem1p=sparce,
-        gem2p=sparce,
-        gem3p=sparce,
-        change=False,
-    )
-    env.change_gem_values()
-
-    for loc in find_instance(env.world, "neural_network"):
-        # reset the memories for all agents
-        # the parameter sets the length of the sequence for LSTM
-        env.world[loc].init_replay(1)
-        env.world[loc].init_rnn_state = None
-
-    agentList = find_instance(env.world, "neural_network")
-    agent = env.world[agentList[0]]
-    env.world[agentList[0]] = EmptyObject()
-
-    # pass 1
-
-    for i in range(world_size - 2):
-        for j in range(world_size - 2):
-            loc = (i + 1, j + 1, 0)
-            original_content = env.world[
-                loc
-            ]  # Save what was originally at the location
-            locReward = original_content.value
-            R_array1[i + 1, j + 1] = locReward
-
-            env.world[loc] = agent  # Put agent in place
-            state = env.pov(loc)
-            Qs = models[0].qnetwork_local.get_qvalues(state)
-            Q = torch.max(Qs).detach().item()
-            Q_array1[i + 1, j + 1] = Q
-            QR_array1[i + 1, j + 1] = Q + locReward
-
-            env.world[
-                loc
-            ] = original_content  # Put back what was originally at the location
-
-    # pass 2
-
-    for i in range(world_size):
-        for j in range(world_size):
-            object_state = torch.tensor(env.world[i, j, 0].appearance[:3]).float()
-            rs, _ = value_model(object_state.unsqueeze(0))
-            r = rs[0][1]
-            env.world[i, j, 0].appearance[3] = r.item() * 255
-
-    for i in range(world_size - 2):
-        for j in range(world_size - 2):
-            loc = (i + 1, j + 1, 0)
-            original_content = env.world[
-                loc
-            ]  # Save what was originally at the location
-            locReward = original_content.value
-            R_array2[i + 1, j + 1] = locReward
-
-            env.world[loc] = agent  # Put agent in place
-            state = env.pov(loc)
-            Qs = models[0].qnetwork_local.get_qvalues(state)
-            Q = torch.max(Qs).detach().item()
-            Q_array2[i + 1, j + 1] = Q
-            QR_array2[i + 1, j + 1] = Q + locReward
-
-            env.world[
-                loc
-            ] = original_content  # Put back what was originally at the location
-
-    # pass 3
-
-    for i in range(world_size):
-        for j in range(world_size):
-            object_state = torch.tensor(env.world[i, j, 0].appearance[:3]).float()
-            rs, _ = value_model(object_state.unsqueeze(0))
-            r = rs[0][1]
-            r = (r * -1) + 5
-            env.world[i, j, 0].appearance[3] = r.item() * 255
-
-    for i in range(world_size - 2):
-        for j in range(world_size - 2):
-            loc = (i + 1, j + 1, 0)
-            original_content = env.world[
-                loc
-            ]  # Save what was originally at the location
-            locReward = original_content.value
-            R_array3[i + 1, j + 1] = locReward
-            locReward = (locReward * -1) + 5
-
-            env.world[loc] = agent  # Put agent in place
-            state = env.pov(loc)
-            Qs = models[0].qnetwork_local.get_qvalues(state)
-            Q = torch.max(Qs).detach().item()
-            Q_array3[i + 1, j + 1] = Q
-            QR_array3[i + 1, j + 1] = Q + locReward
-
-            env.world[
-                loc
-            ] = original_content  # Put back what was originally at the location
-
-    plt.subplot(3, 3, 1)  # First subplot
-    plt.imshow(Q_array1, cmap="viridis")  # Plot the first array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN Q", fontsize=8)  # Title for the first plot
-
-    plt.subplot(3, 3, 2)  # Second subplot
-    plt.imshow(R_array1, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("R", fontsize=8)  # Title for the second plot
-
-    plt.subplot(3, 3, 3)  # Third subplot
-    plt.imshow(QR_array1, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN QR", fontsize=8)  # Title for the third plot
-
-    plt.subplot(3, 3, 4)  # First subplot
-    plt.imshow(Q_array2, cmap="viridis")  # Plot the first array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN + implicit Q", fontsize=8)  # Title for the first plot
-
-    plt.subplot(3, 3, 5)  # Second subplot
-    plt.imshow(R_array2, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("R", fontsize=8)  # Title for the second plot
-
-    plt.subplot(3, 3, 6)  # Third subplot
-    plt.imshow(QR_array2, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN + implicit QR", fontsize=8)  # Title for the first plot
-
-    plt.subplot(3, 3, 7)  # First subplot
-    plt.imshow(Q_array3, cmap="viridis")  # Plot the first array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN + implicit (flipped)", fontsize=8)  # Title for the first plot
-
-    plt.subplot(3, 3, 8)  # Second subplot
-    plt.imshow(R_array3, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("R", fontsize=8)  # Title for the second plot
-
-    plt.subplot(3, 3, 9)  # Third subplot
-    plt.imshow(QR_array3, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN + implicit QR (flipped)", fontsize=8)  # Title for the first plot
-
-    plt.show()

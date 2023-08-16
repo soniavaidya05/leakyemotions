@@ -35,8 +35,12 @@ from torch.nn.utils import clip_grad_norm_
 
 from gem.models.layers import NoisyLinear
 
-from replay_buffer import ReplayBuffer, PrioritizedReplay
+from examples.attitudes_replace_CMS_tile_PER.replay_buffer import (
+    ReplayBuffer,
+    PrioritizedReplay,
+)
 import pdb
+
 
 class IQN(nn.Module):
     """The IQN Q-network."""
@@ -338,7 +342,9 @@ class iRainbowModel:
         self.soft_update(self.qnetwork_local, self.qnetwork_target)
 
         if self.use_per:
-            td_error = td_error.sum(dim=1).mean(dim=1,keepdim=True) # not sure about this -> test
+            td_error = td_error.sum(dim=1).mean(
+                dim=1, keepdim=True
+            )  # not sure about this -> test
             self.memory.update_priorities(idx, abs(td_error.data.cpu().numpy()))
 
         return loss.detach().cpu().numpy()
