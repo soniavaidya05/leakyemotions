@@ -236,7 +236,7 @@ def create_models(action_space):
             action_size=action_space,
             layer_size=250,  # 100
             n_step=3,  # Multistep IQN (rainbow paper uses 3)
-            use_per=True,
+            use_per=False,
             BATCH_SIZE=64,
             BUFFER_SIZE=1024,
             LR=0.00025,  # 0.00025

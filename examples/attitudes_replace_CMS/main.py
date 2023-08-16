@@ -365,11 +365,11 @@ def run_game(
                 for i in range(world_size):
                     for j in range(world_size):
                         object_state = torch.tensor(
-                            env.world[i, j, 0].appearance[:3]
+                            env.world[i, j, 0].appearance[:-2]
                         ).float()
                         rs, _ = value_model(object_state.unsqueeze(0))
                         r = rs[0][1]
-                        env.world[i, j, 0].appearance[3] = r.item() * 255
+                        env.world[i, j, 0].appearance[-2] = r.item() * 255
             testing = False
             if testing and epoch % 100 == 0:
                 atts = eval_attiude_model()
@@ -384,7 +384,8 @@ def run_game(
         ):  # this sets a control condition where no attitudes are used
             for i in range(world_size):
                 for j in range(world_size):
-                    env.world[i, j, 0].appearance[3] = 0.0
+                    env.world[i, j, 0].appearance[-2] = 0.0
+                    env.world[i, j, 0].appearance[-1] = 0.0
 
         # --------------------------------------------------------------
         # this is our episodic memory model with search and weighting
@@ -398,7 +399,7 @@ def run_game(
             )
             for i in range(world_size):
                 for j in range(world_size):
-                    o_state = env.world[i, j, 0].appearance[:3]
+                    o_state = env.world[i, j, 0].appearance[:-2]
                     mems = k_most_similar_recent_states(
                         torch.tensor(o_state),
                         state_knn,
@@ -407,7 +408,7 @@ def run_game(
                         decay_rate=1.0,
                         k=100,
                     )
-                    env.world[i, j, 0].appearance[4] = (
+                    env.world[i, j, 0].appearance[-1] = (
                         compute_weighted_average(
                             o_state,
                             mems,
@@ -429,7 +430,7 @@ def run_game(
             )
             for i in range(world_size):
                 for j in range(world_size):
-                    o_state = env.world[i, j, 0].appearance[:3]
+                    o_state = env.world[i, j, 0].appearance[:-2]
                     mems = k_most_similar_recent_states(
                         torch.tensor(o_state),
                         state_knn_CMS,
@@ -438,7 +439,7 @@ def run_game(
                         decay_rate=1.0,
                         k=100,
                     )
-                    env.world[i, j, 0].appearance[4] = (
+                    env.world[i, j, 0].appearance[-1] = (
                         compute_weighted_average(
                             o_state,
                             mems,
@@ -515,7 +516,7 @@ def run_game(
                     # this sets up the direct reward experience and state information
                     # to be saved in a replay and also learned from
 
-                    state_object = object_info[0:3]
+                    state_object = object_info[0:-2]
                     state_object_input = torch.tensor(state_object).float()
 
                     rs, _ = value_model(state_object_input.unsqueeze(0))
@@ -736,7 +737,7 @@ def make_Q_map(env, models, value_model, sparce=0.01):
             ]  # Save what was originally at the location
             locReward = original_content.value
             R_array2[i + 1, j + 1] = locReward
-            env.world[i + 1, j + 1, 0].appearance[3] = locReward * 255
+            env.world[i + 1, j + 1, 0].appearance[-2] = locReward * 255
 
             env.world[loc] = agent  # Put agent in place
             state = env.pov(loc)
@@ -757,7 +758,7 @@ def make_Q_map(env, models, value_model, sparce=0.01):
             rs, _ = value_model(object_state.unsqueeze(0))
             r = rs[0][1]
             r = (r * -1) + 5
-            env.world[i, j, 0].appearance[3] = r.item() * 255
+            env.world[i, j, 0].appearance[-2] = r.item() * 255
 
     for i in range(world_size - 2):
         for j in range(world_size - 2):
@@ -768,7 +769,7 @@ def make_Q_map(env, models, value_model, sparce=0.01):
             locReward = original_content.value
             R_array3[i + 1, j + 1] = locReward
             locReward = (locReward * -1) + 5
-            env.world[i + 1, j + 1, 0].appearance[3] = locReward * 255
+            env.world[i + 1, j + 1, 0].appearance[-2] = locReward * 255
 
             env.world[loc] = agent  # Put agent in place
             state = env.pov(loc)
