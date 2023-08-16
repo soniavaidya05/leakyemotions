@@ -664,7 +664,7 @@ from gem.models.perception_singlePixel_categories import agent_visualfield
 import copy
 
 
-def make_Q_map(env, models, value_model, sparce=0.01):
+def make_Q_map(env, models, value_model, sparce=0.01, save_name=None):
     Q_array1 = np.zeros((world_size, world_size))
     R_array1 = np.zeros((world_size, world_size))
     QR_array1 = np.zeros((world_size, world_size))
@@ -738,6 +738,7 @@ def make_Q_map(env, models, value_model, sparce=0.01):
             locReward = original_content.value
             R_array2[i + 1, j + 1] = locReward
             env.world[i + 1, j + 1, 0].appearance[-2] = locReward * 255
+            # env.world[i + 1, j + 1, 0].appearance[4] = locReward * 255
 
             env.world[loc] = agent  # Put agent in place
             state = env.pov(loc)
@@ -752,13 +753,14 @@ def make_Q_map(env, models, value_model, sparce=0.01):
 
     # pass 3
 
-    for i in range(world_size):
-        for j in range(world_size):
-            object_state = torch.tensor(env.world[i, j, 0].appearance[:3]).float()
-            rs, _ = value_model(object_state.unsqueeze(0))
-            r = rs[0][1]
-            r = (r * -1) + 5
-            env.world[i, j, 0].appearance[-2] = r.item() * 255
+    # for i in range(world_size):
+    #    for j in range(world_size):
+    #        object_state = torch.tensor(env.world[i, j, 0].appearance[:3]).float()
+    #        rs, _ = value_model(object_state.unsqueeze(0))
+    #        r = rs[0][1]
+    #        r = (r * -1) + 5
+    #        env.world[i, j, 0].appearance[3] = r.item() * 255
+    #        env.world[i, j, 0].appearance[4] = r.item() * 255
 
     for i in range(world_size - 2):
         for j in range(world_size - 2):
@@ -770,6 +772,7 @@ def make_Q_map(env, models, value_model, sparce=0.01):
             R_array3[i + 1, j + 1] = locReward
             locReward = (locReward * -1) + 5
             env.world[i + 1, j + 1, 0].appearance[-2] = locReward * 255
+            # env.world[i + 1, j + 1, 0].appearance[4] = locReward * 255
 
             env.world[loc] = agent  # Put agent in place
             state = env.pov(loc)
@@ -818,16 +821,31 @@ def make_Q_map(env, models, value_model, sparce=0.01):
     plt.title("IQN + implicit (flipped)", fontsize=8)  # Title for the first plot
 
     plt.subplot(3, 3, 8)  # Second subplot
-    plt.imshow(R_array3, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("R", fontsize=8)  # Title for the second plot
+
+    # Reshape the arrays for scatterplot
+    x_data = Q_array2.ravel()
+    y_data = Q_array3.ravel()
+
+    # Filter out points where either x or y is zero
+    mask = (x_data != 0) & (y_data != 0)
+    x_data = x_data[mask]
+    y_data = y_data[mask]
+    # Calculate the correlation coefficient
+    corr_coeff = np.corrcoef(x_data, y_data)[0, 1]
+
+    sns.regplot(x=x_data, y=y_data, scatter_kws={"s": 5}, line_kws={"color": "red"})
+    plt.title(f"Correlation: Q_array2 vs Q_array3\nr = {corr_coeff:.2f}", fontsize=8)
 
     plt.subplot(3, 3, 9)  # Third subplot
     plt.imshow(QR_array3, cmap="viridis")  # Plot the second array
     plt.colorbar()  # To add a color scale
     plt.title("IQN + implicit QR (flipped)", fontsize=8)  # Title for the first plot
 
-    plt.show()
+    if save_name:  # If save_name is provided, save the figure to a file
+        plt.savefig(save_name, dpi=300, bbox_inches="tight")
+        plt.close()  # Close the plot to free up memory
+    else:  # If save_name is not provided, show the plot on the screen
+        plt.show()
 
 
 run_params = (
