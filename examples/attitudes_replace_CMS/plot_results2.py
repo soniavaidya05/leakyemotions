@@ -3,7 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def process_files(file_pattern="*.txt", smoothing=1, time_range=None):
+def process_files(
+    file_pattern="*.txt", smoothing=1, time_range=None, expect_list=False
+):
     # Dictionary to store data
     data_dict = {}
     change_points = set()
@@ -26,8 +28,8 @@ def process_files(file_pattern="*.txt", smoothing=1, time_range=None):
                 if len(parts) >= 4 and parts[0].isdigit():
                     time_step = int(parts[0])
                     third_integer = int(parts[2])
-                    last_string = parts[-1]
-                    condition = parts[-2]  # second to last column
+                    last_string = parts[-1] if not expect_list else parts[-5]
+                    condition = parts[-2] if not expect_list else parts[-6]
 
                     # Check if the time_step is within the specified range, if provided
                     if time_range and (
@@ -87,4 +89,4 @@ def process_files(file_pattern="*.txt", smoothing=1, time_range=None):
 # process_files(file_pattern="study1_*.txt", smoothing=5)
 # process_files(file_pattern="study2b_*.txt", smoothing=5)
 # process_files(file_pattern="test*.txt", smoothing=5)
-process_files(file_pattern="exp_*.txt", smoothing=2)
+process_files(file_pattern="replace2_*.txt", smoothing=1, expect_list=True)

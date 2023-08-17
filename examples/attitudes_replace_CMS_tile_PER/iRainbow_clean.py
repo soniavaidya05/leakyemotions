@@ -26,69 +26,20 @@ iRainbowModel (contains two IQN networks; one for local and one for target)
 """
 import random
 from typing import Optional
-from collections import deque, namedtuple
 
 import torch
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
-import torch.nn.functional as F
 
 from gem.models.layers import NoisyLinear
-from replay_buffer import ReplayBuffer, PrioritizedReplay
 
-
-class CNN_CLD(nn.Module):
-    def __init__(self, config=None, normalization_value=255):
-        super(CNN_CLD, self).__init__()
-
-        self.normalization_value = normalization_value
-
-        if config is None:
-            config = {
-                "layers": [
-                    {
-                        "type": "conv2d",
-                        "in_channels": 7,  # You can set this to the number of input channels you have
-                        "out_channels": 7,  # This is the number of filters (you can set it as desired)
-                        "kernel_size": 1,
-                        "activation": "relu",
-                    }
-                ]
-            }
-
-        layers = []
-        for layer in config["layers"]:
-            if layer["type"] == "conv2d":
-                layers.append(
-                    nn.Conv2d(
-                        layer["in_channels"],
-                        layer["out_channels"],
-                        layer["kernel_size"],
-                    )
-                )
-                if layer["activation"] == "relu":
-                    layers.append(nn.ReLU())
-            elif layer["type"] == "batch_norm2d":
-                layers.append(nn.BatchNorm2d(layer["num_features"]))
-            elif layer["type"] == "max_pool2d":
-                layers.append(nn.MaxPool2d(layer["kernel_size"]))
-            elif layer["type"] == "flatten":
-                layers.append(nn.Flatten())
-            elif layer["type"] == "linear":
-                layers.append(nn.Linear(layer["in_features"], layer["out_features"]))
-                if layer["activation"] == "relu":
-                    layers.append(nn.ReLU())
-                elif layer["activation"] == "softmax":
-                    layers.append(nn.Softmax(dim=1))
-
-        self.network = nn.Sequential(*layers)
-
-    def forward(self, x):
-        x = x / self.normalization_value
-        x = self.network(x)
-        return x
+from examples.attitudes_replace_CMS_tile_PER.replay_buffer import (
+    ReplayBuffer,
+    PrioritizedReplay,
+)
+import pdb
 
 
 class IQN(nn.Module):
@@ -96,15 +47,11 @@ class IQN(nn.Module):
 
     def __init__(
         self,
-        in_channels,
-        num_filters,
-        cnn_out_size,
         state_size: tuple,
         action_size: int,
         layer_size: int,
         seed: int,
         n_quantiles: int,
-        use_cnn: bool,
         device: Optional[torch.device] = None,
     ) -> None:
         super().__init__()
@@ -120,15 +67,10 @@ class IQN(nn.Module):
             .view(1, 1, self.n_cos)
             .to(device)
         )
-        self.use_cnn = use_cnn
         self.device = device
 
         # Network architecture
-        if use_cnn:
-            self.cnn = CNN_CLD()
-            self.head1 = nn.Linear(cnn_out_size, layer_size)
-        else:
-            self.head1 = nn.Linear(1134, layer_size)
+        self.head1 = nn.Linear(405, layer_size)
 
         self.cos_embedding = nn.Linear(self.n_cos, layer_size)
         self.ff_1 = NoisyLinear(layer_size, layer_size)
@@ -162,15 +104,10 @@ class IQN(nn.Module):
         noise = torch.rand_like(input) * eps
         input = input / 255.0
         input = input + noise
+
+        # Flatten the input from [1, 2, 7, 9, 9] to [1, 1134]
         batch_size, timesteps, C, H, W = input.size()
-
-        if self.use_cnn:
-            c_in = input.view(batch_size * timesteps, C, H, W)
-            c_out = self.cnn(c_in)
-        else:
-            # Flatten the input from [1, 2, 7, 9, 9] to [1, 1134]
-            c_out = input.view(batch_size * timesteps, C, H, W)
-
+        c_out = input.view(batch_size * timesteps, C, H, W)
         r_in = c_out.view(batch_size, -1)
 
         # Pass input through linear layer and activation function ([1, 250])
@@ -209,6 +146,7 @@ class IQN(nn.Module):
         actions = quantiles.mean(dim=1)
         return actions
 
+
 class iRainbowModel:
     """Interacts with and learns from the environment."""
 
@@ -221,14 +159,13 @@ class iRainbowModel:
         action_size,
         layer_size,
         n_step,
+        use_per,
         BATCH_SIZE,
         BUFFER_SIZE,
         LR,
         TAU,
         GAMMA,
         N,
-        use_cnn,
-        use_per,
         device,
         seed,
     ):
@@ -261,27 +198,25 @@ class iRainbowModel:
 
         # IQN-Network
         self.qnetwork_local = IQN(
-            in_channels,
-            num_filters,
-            cnn_out_size,
+            # in_channels,
+            # num_filters,
+            # cnn_out_size,
             state_size,
             action_size,
             layer_size,
             seed,
             N,
-            use_cnn,
             device=device,
         ).to(device)
         self.qnetwork_target = IQN(
-            in_channels,
-            num_filters,
-            cnn_out_size,
+            # in_channels,
+            # num_filters,
+            # cnn_out_size,
             state_size,
             action_size,
             layer_size,
             seed,
             N,
-            use_cnn,
             device=device,
         ).to(device)
 
@@ -304,6 +239,16 @@ class iRainbowModel:
                 self.GAMMA,
                 n_step,
             )
+
+    # def new_memory_buffer(self, BUFFER_SIZE, seed, n_step):
+    #     self.memory = ReplayBuffer(
+    #         BUFFER_SIZE,
+    #         self.BATCH_SIZE,
+    #         self.device,
+    #         seed,
+    #         self.GAMMA,
+    #         n_step,
+    #     )
 
     def take_action(self, state, eps=0.0, eval=False):
         """Returns actions for given state as per current policy. Acting only every 4 frames!
@@ -370,6 +315,8 @@ class iRainbowModel:
             2, actions.unsqueeze(-1).expand(self.BATCH_SIZE, self.N, 1)
         )
 
+        # RuntimeError: expand(torch.LongTensor{[64, 1, 1, 1]}, size=[64, 12, 1]): the number of sizes provided (3) must be greater or equal to the number of dimensions in the tensor (4)
+
         # Quantile Huber loss
         td_error = Q_targets - Q_expected
         assert td_error.shape == (
@@ -395,7 +342,9 @@ class iRainbowModel:
         self.soft_update(self.qnetwork_local, self.qnetwork_target)
 
         if self.use_per:
-            td_error = td_error.sum(dim=1).mean(dim=1,keepdim=True) # not sure about this -> test
+            td_error = td_error.sum(dim=1).mean(
+                dim=1, keepdim=True
+            )  # not sure about this -> test
             self.memory.update_priorities(idx, abs(td_error.data.cpu().numpy()))
 
         return loss.detach().cpu().numpy()

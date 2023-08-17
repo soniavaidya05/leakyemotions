@@ -823,10 +823,10 @@ if order == 2:
 run_params = run_params2b
 
 run_params = (
-    [0.5, 8100, 20, 0.999, "weighted_average_attitude", 2000, 2500, 1.0],
-    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 2500, 1.0],
-    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
+    [0.5, 4100, 20, 0.999, "weighted_average_attitude", 2000, 25000, 1.0],
+    [0.5, 4100, 20, 0.999, "no_attitude", 2000, 2500, 1.0],
+    [0.5, 4100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0],
+    [0.5, 4100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
 )
 
 

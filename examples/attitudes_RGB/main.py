@@ -1,16 +1,17 @@
 # from tkinter.tix import Tree
-from examples.attitudes.utils import (
+from examples.attitudes_RGB.utils import (
     update_epsilon,
     update_memories,
     find_moveables,
     transfer_world_memories,
     find_agents,
     find_instance,
+    plot_time_decay,
 )
 import matplotlib.pyplot as plt
-
-from examples.attitudes.iRainbow_clean import iRainbowModel
-from examples.attitudes.env import RPG
+from scipy.spatial.distance import euclidean
+from examples.attitudes_RGB.iRainbow_clean import iRainbowModel
+from examples.attitudes_RGB.env import RPG
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -18,17 +19,24 @@ import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
 
 import torch.optim as optim
-from examples.attitudes.elements import EmptyObject, Wall
+from examples.attitudes_RGB.elements import EmptyObject, Wall
 
 import time
 import numpy as np
 import random
 import torch
 
+from collections import deque, namedtuple
+from scipy.spatial import distance
+
+from datetime import datetime
+
 from sklearn.neighbors import NearestNeighbors
 
+
 # save_dir = "/Users/yumozi/Projects/gem_data/RPG3_test/"
-save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+# save_dir = "/Users/socialai/Dropbox/M1_ultra/"
+save_dir = "/Users/ethan/attitudes-output"
 # save_dir = "C:/Users/wilcu/OneDrive/Documents/gemout/"
 
 # choose device
@@ -39,34 +47,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 import time
 
-SEED = time.time()  # Seed for replicating training runs
-# np.random.seed(SEED)
-random.seed(SEED)
-torch.manual_seed(SEED)
-
-from collections import deque, namedtuple
-
-# noisy_dueling
-
-from scipy.spatial import distance
-import numpy as np
-import random
-
-from datetime import datetime
-
-
-# If True, use the KNN model when computing k-most similar recent states. Otherwise, use a brute-force search.
-USE_KNN_MODEL = True
-# Run profiling on the RL agent to see how long it takes per step
-RUN_PROFILING = False
-
-print(f"Using device: {device}")
-print(f"Using KNN model: {USE_KNN_MODEL}")
-print(f"Running profiling: {RUN_PROFILING}")
-
 
 def k_most_similar_recent_states(
-    state, knn: NearestNeighbors, memories, decay_rate, k=5
+    state, knn: NearestNeighbors, memories, object_memory_states_tensor, decay_rate, k=5
 ):
     if USE_KNN_MODEL:
         # Get the indices of the k most similar states (without selecting them yet)
@@ -74,37 +57,73 @@ def k_most_similar_recent_states(
         k_indices = knn.kneighbors(state, n_neighbors=k, return_distance=False)[0]
     else:
         # Perform a brute-force search for the k most similar states
-        distances = [distance.euclidean(state, memory[0]) for memory in memories]
-        k_indices = np.argsort(distances)[:k]
+        # distances = [distance.euclidean(state, memory[0]) for memory in memories]
+        # k_indices = np.argsort(distances)[:k]
 
-    # Create a list of weights based on the decay rate, but only for the k most similar states
-    # weights = [decay_rate**i for i in k_indices]
+        # let's try another way using torch operations...
 
-    EPSILON = 1e-10  # A small constant
-    weights = [decay_rate**i + EPSILON for i in k_indices]
+        # Calculate the squared Euclidean distance
+        squared_diff = torch.sum((object_memory_states_tensor - state) ** 2, dim=1)
+        # Take the square root to get the Euclidean distance
+        distance = torch.sqrt(squared_diff)
+        # Argsort and take top-k
+        k_indices = torch.argsort(distance, dim=0)[:k]
 
-    # Normalize the weights
-    weights = [w / sum(weights) for w in weights]
+    # Gather the k most similar memories based on the indices, preserving the order
+    most_similar_memories = [memories[i] for i in k_indices]
 
-    # Sample from the k most similar memories with the given weights
-    sampled_memories = random.choices(
-        [memories[i] for i in k_indices], weights=weights, k=k
+    return most_similar_memories
+
+
+def compute_weighted_average(
+    state, memories, similarity_decay_rate=1, time_decay_rate=1
+):
+    if not memories:
+        return 0
+
+    memory_states, rewards = zip(*memories)
+    memory_states = np.array(memory_states)
+    state = np.array(state)
+
+    # Compute Euclidean distances
+    distances = np.linalg.norm(memory_states - state, axis=1)
+    max_distance = np.max(distances) if distances.size else 1
+
+    # Compute similarity weights with exponential decay
+    similarity_weights = (
+        np.exp(-distances / max_distance * similarity_decay_rate)
+        if max_distance != 0
+        else np.ones_like(distances)
     )
 
-    return sampled_memories
+    # Compute time weights with exponential decay
+    N = len(memories)
+    time_weights = np.exp(-np.arange(N) / (N - 1) * time_decay_rate)
+
+    # Combine the weights
+    weights = similarity_weights * time_weights
+
+    # Compute the weighted sum
+    weighted_sum = np.dot(weights, rewards)
+    total_weight = np.sum(weights)
+
+    return weighted_sum / total_weight if total_weight != 0 else 0
 
 
-from sklearn.neighbors import NearestNeighbors
+SEED = time.time()  # Seed for replicating training runs
+# np.random.seed(SEED)
+random.seed(SEED)
+torch.manual_seed(SEED)
 
 
-def average_reward(memories):
-    # Extract the rewards from the tuples (assuming reward is the second element in each tuple)
-    rewards = [memory[1] for memory in memories]
+# If True, use the KNN model when computing k-most similar recent states. Otherwise, use a brute-force search.
+USE_KNN_MODEL = False
+# Run profiling on the RL agent to see how long it takes per step
+RUN_PROFILING = False
 
-    # Calculate the average reward
-    average_reward = sum(rewards) / len(rewards)
-
-    return average_reward
+print(f"Using device: {device}")
+print(f"Using KNN model: {USE_KNN_MODEL}")
+print(f"Running profiling: {RUN_PROFILING}")
 
 
 class ValueModel(nn.Module):
@@ -147,7 +166,7 @@ class ValueModel(nn.Module):
         self.replay_buffer.append((state, reward))
 
 
-value_model = ValueModel(state_dim=7, memory_size=250)
+value_model = ValueModel(state_dim=3, memory_size=250)
 
 
 def create_models():
@@ -160,11 +179,11 @@ def create_models():
     models = []
     models.append(
         iRainbowModel(
-            in_channels=8,
-            num_filters=8,
+            in_channels=4,
+            num_filters=4,
             cnn_out_size=567,  # 910
             state_size=torch.tensor(
-                [8, 9, 9]
+                [4, 9, 9]
             ),  # this seems to only be reading the first value
             action_size=4,
             layer_size=250,  # 100
@@ -232,7 +251,8 @@ def run_game(
     epsilon_decay=0.9999,
     attitude_condition="implicit_attitude",
     switch_epoch=1000,
-    episodic_decay_rate=0.2,
+    episodic_decay_rate=1.0,
+    similarity_decay_rate=1.0,
 ):
     """
     This is the main loop of the game
@@ -243,6 +263,7 @@ def run_game(
     gems = [0, 0, 0, 0]
     decay_rate = 0.2  # Adjust as needed
     change = True
+    gem_changes = 0
 
     for epoch in range(epochs):
         """
@@ -250,7 +271,8 @@ def run_game(
         Creates new gamepoints, resets agents, and runs one episode
         """
         if epoch % switch_epoch == 0:
-            change = not change
+            gem_changes = gem_changes + 1
+            env.change_gem_values()
         epsilon = epsilon * epsilon_decay
         done, withinturn = 0, 0
 
@@ -274,44 +296,74 @@ def run_game(
             env.world[loc].init_replay(working_memory)
             env.world[loc].init_rnn_state = None
 
-        if "episodic_attitude" in attitude_condition:
-            if len(object_memory) > 50:
-                for i in range(world_size):
-                    for j in range(world_size):
-                        for k in range(working_memory):
-                            object_state = torch.tensor(
-                                env.world[i, j, 0].appearance[:7]
-                            ).float()
-                            mems = k_most_similar_recent_states(
-                                object_state,
-                                state_knn,
-                                object_memory,
-                                decay_rate=episodic_decay_rate,
-                                k=5,
-                            )
-                            r = average_reward(mems)
-                            env.world[i, j, 0].appearance[7] = r * 255
+        # these are the different attitude models that are used.
+        # these can be put into a function to just call the one that is
+        # currently being used: this is set in the input to the run
+        # game function with a string
+
+        # for speed, the model computes the attiutdes at the beginning
+        # of each game rather than each trial. For some games where
+        # within round learning is important, this could be changed
+
+        # --------------------------------------------------------------
+        # this model creates a neural network to learn the reward values
+        # --------------------------------------------------------------
 
         if attitude_condition == "implicit_attitude":
             if epoch > 2:
                 for i in range(world_size):
                     for j in range(world_size):
                         object_state = torch.tensor(
-                            env.world[i, j, 0].appearance[:7]
+                            env.world[i, j, 0].appearance[:3]
                         ).float()
                         r = value_model(object_state)
-                        env.world[i, j, 0].appearance[7] = r.item() * 255
+                        env.world[i, j, 0].appearance[3] = r.item() * 255
             testing = False
             if testing and epoch % 100 == 0:
                 atts = eval_attiude_model()
                 print(epoch, atts)
+
+        # --------------------------------------------------------------
+        # this is the no attitude condition, simple IQN learning
+        # --------------------------------------------------------------
 
         if (
             attitude_condition == "no_attitude"
         ):  # this sets a control condition where no attitudes are used
             for i in range(world_size):
                 for j in range(world_size):
-                    env.world[i, j, 0].appearance[7] = 0.0
+                    env.world[i, j, 0].appearance[3] = 0.0
+
+        # --------------------------------------------------------------
+        # this is our episodic memory model with search and weighting
+        # --------------------------------------------------------------
+
+        if (
+            "weighted_average_attitude" in attitude_condition and epoch > 10
+        ):  # this sets a control condition where no attitudes are used
+            object_memory_states_tensor = torch.tensor(
+                [obj_mem[0] for obj_mem in object_memory]
+            )
+            for i in range(world_size):
+                for j in range(world_size):
+                    o_state = env.world[i, j, 0].appearance[:3]
+                    mems = k_most_similar_recent_states(
+                        torch.tensor(o_state),
+                        state_knn,
+                        object_memory,
+                        object_memory_states_tensor,
+                        decay_rate=1.0,
+                        k=250,
+                    )
+                    env.world[i, j, 0].appearance[3] = (
+                        compute_weighted_average(
+                            o_state,
+                            mems,
+                            similarity_decay_rate=similarity_decay_rate,
+                            time_decay_rate=episodic_decay_rate,
+                        )
+                        * 255
+                    )
 
         turn = 0
 
@@ -319,10 +371,15 @@ def run_game(
 
         while done == 0:
             """
-            Find the agents and wolves and move them
+            Find the agents and move them
             """
             turn = turn + 1
             withinturn = withinturn + 1
+
+            # --------------------------------------------------------------
+            # note the sync models lines may need to be deleted
+            # the IQN has a soft update, so we should test dropping
+            # the lines below
 
             if epoch % sync_freq == 0:
                 # update the double DQN model ever sync_frew
@@ -330,6 +387,7 @@ def run_game(
                     models[mods].qnetwork_target.load_state_dict(
                         models[mods].qnetwork_local.state_dict()
                     )
+            # --------------------------------------------------------------
 
             agentList = find_instance(env.world, "neural_network")
 
@@ -348,46 +406,8 @@ def run_game(
                     holdObject = env.world[loc]
                     device = models[holdObject.policy].device
 
-                    # rather than just the state, compute the whole map as a test
-                    if attitude_condition == "construct_attitude_slow":
-                        if len(object_memory) > 50:
-                            for i in range(world_size):
-                                for j in range(world_size):
-                                    for k in range(working_memory):
-                                        object_state = torch.tensor(
-                                            env.world[i, j, 0].appearance[:7]
-                                        ).float()
-                                        mems = k_most_similar_recent_states(
-                                            object_state,
-                                            state_knn,
-                                            object_memory,
-                                            decay_rate=0.5,
-                                            k=5,
-                                        )
-                                        r = average_reward(mems)
-                                        env.world[i, j, 0].appearance[7] = r * 255
-
                     state = env.pov(loc)
                     batch, timesteps, channels, height, width = state.shape
-
-                    if attitude_condition == "construct_attitude":
-                        if len(object_memory) > 50:
-                            for t in range(timesteps):
-                                for h in range(height):
-                                    for w in range(width):
-                                        state[0, t, 7, h, w] = 0
-                                        # if env.world[h, w, 0].kind != "empty":
-                                        object_state = state[0, t, :7, h, w]
-                                        mems = k_most_similar_recent_states(
-                                            object_state,
-                                            state_knn,
-                                            object_memory,
-                                            decay_rate=0.2,
-                                            k=5,
-                                        )
-
-                                        r = average_reward(mems)
-                                        state[0, t, 7, h, w] = r * 255
 
                     action = models[env.world[loc].policy].take_action(state, epsilon)
 
@@ -400,11 +420,19 @@ def run_game(
                         object_info,
                     ) = holdObject.transition(env, models, action[0], loc)
 
+                    # --------------------------------------------------------------
                     # create object memory
-                    state_object = object_info[0:7]
+                    # this sets up the direct reward experience and state information
+                    # to be saved in a replay and also learned from
+
+                    state_object = object_info[0:3]
 
                     object_exp = (state_object, reward)
                     value_model.add_memory(state_object, reward)
+
+                    # note, to save time we can toggle the line below to only learn the
+                    # implicit attitude when the implicit attitude is being used.
+
                     if len(value_model.replay_buffer) > 51 and turn % 2 == 0:
                         memories = value_model.sample(50)
                         value_loss = value_model.learn(memories, 25)
@@ -413,33 +441,21 @@ def run_game(
                         # Fit a k-NN model to states extracted from the replay buffer
                         state_knn.fit([exp[0] for exp in object_memory])
 
-                    if reward == 15:
+                    # --------------------------------------------------------------
+                    reward_values = env.gem_values
+                    reward_values = sorted(reward_values, reverse=True)
+
+                    if reward == reward_values[0]:
                         gems[0] = gems[0] + 1
-                    if reward == 5:
+                    if reward == reward_values[1]:
                         gems[1] = gems[1] + 1
-                    if reward == -5:
+                    if reward == reward_values[2]:
                         gems[2] = gems[2] + 1
                     if reward == -1:
                         gems[3] = gems[3] + 1
 
-                    # these can be included on one replay
-
-                    if attitude_condition == "construct_attitude":
-                        if len(object_memory) > 50:
-                            for t in range(timesteps):
-                                for h in range(height):
-                                    for w in range(width):
-                                        next_state[0, t, 7, h, w] = 0
-                                        object_state = state[0, t, :7, h, w]
-                                        mems = k_most_similar_recent_states(
-                                            object_state,
-                                            state_knn,
-                                            object_memory,
-                                            decay_rate=0.5,
-                                            k=5,
-                                        )
-                                        r = average_reward(mems)
-                                        next_state[0, t, 7, h, w] = r * 255
+                    # note, the line for PER is commented out. We may want to use IQN
+                    # with PER as a better comparison
 
                     exp = (
                         # models[env.world[new_loc].policy].max_priority,
@@ -456,7 +472,7 @@ def run_game(
                     env.world[new_loc].episode_memory.append(exp)
 
                     if env.world[new_loc].kind == "agent":
-                        game_points[0] = game_points[0] + reward
+                        game_points[0] = game_points[0] + reward / reward_values[0]
 
             # determine whether the game is finished (either max length or all agents are dead)
             if (
@@ -521,161 +537,77 @@ def run_game(
                 gems,
                 losses,
                 epsilon,
-                change,
+                str(gem_changes),
                 attitude_condition,
+                # env.gem1_value,
+                # env.gem2_value,
+                # env.gem3_value,
             )
+            # rs = show_weighted_averaged(object_memory)
+            # print(epoch, rs)
             game_points = [0, 0]
             gems = [0, 0, 0, 0]
             losses = 0
     return models, env, turn, epsilon
 
 
-def load_attitudes(
-    state, env=env, object_memory=object_memory, state_knn=state_knn, decay_rate=0.5
-):
-    batch, timesteps, channels, height, width = state.shape
-    if len(object_memory) > 50:
-        for t in range(timesteps):
-            for h in range(height):
-                for w in range(width):
-                    state[0, t, 7, h, w] = 0
-                    object_state = state[0, t, :7, h, w]
-                    mems = k_most_similar_recent_states(
-                        object_state,
-                        state_knn,
-                        object_memory,
-                        decay_rate,
-                        k=5,
-                    )
-                    r = average_reward(mems)
-                    state[0, t, 7, h, w] = r * 0
-    return state
-
-
-def test_memory(env=env, object_memory=object_memory, new_env=False):
-    if new_env:
-        env.reset_env(
-            height=world_size,
-            width=world_size,
-            layers=1,
-            gem1p=0.03,
-            gem2p=0.03,
-            gem3p=0.03,
-        )
-    # agentList = find_instance(env.world, "neural_network")
-    for loc in find_instance(env.world, "neural_network"):
-        # reset the memories for all agents
-        # the parameter sets the length of the sequence for LSTM
-        env.world[loc].init_replay(1)
-        env.world[loc].init_rnn_state = None
-
-    for loc in find_instance(env.world, "neural_network"):
-        state = env.pov(loc)
-
-        # batch, timesteps, channels, height, width = state.shape
-        # state_attitudes = load_attitudes(state)
-        for i in range(state.shape[3]):
-            for j in range(state.shape[4]):
-                for t in range(state.shape[1]):
-                    i2 = loc[0] - 4 + i
-                    j2 = loc[1] - 4 + j
-                    flagged = False
-                    if i2 < 0:
-                        flagged = True
-                    if i2 >= world_size:
-                        flagged = True
-                    if j2 < 0:
-                        flagged = True
-                    if j2 >= world_size:
-                        flagged = True
-
-                    if flagged:
-                        object_kind = "outside"
-                        object_value = 0
-                    else:
-                        object_kind = env.world[i2, j2, 0].kind
-                        object_value = env.world[i2, j2, 0].value
-
-                    print(loc, t, i, j, object_kind, state[0, t, 7, i, j], object_value)
-
-
 models = create_models()
 
-# options here are:
-#       no_attitude
-#       episodic_attitude
-#       implicit_attitude
-#       construct_attitude
-#       construct_attitude_slow (does all mappings at the beginning of the agents turn)
+# options here are. these are experiments that we ran
 
-#       construct_attitude_slow works and construct_attitude does not,
-#       suggesting that construct_attitude has a bug in it
-
-
-run_params1 = (
-    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude", 2000, 5000, 1.0],
-    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
+run_params = (
+    [0.5, 4100, 20, 0.999, "weighted_average_attitude", 2000, 2500, 20.0, 20.0],
+    [0.5, 4100, 20, 0.999, "no_attitude", 2000, 2500, 1.0, 1.0],
+    [0.5, 4100, 20, 0.999, "implicit_attitude", 2000, 2500, 1.0, 1.0],
 )
+
 
 run_params2 = (
-    [0.5, 8100, 20, 0.999, "episodic_attitude_250_10", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_250_8", 2000, 250, 0.8],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_250_5", 2000, 250, 0.5],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_250_2", 2000, 250, 0.2],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_10", 2000, 1000, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_8", 2000, 1000, 0.8],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_5", 2000, 1000, 0.5],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_1000_2", 2000, 1000, 0.2],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_10", 2000, 2500, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_8", 2000, 2500, 0.8],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_5", 2000, 2500, 0.5],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_2500_2", 2000, 2500, 0.2],
+    [
+        0.5,
+        4100,
+        20,
+        0.999,
+        "weighted_average_attitude_2500_20_5",
+        2000,
+        25000,
+        20.0,
+        5.0,
+    ],
+    [
+        0.5,
+        4100,
+        20,
+        0.999,
+        "weighted_average_attitude_2500_1_1",
+        2000,
+        25000,
+        20.0,
+        5.0,
+    ],
+    [
+        0.5,
+        4100,
+        20,
+        0.999,
+        "weighted_average_attitude_2500_20_2",
+        2000,
+        25000,
+        20.0,
+        5.0,
+    ],
+    [
+        0.5,
+        4100,
+        20,
+        0.999,
+        "weighted_average_attitude_2500_10_2",
+        2000,
+        25000,
+        20.0,
+        5.0,
+    ],
 )
-
-run_params2b = (
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_10", 2000, 2500, 1.0],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_8", 2000, 2500, 0.8],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_5", 2000, 2500, 0.5],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_2", 2000, 2500, 0.2],
-)
-
-run_params2b = (
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_10", 2000, 250, 1.0],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_8", 2000, 250, 0.8],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_5", 2000, 250, 0.5],
-    [0.5, 4000, 20, 0.999, "episodic_attitude_2500_2", 2000, 250, 0.2],
-)
-
-run_params1a = (
-    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
-)
-
-run_params1b = (
-    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
-)
-
-run_params1c = (
-    [0.5, 8100, 20, 0.999, "episodic_attitude_decay", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "no_attitude", 2000, 250, 1.0],
-    [0.5, 8100, 20, 0.999, "implicit_attitude", 2000, 250, 1.0],
-)
-
-order = np.random.choice([0, 1, 2])
-
-if order == 0:
-    run_params = run_params1a
-if order == 1:
-    run_params = run_params1b
-if order == 2:
-    run_params = run_params1c
-
-run_params = run_params2b
 
 
 # Convert the tuple of lists to a list of lists
@@ -703,6 +635,7 @@ for modRun in range(len(run_params)):
         attitude_condition=run_params[modRun][4],
         switch_epoch=run_params[modRun][5],
         episodic_decay_rate=run_params[modRun][7],
+        similarity_decay_rate=run_params[modRun][8],
     )
     # atts = eval_attiude_model()
     # print(atts)
