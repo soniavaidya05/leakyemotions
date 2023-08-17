@@ -24,9 +24,9 @@ class Element(ABC):
 class EmptyObject:
     kind = "empty"  # class variable shared by all instances
 
-    def __init__(self):
+    def __init__(self, color = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]):
         self.health = 0  # empty stuff is basically empty
-        self.appearance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # empty is well, blank
+        self.appearance = color  # empty is well, blank
         self.vision = 1  # empty stuff is basically empty
         self.policy = "NA"  # empty stuff is basically empty
         self.value = 0  # empty stuff is basically empty
@@ -45,9 +45,9 @@ class EmptyObject:
 class Wall:
     kind = "wall"  # class variable shared by all instances
 
-    def __init__(self):
+    def __init__(self, color = [0.0, 255.0, 0.0, 0.0, 0.0, 0.0, 0.0]):
         self.health = 0  # wall stuff is basically empty
-        self.appearance = [0.0, 255.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # walls are purple
+        self.appearance = color  # walls are purple
         self.vision = 0  # wall stuff is basically empty
         self.policy = "NA"  # walls do not do anything
         self.value = 0  # wall stuff is basically empty
@@ -117,9 +117,9 @@ class MexicanTruck(Truck):
 class Agent:
     kind = "agent"  # class variable shared by all instances
 
-    def __init__(self, model):
+    def __init__(self, model, color = [0.0, 0.0, 255.0, 0.0, 0.0, 0.0, 0.0]):
         self.health = 10  # for the agents, this is how hungry they are
-        self.appearance = [0.0, 0.0, 255.0, 0.0, 0.0, 0.0, 0.0]  # agents are blue
+        self.appearance = color  # agents are blue
         self.vision = 4  # agents can see three radius around them
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.value = 0  # agents have no value
@@ -133,13 +133,14 @@ class Agent:
     def __str__(self):
         return('agent')
 
-    def init_replay(self, numberMemories, pov_size=9, visual_depth=3):
+    def init_replay(self, numberMemories, one_hot = True):
         """
         Fills in blank images for the LSTM before game play.
         Implicitly defines the number of sequences that the LSTM will be trained on.
         """
-        # pov_size = 9 # this should not be needed if in the input above
-        image = torch.zeros(1, numberMemories, 7, pov_size, pov_size).float()
+        pov_size = (self.vision * 2) + 1
+        n_channels = 7 if one_hot == True else 3
+        image = torch.zeros(1, numberMemories, n_channels, pov_size, pov_size).float()
         priority = torch.tensor(0.1)
         blank = torch.tensor(0.0)
         exp = (priority, (image, blank, blank, image, blank))
@@ -147,7 +148,7 @@ class Agent:
 
     def movement(self, action, location):
         """
-        Takes an action and returns a new location
+        Takes an action and returns a new location (0: up, 1: down, 2: left, 3: right)
         """
         new_location = location
         if action == 0:
@@ -168,12 +169,21 @@ class Agent:
         reward = 0
         new_loc = location
         attempted_location = self.movement(action, location)
-        holdObject = env.world[location]
+        agent = env.world[location]
 
         if env.world[attempted_location].passable == 1:
-            env.world[location] = EmptyObject()
+            env.world[location] = EmptyObject(color = env.colors['empty_color'])
             reward = env.world[attempted_location].value
-            env.world[attempted_location] = holdObject
+            # Get square appearance
+            app1 = env.world[attempted_location].appearance
+            # Get agent appearance
+            app2 = agent.appearance
+            # Move agent
+            env.world[attempted_location] = agent
+            if reward in env.truck_prefs:
+                done = 1
+                # If agent stepped on a truck, change agent's appearance to overlay agent + truck
+                env.world[attempted_location].appearance = app1 + app2
             new_loc = attempted_location
 
         else:
