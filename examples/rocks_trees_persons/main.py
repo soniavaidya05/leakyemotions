@@ -761,7 +761,7 @@ run_params = (
 for modRun in range(len(run_params)):
     models = create_models()
     value_model = ValueModel(state_dim=9, memory_size=250)
-    resource_model = ResourceModel(state_dim=9, memory_size=250)
+    resource_model = ResourceModel(state_dim=9, memory_size=2000)
     object_memory = deque(maxlen=run_params[modRun][6])
     state_knn = NearestNeighbors(n_neighbors=5)
     models, env, turn, epsilon = run_game(
