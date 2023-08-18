@@ -105,7 +105,7 @@ class RPG:
             color = np.random.choice([0, 1])
             if color == 0:
                 image_color = [0.0, 0.0, 255.0, 0.0, 0.0]
-                if random.random() < 0.75:
+                if random.random() < 0.90:
                     rock = 1
                     wood = 0
                 else:
@@ -113,12 +113,12 @@ class RPG:
                     rock = 1
             if color == 1:
                 image_color = [0.0, 0.0, 0.0, 255.0, 0.0]
-                if random.random() > 0.5:
-                    wood = 0
-                    rock = 1
-                else:
+                if random.random() < 0.5:
                     wood = 1
                     rock = 0
+                else:
+                    wood = 0
+                    rock = 1
             app = [image_color + individuation + [0, 0]]
             info = (person, app, [wood, rock], 0, 0)
             self.person_list.append(info)

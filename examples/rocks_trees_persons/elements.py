@@ -145,10 +145,10 @@ class Agent:
             env.world[location] = EmptyObject(env.app_size)
             if env.world[attempted_location].kind == "gem":
                 if env.world[attempted_location].wood > 0:
-                    reward = 15  # hard coded everyone wants wood
+                    reward = -5  # hard coded everyone wants wood
                     resource_outcome = [0, 1, 0]
                 if env.world[attempted_location].stone > 0:
-                    reward = -5
+                    reward = 15
                     resource_outcome = [0, 0, 1]
 
             # reward = env.world[attempted_location].value
