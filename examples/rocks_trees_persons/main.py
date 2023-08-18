@@ -479,9 +479,9 @@ def run_game(
                         object_state = torch.tensor(
                             env.world[i, j, 0].appearance[:-3]
                         ).float()
-                        object_state = torch.concat(
-                            object_state, agent_wood, agent_stone
-                        )
+                        # object_state = torch.concat(
+                        #    object_state, agent_wood, agent_stone
+                        # )
                         rs, _ = value_model(object_state.unsqueeze(0))
                         r = rs[0][1]
                         env.world[i, j, 0].appearance[-2] = r.item() * 255
@@ -675,7 +675,7 @@ def run_game(
                     reward_values = env.gem_values
                     reward_values = sorted(reward_values, reverse=True)
 
-                    if reward == 15:
+                    if reward == 10:
                         gems[0] = gems[0] + 1
                     if reward == -5:
                         gems[1] = gems[1] + 1
@@ -815,7 +815,7 @@ run_params = (
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
     models = create_models()
-    value_model = ValueModel(state_dim=10, memory_size=250)
+    value_model = ValueModel(state_dim=8, memory_size=250)
     resource_model = ResourceModel(state_dim=8, memory_size=2000)
     object_memory = deque(maxlen=run_params[modRun][6])
     state_knn = NearestNeighbors(n_neighbors=5)
