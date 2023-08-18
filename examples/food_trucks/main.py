@@ -1,11 +1,3 @@
-# Set module path
-import os
-import sys
-module_path = os.path.abspath('../..')
-if module_path not in sys.path:
-    sys.path.append(module_path)
-    print(sys.path)
-
 # Import basic packages
 import matplotlib.pyplot as plt
 import torch
@@ -19,17 +11,18 @@ from gem.utils import (
     transfer_world_memories,
     find_instance,
 )
+from gem.DQN_utils import save_models
 
 from IPython.display import clear_output
 
 # Import model and environment
-from iRainbow_clean import iRainbowModel
-from env import RPG
-from elements import EmptyObject, Wall
+from examples.food_trucks.iRainbow_clean import iRainbowModel
+from examples.food_trucks.env import FoodTrucks
+from examples.food_trucks.elements import EmptyObject, Wall
+from examples.food_trucks.utils import viz
 
 # Set up tensorboard
 from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter()
 
 # Set seed for replication
 SEED = 1 
@@ -44,7 +37,8 @@ device = 'cpu'
 
 
 
-def create_models(n_agents = 1):
+def create_models(n_agents = 1,
+                  one_hot = True):
     """
     Should make the sequence length of the LSTM part of the model and an input here
     Should also set up so that the number of hidden laters can be added to dynamically
@@ -53,50 +47,52 @@ def create_models(n_agents = 1):
 
     models = []
     for i in range(n_agents):
-        models.append(
-            iRainbowModel(
-                in_channels=7,
-                num_filters=7,
-                cnn_out_size=567,  # 910
-                state_size=torch.tensor(
-                    [7, 9, 9]
-                ),  # this seems to only be reading the first value
-                action_size=4,
-                layer_size=250,  # 100
-                n_step=3,  # Multistep IQN (rainbow paper uses 3)
-                BATCH_SIZE=64,
-                BUFFER_SIZE=1024,
-                LR=0.00025,  # 0.00025
-                TAU=1e-3,  # Soft update parameter
-                GAMMA=0.95,  # Discout factor 0.99
-                N=12,  # Number of quantiles
-                device=device,
-                seed=SEED,
+        if one_hot:
+            models.append(
+                iRainbowModel(
+                    in_channels=7,
+                    num_filters=7,
+                    cnn_out_size=567,  # 910
+                    state_size=torch.tensor(
+                        [7, 9, 9]
+                    ),  # this seems to only be reading the first value
+                    action_size=4,
+                    layer_size=250,  # 100
+                    n_step=3,  # Multistep IQN (rainbow paper uses 3)
+                    BATCH_SIZE=64,
+                    BUFFER_SIZE=1024,
+                    LR=0.00025,  # 0.00025
+                    TAU=1e-3,  # Soft update parameter
+                    GAMMA=0.95,  # Discout factor 0.99
+                    N=12,  # Number of quantiles
+                    device=device,
+                    seed=SEED,
+                )
             )
-        )
+        else:
+            models.append(
+                iRainbowModel(
+                    in_channels=3,
+                    num_filters=7,
+                    cnn_out_size=567,  # 910
+                    state_size=torch.tensor(
+                        [3, 9, 9]
+                    ),  # this seems to only be reading the first value
+                    action_size=4,
+                    layer_size=250,  # 100
+                    n_step=3,  # Multistep IQN (rainbow paper uses 3)
+                    BATCH_SIZE=64,
+                    BUFFER_SIZE=1024,
+                    LR=0.00025,  # 0.00025
+                    TAU=1e-3,  # Soft update parameter
+                    GAMMA=0.95,  # Discout factor 0.99
+                    N=12,  # Number of quantiles
+                    device=device,
+                    seed=SEED,
+                )
+            )
 
     return models
-
-
-world_size = 11
-
-trainable_models = [0]
-sync_freq = 200  # https://openreview.net/pdf?id=3UK39iaaVpE
-modelUpdate_freq = 4  # https://openreview.net/pdf?id=3UK39iaaVpE
-epsilon = 0.99
-
-turn = 1
-
-# Set up model and environment
-models = create_models(n_agents = len(trainable_models))
-env = RPG(
-    height=world_size,
-    width=world_size,
-    layers=1,
-    defaultObject=EmptyObject(),
-    truck_prefs=(10,5,-5),
-    baker_mode=True
-)
 
 def run_game(
     models,
@@ -105,7 +101,15 @@ def run_game(
     epsilon,
     epochs=10000,
     max_turns=100,
+    world_size = 11,
+    trainable_models = [0],
+    sync_freq = 200,
+    modelUpdate_freq = 4,
+    log = True,
+    show = False
 ):
+    if log:
+        writer = SummaryWriter()
     """
     This is the main loop of the game
     """
@@ -122,16 +126,15 @@ def run_game(
 
         # create a new gameboard for each epoch and repopulate
         # the reset does allow for different params, but when the world size changes, odd
-        env.reset_env(
-            height=world_size,
-            width=world_size,
-            layers=1
-        )
+        env.reset_env()
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
             # the parameter sets the length of the sequence for LSTM
             agent = env.world[loc] # Agent at this location
-            agent.init_replay(2)
+            agent.init_replay(
+                2,
+                one_hot = env.one_hot
+            )
             agent.init_rnn_state = None
 
         while done == 0:
@@ -159,7 +162,7 @@ def run_game(
                 state = env.pov(loc)
 
                 action = models[agent.policy].take_action(state, epsilon)
-
+                
                 (
                     env.world,
                     reward,
@@ -167,6 +170,12 @@ def run_game(
                     done,
                     new_loc,
                 ) = agent.transition(env, models, action[0], loc)
+
+                if show:
+                    if epoch % 50 == 0:
+                        clear_output(wait = True)
+                        print(f'Epoch {epoch}, turn {withinturn}. Taking action {action[0]} with epsilon: {epsilon}.')
+                        viz(env)
 
                 if reward == 10:
                     gems[0] = gems[0] + 1
@@ -249,13 +258,14 @@ def run_game(
 
         if len(trainable_models) > 0:
             # print the state and update the counters. This should be made to be tensorboard instead
-            writer.add_scalar("num_turns", withinturn, epoch)
-            writer.add_scalar("Losses", losses, epoch)
-            writer.add_scalar("Game Points", game_points[0], epoch)
-            writer.add_scalar("Korean Truck (+10)", gems[0], epoch)
-            writer.add_scalar("Lebanese Truck (+5)", gems[1], epoch)
-            writer.add_scalar("Mexican Truck (-5)", gems[2], epoch)
-            writer.add_scalar("Wall Collisions", gems[3], epoch)
+            if log:
+                writer.add_scalar("num_turns", withinturn, epoch)
+                writer.add_scalar("Losses", losses, epoch)
+                writer.add_scalar("Game Points", game_points[0], epoch)
+                writer.add_scalar("Korean Truck (+10)", gems[0], epoch)
+                writer.add_scalar("Lebanese Truck (+5)", gems[1], epoch)
+                writer.add_scalar("Mexican Truck (-5)", gems[2], epoch)
+                writer.add_scalar("Wall Collisions", gems[3], epoch)
 
             if epoch % 50 == 0 and epoch != 0:
 
@@ -281,123 +291,84 @@ def run_game(
             losses = 0
 
             
+    if log:
+        writer.close()
 
     return models, env, turn, epsilon
 
 
-# needs a dictionary with the following keys:
-# turn, trainable_models, sync_freq, modelUpdate_freq
+if __name__ == '__main__':
 
-# below needs to be written
-# env, epsilon, params = setup_game(world_size=15)
+    world_size=11
 
+    parser = argparse.ArgumentParser(description = 'Run the model for the food truck environment.')
+    parser.add_argument('-e', '--epochs', type=int, default=10000, help = 'Number of epochs to run the model for.')
+    parser.add_argument('-d', '--device', default = 'cpu', choices = [
+        'cpu',
+        'mps',
+        'cuda'
+    ], help = 'Device type.')
+    parser.add_argument('-s', '--save-dir', default = 'data/', help = 'Save directory for training data.')
+    parser.add_argument('-b', '--baker-mode', default = True, type = bool, help = 'Flag to set up environment like Baker task', choices = [
+        True,
+        False
+    ])
+    parser.add_argument('-o', '--one-hot', action='store_true')
+    parser.add_argument('-n', '--no-one-hot', dest='one_hot', action='store_false')
+    parser.set_defaults(one_hot=True)
+    args = parser.parse_args()
 
-models = create_models()
-
-
-import matplotlib.animation as animation
-from gem.models.perception import agent_visualfield
-
-
-def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename="tmp"):
-    """
-    This is the main loop of the game
-    """
-    game_points = [0, 0]
-
-    fig = plt.figure()
-    ims = []
-    env.reset_env(world_size, world_size)
-
-    """
-    Move each agent once and then update the world
-    Creates new gamepoints, resets agents, and runs one episode
-    """
-
-    done = 0
-
-    # create a new gameboard for each epoch and repopulate
-    # the resset does allow for different params, but when the world size changes, odd
-    env.reset_env(
+    env = FoodTrucks(
         height=world_size,
         width=world_size,
         layers=1,
-        gem1p=0.0,
-        gem2p=0.0,
-        gem3p=0.0,
+        defaultObject=EmptyObject(),
+        truck_prefs=(10,5,-5),
+        baker_mode=args.baker_mode,
+        one_hot=args.one_hot
     )
 
-    for loc in find_instance(env.world, "neural_network"):
-        # reset the memories for all agents
-        # the parameter sets the length of the sequence for LSTM
-        agent = env.world[loc] # Agent at this location
-        agent.init_replay(1)
-        agent.init_rnn_state = None
+    turn = 1
+    trainable_models = [0]
 
-    for _ in range(max_turns):
-        """
-        Find the agents and wolves and move them
-        """
+    # Set up model and environment
+    models = create_models(n_agents = len(trainable_models),
+                           one_hot = args.one_hot)
 
-        image = agent_visualfield(env.world, (0, 0), env.tile_size, k=None)
-        im = plt.imshow(image, animated=True)
-        ims.append([im])
-
-        agentList = find_instance(env.world, "neural_network")
-
-        random.shuffle(agentList)
-
-        for loc in agentList:
-            agent = env.world[loc] # Agent at this location
-            agent.reward = 0 # Reset the agent's reward
-            device = models[agent.policy].device
-            state = env.pov(loc)
-            params = (state.to(device), epsilon, agent.init_rnn_state)
-
-            # set up the right params below
-
-            action = models[agent.policy].take_action(state, 0)
-
-            (
-                env.world,
-                reward,
-                next_state,
-                done,
-                new_loc,
-            ) = agent.transition(env, models, action[0], loc)
-
-    ani = animation.ArtistAnimation(fig, ims, interval=50, blit=True, repeat_delay=1000)
-    ani.save(filename, writer="PillowWriter", fps=2)
-
-
-run_params = (
-    [0.5, 2000, 100],
-    [0.1, 10000, 100],
-    [0.0, 10000, 100],
-)
-
-# the version below needs to have the keys from above in it
-for modRun in range(len(run_params)):
-    models, env, turn, epsilon = run_game(
-        models,
-        env,
-        turn,
-        run_params[modRun][0],
-        epochs=run_params[modRun][1],
-        max_turns=run_params[modRun][2],
+    # Set up parameters (epsilon, epochs, max_turns)
+    run_params = (
+        [0.5, args.epochs],
+        [0.1, args.epochs],
+        [0.0, args.epochs],
     )
-    # filename = save_dir + "RPG2d_" + str(modRun) + ".gif"
-    # eval_game(models, env, turn, 0, 1, 35, filename)
 
-    # save_models(
-    #    models,
-    #    save_dir,
-    #    "WolvesGems_" + str(modRun),
-    # )
-    # make_video(
-    #    "WolvesGems_" + str(modRun),
-    #    save_dir,
-    #    models,
-    #    20,
-    #    env,
-    # )
+    # the version below needs to have the keys from above in it
+    for modRun in range(len(run_params)):
+        models, env, turn, epsilon = run_game(
+            models,
+            env,
+            turn,
+            epsilon = run_params[modRun][0],
+            epochs=run_params[modRun][1],
+            max_turns=100,
+            world_size=world_size,
+            trainable_models = trainable_models,
+            sync_freq = 200,
+            modelUpdate_freq = 4
+        )
+        # filename = save_dir + "2d_" + str(modRun) + ".gif"
+        # eval_game(models, env, turn, 0, 1, 35, filename)
+
+        # save_models(
+        #    models,
+        #    args.save_dir,
+        #    "model_" + str(modRun) + ".pkl",
+        # )
+
+        # make_video(
+        #    "WolvesGems_" + str(modRun),
+        #    save_dir,
+        #    models,
+        #    20,
+        #    env,
+        # )

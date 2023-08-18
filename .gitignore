@@ -139,3 +139,5 @@ output/
 logs/
 gem/.DS_Store
 examples/food_trucks/runs/
+examples/food_trucks/notebooks/runs/
+examples/food_trucks/data/
