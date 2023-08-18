@@ -407,6 +407,14 @@ def run_game(
             env.world[loc].init_replay(working_memory)
             env.world[loc].init_rnn_state = None
 
+        # reset the variables to be safe
+
+        for i in range(world_size):
+            for j in range(world_size):
+                env.world[i, j, 0].appearance[-3] = 0.0
+                env.world[i, j, 0].appearance[-2] = 0.0
+                env.world[i, j, 0].appearance[-1] = 0.0
+
         # these are the different attitude models that are used.
         # these can be put into a function to just call the one that is
         # currently being used: this is set in the input to the run
@@ -415,6 +423,20 @@ def run_game(
         # for speed, the model computes the attiutdes at the beginning
         # of each game rather than each trial. For some games where
         # within round learning is important, this could be changed
+
+        if "tree_rocks" in attitude_condition:
+            if epoch > 2:
+                for i in range(world_size):
+                    for j in range(world_size):
+                        object_state = torch.tensor(
+                            env.world[i, j, 0].appearance[:-3]
+                        ).float()
+                        predict = resource_model(torch.tensor(state_object).float())
+                        predict = predict.detach().numpy()
+
+                        env.world[i, j, 0].appearance[-3] = predict[0]
+                        env.world[i, j, 0].appearance[-2] = predict[1]
+                        env.world[i, j, 0].appearance[-1] = predict[2]
 
         # --------------------------------------------------------------
         # this model creates a neural network to learn the reward values
@@ -425,7 +447,7 @@ def run_game(
                 for i in range(world_size):
                     for j in range(world_size):
                         object_state = torch.tensor(
-                            env.world[i, j, 0].appearance[:-2]
+                            env.world[i, j, 0].appearance[:-3]
                         ).float()
                         rs, _ = value_model(object_state.unsqueeze(0))
                         r = rs[0][1]
@@ -458,7 +480,7 @@ def run_game(
             )
             for i in range(world_size):
                 for j in range(world_size):
-                    o_state = env.world[i, j, 0].appearance[:-2]
+                    o_state = env.world[i, j, 0].appearance[:-3]
                     mems = k_most_similar_recent_states(
                         torch.tensor(o_state),
                         state_knn,
@@ -489,7 +511,7 @@ def run_game(
             )
             for i in range(world_size):
                 for j in range(world_size):
-                    o_state = env.world[i, j, 0].appearance[:-2]
+                    o_state = env.world[i, j, 0].appearance[:-3]
                     mems = k_most_similar_recent_states(
                         torch.tensor(o_state),
                         state_knn_CMS,  # HERE IS THE ERROR!
@@ -573,7 +595,7 @@ def run_game(
                     # this sets up the direct reward experience and state information
                     # to be saved in a replay and also learned from
 
-                    state_object = object_info[0:-2]
+                    state_object = object_info[0:-3]
                     state_object_input = torch.tensor(state_object).float()
 
                     rs, _ = value_model(state_object_input.unsqueeze(0))
@@ -739,12 +761,13 @@ models = create_models()
 # options here are. these are experiments that we ran
 
 run_params = (
+    [0.5, 4010, 20, 0.999, "tree_rocks", 12000, 2500, 20.0, 20.0],
     [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     [0.5, 4010, 20, 0.999, "None", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "CMS", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "EWA", 12000, 2500, 20.0, 20.0],
-    [0.5, 4010, 20, 0.999, "implicit_attitude+EWA", 12000, 2500, 20.0, 20.0],
+    # [0.5, 4010, 20, 0.999, "implicit_attitude+EWA", 12000, 2500, 20.0, 20.0],
 )
 
 
@@ -760,8 +783,8 @@ run_params = (
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
     models = create_models()
-    value_model = ValueModel(state_dim=9, memory_size=250)
-    resource_model = ResourceModel(state_dim=9, memory_size=2000)
+    value_model = ValueModel(state_dim=8, memory_size=250)
+    resource_model = ResourceModel(state_dim=8, memory_size=2000)
     object_memory = deque(maxlen=run_params[modRun][6])
     state_knn = NearestNeighbors(n_neighbors=5)
     models, env, turn, epsilon = run_game(
