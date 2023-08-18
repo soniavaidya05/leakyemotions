@@ -89,4 +89,4 @@ def process_files(
 # process_files(file_pattern="study1_*.txt", smoothing=5)
 # process_files(file_pattern="study2b_*.txt", smoothing=5)
 # process_files(file_pattern="test*.txt", smoothing=5)
-process_files(file_pattern="replace2_*.txt", smoothing=1, expect_list=True)
+process_files(file_pattern="nn*.txt", smoothing=1, expect_list=True)

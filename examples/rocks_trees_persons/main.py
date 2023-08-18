@@ -1,5 +1,5 @@
 # from tkinter.tix import Tree
-from examples.attitudes_replace_CMS.utils import (
+from examples.rocks_trees_persons.utils import (
     update_epsilon,
     update_memories,
     find_moveables,
@@ -10,8 +10,8 @@ from examples.attitudes_replace_CMS.utils import (
 )
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import euclidean
-from examples.attitudes_replace_CMS.iRainbow_clean import iRainbowModel
-from examples.attitudes_replace_CMS.env import RPG
+from examples.rocks_trees_persons.iRainbow_clean import iRainbowModel
+from examples.rocks_trees_persons.env import RPG
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -19,13 +19,12 @@ import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
 
 import torch.optim as optim
-from examples.attitudes_replace_CMS.elements import EmptyObject, Wall
+from examples.rocks_trees_persons.elements import EmptyObject, Wall
 
 import time
 import numpy as np
 import random
 import torch
-import seaborn as sns
 
 from collections import deque, namedtuple
 from scipy.spatial import distance
@@ -47,92 +46,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #    device = torch.device("mps")
 
 import time
-
-
-# -------------- Neural Network Encoder END ------------------------
-
-### Neural Network Epsiodic Memory
-
-
-class ObjectMemoryEncoder(nn.Module):
-    def __init__(self, input_size, embedding_size, memory_buffer_size=10000):
-        super(ObjectMemoryEncoder, self).__init__()
-
-        class ObjectMemoryBuffer:
-            def __init__(self, capacity):
-                self.capacity = capacity
-                self.memory = []  # Will store tuples of (embedding, reward, timestamp)
-                self.timestamp = (
-                    0  # Initializes a counter to track when the memory was added
-                )
-
-            def push(self, embedding, reward):
-                self.timestamp += 1
-                if len(self.memory) < self.capacity:
-                    self.memory.append((embedding, reward, self.timestamp))
-                else:
-                    self.memory.pop(0)  # remove the oldest memory
-                    self.memory.append((embedding, reward, self.timestamp))
-
-            def get_closest_memories(self, query_embedding, n=1):
-                # Calculate distances based on the embedding (state part)
-                distances = [
-                    (torch.dist(query_embedding, mem[0]), mem) for mem in self.memory
-                ]
-                # Sort primarily by distance, but use timestamp as a secondary criterion
-                sorted_memories = sorted(distances, key=lambda x: (x[0], -x[1][2]))
-                closest_memories = [mem[1] for mem in sorted_memories[:n]]
-                closest_distances = [dist[0] for dist in sorted_memories[:n]]
-                return closest_memories, closest_distances
-
-        self.fc1 = nn.Linear(input_size, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, embedding_size)
-        self.memory_buffer = ObjectMemoryBuffer(capacity=memory_buffer_size)
-
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-    def compute_weighted_avg_object_reward(
-        self, memories, distances, recency_discount, similarity_discount
-    ):
-        total_reward = 0.0
-        total_weight = 0.0
-        recency_weight = 1.0  # Start with the full weight for the most recent memory
-
-        for (embedding, reward, timestamp), distance in zip(memories, distances):
-            similarity_weight = 1 / (
-                1 + distance
-            )  # Inverse relationship. Closer (smaller) distances have larger weights.
-
-            # The combined weight is a product of recency and similarity weights
-            combined_weight = recency_weight * similarity_weight
-
-            total_reward += reward * combined_weight
-            total_weight += combined_weight
-
-            recency_weight *= recency_discount
-
-        return total_reward / total_weight if total_weight != 0 else 0
-
-    def query_buffer(self, query_state, n=20):
-        query_embedding = encoder(query_state)
-        closest_memories, closest_distances = self.memory_buffer.get_closest_memories(
-            query_embedding, n
-        )
-        avg_reward = self.compute_weighted_avg_object_reward(
-            closest_memories,
-            closest_distances,
-            recency_discount=0.9,
-            similarity_discount=0.9,
-        )
-        return avg_reward, closest_memories
-
-
-# -------------- Neural Network Encoder END ------------------------
 
 
 def k_most_similar_recent_states(
@@ -220,6 +133,69 @@ import random
 from collections import deque
 
 
+class ResourceModel(nn.Module):
+    def __init__(
+        self,
+        state_dim,
+        hidden_dim=64,
+        memory_size=5000,
+        learning_rate=0.001,
+    ):
+        super(ResourceModel, self).__init__()
+        self.fc1 = nn.Linear(state_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc4 = nn.Linear(hidden_dim, 3)  # Three outputs for three classes
+
+        self.replay_buffer = deque(maxlen=memory_size)
+        self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = torch.relu(self.fc3(x))
+        probabilities = torch.softmax(self.fc4(x), dim=-1)
+        return probabilities
+
+    def sample(self, num_memories):
+        return random.sample(
+            self.replay_buffer, min(num_memories, len(self.replay_buffer))
+        )
+
+    def learn(self, memories, batch_size=32):
+        # Calculate class weights
+        all_outcomes = [outcome for _, outcome in self.replay_buffer]
+        num_samples = len(all_outcomes)
+        class_counts = [sum([out[i] for out in all_outcomes]) for i in range(3)]
+
+        # Adding a small epsilon to prevent division by zero
+        epsilon = 1e-10
+        class_weights = torch.tensor(
+            [(num_samples / (count + epsilon)) for count in class_counts]
+        ).to(torch.float32)
+
+        for _ in range(len(memories) // batch_size):
+            batch = random.sample(memories, batch_size)
+            states, targets = zip(*batch)
+            states = torch.tensor(states, dtype=torch.float32)
+            targets = torch.tensor(targets, dtype=torch.float32)
+
+            self.optimizer.zero_grad()
+            probabilities = self.forward(states)
+
+            # Weighted Cross-Entropy Loss
+            loss = F.cross_entropy(
+                probabilities, torch.argmax(targets, dim=1), weight=class_weights
+            )
+
+            loss.backward()
+            self.optimizer.step()
+        return loss.item()
+
+    def add_memory(self, state, outcome):
+        self.replay_buffer.append((state, outcome))
+
+
 class ValueModel(nn.Module):
     def __init__(
         self,
@@ -299,10 +275,10 @@ class ValueModel(nn.Module):
         self.replay_buffer.append((state, reward))
 
 
-value_model = ValueModel(state_dim=3, memory_size=250)
+value_model = ValueModel(state_dim=9, memory_size=250)
 
 
-def create_models(action_space):
+def create_models():
     """
     Should make the sequence length of the LSTM part of the model and an input here
     Should also set up so that the number of hidden laters can be added to dynamically
@@ -318,7 +294,7 @@ def create_models(action_space):
             state_size=torch.tensor(
                 [5, 9, 9]
             ),  # this seems to only be reading the first value
-            action_size=action_space,
+            action_size=4,
             layer_size=250,  # 100
             n_step=3,  # Multistep IQN (rainbow paper uses 3)
             BATCH_SIZE=64,
@@ -363,12 +339,12 @@ object_memory = deque(maxlen=250)
 state_knn = NearestNeighbors(n_neighbors=100)
 state_knn_CMS = NearestNeighbors(n_neighbors=100)
 
-# models = create_models()
+models = create_models()
 env = RPG(
     height=world_size,
     width=world_size,
     layers=1,
-    defaultObject=EmptyObject(),
+    defaultObject=EmptyObject(11),
     gem1p=0.03,
     gem2p=0.03,
     wolf1p=0.03,  # rename gem3p
@@ -378,7 +354,6 @@ env = RPG(
 
 def run_game(
     models,
-    value_model,
     env,
     turn,
     epsilon,
@@ -400,14 +375,12 @@ def run_game(
     decay_rate = 0.2  # Adjust as needed
     change = True
     gem_changes = 0
-    replace_object = [0, 0, 0, 0]
 
     for epoch in range(epochs):
         """
         Move each agent once and then update the world
         Creates new gamepoints, resets agents, and runs one episode
         """
-
         if epoch % switch_epoch == 0:
             gem_changes = gem_changes + 1
             env.change_gem_values()
@@ -463,27 +436,6 @@ def run_game(
                 print(epoch, atts)
 
         # --------------------------------------------------------------
-        # this model creates a auto-encoder network to learn the episodic reward values
-        # --------------------------------------------------------------
-
-        if "encoder_attitude" in attitude_condition:
-            if epoch > 2:
-                for i in range(world_size):
-                    for j in range(world_size):
-                        object_state = torch.tensor(
-                            env.world[i, j, 0].appearance[:-2]
-                        ).float()
-
-                        avg_reward, closest_memories = encoder.query_buffer(
-                            object_state
-                        )
-                        env.world[i, j, 0].appearance[-2] = avg_reward.item() * 255
-            testing = False
-            if testing and epoch % 100 == 0:
-                atts = eval_attiude_model()
-                print(epoch, atts)
-
-        # --------------------------------------------------------------
         # this is the no attitude condition, simple IQN learning
         # --------------------------------------------------------------
 
@@ -493,7 +445,6 @@ def run_game(
             for i in range(world_size):
                 for j in range(world_size):
                     env.world[i, j, 0].appearance[-2] = 0.0
-                    env.world[i, j, 0].appearance[-1] = 0.0
 
         # --------------------------------------------------------------
         # this is our episodic memory model with search and weighting
@@ -541,7 +492,7 @@ def run_game(
                     o_state = env.world[i, j, 0].appearance[:-2]
                     mems = k_most_similar_recent_states(
                         torch.tensor(o_state),
-                        state_knn_CMS,
+                        state_knn_CMS,  # HERE IS THE ERROR!
                         object_exp2,
                         object_memory_states_tensor,
                         decay_rate=1.0,
@@ -614,10 +565,8 @@ def run_game(
                         done,
                         new_loc,
                         object_info,
-                        replace_object,
-                    ) = holdObject.transition(
-                        env, models, action[0], loc, replace_object
-                    )
+                        resource_outcome,
+                    ) = holdObject.transition(env, models, action[0], loc)
 
                     # --------------------------------------------------------------
                     # create object memory
@@ -639,10 +588,17 @@ def run_game(
                     object_exp = (state_object, reward)
                     value_model.add_memory(state_object, reward)
 
-                    state_nn = torch.tensor(state_object).float()
-                    reward_nn = torch.tensor(reward).float()
-                    embedding = encoder(state_nn)
-                    encoder.memory_buffer.push(embedding, reward_nn)
+                    # learn resource of target
+                    resource_model.add_memory(state_object, resource_outcome)
+
+                    if len(resource_model.replay_buffer) > 51 and turn % 2 == 0:
+                        resource_loss = resource_model.learn(
+                            resource_model.sample(32), batch_size=32
+                        )
+                    if epoch > 100 and epoch % 40 and turn % 2:
+                        if resource_outcome != [1, 0, 0]:
+                            predict = resource_model(torch.tensor(state_object).float())
+                            print(predict, resource_outcome)
 
                     # note, to save time we can toggle the line below to only learn the
                     # implicit attitude when the implicit attitude is being used.
@@ -660,11 +616,11 @@ def run_game(
                     reward_values = env.gem_values
                     reward_values = sorted(reward_values, reverse=True)
 
-                    if reward == reward_values[0]:
+                    if reward == 15:
                         gems[0] = gems[0] + 1
-                    if reward == reward_values[1]:
+                    if reward == -5:
                         gems[1] = gems[1] + 1
-                    if reward == reward_values[2]:
+                    if reward == 0:
                         gems[2] = gems[2] + 1
                     if reward == -1:
                         gems[3] = gems[3] + 1
@@ -672,6 +628,12 @@ def run_game(
                     # note, the line for PER is commented out. We may want to use IQN
                     # with PER as a better comparison
 
+                    done_flag = 0
+                    if (
+                        withinturn > max_turns
+                        or len(find_instance(env.world, "neural_network")) == 0
+                    ):
+                        done_flag = 1
                     exp = (
                         # models[env.world[new_loc].policy].max_priority,
                         1,
@@ -680,14 +642,15 @@ def run_game(
                             action,
                             reward,
                             next_state,
-                            done,
+                            done_flag,
                         ),
                     )
 
                     env.world[new_loc].episode_memory.append(exp)
 
                     if env.world[new_loc].kind == "agent":
-                        game_points[0] = game_points[0] + reward / reward_values[0]
+                        # game_points[0] = game_points[0] + reward / reward_values[0]
+                        game_points[0] = game_points[0] + reward
 
             # determine whether the game is finished (either max length or all agents are dead)
             if (
@@ -754,7 +717,6 @@ def run_game(
                 epsilon,
                 str(gem_changes),
                 attitude_condition,
-                replace_object
                 # env.gem1_value,
                 # env.gem2_value,
                 # env.gem3_value,
@@ -764,259 +726,20 @@ def run_game(
             game_points = [0, 0]
             gems = [0, 0, 0, 0]
             losses = 0
-            replace_object = [0, 0, 0, 0]
-
-    return models, value_model, env, turn, epsilon
+    return models, env, turn, epsilon
 
 
-# models = create_models()
+models = create_models()
 
 # options here are. these are experiments that we ran
 
-from gem.models.perception_singlePixel_categories import agent_visualfield
-import copy
-
-
-def make_Q_map(env, models, value_model, sparce=0.01, save_name=None):
-    Q_array1 = np.zeros((world_size, world_size))
-    R_array1 = np.zeros((world_size, world_size))
-    QR_array1 = np.zeros((world_size, world_size))
-
-    Q_array2 = np.zeros((world_size, world_size))
-    R_array2 = np.zeros((world_size, world_size))
-    QR_array2 = np.zeros((world_size, world_size))
-
-    Q_array3 = np.zeros((world_size, world_size))
-    R_array3 = np.zeros((world_size, world_size))
-    QR_array3 = np.zeros((world_size, world_size))
-
-    env.reset_env(
-        height=world_size,
-        width=world_size,
-        layers=1,
-        gem1p=sparce,
-        gem2p=sparce,
-        gem3p=sparce,
-        change=False,
-    )
-    env.change_gem_values()
-
-    for loc in find_instance(env.world, "neural_network"):
-        # reset the memories for all agents
-        # the parameter sets the length of the sequence for LSTM
-        env.world[loc].init_replay(1)
-        env.world[loc].init_rnn_state = None
-
-    agentList = find_instance(env.world, "neural_network")
-    agent = env.world[agentList[0]]
-    env.world[agentList[0]] = EmptyObject()
-
-    # pass 1
-
-    for i in range(world_size - 2):
-        for j in range(world_size - 2):
-            loc = (i + 1, j + 1, 0)
-            original_content = env.world[
-                loc
-            ]  # Save what was originally at the location
-            locReward = original_content.value
-            R_array1[i + 1, j + 1] = locReward
-
-            env.world[loc] = agent  # Put agent in place
-            state = env.pov(loc)
-            Qs = models[0].qnetwork_local.get_qvalues(state)
-            Q = torch.max(Qs).detach().item()
-            Q_array1[i + 1, j + 1] = Q
-            QR_array1[i + 1, j + 1] = Q + locReward
-
-            env.world[
-                loc
-            ] = original_content  # Put back what was originally at the location
-
-    # pass 2
-
-    # for i in range(world_size):
-    #    for j in range(world_size):
-    #        object_state = torch.tensor(env.world[i, j, 0].appearance[:3]).float()
-    #        rs, _ = value_model(object_state.unsqueeze(0))
-    #        r = rs[0][1]
-    #        env.world[i, j, 0].appearance[3] = r.item() * 255
-
-    for i in range(world_size - 2):
-        for j in range(world_size - 2):
-            loc = (i + 1, j + 1, 0)
-            original_content = env.world[
-                loc
-            ]  # Save what was originally at the location
-            locReward = original_content.value
-            R_array2[i + 1, j + 1] = locReward
-            env.world[i + 1, j + 1, 0].appearance[-2] = locReward * 255
-            # env.world[i + 1, j + 1, 0].appearance[4] = locReward * 255
-
-            env.world[loc] = agent  # Put agent in place
-            state = env.pov(loc)
-            Qs = models[0].qnetwork_local.get_qvalues(state)
-            Q = torch.max(Qs).detach().item()
-            Q_array2[i + 1, j + 1] = Q
-            QR_array2[i + 1, j + 1] = Q + locReward
-
-            env.world[
-                loc
-            ] = original_content  # Put back what was originally at the location
-
-    # pass 3
-
-    # for i in range(world_size):
-    #    for j in range(world_size):
-    #        object_state = torch.tensor(env.world[i, j, 0].appearance[:3]).float()
-    #        rs, _ = value_model(object_state.unsqueeze(0))
-    #        r = rs[0][1]
-    #        r = (r * -1) + 5
-    #        env.world[i, j, 0].appearance[3] = r.item() * 255
-    #        env.world[i, j, 0].appearance[4] = r.item() * 255
-
-    for i in range(world_size - 2):
-        for j in range(world_size - 2):
-            loc = (i + 1, j + 1, 0)
-            original_content = env.world[
-                loc
-            ]  # Save what was originally at the location
-            locReward = original_content.value
-            R_array3[i + 1, j + 1] = locReward
-            locReward = (locReward * -1) + 5
-            env.world[i + 1, j + 1, 0].appearance[-2] = locReward * 255
-            # env.world[i + 1, j + 1, 0].appearance[4] = locReward * 255
-
-            env.world[loc] = agent  # Put agent in place
-            state = env.pov(loc)
-            Qs = models[0].qnetwork_local.get_qvalues(state)
-            Q = torch.max(Qs).detach().item()
-            Q_array3[i + 1, j + 1] = Q
-            QR_array3[i + 1, j + 1] = Q + locReward
-
-            env.world[
-                loc
-            ] = original_content  # Put back what was originally at the location
-
-    plt.subplot(3, 3, 1)  # First subplot
-    plt.imshow(Q_array1, cmap="viridis")  # Plot the first array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN Q", fontsize=8)  # Title for the first plot
-
-    plt.subplot(3, 3, 2)  # Second subplot
-    plt.imshow(R_array1, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("R", fontsize=8)  # Title for the second plot
-
-    plt.subplot(3, 3, 3)  # Third subplot
-    plt.imshow(QR_array1, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN QR", fontsize=8)  # Title for the third plot
-
-    plt.subplot(3, 3, 4)  # First subplot
-    plt.imshow(Q_array2, cmap="viridis")  # Plot the first array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN + implicit Q", fontsize=8)  # Title for the first plot
-
-    plt.subplot(3, 3, 5)  # Second subplot
-    plt.imshow(R_array2, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("R", fontsize=8)  # Title for the second plot
-
-    plt.subplot(3, 3, 6)  # Third subplot
-    plt.imshow(QR_array2, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN + implicit QR", fontsize=8)  # Title for the first plot
-
-    plt.subplot(3, 3, 7)  # First subplot
-    plt.imshow(Q_array3, cmap="viridis")  # Plot the first array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN + implicit (flipped)", fontsize=8)  # Title for the first plot
-
-    plt.subplot(3, 3, 8)  # Second subplot
-
-    # Reshape the arrays for scatterplot
-    x_data = Q_array2.ravel()
-    y_data = Q_array3.ravel()
-
-    # Filter out points where either x or y is zero
-    mask = (x_data != 0) & (y_data != 0)
-    x_data = x_data[mask]
-    y_data = y_data[mask]
-    # Calculate the correlation coefficient
-    corr_coeff = np.corrcoef(x_data, y_data)[0, 1]
-
-    sns.regplot(x=x_data, y=y_data, scatter_kws={"s": 5}, line_kws={"color": "red"})
-    plt.title(f"Correlation: Q_array2 vs Q_array3\nr = {corr_coeff:.2f}", fontsize=8)
-
-    plt.subplot(3, 3, 9)  # Third subplot
-    plt.imshow(QR_array3, cmap="viridis")  # Plot the second array
-    plt.colorbar()  # To add a color scale
-    plt.title("IQN + implicit QR (flipped)", fontsize=8)  # Title for the first plot
-
-    if save_name:  # If save_name is provided, save the figure to a file
-        plt.savefig(save_name, dpi=300, bbox_inches="tight")
-        plt.close()  # Close the plot to free up memory
-    else:  # If save_name is not provided, show the plot on the screen
-        plt.show()
-
-
 run_params = (
-    # [0.5, 8010, 20, 0.999, "None", 2000, 2500, 20.0, 20.0, False],
-    [
-        0.5,
-        8010,
-        40,
-        0.999,
-        "implicit_attitude+EWA+attack",
-        2000,
-        2500,
-        20.0,
-        20.0,
-        True,
-    ],
-    [0.5, 8010, 40, 0.999, "implicit_attitude+EWA", 2000, 2500, 20.0, 20.0, False],
-    [0.5, 8010, 40, 0.999, "implicit_attitude+EWA", 2000, 2500, 20.0, 20.0, False],
-    [
-        0.5,
-        8010,
-        40,
-        0.999,
-        "implicit_attitude+EWA+attack",
-        2000,
-        2500,
-        20.0,
-        20.0,
-        True,
-    ],
-    [0.5, 8010, 40, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0, False],
-    [0.5, 8010, 40, 0.999, "implicit_attitude+attack", 2000, 2500, 20.0, 20.0, False],
-    [0.5, 8010, 40, 0.999, "none", 2000, 2500, 20.0, 20.0, False],
-    [0.5, 8010, 40, 0.999, "none+attack", 2000, 2500, 20.0, 20.0, False],
-    # [0.5, 8010, 20, 0.999, "implicit_attitude+CMS", 2000, 2500, 20.0, 20.0],
-    # [0.5, 8010, 20, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0],
-    # [0.5, 8010, 20, 0.999, "None", 2000, 2500, 20.0, 20.0],
-    # [0.5, 8010, 20, 0.999, "implicit_attitude+EWA", 2000, 2500, 20.0, 20.0],
-    # [0.5, 8010, 20, 0.999, "CMS", 2000, 2500, 20.0, 20.0],
-    # [0.5, 8010, 20, 0.999, "EWA", 2000, 2500, 20.0, 20.0],
-)
-
-run_params = (
-    [0.5, 10001, 20, 0.999, "encoder_attitude", 2000, 2500, 20.0, 20.0, False],
-    [0.5, 10001, 20, 0.999, "implicit_attitude", 2000, 2500, 20.0, 20.0, False],
-    [0.5, 10001, 20, 0.999, "None", 2000, 2500, 20.0, 20.0, False],
-    [
-        0.5,
-        10001,
-        20,
-        0.999,
-        "implicit_attitude+encoder_attitude",
-        2000,
-        2500,
-        20.0,
-        20.0,
-        False,
-    ],
+    [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
+    [0.5, 4010, 20, 0.999, "None", 12000, 2500, 20.0, 20.0],
+    # [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
+    # [0.5, 4010, 20, 0.999, "CMS", 12000, 2500, 20.0, 20.0],
+    # [0.5, 4010, 20, 0.999, "EWA", 12000, 2500, 20.0, 20.0],
+    [0.5, 4010, 20, 0.999, "implicit_attitude+EWA", 12000, 2500, 20.0, 20.0],
 )
 
 
@@ -1031,24 +754,13 @@ run_params = (
 
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
-    if run_params[modRun][9] == True:
-        action_space = 8
-    else:
-        action_space = 4
-    models = create_models(action_space)
-    value_model = ValueModel(state_dim=3, memory_size=250)
+    models = create_models()
+    value_model = ValueModel(state_dim=9, memory_size=250)
+    resource_model = ResourceModel(state_dim=9, memory_size=250)
     object_memory = deque(maxlen=run_params[modRun][6])
-    state_knn = NearestNeighbors(n_neighbors=50)
-    state_knn_CMS = NearestNeighbors(n_neighbors=50)
-
-    # Initialize the neural network and memory buffer
-    encoder = ObjectMemoryEncoder(
-        input_size=3, embedding_size=3, memory_buffer_size=250
-    )
-
-    models, value_model, env, turn, epsilon = run_game(
+    state_knn = NearestNeighbors(n_neighbors=5)
+    models, env, turn, epsilon = run_game(
         models,
-        value_model,
         env,
         turn,
         run_params[modRun][0],
@@ -1059,11 +771,9 @@ for modRun in range(len(run_params)):
         switch_epoch=run_params[modRun][5],
         episodic_decay_rate=run_params[modRun][7],
         similarity_decay_rate=run_params[modRun][8],
-        # attack_gems=run_params[modRun][9],
     )
     # atts = eval_attiude_model()
     # print(atts)
-    make_Q_map(env, models, value_model, sparce=0.01)
 
 
 # notes:
@@ -1071,17 +781,3 @@ for modRun in range(len(run_params)):
 #      need to have long term memories that get stored somehow
 #      if we can get the decay to work right, decay can be something that
 #      is modulated (and maybe learned) to retain memories for longer
-
-
-# usage:
-# note: need to play with the recency and teh similarity discounts
-
-
-# avg_reward, closest_memories = encoder.query_buffer(torch.tensor([255.0, 100.0, 100.0]))
-# print(avg_reward)
-
-# avg_reward, closest_memories = encoder.query_buffer(torch.tensor([0.0, 250.0, 0.0]))
-# print(avg_reward)
-
-# avg_reward, closest_memories = encoder.query_buffer(torch.tensor([200.0, 50.0, 100.0]))
-# print(avg_reward)

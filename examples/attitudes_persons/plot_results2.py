@@ -21,9 +21,9 @@ def process_files(file_pattern="*.txt", smoothing=1, time_range=None):
     for filename in glob.glob(file_pattern):
         with open(filename, "r") as file:
             for line in file:
-                # Check if line starts with a number
-                if line[0].isdigit():
-                    parts = line.split()
+                # Check if line starts with a number and has at least 4 parts
+                parts = line.split()
+                if len(parts) >= 4 and parts[0].isdigit():
                     time_step = int(parts[0])
                     third_integer = int(parts[2])
                     last_string = parts[-1]
@@ -84,7 +84,11 @@ def process_files(file_pattern="*.txt", smoothing=1, time_range=None):
 
 # Example usage for time steps between 100 and 300
 # process_files(smoothing=5, time_range=(1500, 3000))
-process_files(file_pattern="nn*.txt", smoothing=10)
-
-# process_files(file_pattern="CMS_corr1*.txt", smoothing=1)
+# process_files(file_pattern="study1_*.txt", smoothing=5)
+# process_files(file_pattern="study2b_*.txt", smoothing=5)
+# process_files(file_pattern="test*.txt", smoothing=5)
+process_files(file_pattern="persons1*.txt", smoothing=1)
+process_files(file_pattern="persons1*.txt", smoothing=5)
+process_files(file_pattern="persons1*.txt", smoothing=10)
 # process_files(file_pattern="CMS_corr2*.txt", smoothing=1)
+# process_files(file_pattern="CMS_sh*.txt", smoothing=1)

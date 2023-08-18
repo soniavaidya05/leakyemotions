@@ -84,4 +84,4 @@ def process_files_with_list(file_pattern="*.txt", smoothing=1, time_range=None):
 
 
 # Example usage
-process_files_with_list(file_pattern="replace*.txt", smoothing=1)
+process_files_with_list(file_pattern="nn*.txt", smoothing=1)

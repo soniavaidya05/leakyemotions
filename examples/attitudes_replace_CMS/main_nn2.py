@@ -51,35 +51,34 @@ import time
 
 # -------------- Neural Network Encoder END ------------------------
 
-### Neural Network Epsiodic Memory
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from collections import deque
 
 
 class ObjectMemoryEncoder(nn.Module):
-    def __init__(self, input_size, embedding_size, memory_buffer_size=10000):
+    def __init__(
+        self, input_size, embedding_size, memory_buffer_size=10000, dropout_prob=0.5
+    ):
         super(ObjectMemoryEncoder, self).__init__()
 
         class ObjectMemoryBuffer:
             def __init__(self, capacity):
                 self.capacity = capacity
-                self.memory = []  # Will store tuples of (embedding, reward, timestamp)
-                self.timestamp = (
-                    0  # Initializes a counter to track when the memory was added
-                )
+                # Using deque for efficient popping from the left
+                self.memory = deque(maxlen=self.capacity)
+                self.timestamp = 0
 
             def push(self, embedding, reward):
                 self.timestamp += 1
-                if len(self.memory) < self.capacity:
-                    self.memory.append((embedding, reward, self.timestamp))
-                else:
-                    self.memory.pop(0)  # remove the oldest memory
-                    self.memory.append((embedding, reward, self.timestamp))
+                # Deque will automatically remove the leftmost item if it exceeds the maxlen
+                self.memory.append((embedding, reward, self.timestamp))
 
             def get_closest_memories(self, query_embedding, n=1):
-                # Calculate distances based on the embedding (state part)
                 distances = [
                     (torch.dist(query_embedding, mem[0]), mem) for mem in self.memory
                 ]
-                # Sort primarily by distance, but use timestamp as a secondary criterion
                 sorted_memories = sorted(distances, key=lambda x: (x[0], -x[1][2]))
                 closest_memories = [mem[1] for mem in sorted_memories[:n]]
                 closest_distances = [dist[0] for dist in sorted_memories[:n]]
@@ -88,11 +87,18 @@ class ObjectMemoryEncoder(nn.Module):
         self.fc1 = nn.Linear(input_size, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, embedding_size)
+
+        # Dropout layers
+        self.dropout1 = nn.Dropout(dropout_prob)
+        self.dropout2 = nn.Dropout(dropout_prob)
+
         self.memory_buffer = ObjectMemoryBuffer(capacity=memory_buffer_size)
+        self.optimizer = optim.Adam(self.parameters(), lr=0.001)
+        self.loss_fn = F.mse_loss
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = self.dropout1(F.relu(self.fc1(x)))
+        x = self.dropout2(F.relu(self.fc2(x)))
         x = self.fc3(x)
         return x
 
@@ -101,35 +107,77 @@ class ObjectMemoryEncoder(nn.Module):
     ):
         total_reward = 0.0
         total_weight = 0.0
-        recency_weight = 1.0  # Start with the full weight for the most recent memory
+        recency_weight = 1.0
 
         for (embedding, reward, timestamp), distance in zip(memories, distances):
-            similarity_weight = 1 / (
-                1 + distance
-            )  # Inverse relationship. Closer (smaller) distances have larger weights.
+            similarity_weight = 1 / (1 + distance)
 
-            # The combined weight is a product of recency and similarity weights
             combined_weight = recency_weight * similarity_weight
-
             total_reward += reward * combined_weight
             total_weight += combined_weight
 
             recency_weight *= recency_discount
 
+        # Safeguard against zero division
         return total_reward / total_weight if total_weight != 0 else 0
 
-    def query_buffer(self, query_state, n=20):
-        query_embedding = encoder(query_state)
+    def query_buffer(
+        self, query_state, n=20, recency_discount=0.9, similarity_discount=0.9
+    ):
+        query_embedding = self.forward(query_state)
         closest_memories, closest_distances = self.memory_buffer.get_closest_memories(
             query_embedding, n
         )
         avg_reward = self.compute_weighted_avg_object_reward(
-            closest_memories,
-            closest_distances,
-            recency_discount=0.9,
-            similarity_discount=0.9,
+            closest_memories, closest_distances, recency_discount, similarity_discount
         )
         return avg_reward, closest_memories
+
+    def mask_input(self, original_input, mask_prob=0.2):
+        mask = (
+            (torch.rand(original_input.size()) > mask_prob)
+            .float()
+            .to(original_input.device)
+        )
+        return original_input * mask
+
+    def get_batch_from_memory(self, batch_size=32):
+        batch = random.sample(self.memory_buffer.memory, batch_size)
+        states, rewards, timestamps = zip(*batch)
+        return torch.stack(states), torch.tensor(rewards, dtype=torch.float32)
+
+    def train_step(
+        self, states, rewards, noise_stddev=0.05, mask_prob=0.2, reward_mask_prob=0.1
+    ):
+        # Switch to train mode
+        self.train()
+
+        # Add Gaussian noise to states
+        noisy_states = states + torch.randn_like(states) * noise_stddev
+        embeddings_from_noisy = self.forward(noisy_states)
+
+        # Mask some parts of the states
+        masked_states = self.mask_input(states, mask_prob=mask_prob)
+        embeddings_from_masked = self.forward(masked_states)
+
+        # Occasionally mask rewards
+        if random.random() < reward_mask_prob:
+            rewards = torch.zeros_like(rewards)
+
+        # Compute loss based on the embeddings
+        # (You can adjust this loss computation based on your desired objective)
+        loss = (
+            self.loss_fn(embeddings_from_noisy, states)
+            + self.loss_fn(embeddings_from_masked, states)
+            + self.loss_fn(embeddings_from_noisy, rewards.unsqueeze(-1))
+        )
+
+        # Backpropagation
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        return loss.item()
 
 
 # -------------- Neural Network Encoder END ------------------------
@@ -478,10 +526,13 @@ def run_game(
                             object_state
                         )
                         env.world[i, j, 0].appearance[-2] = avg_reward.item() * 255
-            testing = False
-            if testing and epoch % 100 == 0:
-                atts = eval_attiude_model()
-                print(epoch, atts)
+            train_encoder = False
+            if train_encoder:
+                if turn % 4 == 0:
+                    states_batch, rewards_batch = encoder.get_batch_from_memory(
+                        batch_size=32
+                    )
+                    loss = encoder.train_step(states_batch, rewards_batch)
 
         # --------------------------------------------------------------
         # this is the no attitude condition, simple IQN learning
