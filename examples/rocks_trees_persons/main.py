@@ -434,9 +434,9 @@ def run_game(
                         predict = resource_model(torch.tensor(state_object).float())
                         predict = predict.detach().numpy()
 
-                        env.world[i, j, 0].appearance[-3] = predict[0]
-                        env.world[i, j, 0].appearance[-2] = predict[1]
-                        env.world[i, j, 0].appearance[-1] = predict[2]
+                        env.world[i, j, 0].appearance[-3] = predict[0] * 255
+                        env.world[i, j, 0].appearance[-2] = predict[1] * 255
+                        env.world[i, j, 0].appearance[-1] = predict[2] * 255
 
         # --------------------------------------------------------------
         # this model creates a neural network to learn the reward values
