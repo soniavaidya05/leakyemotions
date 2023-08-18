@@ -589,16 +589,19 @@ def run_game(
                     value_model.add_memory(state_object, reward)
 
                     # learn resource of target
-                    resource_model.add_memory(state_object, resource_outcome)
+                    if reward != 0:
+                        resource_model.add_memory(state_object, resource_outcome)
+                    if reward == 0 and random.random() > 0.9:
+                        resource_model.add_memory(state_object, resource_outcome)
 
                     if len(resource_model.replay_buffer) > 51 and turn % 2 == 0:
                         resource_loss = resource_model.learn(
                             resource_model.sample(32), batch_size=32
                         )
-                    if epoch > 100 and epoch % 40 and turn % 2:
-                        if resource_outcome != [1, 0, 0]:
-                            predict = resource_model(torch.tensor(state_object).float())
-                            print(predict, resource_outcome)
+                    # if epoch > 100 and epoch % 40 and turn % 2:
+                    #    if resource_outcome != [1, 0, 0]:
+                    #        predict = resource_model(torch.tensor(state_object).float())
+                    #        print(predict, resource_outcome)
 
                     # note, to save time we can toggle the line below to only learn the
                     # implicit attitude when the implicit attitude is being used.
