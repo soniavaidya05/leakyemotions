@@ -591,7 +591,9 @@ def run_game(
                     # learn resource of target
                     if reward != 0:
                         resource_model.add_memory(state_object, resource_outcome)
-                    if reward == 0 and random.random() > 0.9:
+                    if (
+                        reward == 0 and random.random() > 0.9
+                    ):  # seems to work if downsample nothing
                         resource_model.add_memory(state_object, resource_outcome)
 
                     if len(resource_model.replay_buffer) > 51 and turn % 2 == 0:
