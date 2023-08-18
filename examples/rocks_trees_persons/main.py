@@ -431,12 +431,21 @@ def run_game(
                         object_state = torch.tensor(
                             env.world[i, j, 0].appearance[:-3]
                         ).float()
-                        predict = resource_model(torch.tensor(state_object).float())
+                        predict = resource_model(object_state)
                         predict = predict.detach().numpy()
 
                         env.world[i, j, 0].appearance[-3] = predict[0] * 255
                         env.world[i, j, 0].appearance[-2] = predict[1] * 255
                         env.world[i, j, 0].appearance[-1] = predict[2] * 255
+                        # if epoch % 100 == 0:
+                        #    print(
+                        #        "tree rocks",
+                        #        epoch,
+                        #        i,
+                        #        j,
+                        #        env.world[i, j, 0].appearance[-3:],
+                        #        env.world[i, j, 0].kind,
+                        #    )
 
         # --------------------------------------------------------------
         # this model creates a neural network to learn the reward values
@@ -613,12 +622,11 @@ def run_game(
                     # learn resource of target
                     if reward != 0:
                         resource_model.add_memory(state_object, resource_outcome)
-                    if (
-                        reward == 0 and random.random() > 0.9
-                    ):  # seems to work if downsample nothing
-                        resource_model.add_memory(state_object, resource_outcome)
+                    else:
+                        if random.random() > 0.5:  # seems to work if downsample nothing
+                            resource_model.add_memory(state_object, resource_outcome)
 
-                    if len(resource_model.replay_buffer) > 51 and turn % 2 == 0:
+                    if len(resource_model.replay_buffer) > 33 and turn % 2 == 0:
                         resource_loss = resource_model.learn(
                             resource_model.sample(32), batch_size=32
                         )
