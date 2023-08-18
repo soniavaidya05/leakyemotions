@@ -162,34 +162,52 @@ class ResourceModel(nn.Module):
             self.replay_buffer, min(num_memories, len(self.replay_buffer))
         )
 
-    def learn(self, memories, batch_size=32):
-        # Calculate class weights
-        all_outcomes = [outcome for _, outcome in self.replay_buffer]
-        num_samples = len(all_outcomes)
-        class_counts = [sum([out[i] for out in all_outcomes]) for i in range(3)]
+    def learn(self, memories, batch_size=32, class_weights=False):
+        if class_weights:
+            # Calculate class weights
+            all_outcomes = [outcome for _, outcome in self.replay_buffer]
+            num_samples = len(all_outcomes)
+            class_counts = [sum([out[i] for out in all_outcomes]) for i in range(3)]
 
-        # Adding a small epsilon to prevent division by zero
-        epsilon = 1e-10
-        class_weights = torch.tensor(
-            [(num_samples / (count + epsilon)) for count in class_counts]
-        ).to(torch.float32)
+            # Adding a small epsilon to prevent division by zero
+            epsilon = 1e-10
+            class_weights = torch.tensor(
+                [(num_samples / (count + epsilon)) for count in class_counts]
+            ).to(torch.float32)
 
-        for _ in range(len(memories) // batch_size):
-            batch = random.sample(memories, batch_size)
-            states, targets = zip(*batch)
-            states = torch.tensor(states, dtype=torch.float32)
-            targets = torch.tensor(targets, dtype=torch.float32)
+            for _ in range(len(memories) // batch_size):
+                batch = random.sample(memories, batch_size)
+                states, targets = zip(*batch)
+                states = torch.tensor(states, dtype=torch.float32)
+                targets = torch.tensor(targets, dtype=torch.float32)
 
-            self.optimizer.zero_grad()
-            probabilities = self.forward(states)
+                self.optimizer.zero_grad()
+                probabilities = self.forward(states)
 
-            # Weighted Cross-Entropy Loss
-            loss = F.cross_entropy(
-                probabilities, torch.argmax(targets, dim=1), weight=class_weights
-            )
+                # Weighted Cross-Entropy Loss
+                loss = F.cross_entropy(
+                    probabilities, torch.argmax(targets, dim=1), weight=class_weights
+                )
 
-            loss.backward()
-            self.optimizer.step()
+                loss.backward()
+                self.optimizer.step()
+
+        else:
+            for _ in range(len(memories) // batch_size):
+                batch = random.sample(memories, batch_size)
+                states, targets = zip(*batch)
+                states = torch.tensor(states, dtype=torch.float32)
+                targets = torch.tensor(targets, dtype=torch.float32)
+
+                self.optimizer.zero_grad()
+                probabilities = self.forward(states)
+
+                # Cross-Entropy Loss without weights
+                loss = F.cross_entropy(probabilities, torch.argmax(targets, dim=1))
+
+                loss.backward()
+                self.optimizer.step()
+
         return loss.item()
 
     def add_memory(self, state, outcome):
@@ -275,7 +293,7 @@ class ValueModel(nn.Module):
         self.replay_buffer.append((state, reward))
 
 
-value_model = ValueModel(state_dim=9, memory_size=250)
+value_model = ValueModel(state_dim=10, memory_size=250)
 
 
 def create_models():
@@ -407,6 +425,9 @@ def run_game(
             env.world[loc].init_replay(working_memory)
             env.world[loc].init_rnn_state = None
 
+        agent_wood = env.world[loc].wood
+        agent_stone = env.world[loc].stone
+
         # reset the variables to be safe
 
         for i in range(world_size):
@@ -458,6 +479,9 @@ def run_game(
                         object_state = torch.tensor(
                             env.world[i, j, 0].appearance[:-3]
                         ).float()
+                        object_state = torch.concat(
+                            object_state, agent_wood, agent_stone
+                        )
                         rs, _ = value_model(object_state.unsqueeze(0))
                         r = rs[0][1]
                         env.world[i, j, 0].appearance[-2] = r.item() * 255
@@ -791,7 +815,7 @@ run_params = (
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
     models = create_models()
-    value_model = ValueModel(state_dim=8, memory_size=250)
+    value_model = ValueModel(state_dim=10, memory_size=250)
     resource_model = ResourceModel(state_dim=8, memory_size=2000)
     object_memory = deque(maxlen=run_params[modRun][6])
     state_knn = NearestNeighbors(n_neighbors=5)
