@@ -425,6 +425,14 @@ def run_game(
             env.world[loc].init_replay(working_memory)
             env.world[loc].init_rnn_state = None
 
+        start_resource = np.random.choice([0, 1])
+        if start_resource == 0:
+            env.world[loc].wood = 1
+            env.world[loc].stome = 0
+        if start_resource == 1:
+            env.world[loc].wood = 0
+            env.world[loc].stome = 1
+
         agent_wood = env.world[loc].wood
         agent_stone = env.world[loc].stone
 
