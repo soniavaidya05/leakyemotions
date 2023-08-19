@@ -428,141 +428,6 @@ def run_game(
         agent_wood = env.world[loc].wood
         agent_stone = env.world[loc].stone
 
-        # reset the variables to be safe
-
-        for i in range(world_size):
-            for j in range(world_size):
-                env.world[i, j, 0].appearance[-3] = 0.0
-                env.world[i, j, 0].appearance[-2] = 0.0
-                env.world[i, j, 0].appearance[-1] = 0.0
-
-        # these are the different attitude models that are used.
-        # these can be put into a function to just call the one that is
-        # currently being used: this is set in the input to the run
-        # game function with a string
-
-        # for speed, the model computes the attiutdes at the beginning
-        # of each game rather than each trial. For some games where
-        # within round learning is important, this could be changed
-
-        if "tree_rocks" in attitude_condition:
-            if epoch > 2:
-                for i in range(world_size):
-                    for j in range(world_size):
-                        object_state = torch.tensor(
-                            env.world[i, j, 0].appearance[:-3]
-                        ).float()
-                        predict = resource_model(object_state)
-                        predict = predict.detach().numpy()
-
-                        env.world[i, j, 0].appearance[-3] = predict[0] * 255
-                        env.world[i, j, 0].appearance[-2] = predict[1] * 255
-                        env.world[i, j, 0].appearance[-1] = predict[2] * 255
-                        # if epoch % 100 == 0:
-                        #    print(
-                        #        "tree rocks",
-                        #        epoch,
-                        #        i,
-                        #        j,
-                        #        env.world[i, j, 0].appearance[-3:],
-                        #        env.world[i, j, 0].kind,
-                        #    )
-
-        # --------------------------------------------------------------
-        # this model creates a neural network to learn the reward values
-        # --------------------------------------------------------------
-
-        if "implicit_attitude" in attitude_condition:
-            if epoch > 2:
-                for i in range(world_size):
-                    for j in range(world_size):
-                        object_state = torch.tensor(
-                            env.world[i, j, 0].appearance[:-3]
-                        ).float()
-                        # object_state = torch.concat(
-                        #    object_state, agent_wood, agent_stone
-                        # )
-                        rs, _ = value_model(object_state.unsqueeze(0))
-                        r = rs[0][1]
-                        env.world[i, j, 0].appearance[-2] = r.item() * 255
-            testing = False
-            if testing and epoch % 100 == 0:
-                atts = eval_attiude_model()
-                print(epoch, atts)
-
-        # --------------------------------------------------------------
-        # this is the no attitude condition, simple IQN learning
-        # --------------------------------------------------------------
-
-        if (
-            attitude_condition == "no_attitude"
-        ):  # this sets a control condition where no attitudes are used
-            for i in range(world_size):
-                for j in range(world_size):
-                    env.world[i, j, 0].appearance[-2] = 0.0
-
-        # --------------------------------------------------------------
-        # this is our episodic memory model with search and weighting
-        # --------------------------------------------------------------
-
-        if (
-            "EWA" in attitude_condition and epoch > 100
-        ):  # this sets a control condition where no attitudes are used
-            object_memory_states_tensor = torch.tensor(
-                [obj_mem[0] for obj_mem in object_memory]
-            )
-            for i in range(world_size):
-                for j in range(world_size):
-                    o_state = env.world[i, j, 0].appearance[:-3]
-                    mems = k_most_similar_recent_states(
-                        torch.tensor(o_state),
-                        state_knn,
-                        object_memory,
-                        object_memory_states_tensor,
-                        decay_rate=1.0,
-                        k=100,
-                    )
-                    env.world[i, j, 0].appearance[-1] = (
-                        compute_weighted_average(
-                            o_state,
-                            mems,
-                            similarity_decay_rate=similarity_decay_rate,
-                            time_decay_rate=episodic_decay_rate,
-                        )
-                        * 255
-                    )
-
-        # --------------------------------------------------------------
-        # this is complementary learning system model
-        # --------------------------------------------------------------
-
-        if (
-            "CMS" in attitude_condition and epoch > 100
-        ):  # this sets a control condition where no attitudes are used
-            object_memory_states_tensor = torch.tensor(
-                [obj_mem[0] for obj_mem in object_memory]
-            )
-            for i in range(world_size):
-                for j in range(world_size):
-                    o_state = env.world[i, j, 0].appearance[:-3]
-                    mems = k_most_similar_recent_states(
-                        torch.tensor(o_state),
-                        state_knn_CMS,  # HERE IS THE ERROR!
-                        object_exp2,
-                        object_memory_states_tensor,
-                        decay_rate=1.0,
-                        k=100,
-                    )
-                    env.world[i, j, 0].appearance[-1] = (
-                        compute_weighted_average(
-                            o_state,
-                            mems,
-                            similarity_decay_rate=similarity_decay_rate,
-                            time_decay_rate=episodic_decay_rate,
-                        )
-                        * 255
-                    )
-
         turn = 0
 
         start_time = time.time()
@@ -599,6 +464,145 @@ def run_game(
             agent_num = 0
 
             for loc in agentList:
+                # reset the variables to be safe
+
+                for i in range(world_size):
+                    for j in range(world_size):
+                        env.world[i, j, 0].appearance[-4] = env.world[
+                            loc
+                        ].wood  # note, currently overwriting the individual info
+                        env.world[i, j, 0].appearance[-4] = env.world[loc].stone
+                        env.world[i, j, 0].appearance[-3] = 0.0
+                        env.world[i, j, 0].appearance[-2] = 0.0
+                        env.world[i, j, 0].appearance[-1] = 0.0
+
+                # these are the different attitude models that are used.
+                # these can be put into a function to just call the one that is
+                # currently being used: this is set in the input to the run
+                # game function with a string
+
+                # for speed, the model computes the attiutdes at the beginning
+                # of each game rather than each trial. For some games where
+                # within round learning is important, this could be changed
+
+                if "tree_rocks" in attitude_condition:
+                    if epoch > 2:
+                        for i in range(world_size):
+                            for j in range(world_size):
+                                object_state = torch.tensor(
+                                    env.world[i, j, 0].appearance[:-3]
+                                ).float()
+                                predict = resource_model(object_state)
+                                predict = predict.detach().numpy()
+
+                                env.world[i, j, 0].appearance[-3] = predict[0] * 255
+                                env.world[i, j, 0].appearance[-2] = predict[1] * 255
+                                env.world[i, j, 0].appearance[-1] = predict[2] * 255
+                                # if epoch % 100 == 0:
+                                #    print(
+                                #        "tree rocks",
+                                #        epoch,
+                                #        i,
+                                #        j,
+                                #        env.world[i, j, 0].appearance[-3:],
+                                #        env.world[i, j, 0].kind,
+                                #    )
+
+                # --------------------------------------------------------------
+                # this model creates a neural network to learn the reward values
+                # --------------------------------------------------------------
+
+                if "implicit_attitude" in attitude_condition:
+                    if epoch > 2:
+                        for i in range(world_size):
+                            for j in range(world_size):
+                                object_state = torch.tensor(
+                                    env.world[i, j, 0].appearance[:-3]
+                                ).float()
+                                # object_state = torch.concat(
+                                #    object_state, agent_wood, agent_stone
+                                # )
+                                rs, _ = value_model(object_state.unsqueeze(0))
+                                r = rs[0][1]
+                                env.world[i, j, 0].appearance[-2] = r.item() * 255
+                    testing = False
+                    if testing and epoch % 100 == 0:
+                        atts = eval_attiude_model()
+                        print(epoch, atts)
+
+                # --------------------------------------------------------------
+                # this is the no attitude condition, simple IQN learning
+                # --------------------------------------------------------------
+
+                if (
+                    attitude_condition == "no_attitude"
+                ):  # this sets a control condition where no attitudes are used
+                    for i in range(world_size):
+                        for j in range(world_size):
+                            env.world[i, j, 0].appearance[-2] = 0.0
+
+                # --------------------------------------------------------------
+                # this is our episodic memory model with search and weighting
+                # --------------------------------------------------------------
+
+                if (
+                    "EWA" in attitude_condition and epoch > 100
+                ):  # this sets a control condition where no attitudes are used
+                    object_memory_states_tensor = torch.tensor(
+                        [obj_mem[0] for obj_mem in object_memory]
+                    )
+                    for i in range(world_size):
+                        for j in range(world_size):
+                            o_state = env.world[i, j, 0].appearance[:-3]
+                            mems = k_most_similar_recent_states(
+                                torch.tensor(o_state),
+                                state_knn,
+                                object_memory,
+                                object_memory_states_tensor,
+                                decay_rate=1.0,
+                                k=100,
+                            )
+                            env.world[i, j, 0].appearance[-1] = (
+                                compute_weighted_average(
+                                    o_state,
+                                    mems,
+                                    similarity_decay_rate=similarity_decay_rate,
+                                    time_decay_rate=episodic_decay_rate,
+                                )
+                                * 255
+                            )
+
+                # --------------------------------------------------------------
+                # this is complementary learning system model
+                # --------------------------------------------------------------
+
+                if (
+                    "CMS" in attitude_condition and epoch > 100
+                ):  # this sets a control condition where no attitudes are used
+                    object_memory_states_tensor = torch.tensor(
+                        [obj_mem[0] for obj_mem in object_memory]
+                    )
+                    for i in range(world_size):
+                        for j in range(world_size):
+                            o_state = env.world[i, j, 0].appearance[:-3]
+                            mems = k_most_similar_recent_states(
+                                torch.tensor(o_state),
+                                state_knn_CMS,  # HERE IS THE ERROR!
+                                object_exp2,
+                                object_memory_states_tensor,
+                                decay_rate=1.0,
+                                k=100,
+                            )
+                            env.world[i, j, 0].appearance[-1] = (
+                                compute_weighted_average(
+                                    o_state,
+                                    mems,
+                                    similarity_decay_rate=similarity_decay_rate,
+                                    time_decay_rate=episodic_decay_rate,
+                                )
+                                * 255
+                            )
+
                 agent_num = agent_num + 1
                 if env.world[loc].kind != "deadAgent":
                     holdObject = env.world[loc]
