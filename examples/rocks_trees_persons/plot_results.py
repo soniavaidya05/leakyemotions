@@ -84,7 +84,4 @@ def process_files(file_pattern="*.txt", smoothing=1, time_range=None):
 
 # Example usage for time steps between 100 and 300
 # process_files(smoothing=5, time_range=(1500, 3000))
-process_files(file_pattern="CMS_sh*.txt", smoothing=10)
-
-process_files(file_pattern="CMS_corr1*.txt", smoothing=1)
-process_files(file_pattern="CMS_corr2*.txt", smoothing=1)
+process_files(file_pattern="binary*.txt", smoothing=1, time_range=(1, 1800))

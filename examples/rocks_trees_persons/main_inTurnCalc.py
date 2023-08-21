@@ -293,7 +293,7 @@ class ValueModel(nn.Module):
         self.replay_buffer.append((state, reward))
 
 
-value_model = ValueModel(state_dim=10, memory_size=250)
+value_model = ValueModel(state_dim=19, memory_size=250)
 
 
 def create_models():
@@ -354,15 +354,15 @@ def eval_attiude_model(value_model=value_model):
 
 object_exp2 = deque(maxlen=2500)
 object_memory = deque(maxlen=250)
-state_knn = NearestNeighbors(n_neighbors=100)
-state_knn_CMS = NearestNeighbors(n_neighbors=100)
+state_knn = NearestNeighbors(n_neighbors=15)
+state_knn_CMS = NearestNeighbors(n_neighbors=15)
 
 models = create_models()
 env = RPG(
     height=world_size,
     width=world_size,
     layers=1,
-    defaultObject=EmptyObject(11),
+    defaultObject=EmptyObject(20),
     gem1p=0.03,
     gem2p=0.03,
     wolf1p=0.03,  # rename gem3p
@@ -476,10 +476,10 @@ def run_game(
 
                 for i in range(world_size):
                     for j in range(world_size):
-                        env.world[i, j, 0].appearance[-4] = env.world[
-                            loc
-                        ].wood  # note, currently overwriting the individual info
-                        env.world[i, j, 0].appearance[-4] = env.world[loc].stone
+                        env.world[i, j, 0].appearance[-5] = (
+                            env.world[loc].wood * 255.0
+                        )  # note, currently overwriting the individual info
+                        env.world[i, j, 0].appearance[-4] = env.world[loc].stone * 255.0
                         env.world[i, j, 0].appearance[-3] = 0.0
                         env.world[i, j, 0].appearance[-2] = 0.0
                         env.world[i, j, 0].appearance[-1] = 0.0
@@ -554,31 +554,32 @@ def run_game(
                 # --------------------------------------------------------------
 
                 if (
-                    "EWA" in attitude_condition and epoch > 100
+                    "EWA" in attitude_condition and epoch > 20
                 ):  # this sets a control condition where no attitudes are used
                     object_memory_states_tensor = torch.tensor(
                         [obj_mem[0] for obj_mem in object_memory]
                     )
                     for i in range(world_size):
                         for j in range(world_size):
-                            o_state = env.world[i, j, 0].appearance[:-3]
-                            mems = k_most_similar_recent_states(
-                                torch.tensor(o_state),
-                                state_knn,
-                                object_memory,
-                                object_memory_states_tensor,
-                                decay_rate=1.0,
-                                k=100,
-                            )
-                            env.world[i, j, 0].appearance[-1] = (
-                                compute_weighted_average(
-                                    o_state,
-                                    mems,
-                                    similarity_decay_rate=similarity_decay_rate,
-                                    time_decay_rate=episodic_decay_rate,
+                            if env.world[i, j, 0].kind != "empty":
+                                o_state = env.world[i, j, 0].appearance[:-3]
+                                mems = k_most_similar_recent_states(
+                                    torch.tensor(o_state),
+                                    state_knn,
+                                    object_memory,
+                                    object_memory_states_tensor,
+                                    decay_rate=1.0,
+                                    k=10,
                                 )
-                                * 255
-                            )
+                                env.world[i, j, 0].appearance[-1] = (
+                                    compute_weighted_average(
+                                        o_state,
+                                        mems,
+                                        similarity_decay_rate=similarity_decay_rate,
+                                        time_decay_rate=episodic_decay_rate,
+                                    )
+                                    * 255
+                                )
 
                 # --------------------------------------------------------------
                 # this is complementary learning system model
@@ -805,13 +806,13 @@ models = create_models()
 # options here are. these are experiments that we ran
 
 run_params = (
-    [0.5, 4010, 20, 0.999, "tree_rocks", 12000, 2500, 20.0, 20.0],
-    [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
+    [0.5, 4010, 20, 0.999, "implicit_attitude+EWA", 12000, 2500, 20.0, 20.0],
+    # [0.5, 4010, 20, 0.999, "tree_rocks", 12000, 2500, 20.0, 20.0],
     [0.5, 4010, 20, 0.999, "None", 12000, 2500, 20.0, 20.0],
+    [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "CMS", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "EWA", 12000, 2500, 20.0, 20.0],
-    # [0.5, 4010, 20, 0.999, "implicit_attitude+EWA", 12000, 2500, 20.0, 20.0],
 )
 
 
@@ -827,8 +828,8 @@ run_params = (
 # the version below needs to have the keys from above in it
 for modRun in range(len(run_params)):
     models = create_models()
-    value_model = ValueModel(state_dim=8, memory_size=250)
-    resource_model = ResourceModel(state_dim=8, memory_size=2000)
+    value_model = ValueModel(state_dim=17, memory_size=250)
+    resource_model = ResourceModel(state_dim=17, memory_size=2000)
     object_memory = deque(maxlen=run_params[modRun][6])
     state_knn = NearestNeighbors(n_neighbors=5)
     models, env, turn, epsilon = run_game(

@@ -25,9 +25,9 @@ class RPG:
         gem2p=0.04,
         wolf1p=0.005,
         tile_size=(1, 1),
-        defaultObject=EmptyObject(11),
+        defaultObject=EmptyObject(20),
     ):
-        self.app_size = 11
+        self.app_size = 20
         self.gem1p = gem1p
         self.gem2p = gem2p
         self.wolf1p = wolf1p
@@ -94,32 +94,38 @@ class RPG:
     def change_gem_values(self, new_values="None", new_colours="Shuffled"):
         pass
 
-    def create_people(self, num_people=100):
+    def create_people(self, num_people=40):
         for person in range(num_people):
             individuation = [
-                random.random() * 255.0,
-                random.random() * 255.0,
-                random.random() * 255.0,
-                random.random() * 255.0,
+                np.random.choice([0, 1]) * 255.0,
+                np.random.choice([0, 1]) * 255.0,
+                np.random.choice([0, 1]) * 255.0,
+                np.random.choice([0, 1]) * 255.0,
+                np.random.choice([0, 1]) * 255.0,
+                np.random.choice([0, 1]) * 255.0,
+                np.random.choice([0, 1]) * 255.0,
+                np.random.choice([0, 1]) * 255.0,
+                0,
+                0,
             ]
             color = np.random.choice([0, 1])
             if color == 0:
-                image_color = [0.0, 0.0, 255.0, 0.0, 0.0]
-                if random.random() < 0.90:
+                image_color = [255.0, 0.0, 0.0]
+                if random.random() < 0.75:
                     rock = 1
                     wood = 0
                 else:
                     wood = 0
                     rock = 1
             if color == 1:
-                image_color = [0.0, 0.0, 0.0, 255.0, 0.0]
-                if random.random() < 0.5:
+                image_color = [0.0, 255.0, 0.0]
+                if random.random() < 0.25:
                     wood = 1
                     rock = 0
                 else:
                     wood = 0
                     rock = 1
-            app = [image_color + individuation + [0, 0]]
+            app = [[0, 0] + image_color + image_color + individuation + [0, 0]]
             info = (person, app, [wood, rock], 0, 0)
             self.person_list.append(info)
 
