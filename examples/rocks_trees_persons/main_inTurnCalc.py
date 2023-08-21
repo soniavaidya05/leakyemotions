@@ -554,14 +554,15 @@ def run_game(
                 # --------------------------------------------------------------
 
                 if (
-                    "EWA" in attitude_condition and epoch > 20
+                    "EWA" in attitude_condition and epoch > 100
                 ):  # this sets a control condition where no attitudes are used
                     object_memory_states_tensor = torch.tensor(
                         [obj_mem[0] for obj_mem in object_memory]
                     )
-                    for i in range(world_size):
-                        for j in range(world_size):
-                            if env.world[i, j, 0].kind != "empty":
+                    full_view = False
+                    if full_view:
+                        for i in range(world_size):
+                            for j in range(world_size):
                                 o_state = env.world[i, j, 0].appearance[:-3]
                                 mems = k_most_similar_recent_states(
                                     torch.tensor(o_state),
@@ -569,7 +570,7 @@ def run_game(
                                     object_memory,
                                     object_memory_states_tensor,
                                     decay_rate=1.0,
-                                    k=10,
+                                    k=100,
                                 )
                                 env.world[i, j, 0].appearance[-1] = (
                                     compute_weighted_average(
@@ -580,6 +581,33 @@ def run_game(
                                     )
                                     * 255
                                 )
+                    else:
+                        for i in range(9):
+                            for j in range(9):
+                                if (
+                                    i - 4 >= 0
+                                    and j - 4 >= 0
+                                    and i + 4 < world_size
+                                    and j + 4 < world_size
+                                ):
+                                    o_state = env.world[i - 4, j - 4, 0].appearance[:-3]
+                                    mems = k_most_similar_recent_states(
+                                        torch.tensor(o_state),
+                                        state_knn,
+                                        object_memory,
+                                        object_memory_states_tensor,
+                                        decay_rate=1.0,
+                                        k=10,
+                                    )
+                                    env.world[i, j, 0].appearance[-1] = (
+                                        compute_weighted_average(
+                                            o_state,
+                                            mems,
+                                            similarity_decay_rate=similarity_decay_rate,
+                                            time_decay_rate=episodic_decay_rate,
+                                        )
+                                        * 255
+                                    )
 
                 # --------------------------------------------------------------
                 # this is complementary learning system model
