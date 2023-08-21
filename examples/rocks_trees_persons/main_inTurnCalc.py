@@ -585,12 +585,14 @@ def run_game(
                         for i in range(9):
                             for j in range(9):
                                 if (
-                                    i - 4 >= 0
-                                    and j - 4 >= 0
-                                    and i + 4 < world_size
-                                    and j + 4 < world_size
+                                    (loc[0] + i - 4) >= 0
+                                    and (loc[1] + j - 4) >= 0
+                                    and (loc[0] + i + 4) < world_size
+                                    and (loc[1] + j + 4) < world_size
                                 ):
-                                    o_state = env.world[i - 4, j - 4, 0].appearance[:-3]
+                                    o_state = env.world[
+                                        loc[0] + i - 4, loc[1] + j - 4, 0
+                                    ].appearance[:-3]
                                     mems = k_most_similar_recent_states(
                                         torch.tensor(o_state),
                                         state_knn,
@@ -599,7 +601,9 @@ def run_game(
                                         decay_rate=1.0,
                                         k=10,
                                     )
-                                    env.world[i, j, 0].appearance[-1] = (
+                                    env.world[
+                                        loc[0] + i - 4, loc[1] + j - 4, 0
+                                    ].appearance[-1] = (
                                         compute_weighted_average(
                                             o_state,
                                             mems,
