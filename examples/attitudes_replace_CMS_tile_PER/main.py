@@ -35,6 +35,8 @@ from datetime import datetime
 
 from sklearn.neighbors import NearestNeighbors
 
+import pdb
+
 
 # save_dir = "/Users/yumozi/Projects/gem_data/RPG3_test/"
 # save_dir = "/Users/socialai/Dropbox/M1_ultra/"
@@ -85,7 +87,8 @@ def compute_weighted_average(
 
     memory_states, rewards = zip(*memories)
     memory_states = np.array(memory_states)
-    state = np.array(state)
+    memory_states = memory_states.reshape(100, -1)
+    state = np.array(state).reshape(-1)
 
     # Compute Euclidean distances
     distances = np.linalg.norm(memory_states - state, axis=1)
@@ -156,6 +159,7 @@ class ValueModel(nn.Module):
 
     def forward(self, x):
         taus = torch.linspace(0, 1, steps=self.num_tau, device=x.device).view(1, -1)
+        x = x.view(x.shape[0], -1)
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
         x = torch.relu(self.fc3(x))
@@ -189,7 +193,12 @@ class ValueModel(nn.Module):
             )
 
             self.optimizer.zero_grad()
+            # flatten the last two dimensions of states
+            # turn states from [25, 25, 3] to [25, 75]
+            states = states.view(states.shape[0], -1)
+
             # Forward pass to get all quantiles, not just the 25th, 50th, and 75th percentiles
+            
             x = torch.relu(self.fc1(states))
             x = torch.relu(self.fc2(x))
             x = torch.relu(self.fc3(x))
@@ -227,11 +236,11 @@ def create_models(action_space):
     models = []
     models.append(
         iRainbowModel(
-            in_channels=5,
+            in_channels=3,
             num_filters=5,
             cnn_out_size=567,  # 910
             state_size=torch.tensor(
-                [5, 9, 9]
+                [75, 9, 9]
             ),  # this seems to only be reading the first value
             action_size=action_space,
             layer_size=250,  # 100
@@ -367,12 +376,10 @@ def run_game(
             if epoch > 2:
                 for i in range(world_size):
                     for j in range(world_size):
-                        object_state = torch.tensor(
-                            env.world[i, j, 0].appearance[:-2]
-                        ).float()
+                        object_state = torch.FloatTensor(env.world[i, j, 0].appearance).flatten()
                         rs, _ = value_model(object_state.unsqueeze(0))
                         r = rs[0][1]
-                        env.world[i, j, 0].appearance[3] = r.item() * 255
+                        env.world[i, j, 0].attitude[0] = r.item() * 255
             testing = False
             if testing and epoch % 100 == 0:
                 atts = eval_attiude_model()
@@ -387,8 +394,8 @@ def run_game(
         ):  # this sets a control condition where no attitudes are used
             for i in range(world_size):
                 for j in range(world_size):
-                    env.world[i, j, 0].appearance[-2] = 0.0
-                    env.world[i, j, 0].appearance[-1] = 0.0
+                    env.world[i, j, 0].attitude[0] = 0.0
+                    env.world[i, j, 0].attitude[1] = 0.0
 
         # --------------------------------------------------------------
         # this is our episodic memory model with search and weighting
@@ -402,7 +409,7 @@ def run_game(
             )
             for i in range(world_size):
                 for j in range(world_size):
-                    o_state = env.world[i, j, 0].appearance[:-2]
+                    o_state = env.world[i, j, 0].appearance
                     mems = k_most_similar_recent_states(
                         torch.tensor(o_state),
                         state_knn,
@@ -411,7 +418,7 @@ def run_game(
                         decay_rate=1.0,
                         k=100,
                     )
-                    env.world[i, j, 0].appearance[-1] = (
+                    env.world[i, j, 0].attitude[1] = (
                         compute_weighted_average(
                             o_state,
                             mems,
@@ -433,7 +440,7 @@ def run_game(
             )
             for i in range(world_size):
                 for j in range(world_size):
-                    o_state = env.world[i, j, 0].appearance[:-2]
+                    o_state = env.world[i, j, 0].appearance
                     mems = k_most_similar_recent_states(
                         torch.tensor(o_state),
                         state_knn_CMS,
@@ -442,7 +449,7 @@ def run_game(
                         decay_rate=1.0,
                         k=100,
                     )
-                    env.world[i, j, 0].appearance[-1] = (
+                    env.world[i, j, 0].attitude[1] = (
                         compute_weighted_average(
                             o_state,
                             mems,
@@ -519,9 +526,8 @@ def run_game(
                     # this sets up the direct reward experience and state information
                     # to be saved in a replay and also learned from
 
-                    state_object = object_info[0:-2]
-                    state_object_input = torch.tensor(state_object).float()
-
+                    state_object = object_info
+                    state_object_input = torch.tensor(state_object).float().flatten()
                     rs, _ = value_model(state_object_input.unsqueeze(0))
                     if epoch < 100:
                         mem = (state_object, reward)
@@ -543,8 +549,12 @@ def run_game(
                     object_memory.append(object_exp)
                     if USE_KNN_MODEL:
                         # Fit a k-NN model to states extracted from the replay buffer
-                        state_knn.fit([exp[0] for exp in object_memory])
-                        state_knn_CMS.fit([exp[0] for exp in object_exp2])
+                        flatten_memory = [torch.FloatTensor(exp[0]).flatten() for exp in object_memory]
+                        flatten_memory2 = [torch.FloatTensor(exp[0]).flatten() for exp in object_exp2]
+
+
+                        state_knn.fit([exp for exp in flatten_memory])
+                        state_knn_CMS.fit([exp for exp in flatten_memory2])
 
                     # --------------------------------------------------------------
                     reward_values = env.gem_values
@@ -724,7 +734,7 @@ for modRun in range(len(run_params)):
     else:
         action_space = 4
     models = create_models(action_space)
-    value_model = ValueModel(state_dim=3, memory_size=250)
+    value_model = ValueModel(state_dim=75, memory_size=250)
     object_memory = deque(maxlen=run_params[modRun][6])
     state_knn = NearestNeighbors(n_neighbors=5)
     models, value_model, env, turn, epsilon = run_game(

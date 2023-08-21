@@ -1,4 +1,4 @@
-from examples.attitudes_replace_CMS.elements import (
+from examples.attitudes_replace_CMS_tile_PER.elements import (
     Agent,
     Gem,
     EmptyObject,
@@ -13,7 +13,7 @@ import random
 
 from gem.utils import find_moveables, find_instance
 import torch
-
+import pdb
 
 class RPG:
     def __init__(
@@ -40,21 +40,21 @@ class RPG:
         self.gem1_value = ((np.random.random() - 0.5) * 30) + 1
         self.gem2_value = ((np.random.random() - 0.5) * 30) + 1
         self.gem3_value = ((np.random.random() - 0.5) * 30) + 1
-        self.gem1_apperance = [
+        self.gem1_appearance = [
             np.random.random() * 255,
             np.random.random() * 255,
             np.random.random() * 255,
             0,
             0,
         ]
-        self.gem2_apperance = [
+        self.gem2_appearance = [
             np.random.random() * 255,
             np.random.random() * 255,
             np.random.random() * 255,
             0,
             0,
         ]
-        self.gem3_apperance = [
+        self.gem3_appearance = [
             np.random.random() * 255,
             np.random.random() * 255,
             np.random.random() * 255,
@@ -134,15 +134,15 @@ class RPG:
             if self.world[object_location1, object_location2, 0].kind == "empty":
                 if obj == 0:
                     self.world[object_location] = Gem(
-                        self.gem1_value, self.gem1_apperance
+                        self.gem1_value, self.gem1_appearance
                     )
                 if obj == 1:
                     self.world[object_location] = Gem(
-                        self.gem2_value, self.gem2_apperance
+                        self.gem2_value, self.gem2_appearance
                     )
                 if obj == 2:
                     self.world[object_location] = Gem(
-                        self.gem3_value, self.gem3_apperance
+                        self.gem3_value, self.gem3_appearance
                     )
                 placed = True
             counter += 1
@@ -200,21 +200,21 @@ class RPG:
                     self.gem3_value = -5
 
         if new_colours == "Random":
-            self.gem1_apperance = [
+            self.gem1_appearance = [
                 np.random.random() * 255,
                 np.random.random() * 255,
                 np.random.random() * 255,
                 0,
                 0,
             ]
-            self.gem2_apperance = [
+            self.gem2_appearance = [
                 np.random.random() * 255,
                 np.random.random() * 255,
                 np.random.random() * 255,
                 0,
                 0,
             ]
-            self.gem3_apperance = [
+            self.gem3_appearance = [
                 np.random.random() * 255,
                 np.random.random() * 255,
                 np.random.random() * 255,
@@ -223,44 +223,44 @@ class RPG:
             ]
 
         if new_colours == "Shuffled":
-            color1 = [200, 50, 100, 0, 0]
-            color2 = [50, 100, 200, 0, 0]
-            color3 = [100, 200, 50, 0, 0]
+            color1 = [200, 50, 100]
+            color2 = [50, 100, 200]
+            color3 = [100, 200, 50]
 
             gem_colours = np.random.choice([0, 1, 2])
 
             if gem_colours == 0:
-                self.gem1_apperance = color1
+                self.gem1_appearance = color1
                 gem_colours2 = np.random.choice([0, 1])
                 if gem_colours2 == 0:
-                    self.gem2_apperance = color2
-                    self.gem3_apperance = color3
+                    self.gem2_appearance = color2
+                    self.gem3_appearance = color3
                 else:
-                    self.gem2_apperance = color3
-                    self.gem3_apperance = color2
+                    self.gem2_appearance = color3
+                    self.gem3_appearance = color2
             elif gem_colours == 1:
-                self.gem1_apperance = color2
+                self.gem1_appearance = color2
                 gem_colours2 = np.random.choice([0, 1])
                 if gem_colours2 == 0:
-                    self.gem2_apperance = color1
-                    self.gem3_apperance = color3
+                    self.gem2_appearance = color1
+                    self.gem3_appearance = color3
                 else:
-                    self.gem2_apperance = color3
-                    self.gem3_apperance = color1
+                    self.gem2_appearance = color3
+                    self.gem3_appearance = color1
             elif gem_colours == 2:
-                self.gem1_apperance = color3
+                self.gem1_appearance = color3
                 gem_colours2 = np.random.choice([0, 1])
                 if gem_colours2 == 0:
-                    self.gem2_apperance = color1
-                    self.gem3_apperance = color2
+                    self.gem2_appearance = color1
+                    self.gem3_appearance = color2
                 else:
-                    self.gem2_apperance = color2
-                    self.gem3_apperance = color1
+                    self.gem2_appearance = color2
+                    self.gem3_appearance = color1
 
         if new_colours == "Correlated":
-            g1 = tuple(self.gem1_apperance[0:3])
-            g2 = tuple(self.gem2_apperance[0:3])
-            g3 = tuple(self.gem3_apperance[0:3])
+            g1 = tuple(self.gem1_appearance[0:3])
+            g2 = tuple(self.gem2_appearance[0:3])
+            g3 = tuple(self.gem3_appearance[0:3])
 
             # g1 = (g1t[0], g1t[1], g1t[2])
 
@@ -282,25 +282,25 @@ class RPG:
             else:
                 g3n = self.rotate_rgb(g3, -45)
 
-            self.gem1_apperance[0] = g1n[0]
-            self.gem2_apperance[0] = g2n[0]
-            self.gem3_apperance[0] = g3n[0]
+            self.gem1_appearance[0] = g1n[0]
+            self.gem2_appearance[0] = g2n[0]
+            self.gem3_appearance[0] = g3n[0]
 
-            self.gem1_apperance[1] = g1n[1]
-            self.gem2_apperance[1] = g2n[1]
-            self.gem3_apperance[1] = g3n[1]
+            self.gem1_appearance[1] = g1n[1]
+            self.gem2_appearance[1] = g2n[1]
+            self.gem3_appearance[1] = g3n[1]
 
-            self.gem1_apperance[2] = g1n[2]
-            self.gem2_apperance[2] = g2n[2]
-            self.gem3_apperance[2] = g3n[2]
+            self.gem1_appearance[2] = g1n[2]
+            self.gem2_appearance[2] = g2n[2]
+            self.gem3_appearance[2] = g3n[2]
 
-            self.gem1_apperance[3] = 0
-            self.gem2_apperance[3] = 0
-            self.gem3_apperance[3] = 0
+            self.gem1_appearance[3] = 0
+            self.gem2_appearance[3] = 0
+            self.gem3_appearance[3] = 0
 
-            self.gem1_apperance[4] = 0
-            self.gem2_apperance[4] = 0
-            self.gem3_apperance[4] = 0
+            self.gem1_appearance[4] = 0
+            self.gem2_appearance[4] = 0
+            self.gem3_appearance[4] = 0
 
         self.gem_values = [self.gem1_value, self.gem2_value, self.gem3_value]
 
@@ -354,12 +354,21 @@ class RPG:
 
         moveList = find_instance(self.world, "neural_network")
 
+        green = [0, 255, 0]
+        wall_app = [
+            green, green, green, green, green,
+            green, green, green, green, green,
+            green, green, green, green, green,
+            green, green, green, green, green,
+            green, green, green, green, green,
+        ]
+
         img = agent_visualfield(
             self.world,
             moveList[0],
             k=4,
-            wall_app=[0.0, 255.0, 0.0, 0.0, 0.0],
-            num_channels=4,
+            wall_app=wall_app,
+            num_channels=75,
         )
 
         plt.subplot(1, 2, 1)
@@ -386,12 +395,22 @@ class RPG:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
+
+            green = [0, 255, 0]
+            wall_app = [
+                green, green, green, green, green,
+                green, green, green, green, green,
+                green, green, green, green, green,
+                green, green, green, green, green,
+                green, green, green, green, green,
+            ]
+
             img = agent_visualfield(
                 self.world,
                 loc,
                 k=self.world[location].vision,
-                wall_app=[0.0, 255.0, 0.0, 0.0, 0.0],
-                num_channels=5,
+                wall_app=wall_app,
+                num_channels=75,
             )
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
@@ -432,11 +451,11 @@ class RPG:
                 )
 
                 if obj == 0:
-                    self.world[i, j, 0] = Gem(self.gem1_value, self.gem1_apperance)
+                    self.world[i, j, 0] = Gem(self.gem1_value, self.gem1_appearance)
                 if obj == 1:
-                    self.world[i, j, 0] = Gem(self.gem2_value, self.gem2_apperance)
+                    self.world[i, j, 0] = Gem(self.gem2_value, self.gem2_appearance)
                 if obj == 2:
-                    self.world[i, j, 0] = Gem(self.gem3_value, self.gem3_apperance)
+                    self.world[i, j, 0] = Gem(self.gem3_value, self.gem3_appearance)
 
         player1_location1 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
         player1_location2 = np.random.choice(np.arange(1, self.world.shape[1] - 1))
@@ -462,61 +481,44 @@ class RPG:
             self.world[i, 0, 0] = Wall()
             self.world[i, height - 1, 0] = Wall()
 
-    def step(self, models, loc, epsilon=0.85, device=None):
-        """
-        This is an example script for an alternative step function
-        It does not account for the fact that an agent can die before
-        it's next turn in the moveList. If that can be solved, this
-        may be preferable to the above function as it is more like openAI gym
 
-        The solution may come from the agent.died() function if we can get that to work
 
-        location = (i, j, 0)
+def agent_visualfield(
+    world, location, k, wall_app, num_channels
+):
+    """
+    Create an agent visual field of size (2k + 1, 2k + 1) pixels
+    Layer = location[2] and layer in the else are added to this function
+    """
 
-        Uasge:
-            for i, j, k = agents
-                location = (i, j, k)
-                state, action, reward, next_state, done, additional_output = env.stepSingle(models, (0, 0, 0), epsilon)
-                env.world[0, 0, 0].updateMemory(state, action, reward, next_state, done, additional_output)
-            env.WorldUpdate()
+    if len(location) > 2:
+        layer = location[2]
+    else:
+        layer = 0
 
-        """
-        holdObject = self.world[loc]
-        device = models[holdObject.policy].device
+    bounds = (location[0] - k, location[0] + k, location[1] - k, location[1] + k)
+    # instantiate image
+    images = []
 
-        if holdObject.kind != "deadAgent":
-            """
-            This is where the agent will make a decision
-            If done this way, the pov statement may be about to be part of the action
-            Since they are both part of the same class
+    for channel in range(num_channels):
+        image = np.random.random((bounds[1] - bounds[0] + 1, bounds[3] - bounds[2] + 1))
+        images.append(image)
 
-            if going for this, the pov statement needs to know about location rather than separate
-            i and j variables
-            """
-            state = models[holdObject.policy].pov(self.world, loc, holdObject)
-            params = (state.to(device), epsilon, None)
-            action, init_rnn_state = models[holdObject.policy].take_action(params)
+    for i in range(bounds[0], bounds[1] + 1):
+        for j in range(bounds[2], bounds[3] + 1):
+            # while outside the world array index...
+            if i < 0 or j < 0 or i >= world.shape[0] - 1 or j >= world.shape[1]:
+                # image has shape bounds[1] - bounds[0], bounds[3] - bounds[2]
+                # visual appearance = wall
+                flat = torch.FloatTensor(wall_app).flatten()
+                for channel in range(num_channels):
+                    images[channel][i - bounds[0], j - bounds[2]] = flat[channel]
 
-        if holdObject.has_transitions == True:
-            """
-            Updates the world given an action
-            TODO: does this need self.world in here, or can it be figured out by passing self?
-            """
-            (
-                self.world,
-                reward,
-                next_state,
-                done,
-                new_loc,
-                object_info,
-            ) = holdObject.transition(self, models, action, loc)
-        else:
-            reward = 0
-            next_state = state
+            else:
+                flat = torch.FloatTensor(world[i, j, layer].appearance).flatten()
+                for channel in range(num_channels):
+                    images[channel][i - bounds[0], j - bounds[2]] = flat[channel]
 
-        if random.random() < 0.01:
-            print(object_info, reward)
-
-        additional_output = []
-
-        return state, action, reward, next_state, done, new_loc, additional_output
+    # Composite image by interlacing the red, green, and blue channels, or one hots
+    state = np.dstack(tuple(images))
+    return state

@@ -23,17 +23,15 @@ class EmptyObject:
 
     def __init__(self):
         self.health = 0  # empty stuff is basically empty
-        self.appearance = [0.0, 0.0, 0.0, 0.0, 0.0]  # empty is well, blank
         black = [0, 0, 0]
-        self.tile = (
-            [
-                black, black, black,
-                black, black, black,
-                black, black, black,
-            ],
-            0,
-            0,
-        )  # empty is well, blank
+        self.appearance = [
+            black, black, black, black, black,
+            black, black, black, black, black,
+            black, black, black, black, black,
+            black, black, black, black, black,
+            black, black, black, black, black,
+        ]
+        self.attitude = [0, 0]
         self.vision = 1  # empty stuff is basically empty
         self.policy = "NA"  # empty stuff is basically empty
         self.value = 0  # empty stuff is basically empty
@@ -51,17 +49,15 @@ class Wall:
 
     def __init__(self):
         self.health = 0  # wall stuff is basically empty
-        self.appearance = [0.0, 255.0, 0.0, 0.0, 0.0]  # walls are purple
         green = [0, 255, 0]
-        self.tile = (
-            [
-                green, green, green,
-                green, green, green,
-                green, green, green,
-            ],
-            0,
-            0,
-        )  # empty is well, blank
+        self.appearance = [
+            green, green, green, green, green,
+            green, green, green, green, green,
+            green, green, green, green, green,
+            green, green, green, green, green,
+            green, green, green, green, green,
+        ]
+        self.attitude = [0, 0]
         self.vision = 0  # wall stuff is basically empty
         self.policy = "NA"  # walls do not do anything
         self.value = 0  # wall stuff is basically empty
@@ -80,16 +76,14 @@ class Gem:
     def __init__(self, value, color):
         super().__init__()
         self.health = 1  # for the gem, whether it has been mined or not
-        self.appearance = color  # gems are green
-        self.tile = (
-            [
-                color, color, color,
-                color, color, color,
-                color, color, color,
-            ],
-            0,
-            0,
-        )  # empty is well, blank
+        self.appearance = [
+            color, color, color, color, color,
+            color, color, color, color, color,
+            color, color, color, color, color,
+            color, color, color, color, color,
+            color, color, color, color, color,
+        ]
+        self.attitude = [0, 0]
         self.vision = 1  # gems can see one radius around them
         self.policy = "NA"  # gems do not do anything
         self.value = value  # the value of this gem
@@ -107,17 +101,15 @@ class Agent:
 
     def __init__(self, model):
         self.health = 10  # for the agents, this is how hungry they are
-        self.appearance = [255.0, 0.0, 0.0, 0.0, 0.0]  # agents are blue
         blue = [255, 0, 0]
-        self.tile = (
-            [
-                blue, blue, blue,
-                blue, blue, blue,
-                blue, blue, blue,
-            ],
-            0,
-            0,
-        )  # empty is well, blank
+        self.appearance = [
+            blue, blue, blue, blue, blue,
+            blue, blue, blue, blue, blue,
+            blue, blue, blue, blue, blue,
+            blue, blue, blue, blue, blue,
+            blue, blue, blue, blue, blue,
+        ]
+        self.attitude = [0, 0]
         self.vision = 4  # agents can see three radius around them
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.value = 0  # agents have no value
@@ -134,7 +126,7 @@ class Agent:
         Implicitly defines the number of sequences that the LSTM will be trained on.
         """
         # pov_size = 9 # this should not be needed if in the input above
-        image = torch.zeros(1, numberMemories, 5, pov_size, pov_size).float()
+        image = torch.zeros(1, numberMemories, 75, pov_size, pov_size).float()
         priority = torch.tensor(0.1)
         blank = torch.tensor(0.0)
         exp = (priority, (image, blank, blank, image, blank))
