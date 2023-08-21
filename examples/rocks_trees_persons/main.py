@@ -511,26 +511,55 @@ def run_game(
             object_memory_states_tensor = torch.tensor(
                 [obj_mem[0] for obj_mem in object_memory]
             )
-            for i in range(world_size):
-                for j in range(world_size):
-                    o_state = env.world[i, j, 0].appearance[:-3]
-                    mems = k_most_similar_recent_states(
-                        torch.tensor(o_state),
-                        state_knn,
-                        object_memory,
-                        object_memory_states_tensor,
-                        decay_rate=1.0,
-                        k=100,
-                    )
-                    env.world[i, j, 0].appearance[-1] = (
-                        compute_weighted_average(
-                            o_state,
-                            mems,
-                            similarity_decay_rate=similarity_decay_rate,
-                            time_decay_rate=episodic_decay_rate,
+            full_view = False
+            if full_view:
+                for i in range(world_size):
+                    for j in range(world_size):
+                        o_state = env.world[i, j, 0].appearance[:-3]
+                        mems = k_most_similar_recent_states(
+                            torch.tensor(o_state),
+                            state_knn,
+                            object_memory,
+                            object_memory_states_tensor,
+                            decay_rate=1.0,
+                            k=100,
                         )
-                        * 255
-                    )
+                        env.world[i, j, 0].appearance[-1] = (
+                            compute_weighted_average(
+                                o_state,
+                                mems,
+                                similarity_decay_rate=similarity_decay_rate,
+                                time_decay_rate=episodic_decay_rate,
+                            )
+                            * 255
+                        )
+            else:
+                for i in range(9):
+                    for j in range(9):
+                        if (
+                            i - 4 >= 0
+                            and j - 4 >= 0
+                            and i + 4 < world_size
+                            and j + 4 < world_size
+                        ):
+                            o_state = env.world[i - 4, j - 4, 0].appearance[:-3]
+                            mems = k_most_similar_recent_states(
+                                torch.tensor(o_state),
+                                state_knn,
+                                object_memory,
+                                object_memory_states_tensor,
+                                decay_rate=1.0,
+                                k=10,
+                            )
+                            env.world[i, j, 0].appearance[-1] = (
+                                compute_weighted_average(
+                                    o_state,
+                                    mems,
+                                    similarity_decay_rate=similarity_decay_rate,
+                                    time_decay_rate=episodic_decay_rate,
+                                )
+                                * 255
+                            )
 
         # --------------------------------------------------------------
         # this is complementary learning system model
@@ -793,13 +822,13 @@ models = create_models()
 # options here are. these are experiments that we ran
 
 run_params = (
-    [0.5, 4010, 20, 0.999, "implicit_attitude+EWA", 12000, 2500, 20.0, 20.0],
+    [0.5, 4010, 20, 0.999, "EWA", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "tree_rocks", 12000, 2500, 20.0, 20.0],
     [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     [0.5, 4010, 20, 0.999, "None", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "CMS", 12000, 2500, 20.0, 20.0],
-    [0.5, 4010, 20, 0.999, "EWA", 12000, 2500, 20.0, 20.0],
+    # [0.5, 4010, 20, 0.999, "EWA", 12000, 2500, 20.0, 20.0],
 )
 
 
