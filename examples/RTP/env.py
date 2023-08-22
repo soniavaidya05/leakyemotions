@@ -22,13 +22,13 @@ class RTP:
         layers=1,
         contextual=True,
         tile_size=(1, 1),
-        appearance_size = 11
+        appearance_size = 20
     ):
         self.app_size = appearance_size
         self.height = height
         self.width = width
         self.layers = layers
-        self.defaultObject = EmptyObject(11)
+        self.defaultObject = EmptyObject(appearance_size)
         self.tile_size = tile_size,
         self.contextual = contextual
         self.create_world()
@@ -65,15 +65,8 @@ class RTP:
         for person in range(num_people):
             
             # Individual appearance
-            individuation = [
-                random.random() * 255.0,
-                random.random() * 255.0,
-                random.random() * 255.0,
-                random.random() * 255.0, #NOTE: some of these are overwritten by the code
-                random.random() * 255.0,
-                random.random() * 255.0,
-                random.random() * 255.0,
-            ]
+            individuation = [random.random() * 255 for i in range(8)]
+            zeroes = [0 for i in range(8)]
             color = np.random.choice([0, 1])
 
             # Group id depends on appearance index 2 or 3
@@ -81,7 +74,7 @@ class RTP:
             # Group 0 is mostly miners
             if color == 0:
                 image_color = [0.0, 0.0, 255.0, 0.0]
-                if random.random() < 0.90:
+                if random.random() < 0.75:
                     rock = 1
                     wood = 0
                 else:
@@ -90,15 +83,15 @@ class RTP:
             # Group 1 is 50/50 choppers and miners
             if color == 1:
                 image_color = [0.0, 0.0, 0.0, 255.0]
-                if random.random() < 0.5:
+                if random.random() < 0.75:
                     wood = 1
                     rock = 0
                 else:
                     wood = 0
                     rock = 1
-            # Appearance includes 4 object ids and 7 individuation characteristics
-            # Some of this individuation information is overwritten by the implicit attitude info
-            app = [image_color + individuation]
+            # Appearance includes 4 object ids and 8 individuation characteristics
+            # Trimmed to max appearance size
+            app = np.array([image_color + individuation + zeroes][0][:self.app_size])
             info = (person, app, [wood, rock], 0, 0)
             self.person_list.append(info)
 
@@ -124,7 +117,7 @@ class RTP:
             app = self.person_list[random_numbers[person]][1]
             reward = self.person_list[random_numbers[person]][2]
             self.world[locs[person]] = Gem(
-                reward, np.array(app[0]), self.app_size
+                reward, app, self.app_size
             )
         
         # Place the agent

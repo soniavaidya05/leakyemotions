@@ -65,7 +65,7 @@ class IQN(nn.Module):
         self.device = device
 
         # Network architecture
-        self.head1 = nn.Linear(891, layer_size)
+        self.head1 = nn.Linear(np.prod(state_size.detach().numpy()), layer_size)
 
         self.cos_embedding = nn.Linear(self.n_cos, layer_size)
         self.ff_1 = NoisyLinear(layer_size, layer_size)
@@ -259,9 +259,6 @@ class iRainbowModel:
 
     def __init__(
         self,
-        in_channels,
-        num_filters,
-        cnn_out_size,
         state_size,
         action_size,
         layer_size,

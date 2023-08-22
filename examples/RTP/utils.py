@@ -3,6 +3,7 @@ import random
 import matplotlib.pyplot as plt
 from PIL import Image
 from IPython.display import clear_output
+from examples.RTP.models.attitude_models import evaluate
 
 # ------------------------------------- #
 # region: Generic gem helper functions  #
@@ -228,6 +229,8 @@ def run_one_game(
     '''
     Run a single game.
     all_models: A tuple including (IQN model, Value model, Resource model, EWA model). If you are only using one of these, the rest passed in can be None
+    condition: The model setup to use for the game. Can be one of 'EWA', 'implicit', 'tree_rocks', or 'None'
+    env: The environment to use 
     '''
 
     # Unpack the models
@@ -267,6 +270,23 @@ def run_one_game(
 
         for loc in agent_locations:
 
+            if env.contextual:
+                # Reset the appearance of objects at the given location
+                env.reset_appearance(loc)
+
+                if condition == 'EWA':
+                    ewa_model.fit()
+
+                evaluate(
+                    env,
+                    condition=condition,
+                    value_model=value_model,
+                    resource_model=resource_model,
+                    ewa_model=ewa_model,
+                    epoch=0,
+                    loc = loc
+                )
+
             # Renaming "holdObject" to "agent" for readability
             agent = env.world[loc]
             # Reset turn reward to 0
@@ -302,47 +322,6 @@ def run_one_game(
 
             # Create object state
             state_object = object_info[0:-3]
-
-            # ---------------------------------------- #
-            # Implicit attitude: train the value model #
-            # ---------------------------------------- #
-                            
-            if 'implicit' in condition:
-                value_model.add_memory(state_object, reward)
-
-                # When the replay buffer is long enough, begin training the model
-                if len(value_model.replay_buffer) > 51 and turn % 2 == 0:
-                    memories = value_model.sample(50)
-                    value_loss = value_model.learn(memories, 25)
-
-            # ---------------------------------------- #
-            # Resource guess: train the resource model #
-            # ---------------------------------------- #
-
-            if 'tree_rocks' in condition:
-
-                # learn resource of target
-                if reward != 0:
-                    resource_model.add_memory(state_object, resource_outcome)
-                else:
-                    if random.random() > 0.5:  # seems to work if downsample nothing
-                        resource_model.add_memory(state_object, resource_outcome)
-
-                # When the replay buffer is long enough, begin training the model
-                if len(resource_model.replay_buffer) > 33 and turn % 2 == 0:
-                    resource_loss = resource_model.learn(
-                        resource_model.sample(32), batch_size=32
-                    )
-
-            # ---------------------------------------- #
-            # EWA model: Add episodic memory and train #
-            # ---------------------------------------- #
-
-            if 'EWA' in condition:
-
-                # Add the state-reward pair to the episodic memory buffer
-                ewa_model.memory.append((state_object, reward))
-                ewa_model.fit()
 
 
             # End the game when the last turn is reached

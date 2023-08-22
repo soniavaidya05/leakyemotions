@@ -16,9 +16,9 @@ parameters = {
     'num_models': 1, # Number of agents. Right now, only supports 1
     'sync_freq': 200, # Parameters related to model soft update. TODO: Figure out if these are still needed
     'model_update_freq': 4, # Parameters related to model soft update. TODO: Figure out if these are still needed 
-    'epsilon': 0.5, # Exploration parameter
-    'conditions': ['EWA', 'None'], # Model run conditions
-    'epsilon_decay': 0.9999, # Exploration decay rate
+    'epsilon': 0.3, # Exploration parameter
+    'conditions': ['None', 'EWA'], # Model run conditions
+    'epsilon_decay': 0.999, # Exploration decay rate
     'episodic_decay_rate': 1.0, # EWA episodic decay rate
     'similarity_decay_rate': 1.0, # EWA similarity decay rate
     'epochs': 1000, # Number of epochs
@@ -27,10 +27,13 @@ parameters = {
     'knn_size': 5, # Size of the nearest neighbours
     'RUN_PROFILING': False, # Whether to time each epoch
     'log': False, # Tensorboard support. Currently disabled
-    'contextual': True # Whether the agents' need changes based on its current resource value or stays static
+    'contextual': True, # Whether the agents' need changes based on its current resource value or stays static
+    'appearance_size': 20,
 }
 
-#region: Imports
+# ---------------------------- #
+# region: imports              #
+# ---------------------------- #
 
 # ---------------------------- #
 #     Fix import structure     #
@@ -64,7 +67,7 @@ from examples.RTP.models.attitude_models import (
     ValueModel, 
     ResourceModel, 
     EWAModel,
-    evaluate
+    evaluate,
 )
 from examples.RTP.env import RTP
 
@@ -74,19 +77,21 @@ from examples.RTP.env import RTP
 import torch
 import time
 import random
+import numpy as np
 
 # Seed information
 SEED = time.time() 
 random.seed(SEED)
 torch.manual_seed(SEED)
 
-#endregion: Imports
+# ---------------------------- #
+# endregion: imports           #
+# ---------------------------- #
 
 def create_models(num_models = 1, device = 'cpu', **kwargs):
     """
-    Should make the sequence length of the LSTM part of the model and an input here
-    Should also set up so that the number of hidden laters can be added to dynamically
-    in this function. Below should fully set up the NN in a flexible way for the studies
+    Create N models for the RTP game.
+    Currently, only 1 is supported for all attitude models
     """
 
     models = []
@@ -96,11 +101,8 @@ def create_models(num_models = 1, device = 'cpu', **kwargs):
     for i in range(num_models):
         models.append(
             iRainbowModel(
-                in_channels=5,
-                num_filters=5,
-                cnn_out_size=567,  # 910
                 state_size=torch.tensor(
-                    [5, 9, 9]
+                    [kwargs['appearance_size'], 9, 9]
                 ),  # this seems to only be reading the first value
                 action_size=4,
                 layer_size=250,  # 100
@@ -117,13 +119,13 @@ def create_models(num_models = 1, device = 'cpu', **kwargs):
         )
         value_models.append(
             ValueModel(
-                state_dim = 8,
+                state_dim = kwargs['appearance_size'] - 3,
                 memory_size=250,
             )
         )
         resource_models.append(
             ResourceModel(
-                state_dim = 8,
+                state_dim = kwargs['appearance_size'] - 3,
                 memory_size = 2000
             )
         )
@@ -131,7 +133,7 @@ def create_models(num_models = 1, device = 'cpu', **kwargs):
         ewa_models.append(
             EWAModel(
                 mem_len=250,
-                state_knn_len=5,
+                state_knn_len=kwargs['knn_size'],
                 episodic_decay_rate=kwargs['episodic_decay_rate'],
                 similarity_decay_rate=kwargs['similarity_decay_rate']
             )
@@ -142,35 +144,26 @@ def create_models(num_models = 1, device = 'cpu', **kwargs):
 def run_game(
     all_models,
     env,
-    condition,
-    parameters
+    epsilon,
+    epochs=10000,
+    max_turns=100,
+    epsilon_decay=0.999,
+    condition="implicit_attitude",
+    sync_freq=200,
+    model_update_freq = 4,
+    RUN_PROFILING = False
 ):
     
-    '''
-    Unpack models and parameters
-    '''
+    # Unpack the models
     models, value_models, resource_models, ewa_models = all_models
-    # For now, just use this by default
+    # For now, just use 1 attitude model
     value_model = value_models[0]
     resource_model = resource_models[0]
     ewa_model = ewa_models[0]
-    epochs = parameters['epochs']
-    sync_freq = parameters['sync_freq']
-    model_update_freq = parameters['model_update_freq']
-    log = parameters['log']
-    epsilon = parameters['epsilon']
+    # Whether the environmental rewards are contextual
     contextual = env.contextual
 
-    # Tensorboard logging. Currently disabled because meltingpot broke my tensorboard installation :(
-    if log:
-        from torch.utils.tensorboard import SummaryWriter
-        writer = SummaryWriter()
-
-    
-    """
-    This is the main loop of the game
-    """
-
+    # Set up metrics
     losses = 0
     total_reward = 0
     approaches = {
@@ -178,57 +171,55 @@ def run_game(
         'unrewarding': 0,
         'wall': 0
     }
-    change = True
 
     for epoch in range(epochs):
         """
         Move each agent once and then update the world
         Creates new gamepoints, resets agents, and runs one episode
         """
-
-        # Reduce epsilon by decay value each epoch
-        epsilon = epsilon * parameters['epsilon_decay']
-        # Reset done flag and turn counter
+        epsilon = epsilon * epsilon_decay
         done, turn = 0, 0
 
-        # Reset the environment
-        env.reset_env(
+        env.reset_env()
 
-            change=change, # Change the values if the change flag is set to True
-        )
-
-        # Reset agent memories with the specified number of memories
         working_memory = 1
-        initialize_rnn(env, working_memory)
+        for loc in find_instance(env.world, "neural_network"):
+            # reset the memories for all agents
+            # the parameter sets the length of the sequence for LSTM
+            env.world[loc].init_replay(working_memory)
+            env.world[loc].init_rnn_state = None
 
+            # Set starting resource for agents
+            start_resource = np.random.choice([0, 1])
+            if start_resource == 0:
+                env.world[loc].wood = 1
+                env.world[loc].stome = 0
+            if start_resource == 1:
+                env.world[loc].wood = 0
+                env.world[loc].stome = 1
 
-        # -------------- #
-        # Attitude model #
-        # -------------- #
-
-        # If the learning is not contextual, it only needs to be learned once per epoch
+        # If the environment is static, evaluate attitude models each turn
         if not contextual:
-            # Call the attitude model evaluation before each epoch
-            if epoch > 10:
-                evaluate(
-                    env,
-                    condition=condition,
-                    value_model=value_model,
-                    resource_model=resource_model,
-                    ewa_model=ewa_model
-                )
+            evaluate(
+                env,
+                condition,
+                value_model,
+                resource_model,
+                ewa_model,
+                epoch
+            )
 
-
+        # Start time for logging
         start_time = time.time()
 
         while done == 0:
             """
-            Run through each turn
+            Find the agents and move them
             """
-            turn += 1
+            turn = turn + 1
 
-
-            # --------------------------------------------------------------
+            # -------------------------------------------------------------- #
+            # region: sync_freq
             # note the sync models lines may need to be deleted
             # the IQN has a soft update, so we should test dropping
             # the lines below
@@ -239,38 +230,38 @@ def run_game(
                     model.qnetwork_target.load_state_dict(
                         model.qnetwork_local.state_dict()
                     )
-            # --------------------------------------------------------------
+            
+            # endregion
+            # -------------------------------------------------------------- #
 
-
-            # Get the location of agents
             agent_locations = find_instance(env.world, "neural_network")
+
             random.shuffle(agent_locations)
 
+            # -------------------------------------------------------------- #
+            # region: each agent action loop...                              #
+            # -------------------------------------------------------------- #
             for loc in agent_locations:
+
+                # Renaming "holdObject" to "agent" for readability
+                agent = env.world[loc]
+                # Reset turn reward to 0
+                agent.reward = 0
 
                 # -------------------------------------- #
                 # Contextual attitudes: update each turn #
                 # -------------------------------------- #
 
                 if contextual:
-                    # Reset the appearance of objects at the given location
-                    env.reset_appearance(loc)
-
-                    if epoch > 10:
-                        evaluate(
-                            env,
-                            condition=condition,
-                            value_model=value_model,
-                            resource_model=resource_model,
-                            ewa_model=ewa_model,
-                            loc = loc
-                        )
-
-
-                # Renaming "holdObject" to "agent" for readability
-                agent = env.world[loc]
-                # Reset turn reward to 0
-                agent.reward = 0
+                    evaluate(
+                        env,
+                        condition=condition,
+                        value_model=value_model,
+                        resource_model=resource_model,
+                        ewa_model=ewa_model,
+                        epoch=epoch,
+                        loc = loc
+                    )
 
                 # Observation of the environment at agent's location
                 state = env.pov(loc)
@@ -278,6 +269,7 @@ def run_game(
                 # Act according to model policy
                 action = models[agent.policy].take_action(state, epsilon)
 
+                # Agent transitions
                 (
                     env.world,
                     reward,
@@ -288,20 +280,11 @@ def run_game(
                     resource_outcome,
                 ) = agent.transition(env, models, action[0], loc)
 
-                # Record reward outcomes
-
-                # Rewarding: Agent chose the right resource
-                # Unrewarding: Agent chose the wrong resource (e.g. wood when it needed stone)
-                # Wall: Agent ran into a wall
-                if reward == 10:
-                    approaches['rewarding'] += 1
-                elif reward == 0 and resource_outcome in [[0, 1, 0] or [0, 0, 1]]:
-                    approaches['unrewarding'] += 1
-                elif reward == -1:
-                    approaches['wall'] += 1
-
                 # Create object state from the first component of the object appearance
                 state_object = object_appearance[0:-3]
+
+                # ---------------------------------------- #
+                # region: update the attitude models...    #
 
                 # ---------------------------------------- #
                 # Implicit attitude: train the value model #
@@ -344,12 +327,23 @@ def run_game(
                     ewa_model.memory.append((state_object, reward))
                     ewa_model.fit()
 
+                # endregion: update the attitude models... #
+                # ---------------------------------------- #
+                
+                # Record reward outcomes
 
-                # End the game when the last turn is reached
-                if (turn > parameters['max_turns']):
+                # Rewarding: Agent chose the right resource
+                # Unrewarding: Agent chose the wrong resource (e.g. wood when it needed stone)
+                # Wall: Agent ran into a wall
+                if reward == 10:
+                    approaches['rewarding'] += 1
+                elif reward == 0 and 255.0 in object_appearance[2:4]:
+                    approaches['unrewarding'] += 1
+                elif reward == -1:
+                    approaches['wall'] += 1
+
+                if (turn > max_turns):
                     done = 1
-
-                # Add experience to replay
                 exp = (
                     1, # Priority value
                     (
@@ -361,10 +355,12 @@ def run_game(
                     ),
                 )
 
-                # Update agent episode memory and total reward
-                agent = env.world[new_loc]
-                agent.episode_memory.append(exp)
+                env.world[new_loc].episode_memory.append(exp)
                 total_reward += reward
+
+            # -------------------------------------------------------------- #
+            # endregion: each agent action loop                              #
+            # -------------------------------------------------------------- #
 
             # Transfer memories after the episode is complete
             models, env = update_terminal_memories(models, env, done)
@@ -373,7 +369,9 @@ def run_game(
             # Not sure why this is repeated below
             # TODO: Test whether both of these are needed?
             if epoch > 10 and turn % model_update_freq == 0:
-
+                """
+                Train the neural networks within a eposide at rate of modelUpdate_freq
+                """
                 for model in models:
                     experiences = model.memory.sample()
                     loss = model.learn(experiences)
@@ -382,24 +380,20 @@ def run_game(
         # At the end of each epoch, train the neural networks
         if epoch > 10:
             for model in models:
+                """
+                Train the neural networks at the end of eac epoch
+                reduced to 64 so that the new memories ~200 are slowly added with the priority ones
+                """
                 experiences = model.memory.sample()
                 loss = model.learn(experiences)
                 losses = losses + loss
 
+        # Time length of each epoch
         end_time = time.time()
-        if parameters['RUN_PROFILING']:
+        if RUN_PROFILING:
             print(f"Epoch {epoch} took {end_time - start_time} seconds")
 
-        # Every 20 epochs, log the results and reset the counters
-        if epoch % 20 == 0 and len(models) > 0 and epoch != 0:
-            # Tensorboard scalar logging
-            if log:
-                writer.add_scalar('Reward', total_reward)
-                writer.add_scalar('Successful Approaches', approaches['rewarding'])
-                writer.add_scalar('Unsuccessful Approaches', approaches['unrewarding'])
-                writer.add_scalar('Collisions', approaches['wall'])
-                writer.add_scalar('Losses', losses)
-                
+        if epoch % 20 == 0 and epoch != 0:
             # Old print statement for supporting previous results plot framework
             print(
                 epoch,
@@ -411,6 +405,8 @@ def run_game(
                 str(0),
                 condition,
             )
+            # rs = show_weighted_averaged(object_memory)
+            # print(epoch, rs)
             total_reward = 0
             approaches = {
                 'rewarding': 0,
@@ -418,33 +414,40 @@ def run_game(
                 'wall': 0
             }
             losses = 0
-    
+
     # Repack all models when the model is done
-    all_models = (models, value_models, resource_models, ewa_models)
-    return all_models, env, turn, epsilon
+    all_models = models, value_models, resource_models, ewa_models
+    return all_models, env
 
 if __name__ == '__main__':
 
-    env = RTP(
-        height=parameters['world_size'],
-        width=parameters['world_size'],
-        layers=1,
-        contextual=parameters['contextual']
-    )
-
+    # the version below needs to have the keys from above in it
     for condition in range(len(parameters['conditions'])):
-        
+
         # Create new models
         all_models = create_models(
-            num_models = 1,
-            device = 'cpu',
-            decay_rate = parameters['episodic_decay_rate'] # kwarg included for EWA model
+            appearance_size = parameters['appearance_size'],
+            episodic_decay_rate = parameters['episodic_decay_rate'],
+            similarity_decay_rate = parameters['similarity_decay_rate'],
+            knn_size = parameters['knn_size']
         )
 
-        # Run game with a new set of models
-        all_models, env, turn, epsilon = run_game(
-            all_models = all_models,
-            env = env,
-            condition = parameters['conditions'][condition],
-            parameters = parameters
+        env = RTP(
+            height=parameters['world_size'],
+            width=parameters['world_size'],
+            layers=1,
+            contextual=parameters['contextual']
+        )
+
+        all_models, env = run_game(
+            all_models,
+            env,
+            epsilon=parameters['epsilon'],
+            epochs=parameters['epochs'],
+            max_turns=parameters['max_turns'],
+            epsilon_decay=parameters['epsilon_decay'],
+            condition=parameters['conditions'][condition],
+            sync_freq=parameters['sync_freq'],
+            model_update_freq=parameters['model_update_freq'],
+            RUN_PROFILING=parameters['RUN_PROFILING']
         )

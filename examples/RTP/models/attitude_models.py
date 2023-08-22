@@ -200,7 +200,7 @@ class ValueModel(nn.Module):
     def add_memory(self, state, reward):
         self.replay_buffer.append((state, reward))
 
-def eval_attiude_model(value_model):
+def eval_attitude_model(value_model):
     atts = []
     s = torch.zeros(7)
     r = value_model(s)
@@ -281,6 +281,7 @@ def evaluate(
     value_model,
     resource_model,
     ewa_model,
+    epoch,
     loc = None,
     testing = False     
 ):
@@ -331,7 +332,7 @@ def evaluate(
                 # ----------------- #
                 # Implicit attitude #
                 # ----------------- #
-                if 'implicit' in condition:
+                if 'implicit' in condition and epoch > 2:
 
                     # Get estimated reward associated with the object state
                     rs, _ = value_model(object_state.unsqueeze(0))
@@ -343,7 +344,7 @@ def evaluate(
                 # ----------------- #
                 # Resource learning #
                 # ----------------- #
-                elif 'tree_rocks' in condition:
+                elif 'tree_rocks' in condition and epoch > 2:
 
                     # Predict the resource distribution of the agent
                     predict = resource_model(object_state)
@@ -356,7 +357,7 @@ def evaluate(
                 # ------------------------- #
                 # Episodic memory w/ search #
                 # ------------------------- #
-                elif 'EWA' in condition:
+                elif 'EWA' in condition and epoch > 10:
                     
                     # Get the k-nearest-neighbours
                     mems = ewa_model.k_most_similar_recent_states(

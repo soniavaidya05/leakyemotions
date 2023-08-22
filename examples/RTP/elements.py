@@ -161,37 +161,22 @@ class Agent:
                 # They alternately want wood or stone
                 if env.contextual:
 
-                    # Check self.wood and self.stone
-                    if self.wood > 0:
-                        if new_object.stone > 0:
-                            # If the new object has stone, build house (reward) and set resources to 0
-                            resource_outcome = [0, 0, 1]
-                            reward = 10
-                            self.stone, self.wood = 0, 0
-                        elif new_object.wood > 0:
-                            # Otherwise, you just get more wood
+                    if new_object.wood > 0:
+                        if self.stone > 0:
+                            reward = 10  # hard coded everyone wants wood
                             resource_outcome = [0, 1, 0]
-                            reward = 0
-                            self.wood = 1 # Owning wood is a binary here, you either have it or you don't
-                    elif self.stone > 0:
-                        if new_object.stone > 0:
-                            # If the new object has stone, nothing happens
-                            resource_outcome = [0, 0, 1]
-                            reward = 0
-                            self.stone = 1
-                        elif new_object.wood > 0:
-                            # If it has stone, then you get rewards and resources reset
-                            resource_outcome = [0, 1, 0]
-                            reward = 10
-                            self.stone, self.wood = 0, 0
-                    else:
-                        # If the agent has nothing, just add stone or wood
-                        if new_object.stone > 0:
-                            resource_outcome = [0, 0, 1]
-                            self.stone = 1
-                        elif new_object.wood > 0:
-                            resource_outcome = [0, 1, 0]
+                            self.stone = 0
+                            self.wood = 0
+                        else:
                             self.wood = 1
+                    if new_object.stone > 0:
+                        if self.wood > 0:
+                            reward = 10
+                            resource_outcome = [0, 0, 1]
+                            self.stone = 0
+                            self.wood = 0
+                        else:
+                            self.stone = 1
                 
                 # For noncontextual environments, agents always want wood
                 else:
