@@ -554,7 +554,7 @@ def run_game(
                 # --------------------------------------------------------------
 
                 if (
-                    "EWA" in attitude_condition and epoch > 100
+                    "EWA" in attitude_condition and epoch > 20
                 ):  # this sets a control condition where no attitudes are used
                     object_memory_states_tensor = torch.tensor(
                         [obj_mem[0] for obj_mem in object_memory]
@@ -618,7 +618,7 @@ def run_game(
                 # --------------------------------------------------------------
 
                 if (
-                    "CMS" in attitude_condition and epoch > 100
+                    "CMS" in attitude_condition and epoch > 20
                 ):  # this sets a control condition where no attitudes are used
                     object_memory_states_tensor = torch.tensor(
                         [obj_mem[0] for obj_mem in object_memory]
