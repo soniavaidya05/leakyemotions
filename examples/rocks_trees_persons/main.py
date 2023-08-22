@@ -706,7 +706,7 @@ def run_game(
 
                     if reward == 10:
                         gems[0] = gems[0] + 1
-                    if reward == -5:
+                    if reward == -10:
                         gems[1] = gems[1] + 1
                     if reward == 0:
                         gems[2] = gems[2] + 1
