@@ -142,3 +142,4 @@ examples/food_trucks/runs/
 examples/food_trucks/notebooks/runs/
 examples/food_trucks/data/
 examples/RTP/data/
+*.txt
