@@ -253,6 +253,11 @@ def run_game(
                 # -------------------------------------- #
 
                 if contextual:
+
+                    # Reset environment appearance
+                    env.reset_appearance(loc)
+
+                    # Update attitude models
                     evaluate(
                         env,
                         condition=condition,
