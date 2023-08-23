@@ -78,8 +78,8 @@ class RTP:
                     rock = 1
                     wood = 0
                 else:
-                    wood = 0
-                    rock = 1
+                    rock = 0
+                    wood = 1
             # Group 1 is 50/50 choppers and miners
             if color == 1:
                 image_color = [0.0, 0.0, 0.0, 255.0]
