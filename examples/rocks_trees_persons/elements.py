@@ -143,25 +143,34 @@ class Agent:
         reward = 0
         resource_outcome = [1, 0, 0]
 
+        contextual = False
         if env.world[attempted_location].passable == 1:
             env.world[location] = EmptyObject(env.app_size)
             if env.world[attempted_location].kind == "gem":
-                if env.world[attempted_location].wood > 0:
-                    if self.stone > 0:
-                        reward = 10  # hard coded everyone wants wood
-                        resource_outcome = [0, 1, 0]
-                        self.stone = 0
-                        self.wood = 0
-                    else:
-                        self.wood = 1
-                if env.world[attempted_location].stone > 0:
-                    if self.wood > 0:
+                if contextual == True:
+                    if env.world[attempted_location].wood > 0:
+                        if self.stone > 0:
+                            reward = 10  # hard coded everyone wants wood
+                            resource_outcome = [0, 1, 0]
+                            self.stone = 0
+                            self.wood = 0
+                        else:
+                            self.wood = 1
+                    if env.world[attempted_location].stone > 0:
+                        if self.wood > 0:
+                            reward = 10
+                            resource_outcome = [0, 0, 1]
+                            self.stone = 0
+                            self.wood = 0
+                        else:
+                            self.stone = 1
+                else:
+                    if env.world[attempted_location].wood > 0:
                         reward = 10
+                        resource_outcome = [0, 1, 0]
+                    if env.world[attempted_location].stone > 0:
+                        reward = -2
                         resource_outcome = [0, 0, 1]
-                        self.stone = 0
-                        self.wood = 0
-                    else:
-                        self.stone = 1
 
             # reward = env.world[attempted_location].value
             env.world[attempted_location] = holdObject

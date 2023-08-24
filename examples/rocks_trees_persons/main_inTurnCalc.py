@@ -722,7 +722,7 @@ def run_game(
 
                     if reward == 10:
                         gems[0] = gems[0] + 1
-                    if reward == -10:
+                    if reward == -2:
                         gems[1] = gems[1] + 1
                     if reward == 0:
                         gems[2] = gems[2] + 1
@@ -838,6 +838,7 @@ models = create_models()
 # options here are. these are experiments that we ran
 
 run_params = (
+    [0.3, 1500, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     [0.3, 1500, 20, 0.999, "None", 12000, 2500, 20.0, 20.0],
     [0.3, 1500, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],

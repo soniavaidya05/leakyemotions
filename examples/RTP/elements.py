@@ -150,17 +150,14 @@ class Agent:
 
         # If the agent can move through the new location...
         if new_object.passable == 1:
-
             # Clear the agent's previous location
             env.world[location] = EmptyObject(env.app_size)
 
             # If the object is a gem...
             if new_object.kind == "gem":
-            
                 # For contextual environments, agents are rewarded based on their current state
                 # They alternately want wood or stone
                 if env.contextual:
-
                     if new_object.wood > 0:
                         if self.stone > 0:
                             reward = 10  # hard coded everyone wants wood
@@ -177,17 +174,16 @@ class Agent:
                             self.wood = 0
                         else:
                             self.stone = 1
-                
+
                 # For noncontextual environments, agents always want wood
                 else:
-
                     # 10 reward if wood, 0 otherwise
                     if new_object.wood > 0:
                         resource_outcome = [0, 1, 0]
                         reward = 10
                     elif new_object.stone > 0:
                         resource_outcome = [0, 0, 1]
-                        reward = 0
+                        reward = -6
 
             # Finally, move the agent to the new location
             env.world[attempted_location] = agent
@@ -196,9 +192,7 @@ class Agent:
         # If the location is impassable, check whether it's a wall
         # Punish if the agent has run into a wall
         else:
-            if isinstance(
-                env.world[attempted_location], Wall
-            ):
+            if isinstance(env.world[attempted_location], Wall):
                 reward = -1
 
         next_state = env.pov(new_loc)

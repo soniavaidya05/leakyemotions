@@ -22,20 +22,19 @@ class RTP:
         layers=1,
         contextual=True,
         tile_size=(1, 1),
-        appearance_size = 20
+        appearance_size=20,
     ):
         self.app_size = appearance_size
         self.height = height
         self.width = width
         self.layers = layers
         self.defaultObject = EmptyObject(appearance_size)
-        self.tile_size = tile_size,
+        self.tile_size = (tile_size,)
         self.contextual = contextual
         self.create_world()
         self.insert_walls()
         self.create_people()
         self.populate()
-
 
     def create_world(self):
         """
@@ -55,15 +54,14 @@ class RTP:
                 self.world[i, self.width - 1, 0] = Wall(self.app_size)
 
     def create_people(self, num_people=100):
-        '''
+        """
         Create a new list of people.
-        NOTE: This list is MAINTAINED ACROSS GAMES, 
+        NOTE: This list is MAINTAINED ACROSS GAMES,
         and is only generated on environment initialization
-        '''
+        """
         self.person_list = []
 
         for person in range(num_people):
-            
             # Individual appearance
             individuation = [random.random() * 255 for i in range(8)]
             zeroes = [0 for i in range(8)]
@@ -78,26 +76,24 @@ class RTP:
                     rock = 1
                     wood = 0
                 else:
-                    wood = 0
-                    rock = 1
+                    rock = 0
+                    wood = 1
             # Group 1 is 50/50 choppers and miners
             if color == 1:
                 image_color = [0.0, 0.0, 0.0, 255.0]
-                if random.random() < 0.75:
-                    wood = 1
-                    rock = 0
-                else:
-                    wood = 0
+                if random.random() < 0.25:
                     rock = 1
+                    wood = 0
+                else:
+                    rock = 0
+                    wood = 1
             # Appearance includes 4 object ids and 8 individuation characteristics
             # Trimmed to max appearance size
-            app = np.array([image_color + individuation + zeroes][0][:self.app_size])
+            app = np.array([image_color + individuation + zeroes][0][: self.app_size])
             info = (person, app, [wood, rock], 0, 0)
             self.person_list.append(info)
 
-    def populate(
-        self, change=False, masked_attitude=False
-    ):
+    def populate(self, change=False, masked_attitude=False):
         """
         Populates the game board with elements
         """
@@ -106,20 +102,23 @@ class RTP:
         random_numbers = random.sample(range(len(self.person_list)), n)
 
         # Create a list of candidate locations
-        candidate_locs = [index for index in np.ndindex(self.world.shape) if not isinstance(self.world[index[0], index[1], index[2]], Wall) and not index[2] != 0]
+        candidate_locs = [
+            index
+            for index in np.ndindex(self.world.shape)
+            if not isinstance(self.world[index[0], index[1], index[2]], Wall)
+            and not index[2] != 0
+        ]
 
         # Choose n + 1 random locations without replacement
-        loc_index = np.random.choice(len(candidate_locs), size = n + 1, replace = False)
+        loc_index = np.random.choice(len(candidate_locs), size=n + 1, replace=False)
         locs = [candidate_locs[i] for i in loc_index]
 
         # The last loc is used to place the agent, the rest are used for the people
         for person in range(n):
             app = self.person_list[random_numbers[person]][1]
             reward = self.person_list[random_numbers[person]][2]
-            self.world[locs[person]] = Gem(
-                reward, app, self.app_size
-            )
-        
+            self.world[locs[person]] = Gem(reward, app, self.app_size)
+
         # Place the agent
         self.world[locs[20]] = Agent(0, self.app_size)
 
@@ -136,12 +135,12 @@ class RTP:
         self.populate(change=change)
 
     def reset_appearance(self, loc):
-        '''
+        """
         Reset the last 5 values for the environment appearance
         appearance[-5]: agent's wood value
         appearance[-4]: agent's stone value
         appearance[-3:]: used for attitude models
-        '''
+        """
         for i in range(self.height):
             for j in range(self.width):
                 self.world[i, j, 0].appearance[-5] = self.world[loc].wood * 255.0
@@ -193,7 +192,3 @@ class RTP:
         current_state[:, -1, :, :, :] = state_now
 
         return current_state
-
-
-
-

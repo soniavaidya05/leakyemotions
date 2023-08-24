@@ -42,6 +42,7 @@ def compute_weighted_average(
 
     return weighted_sum / total_weight if total_weight != 0 else 0
 
+
 class ResourceModel(nn.Module):
     def __init__(
         self,
@@ -122,6 +123,7 @@ class ResourceModel(nn.Module):
     def add_memory(self, state, outcome):
         self.replay_buffer.append((state, outcome))
 
+
 class ValueModel(nn.Module):
     def __init__(
         self,
@@ -200,6 +202,7 @@ class ValueModel(nn.Module):
     def add_memory(self, state, reward):
         self.replay_buffer.append((state, reward))
 
+
 def eval_attitude_model(value_model):
     atts = []
     s = torch.zeros(7)
@@ -212,45 +215,37 @@ def eval_attitude_model(value_model):
         atts.append(round(r.item(), 2))
     return atts
 
+
 class EWAModel:
-    
-    '''
+
+    """
     Model class for the Episodic memory model with search and reWeighting (EWA)
-    '''
+    """
 
     def __init__(
-            self,
-            mem_len,
-            state_knn_len,
-            episodic_decay_rate,
-            similarity_decay_rate
+        self, mem_len, state_knn_len, episodic_decay_rate, similarity_decay_rate
     ):
-        
         self.memory = deque(maxlen=mem_len)
         self.state_knn = NearestNeighbors(n_neighbors=state_knn_len)
         self.episodic_decay_rate = episodic_decay_rate
         self.similarity_decay_rate = similarity_decay_rate
 
     def get_states(self):
-        return torch.tensor(
-            np.array([obj_mem[0] for obj_mem in self.memory])
-        )
-    
-    def fit(self):
+        return torch.tensor(np.array([obj_mem[0] for obj_mem in self.memory]))
 
+    def fit(self):
         self.state_knn.fit([obj_mem[0] for obj_mem in self.memory])
 
-    def k_most_similar_recent_states(
-    self, state, all_states, k=5, USE_KNN_MODEL = True
-    ):
-        
+    def k_most_similar_recent_states(self, state, all_states, k=5, USE_KNN_MODEL=True):
         if all_states is None:
             all_states = self.get_states()
 
         if USE_KNN_MODEL:
             # Get the indices of the k most similar states (without selecting them yet)
             state = state.cpu().detach().numpy().reshape(1, -1)
-            k_indices = self.state_knn.kneighbors(state, n_neighbors=k, return_distance=False)[0]
+            k_indices = self.state_knn.kneighbors(
+                state, n_neighbors=k, return_distance=False
+            )[0]
 
         else:
             # Perform a brute-force search for the k most similar states
@@ -271,9 +266,11 @@ class EWAModel:
 
         return most_similar_memories
 
+
 # ---------------------------- #
 # In game evaluation functions #
 # ---------------------------- #
+
 
 def evaluate(
     env,
@@ -282,19 +279,19 @@ def evaluate(
     resource_model,
     ewa_model,
     epoch,
-    loc = None,
-    testing = False     
+    loc=None,
+    testing=False,
 ):
-    '''
+    """
     Use the chosen model to update the appearance of objects in the environment
     env: The environment
     condition: the attitude model condition
     value_model: the value model
     resource_model: the resource model
-    loc: (Not yet implemented) the location of the agent, so appearances are updated only within the agent's field of view. 
-    Requires the use of evaluation per turn rather than per game. 
+    loc: (Not yet implemented) the location of the agent, so appearances are updated only within the agent's field of view.
+    Requires the use of evaluation per turn rather than per game.
     testing: (Optional) whether to test the attitude model and print out its outputs
-    '''
+    """
 
     # First, zero out the last three digits of the objects in the environment
     for i in range(env.height):
@@ -303,7 +300,7 @@ def evaluate(
             env.world[i, j, 0].appearance.put([-3, -2, -1], 0.0)
 
     # Get the object memory states for EWA model
-    if 'EWA' in condition:
+    if "EWA" in condition:
         all_states = ewa_model.get_states()
 
     # Get environment points to update
@@ -320,10 +317,8 @@ def evaluate(
 
     for i in all_is:
         for j in all_js:
-
             # Values are only computed within the environment parameters (only relevant when loc is passed in)
             if i >= 0 and j >= 0 and i < env.height and j < env.width:
-
                 # Get values (0, len - 3) of the appearance to build an attitude
                 object_state = torch.tensor(
                     np.array(env.world[i, j, 0].appearance[:-3])
@@ -332,20 +327,18 @@ def evaluate(
                 # ----------------- #
                 # Implicit attitude #
                 # ----------------- #
-                if 'implicit' in condition and epoch > 2:
-
+                if "implicit" in condition and epoch > 2:
                     # Get estimated reward associated with the object state
                     rs, _ = value_model(object_state.unsqueeze(0))
                     r = rs[0][1]
 
                     # Assign the reward value to the appearance of the object
                     env.world[i, j, 0].appearance[-2] = r.item() * 255
-        
+
                 # ----------------- #
                 # Resource learning #
                 # ----------------- #
-                elif 'tree_rocks' in condition and epoch > 2:
-
+                elif "tree_rocks" in condition and epoch > 2:
                     # Predict the resource distribution of the agent
                     predict = resource_model(object_state)
                     predict = predict.detach().numpy()
@@ -357,13 +350,10 @@ def evaluate(
                 # ------------------------- #
                 # Episodic memory w/ search #
                 # ------------------------- #
-                elif 'EWA' in condition and epoch > 10:
-                    
+                elif "EWA" in condition and epoch > 10:
                     # Get the k-nearest-neighbours
                     mems = ewa_model.k_most_similar_recent_states(
-                        state=object_state,
-                        all_states=all_states,
-                        k=10
+                        state=object_state, all_states=all_states, k=10
                     )
 
                     env.world[i, j, 0].appearance[-1] = (
@@ -375,13 +365,8 @@ def evaluate(
                         )
                         * 255
                     )
-                
-                else:
 
+                else:
                     # No attitude model, nothing happens
                     # TODO: Other models to be implemented
                     pass
-
-        
-
-    
