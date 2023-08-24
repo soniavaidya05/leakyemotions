@@ -144,7 +144,7 @@ class Agent:
         new_loc = location
         attempted_location = self.movement(action, location)
         new_object = env.world[attempted_location]
-
+        outcome_type = -1
         # Default resource outcome is "nothing"
         resource_outcome = [1, 0, 0]
 
@@ -181,9 +181,20 @@ class Agent:
                     if new_object.wood > 0:
                         resource_outcome = [0, 1, 0]
                         reward = 10
+
+                        if new_object.appearance[2] == 255.0:
+                            outcome_type = 0
+                        if new_object.appearance[3] == 255.0:
+                            outcome_type = 1
+
                     elif new_object.stone > 0:
                         resource_outcome = [0, 0, 1]
                         reward = -6
+
+                        if new_object.appearance[2] == 255.0:
+                            outcome_type = 2
+                        if new_object.appearance[3] == 255.0:
+                            outcome_type = 3
 
             # Finally, move the agent to the new location
             env.world[attempted_location] = agent
@@ -209,4 +220,5 @@ class Agent:
             new_loc,
             new_object.appearance,
             resource_outcome,
+            outcome_type,
         )

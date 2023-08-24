@@ -161,6 +161,7 @@ def run_game(
     # Set up metrics
     losses = 0
     total_reward = 0
+    outcomes = [0, 0, 0, 0]
     approaches = {"rewarding": 0, "unrewarding": 0, "wall": 0}
 
     for epoch in range(epochs):
@@ -265,7 +266,10 @@ def run_game(
                     new_loc,
                     object_appearance,
                     resource_outcome,
+                    outcome_type,
                 ) = agent.transition(env, models, action[0], loc)
+                if outcome_type >= 0:
+                    outcomes[outcome_type] += 1
 
                 # Create object state from the first component of the object appearance
                 state_object = object_appearance[0:-3]
@@ -331,7 +335,7 @@ def run_game(
 
                 if turn > max_turns:
                     done = 1
-                    
+
                 exp = (
                     1,  # Priority value
                     (
@@ -393,6 +397,7 @@ def run_game(
                     approaches["wall"],
                 ],
                 losses,
+                outcomes,
                 epsilon,
                 str(0),
                 condition,
@@ -402,6 +407,7 @@ def run_game(
             total_reward = 0
             approaches = {"rewarding": 0, "unrewarding": 0, "wall": 0}
             losses = 0
+            outcomes = [0, 0, 0, 0]
 
     # Repack all models when the model is done
     all_models = models, value_models, resource_models, ewa_models
