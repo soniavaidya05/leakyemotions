@@ -331,6 +331,7 @@ def run_game(
 
                 if turn > max_turns:
                     done = 1
+                    
                 exp = (
                     1,  # Priority value
                     (
