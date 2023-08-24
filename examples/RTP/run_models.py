@@ -23,8 +23,8 @@ parameters = {
     "model_update_freq": 4,  # Parameters related to model soft update. TODO: Figure out if these are still needed
     "epsilon": 0.3,  # Exploration parameter
     "conditions": [
-        "None",
         "implicit_attitude",
+        "None",
         "EWA",
         "implicit_attitude+EWA",
     ],  # Model run conditions
