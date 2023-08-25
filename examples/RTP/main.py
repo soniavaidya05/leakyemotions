@@ -298,11 +298,11 @@ def run_game(
                     if reward != 0:
                         resource_model.add_memory(state_object, resource_outcome)
                     else:
-                        if random.random() > 0.5:  # seems to work if downsample nothing
+                        if random.random() > 0.9:  # seems to work if downsample nothing
                             resource_model.add_memory(state_object, resource_outcome)
 
                     # When the replay buffer is long enough, begin training the model
-                    if len(resource_model.replay_buffer) > 33 and turn % 2 == 0:
+                    if len(resource_model.replay_buffer) > 33:  # and turn % 2 == 0:
                         resource_loss = resource_model.learn(
                             resource_model.sample(32), batch_size=32
                         )
@@ -391,13 +391,13 @@ def run_game(
                 epoch,
                 turn,
                 round(total_reward),
-                [
+                *[
                     approaches["rewarding"],
                     approaches["unrewarding"],
                     approaches["wall"],
                 ],
                 losses,
-                outcomes,
+                *outcomes,
                 epsilon,
                 str(0),
                 condition,

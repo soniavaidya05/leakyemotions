@@ -49,7 +49,7 @@ class ResourceModel(nn.Module):
         state_dim,
         hidden_dim=64,
         memory_size=5000,
-        learning_rate=0.001,
+        learning_rate=0.0005,
     ):
         super(ResourceModel, self).__init__()
         self.fc1 = nn.Linear(state_dim, hidden_dim)
@@ -323,6 +323,13 @@ def evaluate(
                 object_state = torch.tensor(
                     np.array(env.world[i, j, 0].appearance[:-3])
                 ).float()
+                has_wood = 0
+                has_stone = 0
+                has_nothing = 1
+                if env.world[i, j, 0].kind == "gem":
+                    has_wood = env.world[i, j, 0].wood
+                    has_stone = env.world[i, j, 0].stone
+                    has_nothing = 0
 
                 # ----------------- #
                 # Implicit attitude #
@@ -339,13 +346,19 @@ def evaluate(
                 # Resource learning #
                 # ----------------- #
                 elif "tree_rocks" in condition and epoch > 2:
-                    # Predict the resource distribution of the agent
-                    predict = resource_model(object_state)
-                    predict = predict.detach().numpy()
+                    using_tree_rocks_model = False
+                    if using_tree_rocks_model:
+                        # Predict the resource distribution of the agent
+                        predict = resource_model(object_state)
+                        predict = predict.detach().numpy()
 
-                    # Put the prediction values into the last three values
-                    assert len(predict) == 3
-                    env.world[i, j, 0].appearance.put([-3, -2, -1], predict * 255)
+                        # Put the prediction values into the last three values
+                        assert len(predict) == 3
+                        env.world[i, j, 0].appearance.put([-3, -2, -1], predict * 255)
+                    else:
+                        env.world[i, j, 0].appearance[-1] = has_wood * 255
+                        env.world[i, j, 0].appearance[-2] = has_stone * 255
+                        env.world[i, j, 0].appearance[-3] = has_nothing * 255
 
                 # ------------------------- #
                 # Episodic memory w/ search #

@@ -83,6 +83,7 @@ def process_files(file_pattern="*.txt", smoothing=1, time_range=None):
     plt.title("Results")
     plt.show()
 
+
 def process_files_new(file_pattern="*.txt", smoothing=1, time_range=None):
     # Dictionary to store data
     data_dict = {}
@@ -103,7 +104,7 @@ def process_files_new(file_pattern="*.txt", smoothing=1, time_range=None):
             for line in file:
                 # Check if line starts with a number and has at least 4 parts
                 parts = line.split()
-                if len(parts) >= 4 and parts[0].isdigit():
+                if len(parts) >= 8 and parts[0].isdigit():
                     time_step = int(parts[0])
                     third_integer = int(parts[2])
                     last_string = parts[-1]
@@ -162,14 +163,29 @@ def process_files_new(file_pattern="*.txt", smoothing=1, time_range=None):
     plt.show()
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Optional flags for running the process files function
-    parser.add_argument('-f', '--file-pattern', default = './data/output*.txt', help='File pattern to plot results for.')
-    parser.add_argument('-s', '--smoothing', default = 10, type = int, help = 'How much smoothing to apply to the results')
-    parser.add_argument('-o', '--old-function', action = 'store_true', help = 'Use the original process_files function rather than the new one')
+    parser.add_argument(
+        "-f",
+        "--file-pattern",
+        default="./data/output*.txt",
+        help="File pattern to plot results for.",
+    )
+    parser.add_argument(
+        "-s",
+        "--smoothing",
+        default=10,
+        type=int,
+        help="How much smoothing to apply to the results",
+    )
+    parser.add_argument(
+        "-o",
+        "--old-function",
+        action="store_true",
+        help="Use the original process_files function rather than the new one",
+    )
     args = parser.parse_args()
 
     # Use the function set by the old function flag
@@ -179,4 +195,3 @@ if __name__ == '__main__':
         func = process_files_new
 
     func(file_pattern=args.file_pattern, smoothing=args.smoothing)
-

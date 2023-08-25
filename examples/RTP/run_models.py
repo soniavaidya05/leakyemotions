@@ -23,10 +23,11 @@ parameters = {
     "model_update_freq": 4,  # Parameters related to model soft update. TODO: Figure out if these are still needed
     "epsilon": 0.3,  # Exploration parameter
     "conditions": [
-        "implicit_attitude",
+        "tree_rocks",
         "None",
-        "EWA",
-        "implicit_attitude+EWA",
+        "implicit_attitude",
+        # "EWA",
+        # "implicit_attitude+EWA",
     ],  # Model run conditions
     "epsilon_decay": 0.999,  # Exploration decay rate
     "episodic_decay_rate": 1.0,  # EWA episodic decay rate

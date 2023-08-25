@@ -69,6 +69,8 @@ class IQN(nn.Module):
 
         self.cos_embedding = nn.Linear(self.n_cos, layer_size)
         self.ff_1 = NoisyLinear(layer_size, layer_size)
+        self.ff_2 = NoisyLinear(layer_size, layer_size)
+        self.ff_3 = NoisyLinear(layer_size, layer_size)
         self.cos_layer_out = layer_size
 
         self.advantage = NoisyLinear(layer_size, action_size)
@@ -127,6 +129,10 @@ class IQN(nn.Module):
 
         # Pass input through NOISY linear layer and activation function ([1, 250])
         x = self.ff_1(x)
+        x = torch.relu(x)
+        x = self.ff_2(x)  # added two more linear layers to the network
+        x = torch.relu(x)
+        x = self.ff_3(x)
         x = torch.relu(x)
 
         # Calculate output based on value and advantage
