@@ -47,23 +47,30 @@ class ResourceModel(nn.Module):
     def __init__(
         self,
         state_dim,
-        hidden_dim=64,
+        hidden_dim=128,
         memory_size=5000,
-        learning_rate=0.0005,
+        learning_rate=0.001,
+        dropout_prob=0.2,  # added dropout probability
     ):
         super(ResourceModel, self).__init__()
+
         self.fc1 = nn.Linear(state_dim, hidden_dim)
+        self.bn1 = nn.BatchNorm1d(hidden_dim)  # batch normalization
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.bn2 = nn.BatchNorm1d(hidden_dim)  # batch normalization
         self.fc3 = nn.Linear(hidden_dim, hidden_dim)
+        self.bn3 = nn.BatchNorm1d(hidden_dim)  # batch normalization
         self.fc4 = nn.Linear(hidden_dim, 3)  # Three outputs for three classes
+
+        self.dropout = nn.Dropout(dropout_prob)  # dropout layer
 
         self.replay_buffer = deque(maxlen=memory_size)
         self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        x = torch.relu(self.fc3(x))
+        x = self.dropout(torch.relu((self.fc1(x))))
+        x = self.dropout(torch.relu((self.fc2(x))))
+        x = self.dropout(torch.relu((self.fc3(x))))
         probabilities = torch.softmax(self.fc4(x), dim=-1)
         return probabilities
 
@@ -72,51 +79,37 @@ class ResourceModel(nn.Module):
             self.replay_buffer, min(num_memories, len(self.replay_buffer))
         )
 
-    def learn(self, memories, batch_size=32, class_weights=False):
-        if class_weights:
-            # Calculate class weights
-            all_outcomes = [outcome for _, outcome in self.replay_buffer]
-            num_samples = len(all_outcomes)
-            class_counts = [sum([out[i] for out in all_outcomes]) for i in range(3)]
+    def learn(self, memories, batch_size=32, use_class_weights=True):
+        class_weights_tensor = None
+        if use_class_weights:
+            # Modified the way class counts are determined
+            all_outcomes = [
+                torch.argmax(torch.tensor(outcome)) for _, outcome in self.replay_buffer
+            ]
+            class_counts = [all_outcomes.count(i) for i in range(3)]
 
             # Adding a small epsilon to prevent division by zero
             epsilon = 1e-10
-            class_weights = torch.tensor(
-                [(num_samples / (count + epsilon)) for count in class_counts]
+            class_weights_tensor = torch.tensor(
+                [(len(all_outcomes) / (count + epsilon)) for count in class_counts]
             ).to(torch.float32)
 
-            for _ in range(len(memories) // batch_size):
-                batch = random.sample(memories, batch_size)
-                states, targets = zip(*batch)
-                states = torch.tensor(np.array(states), dtype=torch.float32)
-                targets = torch.tensor(np.array(targets), dtype=torch.float32)
+        for _ in range(len(memories) // batch_size):
+            batch = random.sample(memories, batch_size)
+            states, targets = zip(*batch)
+            states = torch.tensor(np.array(states), dtype=torch.float32)
+            targets = torch.tensor(np.array(targets), dtype=torch.float32)
 
-                self.optimizer.zero_grad()
-                probabilities = self.forward(states)
+            self.optimizer.zero_grad()
+            probabilities = self.forward(states)
 
-                # Weighted Cross-Entropy Loss
-                loss = F.cross_entropy(
-                    probabilities, torch.argmax(targets, dim=1), weight=class_weights
-                )
+            # Cross-Entropy Loss, potentially with weights
+            loss = F.cross_entropy(
+                probabilities, torch.argmax(targets, dim=1), weight=class_weights_tensor
+            )
 
-                loss.backward()
-                self.optimizer.step()
-
-        else:
-            for _ in range(len(memories) // batch_size):
-                batch = random.sample(memories, batch_size)
-                states, targets = zip(*batch)
-                states = torch.tensor(np.array(states), dtype=torch.float32)
-                targets = torch.tensor(np.array(targets), dtype=torch.float32)
-
-                self.optimizer.zero_grad()
-                probabilities = self.forward(states)
-
-                # Cross-Entropy Loss without weights
-                loss = F.cross_entropy(probabilities, torch.argmax(targets, dim=1))
-
-                loss.backward()
-                self.optimizer.step()
+            loss.backward()
+            self.optimizer.step()
 
         return loss.item()
 
@@ -346,7 +339,9 @@ def evaluate(
                 # Resource learning #
                 # ----------------- #
                 elif "tree_rocks" in condition and epoch > 2:
-                    using_tree_rocks_model = False
+                    using_tree_rocks_model = True
+                    if epoch < 300:
+                        using_tree_rocks_model = False
                     if using_tree_rocks_model:
                         # Predict the resource distribution of the agent
                         predict = resource_model(object_state)
@@ -354,11 +349,13 @@ def evaluate(
 
                         # Put the prediction values into the last three values
                         assert len(predict) == 3
-                        env.world[i, j, 0].appearance.put([-3, -2, -1], predict * 255)
+                        env.world[i, j, 0].appearance.put(
+                            [-3, -2, -1], predict * 255 * 10
+                        )
                     else:
-                        env.world[i, j, 0].appearance[-1] = has_wood * 255
-                        env.world[i, j, 0].appearance[-2] = has_stone * 255
-                        env.world[i, j, 0].appearance[-3] = has_nothing * 255
+                        env.world[i, j, 0].appearance[-2] = has_wood * 255 * 10
+                        env.world[i, j, 0].appearance[-1] = has_stone * 255 * 10
+                        env.world[i, j, 0].appearance[-3] = has_nothing * 255 * 10
 
                 # ------------------------- #
                 # Episodic memory w/ search #

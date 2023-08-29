@@ -33,8 +33,62 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
+import torch.nn.functional as F
 
 from gem.models.layers import NoisyLinear
+from examples.delay_discount.replay_buffer import ReplayBuffer, PrioritizedReplay
+
+
+class CNN_CLD(nn.Module):
+    def __init__(self, config=None, normalization_value=255):
+        super(CNN_CLD, self).__init__()
+
+        self.normalization_value = normalization_value
+
+        if config is None:
+            config = {
+                "layers": [
+                    {
+                        "type": "conv2d",
+                        "in_channels": 7,  # You can set this to the number of input channels you have
+                        "out_channels": 7,  # This is the number of filters (you can set it as desired)
+                        "kernel_size": 1,
+                        "activation": "relu",
+                    }
+                ]
+            }
+
+        layers = []
+        for layer in config["layers"]:
+            if layer["type"] == "conv2d":
+                layers.append(
+                    nn.Conv2d(
+                        layer["in_channels"],
+                        layer["out_channels"],
+                        layer["kernel_size"],
+                    )
+                )
+                if layer["activation"] == "relu":
+                    layers.append(nn.ReLU())
+            elif layer["type"] == "batch_norm2d":
+                layers.append(nn.BatchNorm2d(layer["num_features"]))
+            elif layer["type"] == "max_pool2d":
+                layers.append(nn.MaxPool2d(layer["kernel_size"]))
+            elif layer["type"] == "flatten":
+                layers.append(nn.Flatten())
+            elif layer["type"] == "linear":
+                layers.append(nn.Linear(layer["in_features"], layer["out_features"]))
+                if layer["activation"] == "relu":
+                    layers.append(nn.ReLU())
+                elif layer["activation"] == "softmax":
+                    layers.append(nn.Softmax(dim=1))
+
+        self.network = nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = x / self.normalization_value
+        x = self.network(x)
+        return x
 
 
 class IQN(nn.Module):
@@ -42,11 +96,15 @@ class IQN(nn.Module):
 
     def __init__(
         self,
+        in_channels,
+        num_filters,
+        cnn_out_size,
         state_size: tuple,
         action_size: int,
         layer_size: int,
         seed: int,
         n_quantiles: int,
+        use_cnn: bool,
         device: Optional[torch.device] = None,
     ) -> None:
         super().__init__()
@@ -62,15 +120,18 @@ class IQN(nn.Module):
             .view(1, 1, self.n_cos)
             .to(device)
         )
+        self.use_cnn = use_cnn
         self.device = device
 
         # Network architecture
-        self.head1 = nn.Linear(np.prod(state_size.detach().numpy()), layer_size)
+        if use_cnn:
+            self.cnn = CNN_CLD()
+            self.head1 = nn.Linear(cnn_out_size, layer_size)
+        else:
+            self.head1 = nn.Linear(1134, layer_size)
 
         self.cos_embedding = nn.Linear(self.n_cos, layer_size)
         self.ff_1 = NoisyLinear(layer_size, layer_size)
-        self.ff_2 = NoisyLinear(layer_size, layer_size)
-        self.ff_3 = NoisyLinear(layer_size, layer_size)
         self.cos_layer_out = layer_size
 
         self.advantage = NoisyLinear(layer_size, action_size)
@@ -101,10 +162,15 @@ class IQN(nn.Module):
         noise = torch.rand_like(input) * eps
         input = input / 255.0
         input = input + noise
-
-        # Flatten the input from [1, 2, 7, 9, 9] to [1, 1134]
         batch_size, timesteps, C, H, W = input.size()
-        c_out = input.view(batch_size * timesteps, C, H, W)
+
+        if self.use_cnn:
+            c_in = input.view(batch_size * timesteps, C, H, W)
+            c_out = self.cnn(c_in)
+        else:
+            # Flatten the input from [1, 2, 7, 9, 9] to [1, 1134]
+            c_out = input.view(batch_size * timesteps, C, H, W)
+
         r_in = c_out.view(batch_size, -1)
 
         # Pass input through linear layer and activation function ([1, 250])
@@ -130,10 +196,6 @@ class IQN(nn.Module):
         # Pass input through NOISY linear layer and activation function ([1, 250])
         x = self.ff_1(x)
         x = torch.relu(x)
-        # x = self.ff_2(x)  # added two more linear layers to the network
-        # x = torch.relu(x)
-        # x = self.ff_3(x)
-        # x = torch.relu(x)
 
         # Calculate output based on value and advantage
         advantage = self.advantage(x)
@@ -148,123 +210,14 @@ class IQN(nn.Module):
         return actions
 
 
-class ReplayBuffer:
-    """Fixed-size buffer to store experience tuples."""
-
-    def __init__(self, buffer_size, batch_size, device, seed, gamma, n_step=1):
-        """Initialize a ReplayBuffer object.
-        Params
-        ======
-            buffer_size (int): maximum size of buffer
-            batch_size (int): size of each training batch
-            seed (int): random seed
-        """
-        self.device = device
-        self.memory = deque(maxlen=buffer_size)
-        self.batch_size = batch_size
-        self.experience = namedtuple(
-            "Experience",
-            field_names=["state", "action", "reward", "next_state", "done"],
-        )
-        self.seed = random.seed(seed)
-        self.gamma = gamma
-        # self.n_step = n_step
-        # self.n_step_buffer = deque(maxlen=self.n_step)
-
-    def add(self, state, action, reward, next_state, done):
-        """
-        Add a new experience to memory.
-        """
-        # # Add the new experience to buffer
-        # self.n_step_buffer.append((state, action, reward, next_state, done))
-
-        # # If there are enough steps in the buffer, append to the memory
-        # if len(self.n_step_buffer) == self.n_step:
-
-        #     # Set the experience as the return and state change over multiple steps
-        #     state, action, reward, next_state, done = self.calc_multistep_return(self.n_step_buffer)
-        #     e = self.experience(state, action, reward, next_state, done)
-
-        #     # Add the experience to the memory
-        #     self.memory.append(e)
-
-        # NOTE: multistep return seem to have little/negative effect on the performance
-        # NOTE: removing multistep return also bounds the loss to a lower number
-        e = self.experience(state, action, reward, next_state, done)
-        self.memory.append(e)
-
-    # def calc_multistep_return(self, n_step_buffer):
-    #     Return = 0
-    #     for idx in range(self.n_step):
-    #         Return += self.gamma**idx * n_step_buffer[idx][2]
-
-    #     # There are 3 steps in the buffer
-    #     # - state = state of first step
-    #     # - action = action of first step
-    #     # - reward = sum of rewards of all steps
-    #     # - next_state = state of last step
-    #     # - done = done of last step
-
-    #     return (
-    #         n_step_buffer[0][0],
-    #         n_step_buffer[0][1],
-    #         Return,
-    #         n_step_buffer[-1][3],
-    #         n_step_buffer[-1][4],
-    #     )
-
-    def sample(self):
-        """Randomly sample a batch of experiences from memory."""
-        experiences = random.sample(self.memory, k=self.batch_size)
-
-        states = (
-            torch.from_numpy(np.stack([e.state for e in experiences if e is not None]))
-            .float()
-            .to(self.device)
-        )
-        actions = (
-            torch.from_numpy(
-                np.vstack([e.action for e in experiences if e is not None])
-            )
-            .long()
-            .to(self.device)
-        )
-        rewards = (
-            torch.from_numpy(
-                np.vstack([e.reward for e in experiences if e is not None])
-            )
-            .float()
-            .to(self.device)
-        )
-        next_states = (
-            torch.from_numpy(
-                np.stack([e.next_state for e in experiences if e is not None])
-            )
-            .float()
-            .to(self.device)
-        )
-        dones = (
-            torch.from_numpy(
-                np.vstack([e.done for e in experiences if e is not None]).astype(
-                    np.uint8
-                )
-            )
-            .float()
-            .to(self.device)
-        )
-
-        return (states, actions, rewards, next_states, dones)
-
-    def __len__(self):
-        """Return the current size of internal memory."""
-        return len(self.memory)
-
-
 class iRainbowModel:
     """Interacts with and learns from the environment."""
 
     def __init__(
         self,
+        in_channels,
+        num_filters,
+        cnn_out_size,
         state_size,
         action_size,
         layer_size,
@@ -275,6 +228,8 @@ class iRainbowModel:
         TAU,
         GAMMA,
         N,
+        use_cnn,
+        use_per,
         device,
         seed,
     ):
@@ -303,51 +258,53 @@ class iRainbowModel:
         self.GAMMA = GAMMA
         self.BATCH_SIZE = BATCH_SIZE
         self.n_step = n_step
+        self.use_per = use_per
 
         # IQN-Network
         self.qnetwork_local = IQN(
-            # in_channels,
-            # num_filters,
-            # cnn_out_size,
+            in_channels,
+            num_filters,
+            cnn_out_size,
             state_size,
             action_size,
             layer_size,
             seed,
             N,
+            use_cnn,
             device=device,
         ).to(device)
         self.qnetwork_target = IQN(
-            # in_channels,
-            # num_filters,
-            # cnn_out_size,
+            in_channels,
+            num_filters,
+            cnn_out_size,
             state_size,
             action_size,
             layer_size,
             seed,
             N,
+            use_cnn,
             device=device,
         ).to(device)
 
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
 
-        self.memory = ReplayBuffer(
-            BUFFER_SIZE,
-            self.BATCH_SIZE,
-            self.device,
-            seed,
-            self.GAMMA,
-            n_step,
-        )
-
-    def new_memory_buffer(self, BUFFER_SIZE, seed, n_step):
-        self.memory = ReplayBuffer(
-            BUFFER_SIZE,
-            self.BATCH_SIZE,
-            self.device,
-            seed,
-            self.GAMMA,
-            n_step,
-        )
+        if self.use_per:
+            self.memory = PrioritizedReplay(
+                BUFFER_SIZE,
+                self.BATCH_SIZE,
+                seed,
+                self.GAMMA,
+                n_step,
+            )
+        else:
+            self.memory = ReplayBuffer(
+                BUFFER_SIZE,
+                self.BATCH_SIZE,
+                self.device,
+                seed,
+                self.GAMMA,
+                n_step,
+            )
 
     def take_action(self, state, eps=0.0, eval=False):
         """Returns actions for given state as per current policy. Acting only every 4 frames!
@@ -382,7 +339,16 @@ class iRainbowModel:
         """
         self.optimizer.zero_grad()
 
-        states, actions, rewards, next_states, dones = experiences
+        if self.use_per:
+            states, actions, rewards, next_states, dones, idx, weights = experiences
+            states = torch.FloatTensor(states).to(self.device)
+            next_states = torch.FloatTensor(np.float32(next_states)).to(self.device)
+            actions = torch.LongTensor(actions).to(self.device)
+            rewards = torch.FloatTensor(rewards).to(self.device).unsqueeze(1)
+            dones = torch.FloatTensor(dones).to(self.device).unsqueeze(1)
+            weights = torch.FloatTensor(weights).unsqueeze(1).to(self.device)
+        else:
+            states, actions, rewards, next_states, dones = experiences
 
         # Get max predicted Q values (for next states) from target model
         Q_targets_next, _ = self.qnetwork_target(next_states, self.N)
@@ -428,6 +394,13 @@ class iRainbowModel:
 
         # ------------------- update target network ------------------- #
         self.soft_update(self.qnetwork_local, self.qnetwork_target)
+
+        if self.use_per:
+            td_error = td_error.sum(dim=1).mean(
+                dim=1, keepdim=True
+            )  # not sure about this -> test
+            self.memory.update_priorities(idx, abs(td_error.data.cpu().numpy()))
+
         return loss.detach().cpu().numpy()
 
     def soft_update(self, local_model, target_model):
