@@ -23,16 +23,16 @@ parameters = {
     "model_update_freq": 4,  # Parameters related to model soft update. TODO: Figure out if these are still needed
     "epsilon": 0.3,  # Exploration parameter
     "conditions": [
-        "tree_rocks",
-        "None",
-        "implicit_attitude",
-        # "EWA",
+        # "tree_rocks",
+        # "None",
+        # "implicit_attitude",
+        "EWA",
         # "implicit_attitude+EWA",
     ],  # Model run conditions
     "epsilon_decay": 0.999,  # Exploration decay rate
     "episodic_decay_rate": 1.0,  # EWA episodic decay rate
     "similarity_decay_rate": 1.0,
-    "epochs": 2000,  # Number of epochs
+    "epochs": 300,  # Number of epochs
     "max_turns": 20,  # Number of turns per game
     "object_memory_size": 2500,  # Size of the memory buffer
     "knn_size": 10,  # Size of the nearest neighbours

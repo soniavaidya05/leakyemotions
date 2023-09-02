@@ -94,24 +94,46 @@ class RPG:
     def change_gem_values(self, new_values="None", new_colours="Shuffled"):
         pass
 
-    def create_people(self, num_people=40):
+    def create_people(self, num_people=50):
         for person in range(num_people):
-            individuation = [
-                np.random.choice([0, 1]) * 255.0,
-                np.random.choice([0, 1]) * 255.0,
-                np.random.choice([0, 1]) * 255.0,
-                np.random.choice([0, 1]) * 255.0,
-                np.random.choice([0, 1]) * 255.0,
-                np.random.choice([0, 1]) * 255.0,
-                np.random.choice([0, 1]) * 255.0,
-                np.random.choice([0, 1]) * 255.0,
-                0,
-                0,
-            ]
+            binary_indiv = False
+            if binary_indiv:
+                individuation = [
+                    np.random.choice([0, 1]) * 255.0,
+                    np.random.choice([0, 1]) * 255.0,
+                    np.random.choice([0, 1]) * 255.0,
+                    np.random.choice([0, 1]) * 255.0,
+                    np.random.choice([0, 1]) * 255.0,
+                    np.random.choice([0, 1]) * 255.0,
+                    np.random.choice([0, 1]) * 255.0,
+                    np.random.choice([0, 1]) * 255.0,
+                    0,
+                    0,
+                ]
+            else:
+                individuation = [
+                    random.random() * 255.0,
+                    random.random() * 255.0,
+                    random.random() * 255.0,
+                    random.random() * 255.0,
+                    random.random() * 255.0,
+                    random.random() * 255.0,
+                    random.random() * 255.0,
+                    random.random() * 255.0,
+                    0,
+                    0,
+                ]
+
+            stereotype = True
+            if stereotype == True:
+                probs = [0.75, 0.25]
+            if stereotype == False:
+                probs = [0.5, 0.5]
+
             color = np.random.choice([0, 1])
             if color == 0:
                 image_color = [255.0, 0.0, 0.0]
-                if random.random() < 0.75:
+                if random.random() < probs[0]:
                     rock = 1
                     wood = 0
                 else:
@@ -119,9 +141,9 @@ class RPG:
                     rock = 1
             if color == 1:
                 image_color = [0.0, 255.0, 0.0]
-                if random.random() < 0.25:
-                    wood = 1
-                    rock = 0
+                if random.random() < probs[1]:
+                    rock = 1
+                    wood = 0
                 else:
                     wood = 0
                     rock = 1

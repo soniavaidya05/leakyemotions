@@ -838,12 +838,12 @@ models = create_models()
 # options here are. these are experiments that we ran
 
 run_params = (
-    [0.3, 1500, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
-    [0.3, 1500, 20, 0.999, "None", 12000, 2500, 20.0, 20.0],
-    [0.3, 1500, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
+    # [0.3, 1500, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
+    # [0.3, 1500, 20, 0.999, "None", 12000, 2500, 20.0, 20.0],
+    # [0.3, 1500, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "CMS", 12000, 2500, 20.0, 20.0],
-    [0.3, 1500, 20, 0.999, "EWA", 12000, 2500, 20.0, 20.0],
+    [0.3, 500, 20, 0.999, "EWA", 12000, 2500, 20.0, 20.0],
     # [0.3, 1500, 20, 0.999, "implicit_attitude+EWA", 12000, 2500, 20.0, 20.0],
     # [0.3, 1500, 20, 0.999, "tree_rocks", 12000, 2500, 20.0, 20.0],
 )
@@ -887,3 +887,168 @@ for modRun in range(len(run_params)):
 #      need to have long term memories that get stored somehow
 #      if we can get the decay to work right, decay can be something that
 #      is modulated (and maybe learned) to retain memories for longer
+
+
+print(len(object_memory))
+
+
+def create_episodic_data(num, n_samples=32, leave_out=False):
+    object_memory_states_tensor = torch.tensor(
+        [obj_mem[0] for obj_mem in object_memory]
+    )
+
+    looking_for_example = True
+    while looking_for_example:
+        example = object_memory[np.random.choice(len(object_memory))]
+        if abs(example[1]) > 0:
+            looking_for_example = False
+        else:
+            if random.random() > 0.99:
+                looking_for_example = False
+
+    curr_target = example
+
+    mems = k_most_similar_recent_states(
+        torch.tensor(curr_target[0]),
+        state_knn,
+        object_memory,
+        object_memory_states_tensor,
+        decay_rate=5.0,
+        k=20,
+    )
+
+    selected_memories = random.sample(object_memory, n_samples - len(mems))
+    all_mem = mems + selected_memories
+
+    # all_mem = random.sample(object_memory, n_samples)
+
+    random.shuffle(all_mem)
+    to_subtract = curr_target[0]
+
+    updated_replay_buffer = [
+        ([1 - (abs(a - b) / 255) for a, b in zip(state, to_subtract)], reward)
+        for state, reward in all_mem
+    ]
+
+    memory_tensor = torch.FloatTensor(
+        [
+            item
+            for sublist in updated_replay_buffer
+            for item in sublist[0] + [sublist[1]]
+        ]
+    )
+
+    return memory_tensor.view(n_samples, -1), torch.FloatTensor(
+        [curr_target[1]] * n_samples
+    ).view(n_samples, -1)
+
+
+def create_episodic_data_batch(e_types, batch_size, leave_out=False):
+    memory_tensors = []
+    curr_targets = []
+    for num in e_types:
+        memory_tensor, curr_target = create_episodic_data(num)
+
+        # Debugging: Check the shape of memory_tensor and type of curr_target[1]
+        # print(f"Debug: memory_tensor.shape = {memory_tensor.shape}, curr_target[1] = {curr_target[1]} (data type: {curr_target[1].__class__})")
+
+        memory_tensors.append(memory_tensor)
+        curr_targets.append(curr_target[1])
+
+    # Convert to PyTorch tensor and NumPy array and return
+    return torch.stack(memory_tensors), np.array(
+        curr_targets, dtype=np.float32
+    ).reshape(batch_size, 1)
+
+
+class RewardPredictor(nn.Module):
+    def __init__(self):
+        super(RewardPredictor, self).__init__()
+        self.fc1 = nn.Linear(576, 64 * 2)
+        self.fc2 = nn.Linear(64 * 2, 32 * 2)
+        self.fc3 = nn.Linear(32 * 2, 1)  # Output is a single scalar value (the reward)
+
+        # Initialize the optimizer within the model
+        self.optimizer = optim.Adam(self.parameters(), lr=0.001)
+
+        # Initialize the loss function
+        self.criterion = nn.MSELoss()
+
+    def forward(self, x):
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+    def learn(self, batch, object_reward):
+        # Convert batch and object_reward to PyTorch tensors
+        batch_tensor = torch.FloatTensor(batch)  # Shape should be [batch_size, 160]
+        object_reward_tensor = torch.FloatTensor(object_reward).view(
+            -1, 1
+        )  # Shape should be [batch_size, 1]
+
+        # Forward pass: Compute predicted y by passing x to the model
+        output = self(batch_tensor)
+
+        # Compute loss
+        loss = self.criterion(output, object_reward_tensor)
+
+        # Zero gradients, perform a backward pass, and update the weights.
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        return loss.item()
+
+
+# Initialize the model
+episodic_reward_model = RewardPredictor()
+
+batch_size = 6  # Feel free to change
+losses = 0
+
+import warnings
+
+# Ignore future warnings
+warnings.simplefilter(action="ignore", category=FutureWarning)
+warnings.simplefilter(action="ignore", category=DeprecationWarning)
+
+
+for epoch in range(100000):
+    types = np.random.choice([1, 2, 3, 4, 5, 6], batch_size)
+    memory_tensor_batch, curr_target_batch = create_episodic_data_batch(
+        types, batch_size
+    )
+
+    # Concatenate along axis 1 (the second axis)
+    # memory_tensor_batch = torch.cat(memory_tensor_batch, dim=1)
+
+    # Reshape to [batch_size, 160]
+    memory_tensor_batch = memory_tensor_batch.view(batch_size, -1)
+
+    # Convert curr_targets to a tensor and reshape to [batch_size, 1]
+    curr_target_batch = torch.tensor(curr_target_batch, dtype=torch.float32).view(
+        batch_size, -1
+    )
+
+    loss = episodic_reward_model.learn(
+        torch.FloatTensor(memory_tensor_batch), torch.FloatTensor(curr_target_batch)
+    )
+    losses += loss
+
+    if epoch % 25 == 0:
+        print(epoch, losses / 250)
+        losses = 0
+        estimates = []
+        targets = []
+        for type in range(1, 7):
+            memory_tensor, curr_target = create_episodic_data(type, 32, False)
+            estimate = episodic_reward_model(memory_tensor.view(1, -1))
+            estimates.append(round(estimate.item(), 2))
+            targets.append(int(curr_target[1]))
+        print(
+            "Estimates:",
+            " ".join(map(str, estimates)),
+            "Targets:",
+            " ".join(map(str, targets)),
+        )

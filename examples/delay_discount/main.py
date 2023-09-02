@@ -91,9 +91,9 @@ env = RPG(
     width=world_size,
     layers=1,
     defaultObject=EmptyObject(),
-    gem1p=0.06,
-    gem2p=0.06,
-    wolf1p=0.03,  # rename gem3p
+    gem1p=0.10,
+    gem2p=0.10,
+    wolf1p=0.00,  # rename gem3p
 )
 # env.game_test()
 
@@ -130,9 +130,9 @@ def run_game(
             height=world_size,
             width=world_size,
             layers=1,
-            gem1p=0.06,
-            gem2p=0.06,
-            gem3p=0.03,
+            gem1p=0.10,
+            gem2p=0.10,
+            gem3p=0.00,
         )
         for loc in find_instance(env.world, "neural_network"):
             # reset the memories for all agents
@@ -141,6 +141,7 @@ def run_game(
             env.world[loc].init_rnn_state = None
 
         collected = 0
+        needed_to_finish = 3
 
         while done == 0:
             """
@@ -206,7 +207,7 @@ def run_game(
 
                     if reward == 5 or reward == 2:
                         collected = collected + 1
-                        if collected > 4:
+                        if collected > needed_to_finish:
                             got_five = got_five + 1
 
                     reward = reward - 0.1  # this is the cost of moving
@@ -217,19 +218,26 @@ def run_game(
                     if (
                         withinturn > max_turns
                         or len(find_instance(env.world, "neural_network")) == 0
-                        or collected > 4
+                        or collected > needed_to_finish
                     ):
                         done = 1
-                        if local_gem_count[0] + local_gem_count[1] < 5:
+                        if local_gem_count[0] + local_gem_count[1] < needed_to_finish:
                             outcome_types[3] = outcome_types[3] + 1
-                        if local_gem_count[0] == 5:
+                        elif local_gem_count[0] == needed_to_finish:
                             outcome_types[0] = outcome_types[0] + 1
-                        elif local_gem_count[1] == 5:
+                        elif local_gem_count[1] == needed_to_finish:
                             outcome_types[1] = outcome_types[1] + 1
-                        else:
+                        elif (
+                            (
+                                local_gem_count[0] + local_gem_count[1]
+                                >= needed_to_finish
+                            )
+                            and local_gem_count[0] > 0
+                            and local_gem_count[1] > 0
+                        ):
                             outcome_types[2] = outcome_types[2] + 1
                         if reward == 2:
-                            reward = 10 * (local_gem_count[1] - local_gem_count[0])
+                            reward = 20 * (local_gem_count[1] - local_gem_count[0])
 
                     # next_state = torch.concatenate(
                     #    [
@@ -356,9 +364,9 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
         height=world_size,
         width=world_size,
         layers=1,
-        gem1p=0.06,
-        gem2p=0.06,
-        gem3p=0.03,
+        gem1p=0.10,
+        gem2p=0.10,
+        gem3p=0.00,
     )
     for loc in find_instance(env.world, "neural_network"):
         # reset the memories for all agents
@@ -415,7 +423,7 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
 # )
 
 run_params = (
-    [0.5, 15000, 40],
+    [0.5, 50000, 40],
     # [0.1, 10000, 40],
     # [0.0, 10000, 40],
 )
@@ -437,7 +445,7 @@ for modRun in range(len(run_params)):
     # save_models(
     #    models,
     #    save_dir,
-    #    "WolvesGems_" + str(modRun),
+    #    "Wolvess_" + str(modRun),
     # )
     # make_video(
     #    "WolvesGems_" + str(modRun),
