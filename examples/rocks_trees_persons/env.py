@@ -94,7 +94,7 @@ class RPG:
     def change_gem_values(self, new_values="None", new_colours="Shuffled"):
         pass
 
-    def create_people(self, num_people=50):
+    def create_people(self, num_people=150):
         for person in range(num_people):
             binary_indiv = False
             if binary_indiv:
@@ -124,7 +124,7 @@ class RPG:
                     0,
                 ]
 
-            stereotype = True
+            stereotype = False
             if stereotype == True:
                 probs = [0.75, 0.25]
             if stereotype == False:
@@ -137,16 +137,16 @@ class RPG:
                     rock = 1
                     wood = 0
                 else:
-                    wood = 0
-                    rock = 1
+                    wood = 1
+                    rock = 0
             if color == 1:
                 image_color = [0.0, 255.0, 0.0]
                 if random.random() < probs[1]:
                     rock = 1
                     wood = 0
                 else:
-                    wood = 0
-                    rock = 1
+                    wood = 1
+                    rock = 0
             app = [[0, 0] + image_color + image_color + individuation + [0, 0]]
             info = (person, app, [wood, rock], 0, 0)
             self.person_list.append(info)

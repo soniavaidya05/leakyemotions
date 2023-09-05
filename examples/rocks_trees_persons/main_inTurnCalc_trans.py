@@ -843,7 +843,7 @@ run_params = (
     # [0.3, 1500, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "CMS", 12000, 2500, 20.0, 20.0],
-    [0.3, 2500, 20, 0.999, "EWA", 12000, 25000, 20.0, 20.0],
+    [0.3, 500, 20, 0.999, "EWA", 12000, 2500, 20.0, 20.0],
     # [0.3, 1500, 20, 0.999, "implicit_attitude+EWA", 12000, 2500, 20.0, 20.0],
     # [0.3, 1500, 20, 0.999, "tree_rocks", 12000, 2500, 20.0, 20.0],
 )
@@ -890,10 +890,78 @@ for modRun in range(len(run_params)):
 
 
 print(len(object_memory))
-import math
+
+
+object_memory_with_index = [
+    (state, reward, index) for index, (state, reward) in enumerate(object_memory)
+]
 
 
 def create_episodic_data(num, n_samples=32, leave_out=False):
+    object_memory_states_tensor = torch.tensor(
+        [obj_mem[0] for obj_mem in object_memory]
+    )
+
+    looking_for_example = True
+    while looking_for_example:
+        state, reward, index = object_memory_with_index[
+            np.random.choice(len(object_memory))
+        ]
+
+        # example = object_memory_with_index[np.random.choice(len(object_memory))]
+        if abs(reward) > 0:
+            looking_for_example = False
+        else:
+            if random.random() > 0.99:
+                looking_for_example = False
+
+    curr_target = (
+        state,
+        reward,
+    )  # or curr_target = (state, reward, index) based on your need
+
+    # Get k most similar recent states
+    mems = k_most_similar_recent_states(
+        torch.tensor(curr_target[0]),
+        state_knn,
+        object_memory_with_index,
+        object_memory_states_tensor,
+        decay_rate=5.0,
+        k=20,
+    )
+
+    # Get random memories
+    selected_memories = random.sample(object_memory_with_index, n_samples - len(mems))
+
+    # Combine them
+    all_mem = mems + selected_memories
+
+    # Sort combined list by timestamp
+    # Assuming the timestamp is the third element in the tuple
+    all_mem = sorted(all_mem, key=lambda x: x[2])
+
+    random.shuffle(all_mem)
+    to_subtract = curr_target[0]
+
+    updated_replay_buffer = [
+        ([1 - (abs(a - b) / 255) for a, b in zip(state, to_subtract)], reward)
+        for state, reward in all_mem
+    ]
+
+    memory_tensor = torch.FloatTensor(
+        [
+            item
+            for sublist in updated_replay_buffer
+            for item in sublist[0] + [sublist[1]]
+        ]
+    )
+
+    return memory_tensor.view(n_samples, -1), torch.FloatTensor(
+        [curr_target[1]] * n_samples
+    ).view(n_samples, -1)
+
+
+def create_episodic_data_old(num, n_samples=32, leave_out=False):
     object_memory_states_tensor = torch.tensor(
         [obj_mem[0] for obj_mem in object_memory]
     )
@@ -915,24 +983,19 @@ def create_episodic_data(num, n_samples=32, leave_out=False):
         object_memory,
         object_memory_states_tensor,
         decay_rate=5.0,
-        k=32,
+        k=20,
     )
 
     selected_memories = random.sample(object_memory, n_samples - len(mems))
-    # all_mem = mems + selected_memories
+    all_mem = mems + selected_memories
+
     # all_mem = random.sample(object_memory, n_samples)
-    all_mem = mems
-    # random.shuffle(all_mem)
+
+    random.shuffle(all_mem)
     to_subtract = curr_target[0]
 
     updated_replay_buffer = [
-        (
-            [
-                max(0, min(1, 1 - (abs(a - b) / 255))) ** 2
-                for a, b in zip(state, to_subtract)
-            ],
-            reward,
-        )
+        ([1 - (abs(a - b) / 255) for a, b in zip(state, to_subtract)], reward)
         for state, reward in all_mem
     ]
 
