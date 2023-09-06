@@ -76,20 +76,17 @@ class Agent:
         exp = (priority, (image, blank, blank, image, blank))
         self.episode_memory.append(exp)
 
-    def transition(self, env, action):
+    def transition(self, action):
         """
         Changes the world based on the action taken
         """
         done = 0
         reward = 0
-        object_info = env.world.appearance[action]
-        reward = 0
-
-        reward = env.world.reward[action]
+        object_info = self.appearance[action]
+        reward = self.rewards[action]
         self.reward += reward
 
         return (
-            env.world,
             reward,
             done,
             object_info,
