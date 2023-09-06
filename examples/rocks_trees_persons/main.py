@@ -366,6 +366,8 @@ env = RPG(
     gem1p=0.03,
     gem2p=0.03,
     wolf1p=0.03,  # rename gem3p
+    group_probs=[0.5, 0.5],
+    num_people=150,
 )
 # env.game_test()
 

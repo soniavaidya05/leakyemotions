@@ -357,15 +357,19 @@ object_memory = deque(maxlen=250)
 state_knn = NearestNeighbors(n_neighbors=15)
 state_knn_CMS = NearestNeighbors(n_neighbors=15)
 
+
 models = create_models()
 env = RPG(
     height=world_size,
     width=world_size,
     layers=1,
-    defaultObject=EmptyObject(20),
     gem1p=0.03,
     gem2p=0.03,
     wolf1p=0.03,  # rename gem3p
+    # group_probs=[0.5, 0.5],
+    # num_people=40,
+    tile_size=(1, 1),
+    defaultObject=EmptyObject(20),
 )
 # env.game_test()
 
@@ -1020,7 +1024,7 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=DeprecationWarning)
 
 
-for epoch in range(100000):
+for epoch in range(10000):
     types = np.random.choice([1, 2, 3, 4, 5, 6], batch_size)
     memory_tensor_batch, curr_target_batch = create_episodic_data_batch(
         types, batch_size

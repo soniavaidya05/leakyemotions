@@ -24,9 +24,13 @@ class RPG:
         gem1p=0.110,
         gem2p=0.04,
         wolf1p=0.005,
+        group_probs=[0.50, 0.50],
+        num_people=150,
         tile_size=(1, 1),
         defaultObject=EmptyObject(20),
     ):
+        self.group_probs = group_probs
+        self.num_people = num_people
         self.app_size = 20
         self.gem1p = gem1p
         self.gem2p = gem2p
@@ -94,7 +98,9 @@ class RPG:
     def change_gem_values(self, new_values="None", new_colours="Shuffled"):
         pass
 
-    def create_people(self, num_people=150):
+    def create_people(self):
+        num_people = self.num_people
+        probs = self.group_probs
         for person in range(num_people):
             binary_indiv = False
             if binary_indiv:
@@ -123,12 +129,6 @@ class RPG:
                     0,
                     0,
                 ]
-
-            stereotype = False
-            if stereotype == True:
-                probs = [0.75, 0.25]
-            if stereotype == False:
-                probs = [0.5, 0.5]
 
             color = np.random.choice([0, 1])
             if color == 0:
