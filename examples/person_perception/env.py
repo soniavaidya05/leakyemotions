@@ -16,7 +16,7 @@ import torch
 class RPG:
     def __init__(
         self,
-        group_probs=[0.50, 0.50],
+        group_probs=[0.75, 0.25],
         num_people=150,
     ):
         self.group_probs = group_probs
@@ -105,11 +105,7 @@ class RPG:
         object_info = self.appearance[action]
         reward = self.rewards[action]
 
-        return (
-            reward,
-            done,
-            object_info,
-        )
+        return (reward, done, object_info, predictions, self.rewards)
 
 
 # all below needs to be moved
@@ -221,16 +217,17 @@ env = RPG()
 value_model = ValueModel(state_dim=20, memory_size=2000)
 rewards = 0
 losses = 0
-for epoch in range(10000):
+for epoch in range(1000):
     env.generate_trial()
-    reward, done, object_info = env.step(value_model, 4)
+    reward, done, object_info, preds, reals = env.step(value_model, 4)
     rewards += reward
     value_model.add_memory(object_info[0], reward)
     if len(value_model.replay_buffer) > 51:
         memories = value_model.sample(50)
         value_loss = value_model.learn(memories, 50)
         losses = value_loss + losses
-    if epoch % 100 == 0:
-        print(epoch, rewards / 100, losses / 100)
+    if epoch % 10 == 0:
+        print(epoch, rewards / 10, losses / 10)
+        print(epoch, preds, reals)
         rewards = 0
         losses = 0
