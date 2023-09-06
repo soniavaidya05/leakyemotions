@@ -824,7 +824,7 @@ models = create_models()
 # options here are. these are experiments that we ran
 
 run_params = (
-    [0.5, 250, 20, 0.999, "EWA", 12000, 2500, 20.0, 20.0],
+    [0.5, 250, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "tree_rocks", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "None", 12000, 2500, 20.0, 20.0],

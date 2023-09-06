@@ -1,5 +1,5 @@
 # from tkinter.tix import Tree
-from examples.rocks_trees_persons.utils import (
+from examples.person_perception.utils import (
     update_epsilon,
     update_memories,
     find_moveables,
@@ -10,8 +10,8 @@ from examples.rocks_trees_persons.utils import (
 )
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import euclidean
-from examples.rocks_trees_persons.iRainbow_clean import iRainbowModel
-from examples.rocks_trees_persons.env import RPG
+from examples.person_perception.iRainbow_clean import iRainbowModel
+from examples.person_perception.env import RPG
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 import torch.nn as nn
@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from gem.DQN_utils import save_models, load_models, make_video
 
 import torch.optim as optim
-from examples.rocks_trees_persons.elements import EmptyObject, Wall
+from examples.person_perception.elements import EmptyObject, Wall
 
 import time
 import numpy as np
