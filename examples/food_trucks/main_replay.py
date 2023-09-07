@@ -10,9 +10,8 @@ import argparse
 from examples.food_trucks.main import run_game, create_models
 from examples.food_trucks.env import FoodTrucks
 from examples.food_trucks.utils import generate_memories
-from examples.food_trucks.worldmodel import (
+from examples.food_trucks.models.worldmodel import (
     PrioritizedReplayMemory,
-    WorldModel,
     sample_and_visualize_test
 )
 from examples.RPG3_PPO.PPO_CPC import (
@@ -20,8 +19,8 @@ from examples.RPG3_PPO.PPO_CPC import (
     PPO
 )
 
-# Tensorboard
-from torch.utils.tensorboard import SummaryWriter
+# from examples.food_trucks.models.cpc import CPCModel
+from examples.food_trucks.models.worldmodel import WorldModel
 
 # # # # # # # # # # # #
 # Setup trained model #
@@ -30,26 +29,32 @@ from torch.utils.tensorboard import SummaryWriter
 def setup(multiplier = 1000):
 
     world_size = 11
+    memory_size = 5
+    vision = 5
     env = FoodTrucks(
         height=world_size,
         width=world_size,
         layers=1,
         truck_prefs=(10,5,-5),
         baker_mode=True,
-        one_hot = True
+        one_hot = True,
+        vision = vision,
+        full_mdp=True
     )
 
     turn = 1
     trainable_models = [0]
 
     # Set up model and environment
-    models = create_models(n_agents = len(trainable_models))
+    models = create_models(n_agents = len(trainable_models),
+                           memory_size = memory_size,
+                           vision = vision)
 
     # Set up parameters (epsilon, epochs, max_turns)
     run_params = (
-        [0.5, multiplier],
-        [0.1, 2 * multiplier],
-        [0.0, 3 * multiplier],
+        [0.5, 5 * multiplier],
+        [0.1, 10 * multiplier],
+        [0.0, 10 * multiplier],
     )
 
     # Train model
@@ -65,7 +70,8 @@ def setup(multiplier = 1000):
             trainable_models = trainable_models,
             sync_freq = 200,
             modelUpdate_freq = 4,
-            log = True
+            memory_size = memory_size,
+            log = False
         )
 
     # Generate memories
@@ -110,6 +116,7 @@ def create_replay(n_agents,
             "kernel_size": 3,
             "stride": 3,
             "padding": 0,
+            "output_padding": 2,  # Add this line
         },
         {"layer_type": "relu"},
         {
@@ -119,7 +126,7 @@ def create_replay(n_agents,
             "kernel_size": 1,
             "stride": 1,
             "padding": 0,
-            # "output_padding": 1,  # Add this line
+            "output_padding": 2,  # Add this line
         },
         # Note, max pool is broken in the config
     ]
@@ -128,40 +135,33 @@ def create_replay(n_agents,
     for i in range(n_agents):
         models.append(
             WorldModel(
-                capacity = len(stored_memories),
-                input_shape = (n_channels, 9, 9),
-                output_shape = (n_channels, 9, 9),
-                num_actions = 4,
-                batch_size = 1024,
+                input_shape=[7, 11, 11],
+                cpc_output = 64,
+                action_space = 4,
+                batch_size=1024,
                 cnn_config = cnn_config,
-                stored_memories = stored_memories
+                memories = stored_memories,
+                memory_size=5,
+                no_cnn=True,
+                device = 'cpu'
             )
         )
 
     return models
 
 def run_model(models, device, plot = False, plot_freq = 100, n_epochs = 100000, action_model = None, env = None):
-    writer = SummaryWriter()
     for model in models:
-        losses1 = 0
-        losses2 = 0
         for epoch in range(n_epochs):
-            reconstruction_loss1, reconstruction_loss2 = model.train_model(device)
-            losses1 = losses1 + reconstruction_loss1
-            losses2 = losses2 + reconstruction_loss2
-            writer.add_scalar("Losses 1", reconstruction_loss1, epoch)
-            writer.add_scalar("Losses 2", reconstruction_loss2, epoch)
+            cpc, r1, r2 = model.train()
             if plot:
                 if epoch % plot_freq == 0:
                     clear_output(wait = True)
-                    print(f'Epoch: {epoch}. R1 loss: {round(reconstruction_loss1, 2)}. R2 loss: {round(reconstruction_loss2, 2)}.')
+                    print(f'Epoch: {epoch}. CPC loss: {round(cpc, 2)}. R1 loss: {round(r1, 2)}. R2 loss: {round(r2, 2)}.')
                     sample_and_visualize_test(model, 
                                               device, 
                                               one_hot = True, 
                                               epoch = epoch,
                                               action_model=action_model,
                                               env=env)
-    writer.close()
-
 
 

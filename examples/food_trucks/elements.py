@@ -117,10 +117,10 @@ class MexicanTruck(Truck):
 class Agent:
     kind = "agent"  # class variable shared by all instances
 
-    def __init__(self, model, color = [0.0, 0.0, 255.0, 0.0, 0.0, 0.0, 0.0]):
+    def __init__(self, model, color = [0.0, 0.0, 255.0, 0.0, 0.0, 0.0, 0.0], vision = 4):
         self.health = 10  # for the agents, this is how hungry they are
         self.appearance = color  # agents are blue
-        self.vision = 4  # agents can see three radius around them
+        self.vision = vision  # agents can see three radius around them
         self.policy = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
         self.value = 0  # agents have no value
         self.reward = 0  # how much reward this agent has collected

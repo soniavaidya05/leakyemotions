@@ -16,13 +16,13 @@ from gem.DQN_utils import save_models
 from IPython.display import clear_output
 
 # Import model and environment
-from examples.food_trucks.iRainbow_clean import iRainbowModel
+from examples.food_trucks.models.iRainbow_clean import iRainbowModel
 from examples.food_trucks.env import FoodTrucks
 from examples.food_trucks.elements import EmptyObject, Wall
 from examples.food_trucks.utils import viz
 
 # Set up tensorboard
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 # Set seed for replication
 SEED = 1 
@@ -38,32 +38,34 @@ device = 'cpu'
 
 
 def create_models(n_agents = 1,
-                  one_hot = True):
+                  one_hot = True,
+                  memory_size = 5,
+                  vision = 4):
     """
     Should make the sequence length of the LSTM part of the model and an input here
     Should also set up so that the number of hidden laters can be added to dynamically
     in this function. Below should fully set up the NN in a flexible way for the studies
     """
 
+    state_len = 2 * vision + 1
+
     models = []
     for i in range(n_agents):
         if one_hot:
             models.append(
                 iRainbowModel(
-                    in_channels=7,
-                    num_filters=7,
-                    cnn_out_size=567,  # 910
                     state_size=torch.tensor(
-                        [7, 9, 9]
+                        [7, state_len, state_len]
                     ),  # this seems to only be reading the first value
                     action_size=4,
                     layer_size=250,  # 100
+                    memory_size = memory_size,
                     n_step=3,  # Multistep IQN (rainbow paper uses 3)
                     BATCH_SIZE=64,
                     BUFFER_SIZE=1024,
                     LR=0.00025,  # 0.00025
                     TAU=1e-3,  # Soft update parameter
-                    GAMMA=0.95,  # Discout factor 0.99
+                    GAMMA=0.99,  # Discout factor 0.99
                     N=12,  # Number of quantiles
                     device=device,
                     seed=SEED,
@@ -72,20 +74,18 @@ def create_models(n_agents = 1,
         else:
             models.append(
                 iRainbowModel(
-                    in_channels=3,
-                    num_filters=7,
-                    cnn_out_size=567,  # 910
                     state_size=torch.tensor(
-                        [3, 9, 9]
+                        [3, state_len, state_len]
                     ),  # this seems to only be reading the first value
                     action_size=4,
                     layer_size=250,  # 100
+                    memory_size = memory_size,
                     n_step=3,  # Multistep IQN (rainbow paper uses 3)
                     BATCH_SIZE=64,
                     BUFFER_SIZE=1024,
                     LR=0.00025,  # 0.00025
                     TAU=1e-3,  # Soft update parameter
-                    GAMMA=0.95,  # Discout factor 0.99
+                    GAMMA=0.99,  # Discout factor 0.99
                     N=12,  # Number of quantiles
                     device=device,
                     seed=SEED,
@@ -105,6 +105,7 @@ def run_game(
     trainable_models = [0],
     sync_freq = 200,
     modelUpdate_freq = 4,
+    memory_size = 5,
     log = True,
     show = False
 ):
@@ -132,7 +133,7 @@ def run_game(
             # the parameter sets the length of the sequence for LSTM
             agent = env.world[loc] # Agent at this location
             agent.init_replay(
-                2,
+                memory_size,
                 one_hot = env.one_hot
             )
             agent.init_rnn_state = None
@@ -325,7 +326,9 @@ if __name__ == '__main__':
         defaultObject=EmptyObject(),
         truck_prefs=(10,5,-5),
         baker_mode=args.baker_mode,
-        one_hot=args.one_hot
+        one_hot=args.one_hot,
+        vision=5,
+        full_mdp=True
     )
 
     turn = 1
@@ -333,7 +336,9 @@ if __name__ == '__main__':
 
     # Set up model and environment
     models = create_models(n_agents = len(trainable_models),
-                           one_hot = args.one_hot)
+                           one_hot = args.one_hot,
+                           memory_size = 5,
+                           vision = 5)
 
     # Set up parameters (epsilon, epochs, max_turns)
     run_params = (
@@ -354,7 +359,8 @@ if __name__ == '__main__':
             world_size=world_size,
             trainable_models = trainable_models,
             sync_freq = 200,
-            modelUpdate_freq = 4
+            modelUpdate_freq = 4,
+            memory_size = 5
         )
         # filename = save_dir + "2d_" + str(modRun) + ".gif"
         # eval_game(models, env, turn, 0, 1, 35, filename)

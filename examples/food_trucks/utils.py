@@ -16,6 +16,7 @@ from IPython.display import clear_output
 def generate_memories(models, env, n_games = 10000, show = False):
     max_turns = 100
     world_size = 11
+    memory_size = 5
     memories = deque(maxlen=max_turns*n_games)
     total_reward = 0
     memories_added = 0
@@ -33,7 +34,7 @@ def generate_memories(models, env, n_games = 10000, show = False):
             # the parameter sets the length of the sequence for LSTM
             agent = env.world[loc]
             agent.init_replay(
-                numberMemories=2,
+                numberMemories=memory_size,
             )
             agent.init_rnn_state = None
 
@@ -47,6 +48,7 @@ def generate_memories(models, env, n_games = 10000, show = False):
                     loc, 
                 )
                
+                print(state.size())
 
                 action = models[agent.policy].take_action(state, 0)
 
@@ -147,6 +149,7 @@ def eval_game(models, env, turn, epsilon, epochs=10000, max_turns=100, filename=
 def generate_memories(models, env, n_games = 10000, show = False):
     max_turns = 100
     world_size = 11
+    memory_size = 5
     memories = deque(maxlen=max_turns*n_games)
     for i in range(n_games):
         clear_output(wait = True)
@@ -162,7 +165,7 @@ def generate_memories(models, env, n_games = 10000, show = False):
             # the parameter sets the length of the sequence for LSTM
             agent = env.world[loc]
             agent.init_replay(
-                numberMemories=2,
+                numberMemories=memory_size,
             )
             agent.init_rnn_state = None
 

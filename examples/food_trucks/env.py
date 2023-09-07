@@ -29,7 +29,9 @@ class FoodTrucks:
         tile_size=(1, 1),
         truck_prefs = (10, 5, -5),
         baker_mode = False,
-        one_hot = True
+        one_hot = True,
+        vision = 5,
+        full_mdp = False
     ):
         self.one_hot = one_hot
         self.height = height
@@ -38,6 +40,8 @@ class FoodTrucks:
         self.defaultObject = defaultObject
         self.baker_mode = baker_mode
         self.truck_prefs = truck_prefs
+        self.vision = vision
+        self.full_mdp = full_mdp
         self.colors = self.color_map()
         self.create_world(self.height, self.width, self.layers)
         self.init_elements()
@@ -103,7 +107,9 @@ class FoodTrucks:
         self.world[locs[0][0], locs[0][1], locs[0][2]] = KoreanTruck(korean_truck, color = self.colors['korean_color'])
         self.world[locs[1][0], locs[1][1], locs[1][2]] = LebaneseTruck(lebanese_truck, color = self.colors['lebanese_color'])
         self.world[locs[2][0], locs[2][1], locs[2][2]] = MexicanTruck(mexican_truck, color = self.colors['mexican_color'])
-        self.world[locs[3][0], locs[3][1], locs[3][2]] = Agent(model = 0, color = self.colors['agent_color'])
+        self.world[locs[3][0], locs[3][1], locs[3][2]] = Agent(model = 0, 
+                                                               color = self.colors['agent_color'],
+                                                               vision = self.vision)
 
     def insert_walls(self, height, width):
         """
@@ -188,21 +194,41 @@ class FoodTrucks:
             Loops through each layer to get full visual field
             """
             loc = (location[0], location[1], layer)
-            if self.one_hot:
-                img = agent_visualfield(
-                    self.world,
-                    loc,
-                    k=self.world[location].vision,
-                    wall_app=[0.0, 255.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                    num_channels=7,
+
+            if not self.full_mdp:
+                if self.one_hot:
+                    img = agent_visualfield(
+                        self.world,
+                        loc,
+                        k=self.world[location].vision,
+                        wall_app=[0.0, 255.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                        num_channels=7,
+                    )
+                else:
+                    img = agent_visualfield2(
+                        self.world,
+                        loc,
+                        k=self.world[location].vision,
+                        out_of_bounds_colour=self.colors['wall_color']
                 )
+            # Full mdp version: see whole map, centred on middle pixel
             else:
-                img = agent_visualfield2(
-                    self.world,
-                    loc,
-                    k=self.world[location].vision,
-                    out_of_bounds_colour=self.colors['wall_color']
-                )
+                loc = (self.height // 2, self.width // 2, layer)
+                if self.one_hot:
+                    img = agent_visualfield(
+                        self.world,
+                        loc,
+                        k=self.height // 2,
+                        wall_app=[0.0, 255.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                        num_channels=7,
+                    )
+                else:
+                    img = agent_visualfield2(
+                        self.world,
+                        loc,
+                        k=self.height // 2,
+                        out_of_bounds_colour=self.colors['wall_color']
+                )   
             input = torch.tensor(img).unsqueeze(0).permute(0, 3, 1, 2).float()
             state_now = torch.cat((state_now, input.unsqueeze(0)), dim=2)
 
