@@ -34,6 +34,7 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
+from torchsummary import summary
 
 from gem.models.layers import NoisyLinear
 
@@ -47,7 +48,7 @@ class IQN(nn.Module):
         layer_size: int,
         seed: int,
         n_quantiles: int,
-        memory_size: int = 5,
+        num_frames: int = 5,
         device: Optional[torch.device] = None,
     ) -> None:
         super().__init__()
@@ -66,7 +67,7 @@ class IQN(nn.Module):
         self.device = device
 
         # Network architecture
-        self.head1 = nn.Linear(memory_size * self.input_shape.prod(), layer_size)
+        self.head1 = nn.Linear(num_frames * self.input_shape.prod(), layer_size)
 
         self.cos_embedding = nn.Linear(self.n_cos, layer_size)
         self.ff_1 = NoisyLinear(layer_size, layer_size)
@@ -255,7 +256,7 @@ class iRainbowModel:
         state_size,
         action_size,
         layer_size,
-        memory_size,
+        num_frames,
         n_step,
         BATCH_SIZE,
         BUFFER_SIZE,
@@ -295,7 +296,7 @@ class iRainbowModel:
         self.n_step = n_step
         self.sync_freq = sync_freq
         self.epsilon = epsilon
-        self.memory_size = memory_size
+        self.num_frames = num_frames
 
         # IQN-Network
         self.qnetwork_local = IQN(
@@ -304,7 +305,7 @@ class iRainbowModel:
             layer_size,
             seed,
             N,
-            memory_size,
+            num_frames,
             device=device,
         ).to(device)
         self.qnetwork_target = IQN(
@@ -313,7 +314,7 @@ class iRainbowModel:
             layer_size,
             seed,
             N,
-            memory_size,
+            num_frames,
             device=device,
         ).to(device)
 
@@ -327,6 +328,15 @@ class iRainbowModel:
             self.GAMMA,
             n_step,
         )
+
+    def __str__(self):
+        return f'''
+IQN iRainbow Model
+==================
+
+Parameters:
+    TAU: {self.TAU}, GAMMA: {self.GAMMA}, Quantiles: {self.N}, Batch size: {self.BATCH_SIZE}
+'''
 
     def take_action(self, state, eval=False):
         """Returns actions for given state as per current policy. Acting only every 4 frames!
@@ -448,6 +458,24 @@ class iRainbowModel:
     
     def end_epoch_action(self, **kwargs):
         self.transfer_memories(kwargs['agent'], extra_reward = True)
+
+    def save(self, name_pattern, dir='./checkpoints'):
+        torch.save(
+            {
+                'local': self.qnetwork_local.state_dict(),
+                'target': self.qnetwork_target.state_dict(),
+                'optim': self.optimizer.state_dict()
+            },
+            f'{dir}/model_{name_pattern}.pkl'
+        )
+    
+    def load(self, name_pattern, dir='./checkpoints'):
+        checkpoint = torch.load(
+            f'{dir}/model_{name_pattern}.pkl'
+        )
+        self.qnetwork_local.load_state_dict(checkpoint['local'])
+        self.qnetwork_target.load_state_dict(checkpoint['target'])
+        self.optimizer.load_state_dict(checkpoint['optim'])
 
 def calculate_huber_loss(td_errors, k=1.0):
     """

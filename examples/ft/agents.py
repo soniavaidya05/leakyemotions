@@ -86,16 +86,16 @@ class Agent(Object):
                  color: list, 
                  model, 
                  cfg,
-                 location
+                 location = None
                 ):
         super().__init__(color)
         self.cfg = cfg
-        self.vision = self.cfg.agent.vision
+        self.vision = self.cfg.vision
         self.location = location
         self.has_transitions = True
 
         # Training-related features
-        self.episode_memory = Memory(self.cfg.agent.memory_size)
+        self.episode_memory = Memory(self.cfg.memory_size)
         self.model = model
 
         self.encounters = {
@@ -118,7 +118,7 @@ class Agent(Object):
             If it is not specified, the state size will be specified with the agent's vision.
         '''
         priority = torch.tensor(0.1)
-        num_frames = self.model.memory_size
+        num_frames = self.model.num_frames
 
         if state_shape is not None:
             state = torch.zeros(1, num_frames, *state_shape).float()
@@ -207,11 +207,18 @@ class Agent(Object):
 
         # Get the interaction reward
         reward += target_object.value 
+        if hasattr(target_object, 'done'):
+            done = True
+        else:
+            done = False
 
         # Get the next state   
         next_state = self.pov(env)
 
-        return state, action, reward, next_state
+        # Increment the encounter list
+        self.encounters[target_object.kind.lower()] += 1
+
+        return state, action, reward, next_state, done
         
     def reset(self):
         self.episode_memory.clear()
@@ -221,18 +228,9 @@ class Agent(Object):
             'korean': 0,
             'lebanese': 0,
             'mexican': 0,
-            'wall': 0
+            'wall': 0,
+            'emptyobject': 0
         }
-
-    def encounter(self, reward):
-        if reward == self.cfg.env.truck_prefs[0]:
-            self.encounters['korean'] += 1
-        elif reward == self.cfg.env.truck_prefs[1]:
-            self.encounters['lebanese'] += 1
-        elif reward == self.cfg.env.truck_prefs[2]:
-            self.encounters['mexican'] += 1
-        elif reward == -1:
-            self.encounters['wall'] += 1
 
     
 # endregion

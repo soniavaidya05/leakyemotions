@@ -3,12 +3,12 @@
 # --------------------------------- #
 from examples.ft.gridworld import GridworldEnv
 from examples.ft.entities import (
-    EmptyObject,
     Wall,
-    Truck
+    EmptyObject
 )
-from examples.ft.agents import Agent
+from examples.ft.utils import color_map
 import numpy as np
+import random
 
 # --------------------------------- #
 # endregion: Imports                #
@@ -20,43 +20,23 @@ class FoodTrucks(GridworldEnv):
     '''
     def __init__(
         self,
-        cfg
+        cfg,
+        agents,
+        entities
     ):
         self.cfg = cfg
         self.channels = cfg.env.channels
-        self.truck_prefs = cfg.env.truck_prefs
+        self.colors = color_map(self.channels)
         self.full_mdp = cfg.env.full_mdp
         self.baker_mode = cfg.env.baker_mode
-        self.color_map()
+        self.agents = agents
+        self.trucks = entities
         super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(self.colors['empty']))
         self.populate()
 
     # --------------------------- #
     # region: initialization      #
     # --------------------------- #
-    
-    def color_map(self):
-        '''
-        Generates a color map for the food truck environment.
-        '''
-        if self.channels > 4:
-            self.colors = {
-                'empty': [0 for _ in range(self.channels)],
-                'agent': [255 if x == 0 else 0 for x in range(self.channels)],
-                'wall': [255 if x == 1 else 0 for x in range(self.channels)],
-                'korean': [255 if x == 2 else 0 for x in range(self.channels)],
-                'lebanese': [255 if x == 3 else 0 for x in range(self.channels)],
-                'mexican': [255 if x == 4 else 0 for x in range(self.channels)]
-            }
-        else:
-            self.colors = {
-                'empty': [0.0, 0.0, 0.0],
-                'agent': [200.0, 200.0, 200.0],
-                'wall': [50.0, 50.0, 50.0],
-                'korean': [0.0, 0.0, 255.0],
-                'lebanese': [0.0, 255.0, 0.0],
-                'mexican': [255.0, 0.0, 0.0]
-            }
 
     def populate(self):
         '''
@@ -88,26 +68,22 @@ class FoodTrucks(GridworldEnv):
             locs = np.vstack((locs, [(self.height - 2, self.height - 2, 0)]))
 
         # Place the trucks and agents
-        trucks = ('korean', 'lebanese', 'mexican')
+        random.shuffle(self.trucks)
         for i in range(len(locs)):
             loc = tuple(locs[i])
             if i < 3:
-                self.world[loc] = Truck(
-                    color=self.colors[trucks[i]],
-                    value=self.truck_prefs[i],
-                    cuisine=trucks[i])
+                self.world[loc] = self.trucks[i]
             else:
-                self.world[loc] = Agent(
-                    color=self.colors['agent'],
-                    model=None,
-                    cfg=self.cfg,
-                    location=loc
-                )
+                self.world[loc] = self.agents[0]
+                self.agents[0].location = loc
 
     # --------------------------- #
     # endregion: initialization   #
     # --------------------------- #
 
-    def reset(self):
+    def reset(self, hard_reset = False):
+        '''
+        Reset the environment.
+        '''
         self.create_world()
         self.populate()

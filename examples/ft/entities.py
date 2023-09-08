@@ -17,6 +17,9 @@ class Object:
 
     def __str__(self):
         return str(self.__class__.__name__)
+    
+    def __repr__(self):
+        return f'{self.__class__.__name__}(color={self.appearance},value={self.value})'
 
 # ----------------------------------------------------- #
 # region: Environment object classes for Baker ToM task #
@@ -44,11 +47,18 @@ class Truck(Object):
 
     Cuisine: specifies the name of the truck.
     '''
-    def __init__(self, color, value, cuisine = 'generic'):
+    def __init__(self, color, cfg):
         super().__init__(color)
-        self.value = value # Value is specified in advance
+        self.cfg = cfg
+        print(cfg)
+        self.value = cfg.value # Value is specified in advance
         self.passable = True # You eat the food by stepping on top of the truck.
-        self.kind = cuisine + str(self)
+        self.kind = cfg.cuisine
+        self.cuisine = cfg.cuisine
+        self.done = True
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(color={self.appearance},value={self.value},cuisine={self.cuisine})'
 
 # endregion
 # ----------------------------------------------------- #

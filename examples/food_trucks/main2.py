@@ -10,7 +10,7 @@ from examples.ft.models.iqn import iRainbowModel
 from examples.ft.env import FoodTrucks
 from examples.ft.entities import EmptyObject
 from examples.ft.utils import visual_field
-from examples.ft.config import create_models, load_config
+from examples.ft.config import create_models, create_agents, create_entities, load_config
 from examples.food_trucks.main import run_game
 
 import torch
@@ -26,13 +26,6 @@ np.random.seed(SEED)
 random.seed(SEED)
 torch.manual_seed(SEED)
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--config", help="path to config file")
-args = parser.parse_args(['--config', '../ft/config.yaml'])
-cfg = load_config(
-    args
-)
-
 def run_game(
     models,
     env: FoodTrucks,
@@ -40,22 +33,20 @@ def run_game(
     max_turns,
     sync_freq,
     model_update_freq,
-    epsilon
+    epsilon,
+    log
 ):
-    
+    if log:
+        from torch.utils.tensorboard import SummaryWriter
+        writer = SummaryWriter()
+
     losses = []
     points = []
-
-    for agent, model in zip(agents, models):
-        agent.model = model
-        agent.model.epsilon = epsilon
 
     for epoch in range(epochs):
 
         env.reset()
-        agents = env.get_entities(
-            'Agent'
-        )
+        agents = env.agents
         for agent in agents:
             agent.reset()
 
@@ -75,11 +66,12 @@ def run_game(
                         agent.model.qnetwork_local.state_dict()
                     )
 
-                state, action, reward, next_state = agent.transition(env)
+                state, action, reward, next_state, done_ = agent.transition(env)
+                
+                if done_:
+                    done = True
 
                 points.append(reward)
-                
-                agent.encounter(reward)
 
                 exp = (1, (state, action, reward, next_state, done))
 
@@ -87,54 +79,87 @@ def run_game(
                     exp
                 )
 
-                agent.models.transfer_memories(
+                agent.model.transfer_memories(
                     agent, extra_reward = True
                 )
 
                 if epoch > 200 and turn % model_update_freq == 0:
                     loss = agent.model.training()
-                    losses.append(loss)
+                    losses.append(loss.detach().numpy())
         
         if epoch > 100:
 
             for agent in agents:
                 loss = agent.model.training()
-                losses.append(loss)
+                losses.append(loss.detach().numpy())
 
-        if len(losses) > 10:
+        if len(losses) > 0:
 
             print(f'''
 --------------------------------------------------------------------
-Epoch: {epoch} | Turns: {turn} | Running mean loss: {round(np.mean(losses[-10:]), 2)} | Running mean reward: {round(np.mean(points[-10:]), 2)}
+Epoch: {epoch} | Turns: {turn} | Running mean loss: {losses[-1]} | Running mean reward: {np.mean(points)}
 ''')
+            if log:
+                writer.add_scalar('Loss', losses[-1], epoch)
+                writer.add_scalar('Reward', points[-1], epoch)
+                writer.add_scalars('Encounters',
+                                   {
+                                       'Korean': agents[0].encounters['korean'],
+                                       'Lebanese': agents[0].encounters['lebanese'],
+                                       'Mexican': agents[0].encounters['mexican'],
+                                       'Wall': agents[0].encounters['wall']
+                                   }, epoch)
         else:
             print(f'''
 --------------------------------------------------------------------
-Epoch: {epoch} | Turns: {turn} | Running mean loss: [n/a] | Running mean reward: {round(np.mean(points[-10:]), 2)}
+Epoch: {epoch} | Turns: {turn} | Running mean loss: [n/a] | Running mean reward: {np.mean(points)}
 ''')
+    
+    if log:
+        writer.close()
         
     return models
 
-env = FoodTrucks(cfg)
+parser = argparse.ArgumentParser()
+parser.add_argument('--config', '-c', default='../ft/config.yaml', help='The filepath to YAML configuration file.')
+args = parser.parse_args()
+cfg = load_config(args)
+
+# Create model objects and environment
 models = create_models(cfg)
+agents = create_agents(cfg, models)
+entities = create_entities(cfg)
+env = FoodTrucks(cfg, agents, entities)
 
 run_params = {
     'models': models,
     'env': env,
-    'epochs': 5000,
-    'max_turns': 100,
-    'sync_freq': 200,
+    'epochs': cfg.experiment.epochs,
+    'max_turns': cfg.experiment.max_turns,
+    'sync_freq': cfg.model.iqn.parameters.sync_freq,
     'model_update_freq': 4,
-    'epsilon': 0.5
+    'epsilon': 0.5,
+    'log': cfg.log
 }
 
+# Epsilon values to run
 eps = [0.5, 0.1, 0.01]
+
 for i in range(3):
     run_params['epsilon'] = eps[i]
     models = run_game(
         **run_params
     )
-    
+
+    for model in models:
+        torch.save(
+            {
+                'local': model.qnetwork_local.state_dict(),
+                'target': model.qnetwork_target.state_dict(),
+                'optim': model.optimizer.state_dict()
+            },
+            f'./data/model_{eps[i]}.pkl'
+        )
 
 
             

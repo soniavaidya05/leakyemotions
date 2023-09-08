@@ -82,9 +82,35 @@ def visual_field(world: np.ndarray,
         else:
             return new.astype(np.uint8)
 
-def add_models(agents, models):
-    for agent, model in zip(agents, models):
-        agent.model = model
+def color_map(channels: int) -> dict:
+    '''
+    Generates a color map for the food truck environment.
+
+    Parameters:
+        channels: the number of appearance channels in the environment
+
+    Return:
+        A dict of object-color mappings
+    '''
+    if channels > 4:
+        colors = {
+            'empty': [0 for _ in range(channels)],
+            'agent': [255 if x == 0 else 0 for x in range(channels)],
+            'wall': [255 if x == 1 else 0 for x in range(channels)],
+            'korean': [255 if x == 2 else 0 for x in range(channels)],
+            'lebanese': [255 if x == 3 else 0 for x in range(channels)],
+            'mexican': [255 if x == 4 else 0 for x in range(channels)]
+        }
+    else:
+        colors = {
+            'empty': [0.0, 0.0, 0.0],
+            'agent': [200.0, 200.0, 200.0],
+            'wall': [50.0, 50.0, 50.0],
+            'korean': [0.0, 0.0, 255.0],
+            'lebanese': [0.0, 255.0, 0.0],
+            'mexican': [255.0, 0.0, 0.0]
+        }
+    return colors
 
 # region: Helper functions
 def shift(array, 
@@ -106,30 +132,6 @@ def shift(array,
                 (slice(0, o) if o >= 0 else slice(o, None),)] = cval
 
     return new_array
-
-def color_map(channels):
-    '''
-    Generates a color map for the food truck environment.
-    '''
-    if channels > 4:
-        colors = {
-            'EmptyObject': [0 for _ in range(channels)],
-            'Agent': [255 if x == 0 else 0 for x in range(channels)],
-            'Wall': [255 if x == 1 else 0 for x in range(channels)],
-            'koreanTruck': [255 if x == 2 else 0 for x in range(channels)],
-            'lebaneseTruck': [255 if x == 3 else 0 for x in range(channels)],
-            'mexicanTruck': [255 if x == 4 else 0 for x in range(channels)]
-        }
-    else:
-        colors = {
-            'EmptyObject': [0.0, 0.0, 0.0],
-            'Agent': [200.0, 200.0, 200.0],
-            'Wall': [50.0, 50.0, 50.0],
-            'koreanTruck': [0.0, 0.0, 255.0],
-            'lebaneseTruck': [0.0, 255.0, 0.0],
-            'mexicanTruck': [255.0, 0.0, 0.0]
-        }
-    return colors
 
 # endregion
 

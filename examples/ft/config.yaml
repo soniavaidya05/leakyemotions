@@ -10,7 +10,6 @@ env:
   layers: 1
   channels: 7
   default_object: EmptyObject
-  truck_prefs: [10, 5, -5]
   full_mdp: True
   baker_mode: True
   vision: 5
@@ -24,7 +23,7 @@ model:
       state_size: [7, 11, 11]
       action_size: 4
       layer_size: 250
-      memory_size: 5
+      num_frames: 5
       n_step: 3
       BATCH_SIZE: 64
       BUFFER_SIZE: 1024
@@ -36,10 +35,21 @@ model:
       epsilon: 0.75
 
 agent:
-  num: 1
-  model: iqn
-  vision: 5
-  memory_size: 100
+  agent:
+    num: 1
+    model: iqn
+    vision: 5
+    memory_size: 100
+
+entity:
+  truck:
+    - cuisine: korean
+      value: 10
+    - cuisine: lebanese
+      value: 5
+    - cuisine: mexican
+      value: -5
+
 
 save_dir: './data/'
 log: True
