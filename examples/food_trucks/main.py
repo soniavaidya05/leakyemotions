@@ -1,3 +1,13 @@
+# --------------- #
+# region: Imports #
+import os
+import sys
+module_path = os.path.abspath('../..')
+if module_path not in sys.path:
+    sys.path.insert(0, module_path)
+# endregion       #
+# --------------- #
+
 # Import basic packages
 import matplotlib.pyplot as plt
 import torch
@@ -22,7 +32,7 @@ from examples.food_trucks.elements import EmptyObject, Wall
 from examples.food_trucks.utils import viz
 
 # Set up tensorboard
-# from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 # Set seed for replication
 SEED = 1 

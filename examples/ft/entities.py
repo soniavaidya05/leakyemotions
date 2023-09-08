@@ -45,13 +45,10 @@ class Truck(Object):
     Cuisine: specifies the name of the truck.
     '''
     def __init__(self, color, value, cuisine = 'generic'):
-        super().__init(color)
+        super().__init__(color)
         self.value = value # Value is specified in advance
         self.passable = True # You eat the food by stepping on top of the truck.
-        self.cuisine = cuisine
-
-    def __str__(self):
-        return self.cuisine + str(self.__class__.__name__)
+        self.kind = cuisine + str(self)
 
 # endregion
 # ----------------------------------------------------- #

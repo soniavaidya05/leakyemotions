@@ -9,12 +9,11 @@ from examples.food_trucks.elements import (
 )
 
 import numpy as np
-from astropy.visualization import make_lupton_rgb
 import matplotlib.pyplot as plt
 from gem.models.perception_singlePixel_categories import agent_visualfield
 from gem.models.perception import agent_visualfield as agent_visualfield2
 
-from gem.utils import find_instance
+from gem.utils import find_instance, one_hot
 from IPython.display import clear_output
 import torch
 
@@ -130,52 +129,6 @@ class FoodTrucks:
         self.populate(self.truck_prefs)
         self.insert_walls(self.height, self.width)
 
-    def plot(self, layer):  # is this defined in the master?
-        """
-        Creates an RGB image of the whole world
-        """
-        image_r = np.random.random((self.world.shape[0], self.world.shape[1]))
-        image_g = np.random.random((self.world.shape[0], self.world.shape[1]))
-        image_b = np.random.random((self.world.shape[0], self.world.shape[1]))
-
-        for i in range(self.world.shape[0]):
-            for j in range(self.world.shape[1]):
-                image_r[i, j] = self.world[i, j, layer].appearance[0]
-                image_g[i, j] = self.world[i, j, layer].appearance[1]
-                image_b[i, j] = self.world[i, j, layer].appearance[2]
-
-        image = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
-        return image
-
-    def init_elements(self):
-        """
-        Creates objects that survive from game to game
-        """
-        self.emptyObject = EmptyObject()
-        self.walls = Wall()
-
-    def game_test(self, layer=0):
-        """
-        Prints one frame to check game instance parameters
-        """
-        image = self.plot(layer)
-
-        moveList = find_instance(self.world, "neural_network")
-
-        img = agent_visualfield(
-            self.world,
-            moveList[0],
-            k=4,
-            wall_app=[0.0, 255.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-            num_channels=7,
-        )
-
-        plt.subplot(1, 2, 1)
-        plt.imshow(image)
-        plt.subplot(1, 2, 2)
-        plt.imshow(img)
-        plt.show()
-
     def pov(self, location, inventory=[], layers=[0]):
         """
         Creates outputs of a single frame, and also a multiple image sequence
@@ -246,3 +199,18 @@ class FoodTrucks:
         current_state[:, -1, :, :, :] = state_now
 
         return current_state
+    
+    def pov_action(self, location):
+        '''
+        Create an agent action frames 
+        '''
+        n_actions = 4
+        agent = self.world[location]
+        # Get the number of timesteps to append
+        B, T, C, H, W = agent.episode_memory[-1][1][0].size()
+        previous_actions = torch.zeros((B, T, n_actions))
+        for i in range(T):
+            action = agent.episode_memory[-4+i][1][1]
+            previous_actions[B, i, :] = one_hot(n_actions, pos = action)
+        return previous_actions
+        

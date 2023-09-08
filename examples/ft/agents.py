@@ -1,5 +1,6 @@
-from examples.ft.entities import Object, EmptyObject
-from collections import deque
+from examples.ft.entities import Object
+from examples.ft.gridworld import GridworldEnv
+from examples.ft.utils import visual_field
 import torch
 
 # ----------------------------------------------------- #
@@ -11,12 +12,12 @@ class Memory:
     '''
 
     def __init__(self, memory_size: int):
-        self.priorities = deque(maxlen=memory_size)
-        self.states = deque(maxlen=memory_size)
-        self.actions = deque(maxlen=memory_size)
-        self.rewards = deque(maxlen=memory_size)
-        self.nextstates = deque(maxlen=memory_size)
-        self.dones = deque(maxlen=memory_size)
+        self.priorities = []
+        self.states = []
+        self.actions = []
+        self.rewards = []
+        self.nextstates = []
+        self.dones = []
 
     def clear(self):
         del self.priorities[:]
@@ -29,7 +30,9 @@ class Memory:
     def append(self, exp):
         '''
         Add an experience to the agent's memory.
-        exp: The tuple to add 
+        
+        Parameters:
+            exp: The tuple to add 
         '''
         # Unpack
         priority, exp1 = exp
@@ -45,8 +48,10 @@ class Memory:
     def get_last_memory(self, attr: str = None):
         '''
         Get the latest memory from the replay.
-        attr: (Optional) the attribute to get.
-        If not specified, it returns all elements
+
+        Parameters:
+            attr: (Optional) the attribute to get.
+            If not specified, it returns all elements
         '''
         if attr is None:
             return (
@@ -59,11 +64,6 @@ class Memory:
             )
         else:
             return getattr(self, attr)[-1]
-        
-    
-
-
-
 
 # endregion
 # ----------------------------------------------------- #
@@ -76,44 +76,54 @@ class Agent(Object):
     '''
     Base agent object.
 
-                        Parameters
-                        ----------
-    color: The appearance of the agent (list of N floats)
-    model: The model object
-    memory_size: The size of the replay buffer
+    Parameters:
+
+        color: The appearance of the agent (list of N floats) \n
+        model: The model object \n
+        memory_size: The size of the replay buffer
     '''
     def __init__(self, 
                  color: list, 
                  model, 
-                 vision: int = 4, 
-                 memory_size: int = 100
+                 cfg,
+                 location
                 ):
         super().__init__(color)
-        self.vision = vision
-        self.model = model
-        self.location = None
+        self.cfg = cfg
+        self.vision = self.cfg.agent.vision
+        self.location = location
         self.has_transitions = True
-        self.episode_memory = Memory(memory_size)
 
-    def init_replay(self, 
-                    num_frames: int = 5, 
+        # Training-related features
+        self.episode_memory = Memory(self.cfg.agent.memory_size)
+        self.model = model
+
+        self.encounters = {
+            'korean': 0,
+            'lebanese': 0,
+            'mexican': 0,
+            'wall': 0
+        }
+
+
+    def init_replay(self,  
                     state_shape = None
                     ):
         '''
         Fill in blank images for the LSTM. Requires the state size to be fully defined.
 
-                                        Parameters
-                                        ----------
-        num_frames: The number of frames per state observation
-        state_shape: (Optional) a tuple or list of C x H x W of the state size.
-        If it is not specified, the state size will be specified with the agent's vision.
+        Parameters:
+
+            state_shape: (Optional) a tuple or list of C x H x W of the state size.
+            If it is not specified, the state size will be specified with the agent's vision.
         '''
         priority = torch.tensor(0.1)
+        num_frames = self.model.memory_size
 
         if state_shape is not None:
             state = torch.zeros(1, num_frames, *state_shape).float()
         else:
-            C = len(self.color)
+            C = len(self.appearance)
             H = W = self.vision * 2 + 1
             state = torch.zeros(1, num_frames, C, H, W).float()
 
@@ -152,35 +162,78 @@ class Agent(Object):
         # Get the previous state
         previous_state = self.episode_memory.get_last_memory('states')
 
-        # Get the last four frames from the previous state
+        # Get the frames from the previous state
         current_state = previous_state.clone()
+
         current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
+        # import matplotlib.pyplot as plt
+        # import numpy as np
+        # plt.subplot(1, 2, 1)
+        # plt.imshow(previous_state[:, -1, :, :, :].squeeze().permute(1, 2, 0).numpy().astype(np.uint8))
+        # plt.subplot(1, 2, 2)
+        # plt.imshow(current_state[:, -2, :, :, :].squeeze().permute(1, 2, 0).numpy().astype(np.uint8))
+        # plt.show()
 
-        
+        # If the environment is a full MDP, get the whole world image
+        if env.full_mdp:
+            image = visual_field(env.world, channels=env.channels)
+        # Otherwise, use the agent observation function
+        else:
+            image = visual_field(env.world, self.location, self.vision, channels=env.channels)
 
+        # Update the latest state to the observation
+        state_now = torch.tensor(image).unsqueeze(0)
+        current_state[:, -1, :, :, :] = state_now
 
+        return current_state
     
     def transition(self,
-                   action: int,
-                   env: Env):
+                   env: GridworldEnv):
         '''
         Changes the world based on the action taken.
         '''
+
+        # Get current state
+        state = self.pov(env)
         reward = 0
+
+        # Take action based on current state
+        action = self.model.take_action(state)
+
+        # Attempt the transition 
         attempted_location = self.movement(action)
-        interaction = env.world[attempted_location]
+        target_object = env.observe(attempted_location)
+        env.move(self, attempted_location)
 
         # Get the interaction reward
-        reward += interaction.value 
+        reward += target_object.value 
 
-        if interaction.passable:
-            # Move the agent to the new location
-            env.world[attempted_location] = self 
-            self.location = attempted_location
-            # Replace the agent from the old location
-            env.world[self.location] = env.default_object 
+        # Get the next state   
+        next_state = self.pov(env)
 
+        return state, action, reward, next_state
         
+    def reset(self):
+        self.episode_memory.clear()
+        self.init_replay()
+        # Reset encounters
+        self.encounters = {
+            'korean': 0,
+            'lebanese': 0,
+            'mexican': 0,
+            'wall': 0
+        }
+
+    def encounter(self, reward):
+        if reward == self.cfg.env.truck_prefs[0]:
+            self.encounters['korean'] += 1
+        elif reward == self.cfg.env.truck_prefs[1]:
+            self.encounters['lebanese'] += 1
+        elif reward == self.cfg.env.truck_prefs[2]:
+            self.encounters['mexican'] += 1
+        elif reward == -1:
+            self.encounters['wall'] += 1
+
     
 # endregion
 # ----------------------------------------------------- #
