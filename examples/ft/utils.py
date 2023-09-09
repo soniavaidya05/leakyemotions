@@ -1,11 +1,23 @@
+# --------------- #
+# region: Imports #
+# Import base packages
+import torch
+import random
 import numpy as np
-from numpy.typing import ArrayLike
 
+from typing import Optional, Union
+from numpy.typing import ArrayLike
+from PIL import Image
+from IPython.display import clear_output
+
+# Import gem packages
 from examples.ft.gridworld import GridworldEnv
+# endregion       #
+# --------------- #
 
 def visual_field(world: np.ndarray,
-        location: ArrayLike = None,
-        vision: int = None,
+        location: Optional[ArrayLike] = None,
+        vision: Optional[int] = None,
         channels: int = 5,
         return_rgb = False
         ) -> np.ndarray:
@@ -14,7 +26,9 @@ def visual_field(world: np.ndarray,
 
     Parameters:
         location: (ArrayLike, Optional) defines the location to centre the visualization on \n
-        vision: (int, Optional) defines the size of the visualization of (2v + 1, 2v + 1) pixels
+        vision: (int, Optional) defines the size of the visualization of (2v + 1, 2v + 1) pixels \n
+        channels: (int, Optional) defines the size of the visualization. By default, 5 channels. \n
+        return_rgb: (bool) Whether to return the image as a plottable RGB image.
 
     Returns: 
         An np.ndarray of C x H x W, determined either by the world size or the vision size.
@@ -43,7 +57,7 @@ def visual_field(world: np.ndarray,
         if return_rgb:
             return new.astype(np.uint8).transpose((1, 2, 0))
         else:
-            return new.astype(np.uint8)
+            return new.astype(np.float64)
     
     # Otherwise...
     else:
@@ -80,7 +94,7 @@ def visual_field(world: np.ndarray,
         if return_rgb:
             return new.astype(np.uint8).transpose((1, 2, 0))
         else:
-            return new.astype(np.uint8)
+            return new.astype(np.float64)
 
 def color_map(channels: int) -> dict:
     '''
@@ -94,25 +108,50 @@ def color_map(channels: int) -> dict:
     '''
     if channels > 4:
         colors = {
-            'empty': [0 for _ in range(channels)],
-            'agent': [255 if x == 0 else 0 for x in range(channels)],
-            'wall': [255 if x == 1 else 0 for x in range(channels)],
+            'EmptyObject': [0 for _ in range(channels)],
+            'Agent': [255 if x == 0 else 0 for x in range(channels)],
+            'Wall': [255 if x == 1 else 0 for x in range(channels)],
             'korean': [255 if x == 2 else 0 for x in range(channels)],
             'lebanese': [255 if x == 3 else 0 for x in range(channels)],
             'mexican': [255 if x == 4 else 0 for x in range(channels)]
         }
     else:
         colors = {
-            'empty': [0.0, 0.0, 0.0],
-            'agent': [200.0, 200.0, 200.0],
-            'wall': [50.0, 50.0, 50.0],
+            'EmptyObject': [0.0, 0.0, 0.0],
+            'Agent': [200.0, 200.0, 200.0],
+            'Wall': [50.0, 50.0, 50.0],
             'korean': [0.0, 0.0, 255.0],
             'lebanese': [0.0, 255.0, 0.0],
             'mexican': [255.0, 0.0, 0.0]
         }
     return colors
 
-# region: Helper functions
+
+
+# --------------------------- #
+# region: Helper functions    #
+# --------------------------- #
+def set_seed(seed: int) -> None:
+    '''
+    Sets a seed for replication.
+    '''
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+def random_seed() -> int:
+    '''
+    Generates a random seed
+
+    Returns:
+        The value of the seed generated
+    '''
+    seed = random.randint(0,10000)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    return seed
+
 def shift(array, 
           shift, 
           cval = np.nan):
@@ -133,6 +172,77 @@ def shift(array,
 
     return new_array
 
-# endregion
+def fig2img(fig):
+    """Convert a Matplotlib figure to a PIL Image and return it"""
+    import io
+    buf = io.BytesIO()
+    fig.savefig(buf)
+    buf.seek(0)
+    img = Image.open(buf)
+    return img
 
+class GameVars:
+    '''
+    Container for storing game variables.
+    '''
+    def __init__(self, max_epochs):
+        self.epochs = []
+        self.turns = []
+        self.losses = []
+        self.rewards = []
+        self.max_epochs = max_epochs
+
+    def clear(self):
+        '''
+        Clear the game variables.
+        '''
+        del self.epochs[:]
+        del self.turns[:]
+        del self.losses[:]
+        del self.rewards[:]
+    
+    def record_turn(
+        self,
+        epoch: int,
+        turn: int,
+        loss: Union[float, torch.Tensor],
+        reward: Union[int, float, torch.Tensor]
+    ):
+        '''
+        Record a game turn.
+        '''
+        self.epochs.append(epoch)
+        self.turns.append(turn)
+        self.losses.append(np.round(loss, 3))
+        self.rewards.append(reward)
+
+
+    def pretty_print(
+            self,
+            *flags
+        ) -> None:
+        '''
+        Take the results from a given epoch (epoch #, turn #, loss, and reward) 
+        and return a formatted string that can be printed to the command line.
+        '''
+        
+        if 'jupyter-mode' in flags:
+            clear_output(wait = True)
+            print(f'╔═════════════╦═══════════╦═════════════╦═════════════╗')
+            print(f'║ Epoch: {str(self.epochs[-1]).rjust(4)} ║ Turn: {str(self.turns[-1]).rjust(3)} ║ Loss: {str(self.losses[-1]).rjust(5)} ║ Reward: {str(self.rewards[-1]).rjust(3)} ║')
+            print(f'╚═════════════╩═══════════╩═════════════╩═════════════╝')
+        else:
+            if self.epochs[-1] == 0:
+                print(f'╔═════════════╦═══════════╦═════════════╦═════════════╗')
+            else:
+                print(f'╠═════════════╬═══════════╬═════════════╬═════════════╣')
+            if True:
+                print(f'║ Epoch: {str(self.epochs[-1]).rjust(4)} ║ Turn: {str(self.turns[-1]).rjust(3)} ║ Loss: {str(self.losses[-1]).rjust(5)} ║ Reward: {str(self.rewards[-1]).rjust(3)} ║')
+                print(f'╚═════════════╩═══════════╩═════════════╩═════════════╝',end='\r')
+            if self.epochs[-1] == self.max_epochs - 1:
+                print(f'╚═════════════╩═══════════╩═════════════╩═════════════╝')
+
+# --------------------------- #
+# endregion                   #
+# --------------------------- #
     

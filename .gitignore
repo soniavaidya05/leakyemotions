@@ -143,3 +143,6 @@ examples/food_trucks/notebooks/runs/
 examples/food_trucks/data/
 examples/RTP/data/
 *.txt
+examples/ft/runs/
+examples/ft/notebooks/runs/
+examples/ft/checkpoints/

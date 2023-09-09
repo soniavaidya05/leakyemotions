@@ -146,7 +146,7 @@ class MLPBCModel(nn.Module):
         self.loss_fn = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr = lr)
 
-    def train(self):
+    def train_model(self):
 
         loss = torch.tensor(0.0)
         

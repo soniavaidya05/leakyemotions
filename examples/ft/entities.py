@@ -50,7 +50,6 @@ class Truck(Object):
     def __init__(self, color, cfg):
         super().__init__(color)
         self.cfg = cfg
-        print(cfg)
         self.value = cfg.value # Value is specified in advance
         self.passable = True # You eat the food by stepping on top of the truck.
         self.kind = cfg.cuisine

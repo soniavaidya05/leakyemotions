@@ -20,12 +20,13 @@ ReplayBuffer
 
 iRainbowModel (contains two IQN networks; one for local and one for target)
  - take_action: standard epsilon greedy action selection
- - learn: train the model using quantile huber loss from IQN
+ - train_model: train the model using quantile huber loss from IQN
  - soft_update: set weights of target network to be a mixture of weights from local and target network
  - transfer_memories: transfer memories from the agent to the model
 """
+import os
 import random
-from typing import Optional
+from typing import Optional, Union
 from numpy.typing import ArrayLike
 from collections import deque, namedtuple
 
@@ -34,24 +35,25 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
-from torchsummary import summary
 
 from gem.models.layers import NoisyLinear
+from examples.ft.models.ann import ANN, DoubleANN
 
 class IQN(nn.Module):
     """The IQN Q-network."""
 
     def __init__(
         self,
-        state_size: tuple,
+        state_size: ArrayLike,
         action_size: int,
         layer_size: int,
         seed: int,
         n_quantiles: int,
         num_frames: int = 5,
-        device: Optional[torch.device] = None,
+        device: Union[str, torch.device] = 'cpu',
     ) -> None:
-        super().__init__()
+
+        super(IQN, self).__init__()
         self.seed = torch.manual_seed(seed)
         self.input_shape = np.array(state_size)
         self.state_dim = len(self.input_shape)
@@ -76,7 +78,7 @@ class IQN(nn.Module):
         self.advantage = NoisyLinear(layer_size, action_size)
         self.value = NoisyLinear(layer_size, 1)
 
-    def calc_cos(self, batch_size, n_tau=8):
+    def calc_cos(self, batch_size, n_tau=8) -> tuple[torch.Tensor]:
         """
         Calculating the cosinus values depending on the number of tau samples
         """
@@ -202,7 +204,7 @@ class ReplayBuffer:
     #         n_step_buffer[-1][4],
     #     )
 
-    def sample(self):
+    def sample(self) -> tuple[torch.Tensor]:
         """Randomly sample a batch of experiences from memory."""
         experiences = random.sample(self.memory, k=self.batch_size)
 
@@ -248,56 +250,63 @@ class ReplayBuffer:
         """Return the current size of internal memory."""
         return len(self.memory)
 
-class iRainbowModel:
+class iRainbowModel(DoubleANN):
     """Interacts with and learns from the environment."""
 
     def __init__(
+        # Base ANN parameters
         self,
-        state_size,
-        action_size,
-        layer_size,
-        num_frames,
-        n_step,
-        BATCH_SIZE,
-        BUFFER_SIZE,
-        LR,
-        TAU,
-        GAMMA,
-        N,
-        sync_freq,
-        device,
-        seed,
-        epsilon
+        state_size: ArrayLike,
+        action_size: int,
+        layer_size: int,
+        epsilon: float,
+        device: Union[str, torch.device],
+        seed: int,
+        # iRainbow parameters
+        num_frames: int,
+        n_step: int,
+        sync_freq: int,
+        model_update_freq: int,
+        BATCH_SIZE: int,
+        BUFFER_SIZE: int,
+        LR: float,
+        TAU: float,
+        GAMMA: float,
+        N: int,
     ):
-        """Initialize an Agent object.
+        """
+        Initialize an iRainbow model.
 
         Params
         ======
-            state_size (ArrayLike): dimension of each state
-            action_size (int): dimension of each action
-            layer_size (int): size of the hidden layer
-            BATCH_SIZE (int): size of the training batch
-            BUFFER_SIZE (int): size of the replay memory
-            LR (float): learning rate
-            TAU (float): tau for soft updating the network weights
-            GAMMA (float): discount factor
-            device (str): device that is used for the compute
-            seed (int): random seed
+            state_size (ArrayLike): The dimension of each state. \n
+            action_size (int): The number of possible actions. \n
+            layer_size (int): The size of the hidden layer. \n
+            epsilon (float): Epsilon-greedy action value. \n
+            device (Union[str, torch.device]): Device used for the compute. \n
+            seed (int): Random seed value for replication. \n
+            num_frames (int): Number of timesteps for the state input. \n
+            BATCH_SIZE (int): The zize of the training batch. \n
+            BUFFER_SIZE (int): The size of the replay memory. \n
+            GAMMA (float): Discount factor \n
+            LR (float): Learning rate \n
+            TAU (float): Network weight soft update rate \n
+            N (int): Number of quantiles
+            
         """
-        self.state_size = state_size
-        self.action_size = action_size
 
-        self.seed = random.seed(seed)
-        self.device = device
+        # Initialize base ANN parameters
+        super(iRainbowModel, self).__init__(state_size, action_size, layer_size, epsilon, device, seed)
+
+        self.num_frames = num_frames
         self.TAU = TAU
         self.N = N
         self.GAMMA = GAMMA
         self.BATCH_SIZE = BATCH_SIZE
         self.n_step = n_step
         self.sync_freq = sync_freq
-        self.epsilon = epsilon
-        self.num_frames = num_frames
-
+        self.model_update_freq = model_update_freq
+        
         # IQN-Network
         self.qnetwork_local = IQN(
             state_size,
@@ -317,6 +326,8 @@ class iRainbowModel:
             num_frames,
             device=device,
         ).to(device)
+        # Aliases for saving to disk
+        self.models = {'local': self.qnetwork_local, 'target': self.qnetwork_target}
 
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
 
@@ -330,15 +341,9 @@ class iRainbowModel:
         )
 
     def __str__(self):
-        return f'''
-IQN iRainbow Model
-==================
-
-Parameters:
-    TAU: {self.TAU}, GAMMA: {self.GAMMA}, Quantiles: {self.N}, Batch size: {self.BATCH_SIZE}
-'''
-
-    def take_action(self, state, eval=False):
+        return f'iRainbowModel(in_size={np.array(self.state_size).prod() * self.memory_size},out_size={self.action_size})'
+    
+    def take_action(self, state, eval=False) -> int:
         """Returns actions for given state as per current policy. Acting only every 4 frames!
 
         Params
@@ -363,8 +368,9 @@ Parameters:
             action = random.choices(np.arange(self.action_size), k=1)
             return action[0]
 
-    def training(self):
+    def train_model(self) -> torch.Tensor:
         """Update value parameters using given batch of experience tuples.
+
         Params
         ======
             experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s', done) tuples
@@ -410,31 +416,30 @@ Parameters:
             # Minimize the loss
             loss.backward()
             clip_grad_norm_(self.qnetwork_local.parameters(), 1)
-
             self.optimizer.step()
 
             # ------------------- update target network ------------------- #
-            self.soft_update(self.qnetwork_local, self.qnetwork_target)
+            self.soft_update()
             
         return loss
 
-    def soft_update(self, local_model, target_model):
+    def soft_update(self) -> None:
         """Soft update model parameters.
         θ_target = τ*θ_local + (1 - τ)*θ_target
         Params
         ======
-            local_model (PyTorch model): weights will be copied from
-            target_model (PyTorch model): weights will be copied to
+            local_model (PyTorch model): weights will be copied from \n
+            target_model (PyTorch model): weights will be copied to \n
             tau (float): interpolation parameter
         """
         for target_param, local_param in zip(
-            target_model.parameters(), local_model.parameters()
+            self.qnetwork_target.parameters(), self.qnetwork_local.parameters()
         ):
             target_param.data.copy_(
                 self.TAU * local_param.data + (1.0 - self.TAU) * target_param.data
             )
 
-    def transfer_memories(self, agent, extra_reward=False, oversamples=4):
+    def transfer_memories(self, agent, extra_reward=False, oversamples=4) -> None:
         """
         Transfer the indiviudual memories to the model
         """
@@ -450,34 +455,32 @@ Parameters:
             for _ in range(oversamples):
                 self.memory.add(state, action, reward, next_state, done)
 
-    def start_epoch_action(self, **kwargs):
+    def start_epoch_action(self, **kwargs) -> None:
+        '''
+        Model actions before agent takes an action.
+
+        Parameters:
+            **kwargs: All local variables are passed into the model
+        '''
         if kwargs['epoch'] % self.sync_freq == 0:
             self.qnetwork_target.load_state_dict(
                 self.qnetwork_local.state_dict()
             )
     
-    def end_epoch_action(self, **kwargs):
+    def end_epoch_action(self, **kwargs) -> None:
+        '''
+        Model actions computed after each agent takes an action.
+
+        Parameters:
+            **kwargs: All local variables are passed into the model
+        '''
         self.transfer_memories(kwargs['agent'], extra_reward = True)
 
-    def save(self, name_pattern, dir='./checkpoints'):
-        torch.save(
-            {
-                'local': self.qnetwork_local.state_dict(),
-                'target': self.qnetwork_target.state_dict(),
-                'optim': self.optimizer.state_dict()
-            },
-            f'{dir}/model_{name_pattern}.pkl'
-        )
-    
-    def load(self, name_pattern, dir='./checkpoints'):
-        checkpoint = torch.load(
-            f'{dir}/model_{name_pattern}.pkl'
-        )
-        self.qnetwork_local.load_state_dict(checkpoint['local'])
-        self.qnetwork_target.load_state_dict(checkpoint['target'])
-        self.optimizer.load_state_dict(checkpoint['optim'])
+        if kwargs['epoch'] > 200 and kwargs['epoch'] % self.model_update_freq == 0:
+            kwargs['loss'] = self.train_model()
+            kwargs['game_vars'].losses.append(kwargs['loss'])
 
-def calculate_huber_loss(td_errors, k=1.0):
+def calculate_huber_loss(td_errors, k=1.0) -> torch.Tensor:
     """
     Calculate huber loss element-wisely depending on kappa k.
     """

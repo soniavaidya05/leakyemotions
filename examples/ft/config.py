@@ -1,10 +1,14 @@
 # --------------- #
 # region: Imports #
 # --------------- #
+#Import base packages
 import yaml
 import os
 import argparse
 
+from typing import Optional, Sequence, Union
+
+# Import gem packages
 from examples.ft.models.iqn import iRainbowModel
 from examples.ft.agents import Agent
 from examples.ft.entities import Truck, Object
@@ -26,7 +30,11 @@ AGENTS = {
 ENTITIES = {
     'truck': Truck
 }
-    
+
+# --------------------------- #
+# region: config functions    #
+# --------------------------- #
+
 class Cfg:
     '''
     Configuration class for parsing the YAML configuration file.
@@ -39,25 +47,42 @@ class Cfg:
             else:
                 setattr(self, key, Cfg(val) if isinstance(val, dict) else val)
 
-# --------------------------- #
-# region: config functions    #
-# --------------------------- #
 def init_log(cfg: Cfg) -> None:
-    print('=' * 40)
-    print(f'Starting experiment: {cfg.experiment.name}')
-    print(f'Saving to: {cfg.save_dir}')
-    print('=' * 40)
+    print(f'╔═════════════════════════════════════════════════════╗')
+    print(f'║                                                     ║')
+    print(f'║        Starting experiment: {str(cfg.experiment.name).ljust(16)}        ║')
+    print(f'║        Epochs: {str(cfg.experiment.epochs).ljust(5)}  Max turns: {str(cfg.experiment.max_turns).ljust(3)}  Log: {"Yes" if cfg.log else "No "}      ║')
+    print(f'║        Saving to: {str(cfg.save_dir).ljust(26)}        ║')
+    print(f'║                                                     ║')
+    print(f'╚═════════════════════════════════════════════════════╝')
+    print(f'')
 
-def parse_args() -> argparse.Namespace:
+def parse_args(
+        command_line: bool = True,
+        args: Optional[Sequence[str]] = None
+) -> argparse.Namespace:
     '''
     Helper function for preparsing the arguments.
 
+    Parameters:
+        args: (Optional) A sequence of command line-like arguments.
+        By default, the function uses the default `--config` argument
+        to get the file from `./config.yaml`. \n
+        Unknown arguments (i.e., not `--config`) are ignored.
+    
     Returns:
         The argparse.Namespace object containing the args
     '''
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", help="path to config file")
-    args = parser.parse_args()
+    parser.add_argument("--config", default='./config.yaml', help="path to config file")
+    # By default, parse the arguments
+    if command_line:
+        args = parser.parse_args()
+    else:
+        if args is None:
+            args = argparse.Namespace(config='./config.yaml')
+        else:
+            args, _ = parser.parse_known_args(args)
     return args
 
 def load_config(args: argparse.Namespace) -> Cfg:
@@ -86,7 +111,7 @@ def load_config(args: argparse.Namespace) -> Cfg:
 # --------------------------- #
 # region: object creators     #
 # --------------------------- #
-def create_models(cfg: Cfg) -> list:
+def create_models(cfg: Cfg) -> list[iRainbowModel]:
     '''
     Create a list of models used for the agents.
 
@@ -140,7 +165,7 @@ def create_agents(
             if not has_model:
                 raise ValueError(f"Model {agent_model_name} not found, please make sure it is defined in the config file.")
             agents.append(AGENT_TYPE(
-                color = colors['agent'],
+                color = colors['Agent'],
                 model = agent_model,
                 cfg = vars(cfg.agent)[agent_type]
             ))

@@ -3,9 +3,14 @@
 # --------------------------------- #
 from examples.ft.gridworld import GridworldEnv
 from examples.ft.entities import (
+    Object,
     Wall,
     EmptyObject
 )
+from examples.ft.agents import (
+    Agent
+)
+from examples.ft.config import Cfg
 from examples.ft.utils import color_map
 import numpy as np
 import random
@@ -20,9 +25,9 @@ class FoodTrucks(GridworldEnv):
     '''
     def __init__(
         self,
-        cfg,
-        agents,
-        entities
+        cfg: Cfg,
+        agents: list[Agent],
+        entities: list[Object]
     ):
         self.cfg = cfg
         self.channels = cfg.env.channels
@@ -31,7 +36,7 @@ class FoodTrucks(GridworldEnv):
         self.baker_mode = cfg.env.baker_mode
         self.agents = agents
         self.trucks = entities
-        super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(self.colors['empty']))
+        super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(self.colors['EmptyObject']))
         self.populate()
 
     # --------------------------- #
@@ -47,11 +52,11 @@ class FoodTrucks(GridworldEnv):
             H, W, L = index
             # If the index is the first or last, replace the location with a wall
             if H in [0, self.height - 1] or W in [0, self.width - 1]:
-                self.world[index] = Wall(color=self.colors['wall'])
+                self.world[index] = Wall(color=self.colors['Wall'])
 
         # Normal mode: randomly placed in the environment
         if not self.baker_mode:
-            candidate_locs = [index for index in np.ndindex(self.world.shape) if not self.world[index].kind == 'wall']
+            candidate_locs = [index for index in np.ndindex(self.world.shape) if not self.world[index].kind == 'Wall']
             loc_index = np.random.choice(len(candidate_locs), size = 4, replace = False)
             locs = [candidate_locs[i] for i in loc_index]
 
@@ -59,7 +64,7 @@ class FoodTrucks(GridworldEnv):
         else:
             wall_locs = [(self.height // 2, x, 0) for x in range(4,self.height - 1)]
             for wall_loc in wall_locs:
-                self.world[wall_loc] = Wall(color = self.colors['wall'])
+                self.world[wall_loc] = Wall(color = self.colors['Wall'])
             
             candidate_locs = [(1, 1, 0), (1, self.height - 2, 0), (self.height - 2, 1, 0)]
             loc_index = np.random.choice(len(candidate_locs), size = 3, replace = False)
@@ -81,7 +86,7 @@ class FoodTrucks(GridworldEnv):
     # endregion: initialization   #
     # --------------------------- #
 
-    def reset(self, hard_reset = False):
+    def reset(self):
         '''
         Reset the environment.
         '''

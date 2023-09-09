@@ -1,7 +1,17 @@
+# --------------- #
+# region: Imports #
+# Import base packages
+from typing import Optional
+from numpy.typing import ArrayLike 
+import torch
+
+# Import gem packages
 from examples.ft.entities import Object
+from examples.ft.models.ann import ANN
 from examples.ft.gridworld import GridworldEnv
 from examples.ft.utils import visual_field
-import torch
+# endregion       #
+# --------------- #
 
 # ----------------------------------------------------- #
 # region: Memory class                                  #
@@ -27,7 +37,7 @@ class Memory:
         del self.rewards[:]
         del self.dones[:]
 
-    def append(self, exp):
+    def append(self, exp: tuple):
         '''
         Add an experience to the agent's memory.
         
@@ -45,7 +55,7 @@ class Memory:
         self.nextstates.append(nextstate)
         self.dones.append(done)
 
-    def get_last_memory(self, attr: str = None):
+    def get_last_memory(self, attr: Optional[str] = None):
         '''
         Get the latest memory from the replay.
 
@@ -84,7 +94,7 @@ class Agent(Object):
     '''
     def __init__(self, 
                  color: list, 
-                 model, 
+                 model: ANN, 
                  cfg,
                  location = None
                 ):
@@ -107,8 +117,8 @@ class Agent(Object):
 
 
     def init_replay(self,  
-                    state_shape = None
-                    ):
+                    state_shape: Optional[ArrayLike] = None
+                    ) -> None:
         '''
         Fill in blank images for the LSTM. Requires the state size to be fully defined.
 
@@ -139,7 +149,7 @@ class Agent(Object):
         
     def movement(self,
                  action: int
-                 ):
+                 ) -> tuple:
         
         '''
         Takes an action and returns a new location
@@ -155,7 +165,7 @@ class Agent(Object):
         return new_location
     
     def pov(self,
-            env):
+            env: GridworldEnv) -> torch.Tensor:
         '''
         Defines the agent's observation function
         '''
@@ -188,7 +198,7 @@ class Agent(Object):
         return current_state
     
     def transition(self,
-                   env: GridworldEnv):
+                   env: GridworldEnv) -> tuple:
         '''
         Changes the world based on the action taken.
         '''
@@ -220,7 +230,7 @@ class Agent(Object):
 
         return state, action, reward, next_state, done
         
-    def reset(self):
+    def reset(self) -> None:
         self.episode_memory.clear()
         self.init_replay()
         # Reset encounters
