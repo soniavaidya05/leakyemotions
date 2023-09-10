@@ -80,6 +80,7 @@ def parse_args(
     # By default, parse the arguments
     if command_line:
         args = parser.parse_args()
+    # Otherwise, args can be passed in. Default value is specified for config.
     else:
         if args is None:
             args = argparse.Namespace(config='./config.yaml')

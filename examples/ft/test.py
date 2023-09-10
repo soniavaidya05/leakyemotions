@@ -192,3 +192,24 @@ def eval_model(*flags,
     game_objects.pop('jupyter-mode', None)
 
     return game_objects
+
+def train_inverse_model(model, plot_freq = 100, **kwargs):
+        '''
+        Defines the training loop for the inverse model.
+        '''
+        
+        losses = []
+
+        for i in range(10000):
+
+            loss = model.train_model()
+            losses.append(loss)
+            if i % 100 == 0:
+                
+                # If an experiment configuration has been passed in...
+                if 'cfg' in kwargs:
+                    models = create_models(kwargs['cfg'])
+                    agents = create_models(kwargs['cfg'], models)
+                    entities = create_entities(kwargs['cfg'])
+
+                    env = FoodTrucks(kwargs['cfg'], agents, models)

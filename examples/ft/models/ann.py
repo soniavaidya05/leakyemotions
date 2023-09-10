@@ -56,6 +56,13 @@ class ANN(nn.Module):
         pass
 
     @abc.abstractmethod
+    def take_action(self, state) -> int:
+        '''
+        Take an action based on the model.
+        '''
+        pass
+
+    @abc.abstractmethod
     def start_epoch_action(self):
         '''
         Actions for the model to perform before it interacts
