@@ -206,6 +206,13 @@ class ActionBatchReplayBuffer(ReplayBuffer):
         self.memory.append(e)
 
     def reset_action_batch(self):
+        '''
+        Empty out the action deque so that the initial actions for the next
+        game are dummy actions.
+        '''
         for _ in range(self.timesteps):
             # Fill the action space with dummy actions
             self.action_batch.append(self.reshape(self.action_space))
+
+    def get_game(self):
+        return self.experience
