@@ -24,11 +24,14 @@ iRainbowModel (contains two IQN networks; one for local and one for target)
  - soft_update: set weights of target network to be a mixture of weights from local and target network
  - transfer_memories: transfer memories from the agent to the model
 """
-import os
+# ------------------------ #
+# region: Imports          #
+# ------------------------ #
+
+# Import base packages
 import random
-from typing import Optional, Union
+from typing import Union
 from numpy.typing import ArrayLike
-from collections import deque, namedtuple
 
 import torch
 import numpy as np
@@ -36,8 +39,14 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
 
+# Import gem-specific packages
 from gem.models.layers import NoisyLinear
-from examples.ft.models.ann import ANN, DoubleANN
+from examples.ft.models.ann import DoubleANN
+from examples.ft.models.buffer import ReplayBuffer
+
+# ------------------------ #
+# endregion                #
+# ------------------------ #
 
 class IQN(nn.Module):
     """The IQN Q-network."""
@@ -139,117 +148,6 @@ class IQN(nn.Module):
         actions = quantiles.mean(dim=1)
         return actions
 
-class ReplayBuffer:
-    """Fixed-size buffer to store experience tuples."""
-
-    def __init__(self, buffer_size, batch_size, device, seed, gamma, n_step=1):
-        """Initialize a ReplayBuffer object.
-        Params
-        ======
-            buffer_size (int): maximum size of buffer
-            batch_size (int): size of each training batch
-            seed (int): random seed
-        """
-        self.device = device
-        self.memory = deque(maxlen=buffer_size)
-        self.batch_size = batch_size
-        self.experience = namedtuple(
-            "Experience",
-            field_names=["state", "action", "reward", "next_state", "done"],
-        )
-        self.seed = random.seed(seed)
-        self.gamma = gamma
-        # self.n_step = n_step
-        # self.n_step_buffer = deque(maxlen=self.n_step)
-
-    def add(self, state, action, reward, next_state, done):
-        """
-        Add a new experience to memory.
-        """
-        # # Add the new experience to buffer
-        # self.n_step_buffer.append((state, action, reward, next_state, done))
-
-        # # If there are enough steps in the buffer, append to the memory
-        # if len(self.n_step_buffer) == self.n_step:
-
-        #     # Set the experience as the return and state change over multiple steps 
-        #     state, action, reward, next_state, done = self.calc_multistep_return(self.n_step_buffer)
-        #     e = self.experience(state, action, reward, next_state, done)
-
-        #     # Add the experience to the memory
-        #     self.memory.append(e)
-
-        # NOTE: multistep return seem to have little/negative effect on the performance
-        # NOTE: removing multistep return also bounds the loss to a lower number
-        e = self.experience(state, action, reward, next_state, done)
-        self.memory.append(e)
-
-    # def calc_multistep_return(self, n_step_buffer):
-    #     Return = 0
-    #     for idx in range(self.n_step):
-    #         Return += self.gamma**idx * n_step_buffer[idx][2]
-
-    #     # There are 3 steps in the buffer
-    #     # - state = state of first step
-    #     # - action = action of first step
-    #     # - reward = sum of rewards of all steps
-    #     # - next_state = state of last step
-    #     # - done = done of last step
-    
-    #     return (
-    #         n_step_buffer[0][0],
-    #         n_step_buffer[0][1],
-    #         Return,
-    #         n_step_buffer[-1][3],
-    #         n_step_buffer[-1][4],
-    #     )
-
-    def sample(self) -> tuple[torch.Tensor]:
-        """Randomly sample a batch of experiences from memory."""
-        experiences = random.sample(self.memory, k=self.batch_size)
-
-        states = (
-            torch.from_numpy(np.stack([e.state for e in experiences if e is not None]))
-            .float()
-            .to(self.device)
-        )
-        actions = (
-            torch.from_numpy(
-                np.vstack([e.action for e in experiences if e is not None])
-            )
-            .long()
-            .to(self.device)
-        )
-        rewards = (
-            torch.from_numpy(
-                np.vstack([e.reward for e in experiences if e is not None])
-            )
-            .float()
-            .to(self.device)
-        )
-        next_states = (
-            torch.from_numpy(
-                np.stack([e.next_state for e in experiences if e is not None])
-            )
-            .float()
-            .to(self.device)
-        )
-        dones = (
-            torch.from_numpy(
-                np.vstack([e.done for e in experiences if e is not None]).astype(
-                    np.uint8
-                )
-            )
-            .float()
-            .to(self.device)
-        )
-
-        return (states, actions, rewards, next_states, dones)
-
-    def __len__(self):
-        """Return the current size of internal memory."""
-        return len(self.memory)
-
 class iRainbowModel(DoubleANN):
     """Interacts with and learns from the environment."""
 
@@ -298,6 +196,7 @@ class iRainbowModel(DoubleANN):
         # Initialize base ANN parameters
         super(iRainbowModel, self).__init__(state_size, action_size, layer_size, epsilon, device, seed)
 
+        # iRainbow-specific parameters
         self.num_frames = num_frames
         self.TAU = TAU
         self.N = N
@@ -326,6 +225,7 @@ class iRainbowModel(DoubleANN):
             num_frames,
             device=device,
         ).to(device)
+
         # Aliases for saving to disk
         self.models = {'local': self.qnetwork_local, 'target': self.qnetwork_target}
 
@@ -369,11 +269,13 @@ class iRainbowModel(DoubleANN):
             return action[0]
 
     def train_model(self) -> torch.Tensor:
-        """Update value parameters using given batch of experience tuples.
+        """Update value parameters using given batch of experience tuples. 
+        Note that the training loop CANNOT be named `train()` or training()` 
+        as this conflicts with `nn.Module` superclass functions.
 
         Params
         ======
-            experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s', done) tuples
+            experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s', done) tuples \n
             gamma (float): discount factor
         """
         loss = torch.tensor(0.0)

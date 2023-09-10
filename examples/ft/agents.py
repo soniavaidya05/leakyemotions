@@ -1,5 +1,7 @@
 # --------------- #
 # region: Imports #
+# --------------- #
+
 # Import base packages
 from typing import Optional
 from numpy.typing import ArrayLike 
@@ -10,6 +12,8 @@ from examples.ft.entities import Object
 from examples.ft.models.ann import ANN
 from examples.ft.gridworld import GridworldEnv
 from examples.ft.utils import visual_field
+
+# --------------- #
 # endregion       #
 # --------------- #
 

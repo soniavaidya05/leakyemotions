@@ -2,7 +2,6 @@ import os
 import abc
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import numpy as np
 
 from typing import Union
@@ -134,8 +133,7 @@ class DoubleANN(ANN):
         Save the model weights and parameters in the specified location.
 
         Parameters:
-            name_pattern: The pattern of the file name to save. \n
-            dir: The folder to save to. Default: './checkpoints/'
+            file_path: The full path to the model, including file extension.
         '''
         torch.save(
             {

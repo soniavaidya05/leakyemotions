@@ -145,4 +145,4 @@ examples/RTP/data/
 *.txt
 examples/ft/runs/
 examples/ft/notebooks/runs/
-examples/ft/checkpoints/
+examples/ft/models/checkpoints/

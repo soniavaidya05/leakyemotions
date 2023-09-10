@@ -1,60 +1,60 @@
+# --------------- #
+# region: Imports #
+# --------------- #
+
 import numpy as np
 from numpy.typing import ArrayLike
+from typing import Union
+from collections import deque
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from examples.food_trucks.models.iRainbow_clean import ReplayBuffer
+from examples.ft.models.iqn import ReplayBuffer
+from examples.ft.models.ann import ANN
+
+# --------------- #
+# endregion       #
+# --------------- #
 
 class BC(nn.Module):
+    '''
+    Behavioural cloning network.
+    '''
 
     def __init__(
             self,
-            state_dim: ArrayLike,
-            frames: int,
-            act_dim: int,
-            hidden_size: int,
+            state_size: ArrayLike,
+            action_size: int,
+            layer_size: int,
             n_channels: int,
-            batch_size: int,
-            BUFFER_SIZE: int,
-            GAMMA: float,
-            device,
-            n_step,
-            seed
+            frames: int
         ):
-        
-        self.state_dim = state_dim
-        self.frames = frames
-        self.act_dim = act_dim
-        self.hidden_size = hidden_size
-        self.n_channels = n_channels
-        self.batch_size = batch_size
 
-        self.memory = ReplayBuffer(
-            BUFFER_SIZE,
-            GAMMA,
-            self.batch_size,
-            device,
-            n_step,
-            seed,
-        )
+        super(BC, self).__init__()
+        
+        self.state_size = state_size
+        self.action_size = action_size
+        self.layer_size = layer_size
+        self.n_channels = n_channels
+        self.frames = frames
 
         # MLP backbone
         self.layers = nn.Sequential(
             nn.Linear(
                 # Pass in flattened states and actions together
-                frames * np.array(state_dim).prod() + (frames - 1) * act_dim, 
-                hidden_size
+                frames * np.array(state_size).prod() + (frames - 1) * action_size, 
+                layer_size
             ),
             nn.ReLU(),
             nn.Linear(
-                hidden_size,
-                hidden_size
+                layer_size,
+                layer_size
             ),
             nn.ReLU(),
             nn.Linear(
-                hidden_size,
-                hidden_size
+                layer_size,
+                layer_size
             ),
             nn.Sigmoid()
         )
@@ -63,8 +63,8 @@ class BC(nn.Module):
         self.state_head = [
             nn.Sequential(
                 nn.Linear(
-                    hidden_size,
-                    np.array(state_dim)[1:].prod()
+                    layer_size,
+                    np.array(state_size)[1:].prod()
                 ),
                 nn.Sigmoid()
             ) for _ in range(self.n_channels)
@@ -73,8 +73,8 @@ class BC(nn.Module):
         # Action head
         self.action_head = nn.Sequential(
             nn.Linear(
-                hidden_size,
-                act_dim
+                layer_size,
+                action_size
             ),
             nn.Softmax(dim=0)
         )
@@ -84,8 +84,8 @@ class BC(nn.Module):
     ):
         # Reshape inputs
         B, T, C, H, W = states.size()
-        states.view(B, -1)
-        actions.view(B, -1)
+        states = states.view(B, -1)
+        actions = actions.view(B, -1)
         x = torch.cat(
             (states, actions),
             dim = 1
@@ -113,59 +113,66 @@ class BC(nn.Module):
             acts
         )
     
-class MLPBCModel(nn.Module):
+class MLPBCModel(ANN):
+    '''
+    MLP-based behavioural cloning model with experience replay.
+    '''
 
-    def __init__(self,
-            state_dim: ArrayLike,
-            frames: int,
-            act_dim: int,
-            hidden_size: int,
-            n_channels: int,
-            batch_size: int,
-            BUFFER_SIZE: int,
-            GAMMA: float,
-            device,
-            n_step,
-            seed,
-            lr
+    def __init__(
+        self,
+        # Base ANN parameters
+        state_size: ArrayLike,
+        action_size: int,
+        layer_size: int,
+        epsilon: float,
+        device: Union[str, torch.device],
+        seed: int,
+        # BC model parameters
+        n_channels: int,
+        frames: int,
+        memory: ReplayBuffer,
+        LR: float
         ):
 
+        super(MLPBCModel, self).__init__(state_size, action_size, layer_size, epsilon, device, seed)
+        
         self.model = BC(
-            state_dim,
-            frames,
-            act_dim,
-            hidden_size,
+            state_size,
+            action_size,
+            layer_size,
             n_channels,
-            batch_size,
-            BUFFER_SIZE,
-            GAMMA,
-            device,
-            n_step,
-            seed
+            frames
         )
+
+        self.memory = memory
+        self.frames = frames
         self.loss_fn = nn.CrossEntropyLoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr = lr)
+        self.optimizer = optim.Adam(self.model.parameters(), lr = LR)
 
     def train_model(self):
 
         loss = torch.tensor(0.0)
         
-        if len(self.memory) > self.batch_size:
+        if len(self.memory) > self.memory.batch_size:
 
             # Both states and actions should be set up as tensors of size (B, T, -1)
             states, actions, _, _, _ = self.memory.sample()
 
             # Split the last action from the input frames
-            action_frames, masked_action = actions[:, :-1, :], actions[:, -1:, :]
+            action_frames, masked_action = actions[:, :-1, :], actions[:, -1, :]
+
+            # Remove the extra dimension from states
+            states = states.squeeze()
+            B, T, C, H, W = states.size()
 
             # Split the state into channels to compute loss against
             # (Agent, Wall, Truck1, Truck2, Truck3)
             a_gt, w_gt, t1_gt, t2_gt, t3_gt = (
-                states[:, 0, :, :, :], 
-                states[:, 1, :, :, :], 
-                states[:, 2, :, :, :],
-                states[:, 3, :, :, :],
-                states[:, 4, :, :, :]
+                states[:, self.frames - 1, 0, :, :].reshape(B, -1), 
+                states[:, self.frames - 1, 1, :, :].reshape(B, -1), 
+                states[:, self.frames - 1, 2, :, :].reshape(B, -1),
+                states[:, self.frames - 1, 3, :, :].reshape(B, -1),
+                states[:, self.frames - 1, 4, :, :].reshape(B, -1)
             )
 
             # Get the model predictions
@@ -178,7 +185,7 @@ class MLPBCModel(nn.Module):
             t1_loss = self.loss_fn(t1, t1_gt)
             t2_loss = self.loss_fn(t2, t2_gt)
             t3_loss = self.loss_fn(t3, t3_gt)
-            act_loss = self.loss_fn(action_prediction, masked_action)
+            act_loss = self.loss_fn(action_prediction, masked_action.to(float))
 
             loss = agent_loss + wall_loss + t1_loss + t2_loss + t3_loss + act_loss
 

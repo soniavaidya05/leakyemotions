@@ -28,6 +28,7 @@ import torch
 import numpy as np
 import random
 import argparse
+from datetime import datetime
 
 # Import gem-specific packages
 from examples.ft.env import FoodTrucks
@@ -69,7 +70,7 @@ def run_game(
     if cfg.log:
         from torch.utils.tensorboard import SummaryWriter
         writer = SummaryWriter(
-            log_dir=f'{root}/examples/ft/runs'
+            log_dir=f'{root}/examples/ft/runs/{datetime.now().strftime("%Y%m%d-%H%m%s")}/'
         )
 
     # Container for game variables (epoch, turn, loss, reward)
@@ -182,29 +183,34 @@ if __name__ == '__main__':
     # Set up the run parameters (including where to save and load the models)
     model_directory = f'{root}/examples/ft/checkpoints'
     run_params = [
+        # {
+        #     'custom_eps': 0.7,
+        #     'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.7}.pkl'
+        # },
+        # {
+        #     'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.7}.pkl',
+        #     'custom_eps': 0.5,
+        #     'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.5}.pkl'
+        # },
+        # {
+        #     'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.5}.pkl',
+        #     'custom_eps': 0.3,
+        #     'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.3}.pkl'
+        # },
+        # {
+        #     'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.3}.pkl',
+        #     'custom_eps': 0.1,
+        #     'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.1}.pkl'
+        # },
+        # {
+        #     'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.1}.pkl',
+        #     'custom_eps': 0.0,
+        #     'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.0}.pkl'
+        # },
         {
-            'custom_eps': 0.7,
-            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.7}.pkl'
-        },
-        {
-            'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.7}.pkl',
-            'custom_eps': 0.5,
-            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.5}.pkl'
-        },
-        {
-            'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.5}.pkl',
-            'custom_eps': 0.3,
-            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.3}.pkl'
-        },
-        {
-            'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.3}.pkl',
-            'custom_eps': 0.1,
-            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.1}.pkl'
-        },
-        {
-            'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.1}.pkl',
+            'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.0}_4.pkl',
             'custom_eps': 0.0,
-            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.0}.pkl'
+            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.0}_5.pkl'
         }
     ]
 
@@ -215,17 +221,3 @@ if __name__ == '__main__':
             cfg,
             **run_params[i]
             )
-
-
-
-            
-
-
-
-
-
-
-                    
-
-            
-        
