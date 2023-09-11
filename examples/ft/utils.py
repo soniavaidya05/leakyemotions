@@ -161,7 +161,7 @@ def animate(
     '''
     path = folder + filename + '.gif'
 
-    frames[0].save(path, format = 'GIF', append_images = frames[1:], save_all = True, duration = 100, loop = 0)
+    frames[0].save(path, format = 'GIF', append_images = frames[1:], save_all = True, duration = 250, loop = 0)
 
 # --------------------------- #
 # endregion: Visualizations   #

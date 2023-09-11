@@ -154,7 +154,7 @@ class MLPBCModel(ANN):
 
         self.memory = memory
         self.frames = frames
-        self.loss_fn = nn.CrossEntropyLoss()
+        self.loss_fn = nn.MSELoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr = LR)
 
     def generate_images(self, state: torch.Tensor, action: torch.Tensor) -> list:
@@ -180,7 +180,7 @@ class MLPBCModel(ANN):
         state = state.squeeze()[T-1, :, :, :]
         state_prediction = state_prediction.view(*state.size())
 
-        return state_prediction, state
+        return state_prediction, state, action_prediction, masked_action
 
     def plot_images(self, state: torch.Tensor, action: torch.Tensor) -> None:
         '''
@@ -191,7 +191,11 @@ class MLPBCModel(ANN):
             action: An individual action batch of dimensions T x A.
         '''
 
-        states = self.generate_images(state, action)
+        state_predictions, states, action_prediction, masked_action = self.generate_images(state, action)
+
+        states = (state_predictions, states)
+        masked_action = masked_action.numpy().astype(int).tolist().index(1)
+        action_prediction = np.round(action_prediction.numpy().tolist()[0], 2)
 
         plot_dims = (2, 5)
         fig, axes = plt.subplots(*plot_dims, figsize=(10,5))
@@ -199,6 +203,7 @@ class MLPBCModel(ANN):
         outcome = ['Pred. ', 'Act. ']
         layer = ['Agent', 'Wall', 'Korean', 'Lebanese', 'Mexican']
 
+        fig.suptitle(f'Action: {masked_action}. Prediction: {action_prediction}')
         for x in range(plot_dims[0]):
             for y in range(plot_dims[1]):
                 axes[x, y].imshow(states[x][y, :, :])

@@ -181,37 +181,37 @@ if __name__ == '__main__':
     cfg = load_config(args)
 
     # Set up the run parameters (including where to save and load the models)
-    model_directory = f'{root}/examples/ft/checkpoints'
+    model_directory = f'{root}/examples/ft/models/checkpoints'
     run_params = [
-        # {
-        #     'custom_eps': 0.7,
-        #     'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.7}.pkl'
-        # },
-        # {
-        #     'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.7}.pkl',
-        #     'custom_eps': 0.5,
-        #     'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.5}.pkl'
-        # },
-        # {
-        #     'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.5}.pkl',
-        #     'custom_eps': 0.3,
-        #     'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.3}.pkl'
-        # },
-        # {
-        #     'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.3}.pkl',
-        #     'custom_eps': 0.1,
-        #     'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.1}.pkl'
-        # },
-        # {
-        #     'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.1}.pkl',
-        #     'custom_eps': 0.0,
-        #     'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.0}.pkl'
-        # },
         {
-            'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.0}_4.pkl',
+            'custom_eps': 0.7,
+            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_pomdp_{0.7}.pkl'
+        },
+        {
+            'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_pomdp_{0.7}.pkl',
+            'custom_eps': 0.5,
+            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_pomdp_{0.5}.pkl'
+        },
+        {
+            'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_pomdp_{0.5}.pkl',
+            'custom_eps': 0.3,
+            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_pomdp_{0.3}.pkl'
+        },
+        {
+            'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_pomdp_{0.3}.pkl',
+            'custom_eps': 0.1,
+            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_pomdp_{0.1}.pkl'
+        },
+        {
+            'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_pomdp_{0.1}.pkl',
             'custom_eps': 0.0,
-            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_{0.0}_5.pkl'
-        }
+            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_pomdp_{0.0}.pkl'
+        },
+        {
+            'load_weights': f'{model_directory}/model_{cfg.model.iqn.type}_pomdp_{0.0}.pkl',
+            'custom_eps': 0.0,
+            'save_weights': f'{model_directory}/model_{cfg.model.iqn.type}_pomdp_{0.0}_2.pkl'
+        },
     ]
 
     # Run each parameterization of the model.
