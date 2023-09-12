@@ -60,18 +60,12 @@ class BC(nn.Module):
             nn.Sigmoid()
         )
 
-        # Head for each channel of a state
-        # self.state_head = [
-        #     nn.Sequential(
-        #         nn.Linear(
-        #             layer_size,
-        #             np.array(state_size)[1:].prod()
-        #         ),
-        #         nn.Sigmoid()
-        #     ) for _ in range(self.n_channels)
-        # ]
-
         self.state_head = nn.Sequential(
+            nn.Linear(layer_size, np.array(state_size).prod()),
+            nn.Sigmoid()
+        )
+
+        self.future_head = nn.Sequential(
             nn.Linear(layer_size, np.array(state_size).prod()),
             nn.Sigmoid()
         )
@@ -100,25 +94,17 @@ class BC(nn.Module):
         # Backbone
         x = self.layers(x)
 
-        # Channel heads
-        # a1_channel = self.state_head[0](x)
-        # w1_channel = self.state_head[1](x)
-        # t1_channel = self.state_head[2](x)
-        # t2_channel = self.state_head[3](x)
-        # t3_channel = self.state_head[4](x)
+        # t+0 and t+1 heads
         state = self.state_head(x)
+        future_state = self.future_head(x)
 
         # Action head
-        acts = self.action_head(x)
+        action = self.action_head(x)
         
         return (
             state,
-            # a1_channel,
-            # w1_channel,
-            # t1_channel,
-            # t2_channel,
-            # t3_channel,
-            acts
+            action,
+            future_state
         )
     
 class MLPBCModel(ANN):
@@ -157,7 +143,7 @@ class MLPBCModel(ANN):
         self.loss_fn = nn.MSELoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr = LR)
 
-    def generate_images(self, state: torch.Tensor, action: torch.Tensor) -> list:
+    def generate_images(self, state: torch.Tensor, action: torch.Tensor, next_state: torch.Tensor) -> tuple[torch.Tensor]:
         '''
         Generate model outputs for a given state.
 
@@ -173,16 +159,18 @@ class MLPBCModel(ANN):
         action_input, masked_action = action[:-1, :], action[-1, :]
 
         with torch.no_grad():
-            state_prediction, action_prediction = self.model(
+            state_prediction, action_prediction, future_state_prediction = self.model(
                 state, action_input
             )
 
         state = state.squeeze()[T-1, :, :, :]
+        next_state = next_state.squeeze()[T-1, :, :, :]
         state_prediction = state_prediction.view(*state.size())
+        future_state_prediction = future_state_prediction.view(*next_state.size())
 
-        return state_prediction, state, action_prediction, masked_action
+        return state_prediction, state, action_prediction, masked_action, future_state_prediction, next_state
 
-    def plot_images(self, state: torch.Tensor, action: torch.Tensor) -> None:
+    def plot_images(self, state: torch.Tensor, action: torch.Tensor, next_state: torch.Tensor) -> None:
         '''
         Plots model outputs for a given state.
 
@@ -191,16 +179,16 @@ class MLPBCModel(ANN):
             action: An individual action batch of dimensions T x A.
         '''
 
-        state_predictions, states, action_prediction, masked_action = self.generate_images(state, action)
+        state_prediction, state, action_prediction, masked_action, future_state_prediction, next_state = self.generate_images(state, action, next_state)
 
-        states = (state_predictions, states)
+        states = (state_prediction, state, future_state_prediction, next_state)
         masked_action = masked_action.numpy().astype(int).tolist().index(1)
         action_prediction = np.round(action_prediction.numpy().tolist()[0], 2)
 
-        plot_dims = (2, 5)
-        fig, axes = plt.subplots(*plot_dims, figsize=(10,5))
+        plot_dims = (4, 5)
+        fig, axes = plt.subplots(*plot_dims, figsize=(10,10))
         
-        outcome = ['Pred. ', 'Act. ']
+        outcome = ['t+0 pr ', 't+0 act ', 't+1 pr ', 't+1 act']
         layer = ['Agent', 'Wall', 'Korean', 'Lebanese', 'Mexican']
 
         fig.suptitle(f'Action: {masked_action}. Prediction: {action_prediction}')
@@ -217,46 +205,29 @@ class MLPBCModel(ANN):
         if len(self.memory) > self.memory.batch_size:
 
             # Both states and actions should be set up as tensors of size (B, T, -1)
-            states, actions, _, _, _ = self.memory.sample()
+            states, actions, rewards, next_states, dones = self.memory.sample()
 
             # Split the last action from the input frames
             action_frames, masked_action = actions[:, :-1, :], actions[:, -1, :]
 
             # Remove the extra dimension from states
             states = states.squeeze()
+            next_states = next_states.squeeze()
             B, T, C, H, W = states.size()
 
             ground_truth = states[:, self.frames - 1, :, :, :].reshape(B, -1).to(self.device)
+            future_state = next_states[:, self.frames - 1, :, :, :].reshape(B, -1).to(self.device)
 
-            state_prediction, action_prediction = self.model(
+            state_prediction, action_prediction, future_state_prediction = self.model(
                 states, action_frames
             )
 
-            act_loss = self.loss_fn(action_prediction.to(float), masked_action.to(float))
-            reconstruction_loss = self.loss_fn(state_prediction, ground_truth)
+            act_loss = nn.CrossEntropyLoss(action_prediction.to(float), masked_action.to(float))
+            t0_loss = nn.BCELoss()(state_prediction, ground_truth)
+            t1_loss = nn.BCELoss()(future_state_prediction, future_state)
 
-
-            # # Split the state into channels to compute loss against
-            # # (Agent, Wall, Truck1, Truck2, Truck3)
-            # a_gt, w_gt, t1_gt, t2_gt, t3_gt = (
-            #     states[:, self.frames - 1, 0, :, :].reshape(B, -1).to(self.device), 
-            #     states[:, self.frames - 1, 1, :, :].reshape(B, -1).to(self.device), 
-            #     states[:, self.frames - 1, 2, :, :].reshape(B, -1).to(self.device),
-            #     states[:, self.frames - 1, 3, :, :].reshape(B, -1).to(self.device),
-            #     states[:, self.frames - 1, 4, :, :].reshape(B, -1).to(self.device)
-            # )
-
-            # # Get the model predictions
-            # a1, w1, t1, t2, t3, action_prediction = self.model(
-            #     states, action_frames
-            # )
-
-            # agent_loss = self.loss_fn(a1, a_gt)
-            # wall_loss = self.loss_fn(w1, w_gt)
-            # t1_loss = self.loss_fn(t1, t1_gt)
-            # t2_loss = self.loss_fn(t2, t2_gt)
-            # t3_loss = self.loss_fn(t3, t3_gt)
-            # act_loss = self.loss_fn(action_prediction.to(float), masked_action.to(float))
+            # reconstruction_loss2 = nn.CrossEntropyLoss()(state_prediction, ground_truth)
+            reconstruction_loss = t0_loss + t1_loss
 
             # reconstruction_loss = agent_loss + wall_loss + t1_loss + t2_loss + t3_loss
             loss = reconstruction_loss + act_loss
@@ -267,6 +238,42 @@ class MLPBCModel(ANN):
 
         return act_loss.detach().cpu().item(), reconstruction_loss.detach().cpu().item()
 
-    
+class Encoder(nn.Module):
+    '''
+    Encoder module for the `WorldModel` class. Passes the state input through
+    a CNN backbone 
+    '''
+    def __init__(
+        self,
+        state_size: ArrayLike,
+        cnn_config
+    ):
+
+        pass
+
+class WorldModel(ANN):
+    '''
+    Encoder-decoder inverse model. Observing another agent's current state `s`, 
+    reconstruct the agent's trajectory `ŝ, â, ŝ'`. 
+    '''
+    def __init__(
+        self,
+        # Base ANN parameters
+        state_size: ArrayLike,
+        action_size: int,
+        layer_size: int,
+        epsilon: float,
+        device: Union[str, torch.device],
+        seed: int,
+        # BC model parameters
+        n_channels: int,
+        frames: int,
+        memory: ReplayBuffer,
+        LR: float
+    ):
+        
+        super(WorldModel, self).__init__(state_size, action_size, layer_size, epsilon, device, seed)
+
+
 
 
