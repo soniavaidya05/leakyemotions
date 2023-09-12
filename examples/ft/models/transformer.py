@@ -1,3 +1,8 @@
+"""
+Implementation of the Vision Transformer (ViT, https://github.com/lucidrains/vit-pytorch/tree/main) 
+with adaptations from StARFormer (https://github.com/elicassion/StARformer/tree/main).
+
+"""
 # --------------- #
 # region: Imports #
 # --------------- #
@@ -85,7 +90,7 @@ class JointEmbedding(nn.Module):
         state_size: ArrayLike,
         patch_size: int,
         action_space: int,
-        layer_size: int
+        layer_size: int,
     ):
 
         self.layer_size = layer_size
@@ -110,6 +115,8 @@ class JointEmbedding(nn.Module):
 class Attention(nn.Module):
     """
     Multi-head self-attention module.
+
+
     """
 
     def __init__(
@@ -138,26 +145,26 @@ class Attention(nn.Module):
 
         # Get Q, K, V
         q, k, v = self.q(x), self.k(x), self.v(x)
-        # Pass them into the attention module (not keeping weights for now)
-        output, _ = self.attention(q, k, v)
+        # Pass them into the attention module
+        output, weights = self.attention(q, k, v)
 
-        return output
+        return output, weights
  
-class TransformerBlock(nn.Module):
+class _TransformerBlock(nn.Module):
     """
-    Single transformer block.
+    Helper transformer block.
     """
     def __init__(
         self,
         layer_size: int,
-        dropout: float = 0.,
-        **kwargs
+        num_heads: int,
+        dropout: float = 0.
     ):
         super().__init__()
 
         self.norm1 = nn.LayerNorm(layer_size)
         self.norm2 = nn.LayerNorm(layer_size)
-        self.attention = Attention(layer_size=layer_size, dropout=dropout,**kwargs)
+        self.attention = Attention(layer_size=layer_size, dropout=dropout,num_heads=num_heads)
         self.ff = nn.Sequential(
                 nn.Linear(layer_size, layer_size * 4),
                 nn.GELU(),
@@ -174,28 +181,32 @@ class TransformerBlock(nn.Module):
 
         return y
 
-
-
-    
-
-    
-class Transformer(nn.Module):
+class TransformerBlock(nn.Module):
     """
     Full multilayer transformer.
     """
     def __init__(
         self,
         depth,
-        **kwargs
-
+        layer_size: int,
+        num_heads: int,
+        dropout: float = 0.
     ):
         
-        self.norm = nn.LayerNorm(kwargs['layer_size'])
+        self.norm = nn.LayerNorm(layer_size)
         self.layers = nn.ModuleList([])
         for _ in range(depth):
             self.layers.append(
-                TransformerBlock
+                _TransformerBlock(layer_size, num_heads, dropout)
             )
+
+        
+    
+    def forward(self, local_tokens: torch.Tensor):
+
+        B, T, P, D = local_tokens.size()
+
+
             
 
 
@@ -253,12 +264,14 @@ class VisionTransformer(nn.Module):
         self.device = device
         self.seed = seed
 
-        # Patch embedding
-        self.patch_embedding = PatchEmbedding(
-            in_channels=state_size[0],
+        # (S, A) embedding
+        self.token_embedding = JointEmbedding(
+            state_size=state_size,
             patch_size=patch_size,
+            action_space=action_size,
             layer_size=layer_size
         )
+
 
 
 
@@ -274,6 +287,24 @@ class VisionTransformer(nn.Module):
             assert self.state_size[i] % self.patch_size == 0, f"Image dimensions {self.state_size[1]} x {self.state_size[2]} must be evenly divisible by the patch size {self.patch_size} x {self.patch_size}."
             num_patches *= self.state_size // self.patch_size
         return num_patches
+    
+    def get_batch(self):
+        """
+        Get a batch of trajectories available in the format:
+
+            (S, A, R, A') -> (S', A', R', A")
+
+        
+        
+
+        """
+        pass
+
+    def train_model(self):
+        """
+        
+        """
+        pass
     
 
 vit = VisionTransformer()
