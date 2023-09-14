@@ -3,9 +3,21 @@
 # ----------------------------------------------------- #
 
 class Object:
-    '''
+    """
     Base element class. Defines the non-optional initialization parameters for all entities.
-    '''
+
+    Parameters:
+        color: The color of the object.
+
+    Attributes:
+        appearance: The appearance of the object, specified by color.
+        vision: The ability of the object to see an N x N pixels around it.
+        value: The reward provided to an agent upon interaction.
+        model: The neural network of the object.
+        passable: Whether the object can be traversed by an agent.
+        has_transitions: Whether the object has unique physics interacting with the environment.
+        kind: The class string of the object.
+    """
     def __init__(self, color):
         self.appearance = color # Every object needs an appearance
         self.vision = 0 # By default, entities cannot see
@@ -45,7 +57,12 @@ class Truck(Object):
     '''
     Base truck object.
 
-    Cuisine: specifies the name of the truck.
+    Parameters:
+        color: The appearance of the truck. \n
+        cfg: The configuration object.
+
+    Attributes:
+        cuisine: specifies the name of the truck.
     '''
     def __init__(self, color, cfg):
         super().__init__(color)
@@ -59,5 +76,6 @@ class Truck(Object):
     def __repr__(self):
         return f'{self.__class__.__name__}(color={self.appearance},value={self.value},cuisine={self.cuisine})'
 
-# endregion
+# ----------------------------------------------------- #
+# endregion                                             #
 # ----------------------------------------------------- #

@@ -1,14 +1,26 @@
 """
-Implementation of the Vision Transformer (ViT, https://github.com/lucidrains/vit-pytorch/tree/main) 
-with adaptations from StARFormer (https://github.com/elicassion/StARformer/tree/main).
+Implementation of a Vision Transformer, which learns a local patch and whole-state representation, as well 
+as representations of the temporal structure and the previous action, using both of these to predict both 
+actions and future states from a given state and prior action transition.
 
+This source code is based on the StARFormer inverse model (https://github.com/elicassion/StARformer/tree/main),
+with adaptations from the Vision Transformer (ViT, https://github.com/lucidrains/vit-pytorch/tree/main).
+
+Structure:
+
+    Joint Embedding (including an action, patch, whole-state convolutional, and temporal embedding)
+
+    Multi-head Attention with both local and global blocks 
 """
 # --------------- #
 # region: Imports #
 # --------------- #
 
+import math
 import torch
 import torch.nn as nn
+import torch.optim as optim
+import numpy as np
 
 from typing import Union
 from numpy.typing import ArrayLike
@@ -71,6 +83,7 @@ class ActionEmbedding(nn.Module):
         layer_size: int,
     ):
         
+        super().__init__()
         self.action_embedding = nn.Embedding(action_space, layer_size)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -81,9 +94,53 @@ class ActionEmbedding(nn.Module):
         # Pass through the embedding layer
         return self.action_embedding(x)
 
+class ConvolutionalEmbedding(nn.Module):
+    """
+    Global state embedding. Convolves the state and passes it 
+    through a linear layer of the same size as the patch and
+    action embedding modules.
+    """
+    def __init__(
+        self,
+        state_size: ArrayLike,
+        layer_size: int
+    ):
+        
+        super().__init__()
+        self.convolutional_embedding = nn.Sequential(
+            nn.Conv2d(
+                in_channels=state_size[0],
+                out_channels=16,
+                kernel_size=3,
+                stride=3,
+                padding=0
+            ),
+            nn.Conv2d(
+                in_channels=16,
+                out_channels=32,
+                kernel_size=2,
+                stride=1,
+                padding=0
+            ),
+            nn.Conv2d(
+                in_channels=32,
+                out_channels=32,
+                kernel_size=1,
+                stride=1,
+                padding=0
+            ),
+            nn.Flatten(),
+            nn.Linear(128,layer_size)
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+
+        return self.convolutional_embedding(x)
+
 class JointEmbedding(nn.Module):
     """
-    Embed patches and actions simultaneously
+    Simultaneously embed state patches, actions, a global convolutional state token,
+    and temporal embeddings 
     """
     def __init__(
         self,
@@ -91,32 +148,38 @@ class JointEmbedding(nn.Module):
         patch_size: int,
         action_space: int,
         layer_size: int,
+        max_timesteps: int
     ):
-
+        super().__init__()
         self.layer_size = layer_size
         self.patch_size = patch_size
+        self.max_timesteps = max_timesteps
         self.patch_embedding = PatchEmbedding(state_size, patch_size, layer_size)
         self.action_embedding = ActionEmbedding(action_space, layer_size)
+        self.temporal_embedding = nn.Parameter(torch.zeros(1, max_timesteps, layer_size))
+        self.global_embedding = ConvolutionalEmbedding(state_size, layer_size)
 
-    def forward(self, states: torch.Tensor, actions: torch.Tensor) -> torch.Tensor:
+    def forward(self, states: torch.Tensor, actions: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
 
         # Get the batch size and timesteps
-        B, T, _, _, _ = states.size()
+        B, T, C, H, W = states.size()
 
         # Get the embeddings and reshape them with batch size and timesteps restored
         state_embeddings = self.patch_embedding(states).view(B, T, -1, self.layer_size)
         action_embeddings = self.action_embedding(actions).view(B, T, -1, self.layer_size)
 
-        # Concatenate the embeddings
+        # Get the global convolutional embedding and add it to the temporal embedding (not sure why)
+        global_tokens = self.global_embedding(states.view(-1, C, H, W)).view(B, T, -1) + self.temporal_embedding[:, :self.max_timesteps]
+
+        # Concatenate the state and action embeddings
         local_tokens = torch.cat((state_embeddings, action_embeddings), dim = 2)
 
-        return local_tokens
-    
+        return local_tokens, global_tokens, self.temporal_embedding[:, :self.max_timesteps]
+
 class Attention(nn.Module):
     """
-    Multi-head self-attention module.
-
-
+    Multi-head self-attention module. Uses torch.nn.MultiheadAttention to 
+    handle the attention computation.
     """
 
     def __init__(
@@ -133,7 +196,8 @@ class Attention(nn.Module):
         self.attention = nn.MultiheadAttention(
             embed_dim=layer_size,
             num_heads=num_heads,
-            dropout=dropout
+            dropout=dropout,
+            batch_first=True
         )
 
         # Query, key, and value layers
@@ -141,15 +205,51 @@ class Attention(nn.Module):
         self.k = nn.Linear(in_features=layer_size, out_features=layer_size)
         self.v = nn.Linear(in_features=layer_size, out_features=layer_size)
 
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
 
         # Get Q, K, V
         q, k, v = self.q(x), self.k(x), self.v(x)
         # Pass them into the attention module
-        output, weights = self.attention(q, k, v)
+        output, weights = self.attention(q, k, v, 
+            average_attn_weights=False)
 
         return output, weights
- 
+
+class StarformerAttention(Attention):
+    """
+    Hand-coded self-attention mechanism from StARformer.
+    """
+    def __init__(
+        self,
+        layer_size: int,
+        num_heads: int,
+        dropout: float = 0.
+    ):
+
+        super(StarformerAttention, self).__init__(layer_size, num_heads, dropout)
+
+        self.attention_dropout = nn.Dropout(dropout)
+        self.residual_dropout = nn.Dropout(dropout)
+        self.softmax = nn.Softmax(dim = -1)
+        self.projection = nn.Linear(layer_size, layer_size)
+        
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+
+        B, N, D = x.size()
+
+        # Hand coded self-attention
+        q = self.q(x.view(B*N, -1)).view(B, N, self.num_heads, D // self.num_heads).transpose(1, 2)
+        k = self.k(x.view(B*N, -1)).view(B, N, self.num_heads, D // self.num_heads).transpose(1, 2)
+        v = self.v(x.view(B*N, -1)).view(B, N, self.num_heads, D // self.num_heads).transpose(1, 2)
+
+        A = q @ k.transpose(-2, -1) * (1 / math.sqrt(k.size(-1)))
+        A = self.softmax(A)
+        A_drop = self.attention_dropout(A)
+        y = (A_drop @ v).transpose(1, 2).contiguous().view(B, N, D)
+        y = self.projection(y)
+        y = self.residual_dropout(y)
+        return y, A
+
 class _TransformerBlock(nn.Module):
     """
     Helper transformer block.
@@ -158,13 +258,17 @@ class _TransformerBlock(nn.Module):
         self,
         layer_size: int,
         num_heads: int,
-        dropout: float = 0.
+        dropout: float = 0.,
+        attention_type: str = 'regular'
     ):
+        
         super().__init__()
-
         self.norm1 = nn.LayerNorm(layer_size)
         self.norm2 = nn.LayerNorm(layer_size)
-        self.attention = Attention(layer_size=layer_size, dropout=dropout,num_heads=num_heads)
+        if attention_type == 'starformer':
+            self.attention = StarformerAttention(layer_size, num_heads, dropout)
+        else:
+            self.attention = Attention(layer_size, num_heads, dropout)
         self.ff = nn.Sequential(
                 nn.Linear(layer_size, layer_size * 4),
                 nn.GELU(),
@@ -172,43 +276,77 @@ class _TransformerBlock(nn.Module):
                 nn.Dropout(dropout)
             )
     
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
 
         # Attention layer: layernormalize + skip connection
-        y = x + self.attention(self.norm1(x))
+        y, att = self.attention(self.norm1(x))
+        x = x + y
         # Feedforward layer: Layernormalize + skip_connection
-        y = y + self.ff(self.norm1(x))
+        x = x + self.ff(self.norm2(x))
 
-        return y
+        # Return the outcomes as well as the attention weights
+        return x, att
 
 class TransformerBlock(nn.Module):
     """
-    Full multilayer transformer.
+    Full transformer block.
     """
     def __init__(
         self,
-        depth,
         layer_size: int,
         num_heads: int,
-        dropout: float = 0.
-    ):
-        
-        self.norm = nn.LayerNorm(layer_size)
-        self.layers = nn.ModuleList([])
-        for _ in range(depth):
-            self.layers.append(
-                _TransformerBlock(layer_size, num_heads, dropout)
-            )
+        num_patches: int,
+        dropout: float = 0.,
+        attention_type: str = 'starformer'
 
+    ):
+        super().__init__()
+        self.norm = nn.LayerNorm(layer_size)
+        self.num_patches = num_patches
         
-    
-    def forward(self, local_tokens: torch.Tensor):
+        # Transformer blocks for the local and global tokens, respectively
+        self.local_block = _TransformerBlock(layer_size, num_heads=num_heads,dropout=dropout, attention_type=attention_type)
+        self.global_block = _TransformerBlock(layer_size, num_heads=num_heads,dropout=dropout, attention_type=attention_type)
+
+        # Increase number of patches because we are adding one more layer with the action embedding
+        total_num_patches = num_patches + 1
+
+        # Project the local tokens into the global token space
+        self.local_global_proj = nn.Sequential(
+            nn.Linear(
+                in_features=total_num_patches * layer_size,
+                out_features=layer_size 
+            ),
+            nn.LayerNorm(layer_size)
+        )
+
+    def forward(
+        self, 
+        local_tokens: 
+        torch.Tensor, 
+        global_tokens: torch.Tensor, 
+        temporal_embedding: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
 
         B, T, P, D = local_tokens.size()
 
+        # Merge batch and timesteps to pass through attention layer
+        local_tokens, local_att = self.local_block(local_tokens.view(-1, P, D))
+        local_tokens = local_tokens.view(B, T, P, D)
 
-            
+        # Project local tokens into the global projection space
+        to_global = self.norm(local_tokens.view(-1, D)).view(B * T, P * D)
 
+        to_global = self.local_global_proj(to_global).view(B, T, -1)
+
+        # Add the temporal and local projections before passing it through 
+        # the global transformer block
+        to_global += temporal_embedding
+
+        global_tokens = torch.cat((to_global, global_tokens), dim = 2).view(B, -1, D)
+        global_tokens, global_att = self.global_block(global_tokens)
+
+        return local_tokens, local_att, global_tokens[:, 1::2], global_att
 
 # -------------------------- #
 # endregion:                 #
@@ -219,32 +357,37 @@ class VisionTransformer(nn.Module):
     def __init__(
         self,
         state_size: ArrayLike,
-        action_size: int,
+        action_space: int,
         layer_size: int,
         patch_size: int,
         num_frames: int,
         batch_size: int,
+        num_layers: int,
+        num_heads: int,
         memory: ABRBuffer,
         LR: float,
         device: Union[str, torch.device],
         seed: int
     ):
-        """Vision transformer adapted from Phil Wang's ViT (https://github.com/lucidrains/vit-pytorch/tree/main). 
+        """Vision transformer adapted from StARFormer (https://github.com/elicassion/StARformer/tree/main)
+        with adaptations from Phil Wang's ViT (https://github.com/lucidrains/vit-pytorch/tree/main).
         Takes a sequence of visual inputs plus prior actions and returns an action prediction.
 
         Parameters:
             state_size: (ArrayLike) An array-like sequence of the form 
             C x H x W defining the input image size. \n
-            action_size: (int) The number of possible actions PLUS ONE (used for the masked actions). \n
+            action_space: (int) The number of possible actions PLUS ONE (used for the masked actions). \n
             layer_size: (int) The size of the embedding layer. \n
             patch_size: (int) The size of patches to use in the model. \n
             num_frames: (int) The number of timesteps passed into the model. \n
             batch_size: (int) The size of the training batches. \n
+            num_layers: (int) The depth of the transformer blocks. \n
             memory: (ActionBatchReplayBuffer) A model object with stored memories. \n
             LR: (float) The learning rate of the model. \n
             device: (str, torch.device) The device to perform computations on. \n
             seed: (int) Manual seed for replication purposes.
         """
+        super().__init__()
         
         # Image and patch dimensions
         self.state_size = state_size
@@ -257,10 +400,11 @@ class VisionTransformer(nn.Module):
 
         # Layer sizes
         self.layer_size = layer_size
-        self.action_size = action_size # Output dimensions
+        self.action_space = action_space # Output dimensions
+        self.num_heads = num_heads
 
         # Additional elements
-        self.memory = memory
+        self.memory = memory 
         self.device = device
         self.seed = seed
 
@@ -268,15 +412,71 @@ class VisionTransformer(nn.Module):
         self.token_embedding = JointEmbedding(
             state_size=state_size,
             patch_size=patch_size,
-            action_space=action_size,
-            layer_size=layer_size
+            action_space=action_space,
+            layer_size=layer_size,
+            max_timesteps=num_frames
         )
 
+        # Set dropout between the token embedding and the transformer blocks
+        self.local_dropout = nn.Dropout(0.)
+        self.global_dropout = nn.Dropout(0.)
 
+        # Num_layers = number of transformer blocks
+        self.blocks = nn.ModuleList(
+            [TransformerBlock(layer_size, num_heads, self.num_patches, dropout = 0.) for _ in range(num_layers)]
+        )
 
+        # Layer normalization and state and action heads
+        self.layernorm = nn.LayerNorm(layer_size)
+        self.state_head = nn.Linear(
+            in_features=layer_size,
+            out_features=np.array(state_size).prod()
+        )
+        self.action_head = nn.Linear(
+            in_features=layer_size,
+            out_features=action_space
+        )
 
+        self.optimizer = optim.Adam(self.parameters(), lr = LR)
 
+    def forward(self, states: torch.Tensor, actions: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        
+        local_tokens, global_tokens, temporal_embedding = self.token_embedding(states, actions)
+        
+        # Dropout layers
+        local_tokens = self.local_dropout(local_tokens)
+        global_tokens = self.global_dropout(global_tokens)
 
+        # Transformer blocks
+        for _, block in enumerate(self.blocks):
+            local_tokens, local_att, global_tokens, global_att = block(local_tokens, global_tokens, temporal_embedding)
+
+        x = self.layernorm(global_tokens)
+
+        state_prediction = self.state_head(x)
+        action_prediction = self.action_head(x)
+
+        return state_prediction, action_prediction
+
+    def state_loss(self, state_predictions: torch.Tensor, state_targets: torch.Tensor) -> torch.Tensor:
+
+        loss = nn.MSELoss()
+
+        # Reshape the targets
+        B, T, C, H, W = state_targets.size()
+        state_predictions = state_predictions.view(B, T, C, H, W)
+
+        return loss(state_predictions, state_targets)
+         
+    def action_loss(self, action_predictions: torch.Tensor, action_targets: torch.Tensor) -> torch.Tensor:
+
+        # Criterion: cross-entropy loss
+        loss = nn.CrossEntropyLoss()
+
+        # Reshape to label outputs
+        action_targets = action_targets.squeeze()
+
+        return loss(action_predictions, action_targets)
 
     def patch(self) -> int:
         """
@@ -285,26 +485,69 @@ class VisionTransformer(nn.Module):
         num_patches = 1
         for i in [1, 2]:
             assert self.state_size[i] % self.patch_size == 0, f"Image dimensions {self.state_size[1]} x {self.state_size[2]} must be evenly divisible by the patch size {self.patch_size} x {self.patch_size}."
-            num_patches *= self.state_size // self.patch_size
+            num_patches *= self.state_size[i] // self.patch_size
         return num_patches
     
-    def get_batch(self):
+    def get_batch(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Get a batch of trajectories available in the format:
 
-            (S, A, R, A') -> (S', A', R', A")
+            `(S, A, R, S', D) -> (S', A', R', S", D')`
+        
+        Losses are computed on the ability to predict from given `S', A -> S", A'`
+
+        Return:
+            A sequence of trajectories of the appropriate transition form.
+        """
+
+        # Get from the buffer in the typical format
+        # State size: (B, T, C, H, W)
+        # Action size: (B, T, 1)
+        states, actions, _, next_states, _ = self.memory.sample()
+
+        # Inputs: action at t-1 and state. Remove the last action and the first 
+        # state as they have no associated pairs.
+        action_inputs = actions[:, :-1, :]
+        state_inputs = states[:, 1:, :, :, :]
+        
+        # Objective: Reconstruct action at t as well as next_state.
+        action_targets = actions[:, 1:, :]
+        state_targets = next_states[:, 1:, :, :, :]
+
+        return state_inputs, action_inputs, state_targets, action_targets
+
+    def train_model(self) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Training loop for the transformer model.
+
+        Get batched (S', A) inputs and (S", A') targets from the stored memories.
+        """
+
+        # Get batched inputs
+        state_inputs, action_inputs, state_targets, action_targets = self.get_batch()
+
+        # Move to device
+        state_inputs = state_inputs.to(self.device)
+        action_inputs = action_inputs.to(self.device)
+
+        # Forward pass through the model
+        state_predictions, action_predictions = self.forward(state_inputs, action_inputs)
+
+        state_loss = self.state_loss(state_predictions, state_targets)
+        action_loss = self.action_loss(action_predictions, action_targets)
+
+        loss = state_loss + action_loss
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        return state_loss.detach().cpu().item(), action_loss.detach().cpu().item()
+
+
+
+
+
+
 
         
-        
-
-        """
-        pass
-
-    def train_model(self):
-        """
-        
-        """
-        pass
-    
-
-vit = VisionTransformer()
