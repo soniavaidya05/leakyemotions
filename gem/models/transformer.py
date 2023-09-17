@@ -413,6 +413,7 @@ class VisionTransformer(nn.Module):
         # Additional elements
         self.memory = memory 
         self.device = device
+        self.memory.device = self.device
         self.seed = seed
 
         # (S, A) embedding
@@ -422,27 +423,27 @@ class VisionTransformer(nn.Module):
             action_space=action_space,
             layer_size=layer_size,
             max_timesteps=num_frames
-        )
+        ).to(self.device)
 
         # Set dropout between the token embedding and the transformer blocks
-        self.local_dropout = nn.Dropout(0.)
-        self.global_dropout = nn.Dropout(0.)
+        self.local_dropout = nn.Dropout(0.).to(self.device)
+        self.global_dropout = nn.Dropout(0.).to(self.device)
 
         # Num_layers = number of transformer blocks
         self.blocks = nn.ModuleList(
             [TransformerBlock(layer_size, num_heads, self.num_patches, dropout = 0.) for _ in range(num_layers)]
-        )
+        ).to(self.device)
 
         # Layer normalization and state and action heads
-        self.layernorm = nn.LayerNorm(layer_size)
+        self.layernorm = nn.LayerNorm(layer_size).to(self.device)
         self.state_head = nn.Linear(
             in_features=layer_size,
             out_features=np.array(state_size).prod()
-        )
+        ).to(self.device)
         self.action_head = nn.Linear(
             in_features=layer_size,
             out_features=action_space
-        )
+        ).to(self.device)
 
         self.optimizer = optim.Adam(self.parameters(), lr = LR)
 
@@ -536,12 +537,12 @@ class VisionTransformer(nn.Module):
 
         # Inputs: action at t-1 and state. Remove the last action and the first 
         # state as they have no associated pairs.
-        action_inputs = actions[:, :-1, :]
-        state_inputs = states[:, 1:, :, :, :]
+        action_inputs = actions[:, :-1, :].to(self.device)
+        state_inputs = states[:, 1:, :, :, :].to(self.device)
         
         # Objective: Reconstruct action at t as well as next_state.
-        action_targets = actions[:, 1:, :]
-        state_targets = next_states[:, 1:, :, :, :]
+        action_targets = actions[:, 1:, :].to(self.device)
+        state_targets = next_states[:, 1:, :, :, :].to(self.device)
 
         return state_inputs, action_inputs, state_targets, action_targets
 
@@ -562,7 +563,7 @@ class VisionTransformer(nn.Module):
         # Forward pass through the model
         state_predictions, action_predictions = self.forward(state_inputs, action_inputs)
 
-        state_loss = self.state_loss(state_predictions, state_targets)
+        state_loss = self.state_loss(state_predictions, state_targets / 255)
         action_loss = self.action_loss(action_predictions, action_targets)
 
         loss = state_loss + action_loss
@@ -593,9 +594,10 @@ class VisionTransformer(nn.Module):
             state_predictions, action_predictions = self.forward(state_inputs.unsqueeze(0), action_inputs.unsqueeze(0))
         
         T, C, H, W = state_targets.size()
-        state_predictions = state_predictions.squeeze().view(T, C, H, W)
+        state_targets = state_targets.detach()
+        state_predictions = state_predictions.squeeze().view(T, C, H, W).detach()
 
-        return state_predictions, state_targets
+        return state_predictions, state_targets / 255
 
 
 

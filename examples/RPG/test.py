@@ -6,6 +6,7 @@
 import os
 import argparse
 import random
+import time
 
 from IPython.display import clear_output
 from matplotlib import pyplot as plt
@@ -244,7 +245,7 @@ def train_transformer_model(cfg: Cfg, action_model_pattern):
         num_layers=4,
         memory=memories,
         LR=.0001,
-        device='cpu',
+        device='mps',
         seed=random.randint(0,1000)
     )
 
@@ -255,6 +256,7 @@ def train_transformer_model(cfg: Cfg, action_model_pattern):
         )
     
     for epoch in range(10000):
+        start = time.time()
         state_loss, action_loss = inverse_model.train_model()
         state_predictions, state_targets = inverse_model.plot_trajectory()
 
@@ -263,6 +265,11 @@ def train_transformer_model(cfg: Cfg, action_model_pattern):
             writer.add_scalar('State loss', state_loss, epoch)
             writer.add_images('State targets', state_targets[:5], epoch) # First 5 images
             writer.add_images('State preds', state_predictions[:5], epoch)
+
+        end = time.time()
+        duration = end - start
+        clear_output(wait = True)
+        print(f'Epoch {epoch}. Total training duration: {duration}.')
 
         # if epoch % 50 == 0:
         #     clear_output(wait = True)
