@@ -23,6 +23,7 @@ import os
 import math
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 
@@ -622,7 +623,108 @@ class VisionTransformer(nn.Module):
         self.load_state_dict(checkpoint['model'])
         self.optimizer.load_state_dict(checkpoint['optim'])
 
+class ViTOneHot(VisionTransformer):
+    """
+    Slight modification of the VisionTransformer optimized for use with one-hot coded state inputs.
+    """
+    def __init__(
+        self,
+        state_size: ArrayLike,
+        action_space: int,
+        layer_size: int,
+        patch_size: int,
+        num_frames: int,
+        batch_size: int,
+        num_layers: int,
+        num_heads: int,
+        memory: ReplayBuffer,
+        LR: float,
+        device: Union[str, torch.device],
+        seed: int
+    ):
+        super(VisionTransformer, self).__(state_size, action_space, layer_size, patch_size, num_frames, batch_size, num_layers, num_heads, memory, LR, device, seed)
+
+        # Alternate output: for each channel, output a positive and negative classification weight.
+        # In the forward model, these will be softmaxed to provide a channelwise +/- pixel probability.
+        self.state_heads = nn.ModuleList([])
+        for _ in range(state_size[0]):
+            self.state_heads.append(
+                nn.Linear(
+                    in_features=layer_size,
+                    out_features=np.array(state_size[1:]).prod() * 2 # Positive and negative output for each channel
+                ),
+            )
+
+    def forward(self, states: torch.Tensor, actions: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Overriden forward pass: Replace the state head with C state heads and a softmaxed output for each channel.
+        """
+
+        B, T, C, H, W = states.size()
+
+        local_tokens, global_tokens, temporal_embedding = self.token_embedding(states, actions)
+        
+        # Dropout layers
+        local_tokens = self.local_dropout(local_tokens)
+        global_tokens = self.global_dropout(global_tokens)
+
+        # Transformer blocks
+        for _, block in enumerate(self.blocks):
+            local_tokens, local_att, global_tokens, global_att = block(local_tokens, global_tokens, temporal_embedding)
+
+        x = self.layernorm(global_tokens)
+
+        action_prediction = self.action_head(x)
+
+        state_predictions = torch.tensor([], requires_grad=True)
+        for _, state_head in enumerate(self.state_heads):
+            state_prediction = state_head(x).view(B, T, 2, H, W)
+            # Softmax along the channel dimension to give yes/no probability
+            state_prediction = F.softmax(state_prediction, dim = 2)
+            # Cat on the last dimension to create a six-dimensional array (B, T, 2, H, W, C)
+            torch.cat((state_predictions, state_prediction.unsqueeze(-1)), dim = -1)
+
+        return state_predictions, action_prediction
+    
+    def state_loss(self, state_predictions: torch.Tensor, state_targets: torch.Tensor):
+        """
+        Overriden state loss function. Cross entropy loss computed on the yes/no probability of each channel.
+        """
+
+        loss = nn.CrossEntropyLoss()
+
+        # State targets are in the form: B T C H W
+        state_targets = state_targets.long() # Classification requires long type
+        # State preds are in the form: B 2 T C H W
+        state_predictions = state_predictions.permute(0, 2, 1, 5, 3, 4)
+
+        return loss(state_predictions, state_targets)
+    
+    def plot_trajectory(self) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Using the current forward model, create a T x C x H x W video of one game and its reconstruction.
+
+        Returns:
+            A tuple of state predictions and state targets.
+        """
+        
+        state_inputs, action_inputs, state_targets, action_targets = self.get_batch()
+
+        #Get just the first item in the batch
+        state_inputs = state_inputs[0]
+        action_inputs = action_inputs[0]
+        state_targets = state_targets[0]
+        action_targets = action_targets[0]
+
+        with torch.no_grad():
+            state_predictions, action_predictions = self.forward(state_inputs.unsqueeze(0), action_inputs.unsqueeze(0))
+        
+        T, C, H, W = state_targets.size()
+        state_targets = state_targets.detach()
 
 
+        # Rearrange: 2 T C H W, then select positive probability (channel 1)
+        state_predictions = state_predictions.permute(0, 1, 4, 2, 3)[1, :, :, :, :].squeeze().detach()
 
+        return state_predictions, state_targets / 255
         
