@@ -19,6 +19,7 @@ Structure:
 # --------------- #
 
 # Base packages
+import os
 import math
 import torch
 import torch.nn as nn
@@ -599,9 +600,27 @@ class VisionTransformer(nn.Module):
 
         return state_predictions, state_targets / 255
 
+    def save(self, file_path: Union[str, os.PathLike]) -> None:
+        """
+        Save the model weights and parameters to disk.
+        """
+        torch.save({
+            'model': self.state_dict(),
+            'optim': self.optimizer.state_dict()
+        },
+            file_path
+        )
 
+    def load(self, file_path: Union[str, os.PathLike]) -> None:
+        """
+        Load the model weights and parameters from a specified file.
 
+        NOTE: The model must have the same settings as those 
+        """
+        checkpoint = torch.load(file_path)
 
+        self.load_state_dict(checkpoint['model'])
+        self.optimizer.load_state_dict(checkpoint['optim'])
 
 
 

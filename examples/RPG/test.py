@@ -207,45 +207,24 @@ def eval_model(*flags,
 
     return game_objects
 
-def train_transformer_model(cfg: Cfg, action_model_pattern):
+def train_transformer_model(cfg: Cfg, memories_path):
 
-    # ------------------------------------------------------ #
-    # region: Create the forward model for the animations... #
-    # ------------------------------------------------------ #
-
-    models = create_models(cfg)
-    for model in models:
-        model.load(f'{cfg.root}/examples/RPG/models/checkpoints/{action_model_pattern}.pkl')
-    agents = create_agents(cfg, models)
-    entities = create_entities(cfg)
-    # env = RPG(cfg, agents, entities)
-    memories = Buffer.load(f'{cfg.root}/examples/RPG/data/{action_model_pattern}_memories.pkl')
-    memories.batch_size = 64 # Reduce batch size since the # of frames is quite long
-    # action_model_store = Buffer(
-    #     buffer_size=cfg.experiment.max_turns,
-    #     batch_size=cfg.experiment.max_turns,
-    #     device=None,
-    #     seed=None,
-    #     gamma=None,
-    #     timesteps=cfg.experiment.max_turns,
-    # )
-
-    # ------------------------------------------------------ #
-    # endregion                                              #
-    # ------------------------------------------------------ #
+    # Load the stored memories
+    memories = Buffer.load(memories_path)
+    memories.batch_size = cfg.model.batch_size # Reduce batch size since the # of frames is quite long
 
     inverse_model = ViT(
-        state_size=cfg.model.iqn.parameters.state_size,
-        action_space=4,
-        layer_size=200,
-        patch_size=3,
-        num_frames=99,
-        num_heads=4,
-        batch_size=64,
-        num_layers=4,
+        state_size=cfg.model.state_size,
+        action_space=cfg.model.action_space,
+        layer_size=cfg.model.layer_size,
+        patch_size=cfg.model.patch_size,
+        num_frames=cfg.model.num_frames,
+        num_heads=cfg.model.num_heads,
+        batch_size=cfg.model.batch_size,
+        num_layers=cfg.model.num_layers,
         memory=memories,
-        LR=.0001,
-        device='mps',
+        LR=cfg.model.LR,
+        device=cfg.model.device,
         seed=random.randint(0,1000)
     )
 
@@ -255,7 +234,7 @@ def train_transformer_model(cfg: Cfg, action_model_pattern):
             log_dir=f'{cfg.root}/examples/RPG/runs/inverse/{datetime.now().strftime("%Y%m%d-%H%m%s")}/'
         )
     
-    for epoch in range(10000):
+    for epoch in range(cfg.experiment.epochs): # NOTE: with mps, 10000 epochs takes about 24 hours on the mac mini
         start = time.time()
         state_loss, action_loss = inverse_model.train_model()
         state_predictions, state_targets = inverse_model.plot_trajectory()
@@ -271,65 +250,9 @@ def train_transformer_model(cfg: Cfg, action_model_pattern):
         clear_output(wait = True)
         print(f'Epoch {epoch}. Total training duration: {duration}.')
 
-        # if epoch % 50 == 0:
-        #     clear_output(wait = True)
-
-        #     # ----------------- #
-        #     # region: Game loop #
-        #     # ----------------- #
-
-        #     env.reset()
-        #     for agent in agents:
-        #         agent.reset()
-        #         agent.model.epsilon = 0
-        #         # Evaluation mode
-        #         agent.model.eval()
-
-        #     done, turn = 0, 0
-
-        #     while done == 0:
-
-        #         # ----------------- #
-        #         # region: Turn loop #
-        #         # ----------------- #
-
-        #         for agent in agents:
-
-        #             state, action, reward, next_state, done_ = agent.transition(env)
-
-        #             # If agent finished or max turns is reached, end the turn
-        #             if turn >= cfg.experiment.max_turns or done_: 
-        #                 done = 1 # End loop if maximum turns have been reached
-                    
-        #             # Append the experience to the replay
-        #             exp = (0, (state, action, reward, next_state, done))
-        #             agent.episode_memory.append(exp)
-        #             action_model_store.add(state, action, reward, next_state, done)
-
-        #         # ----------------- #
-        #         # endregion         #
-        #         # ----------------- #
-
-        #     frames = []
-
-        #     while len(action_model_store.memory) > 0:
-
-        #         experience = action_model_store.memory.popleft()
-        #         state, action, _, next_state, _ = experience
-
-        #         clear_output(wait = True)
-        #         fig = inverse_model.plot_images(state, action.squeeze(), next_state)
-        #         img = fig2img(fig)
-        #         plt.show()
-        #         frames.append(img)
-
-        #     animate(frames,
-        #             f'transformer_model_{epoch}.png',
-        #             '../data/')
-                        
-        #     # ----------------- #
-        #     # endregion         #
-        #     # ----------------- #        
+        if epoch > 0 and epoch % 1000 == 0:
+            # Save the model every 1000 epochs
+            inverse_model.save(f'{cfg.root}/examples/RPG/models/checkpoints/transformer_{epoch}.pkl')       
 
 
         

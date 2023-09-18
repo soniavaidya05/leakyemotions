@@ -21,7 +21,7 @@ class EmptyObject(Object):
         to the item spawn probabilities dictated in the environmnet.
         '''
         
-        if random.random() < env.item_spawn_prob * 0.02:
+        if random.random() < env.item_spawn_prob * 0.02: # NOTE: If this rate is too high, the environment gets overrun
             env.spawn(self.location)
 
 class Wall(Object):
