@@ -9,6 +9,7 @@ from examples.rocks_trees_persons.utils import (
     find_instance,
     plot_time_decay,
 )
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.spatial.distance import euclidean
 from examples.rocks_trees_persons.iRainbow_clean import iRainbowModel
@@ -185,7 +186,6 @@ class RewardPredictor(nn.Module):
 class RewardPredictor1(nn.Module):
     def __init__(self,
                  d_model,
-                 num_tokens,
                  num_heads,
                  dim_feedforward,
                  num_encoder_layers,
@@ -199,8 +199,6 @@ class RewardPredictor1(nn.Module):
             dropout_p=dropout_p,
             max_len=5000
         )
-
-        self.embedding = nn.Embedding(num_tokens, d_model)
 
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
@@ -223,8 +221,6 @@ class RewardPredictor1(nn.Module):
         self.criterion = nn.MSELoss()
 
     def forward(self, x):
-        indices = normalize_and_discretize(x)
-        x = self.embedding(indices) * math.sqrt(self.d_model)  # attention
         x = self.positional_encoder(x)
         x = self.transformer_encoder(x)
         x = x.mean(dim=1)  # not sure what this is for (layer norm?)
@@ -251,14 +247,6 @@ class RewardPredictor1(nn.Module):
         self.optimizer.step()
 
         return loss.detach().item()
-
-
-def normalize_and_discretize(inputs, num_bins=100):
-    min_value = torch.min(inputs)
-    max_value = torch.max(inputs)
-    normalized_inputs = (inputs - min_value) / (max_value - min_value)
-    indices = (normalized_inputs * num_bins).to(torch.long)
-    return indices
 
 
 class PositionalEncoding(nn.Module):
@@ -289,6 +277,7 @@ class PositionalEncoding(nn.Module):
     def forward(self, token_embedding: torch.tensor) -> torch.tensor:
         # Residual connection + pos encoding
         return self.dropout(token_embedding + self.pos_encoding[:token_embedding.size(0), :])
+
 
 def k_most_similar_recent_states(
     state, knn: NearestNeighbors, memories, object_memory_states_tensor, decay_rate, k=5
@@ -1193,10 +1182,9 @@ object_memory = deque(maxlen=25000)
 
 # episodic_reward_model = RewardPredictor()
 
-episodic_reward_model = RewardPredictor1(d_model=128,
-                                         num_tokens=160,
-                                         num_heads=4,
-                                         dim_feedforward=50,
+episodic_reward_model = RewardPredictor1(d_model=720,
+                                         num_heads=6,
+                                         dim_feedforward=70,
                                          num_encoder_layers=6,
                                          dropout_p=0.1)
 
@@ -1206,7 +1194,7 @@ run_params = (
     # [0.3, 1500, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.5, 4010, 20, 0.999, "CMS", 12000, 2500, 20.0, 20.0],
-    [0.3, 100, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
+    [0.3, 500, 20, 0.999, "implicit_attitude", 12000, 2500, 20.0, 20.0],
     # [0.3, 1500, 20, 0.999, "implicit_attitude+EWA", 12000, 2500, 20.0, 20.0],
     # [0.3, 1500, 20, 0.999, "tree_rocks", 12000, 2500, 20.0, 20.0],
 )
@@ -1214,7 +1202,7 @@ run_params = (
 
 # should write some reset functions to reset the world
 
-for new_people in range(10):
+for new_people in tqdm(range(5)):
     print("new people", new_people)
     env = RPG(
         height=world_size,
@@ -1226,6 +1214,7 @@ for new_people in range(10):
         tile_size=(1, 1),
         defaultObject=EmptyObject(20),
     )
+    print("here")
     object_memory = deque(maxlen=25000)
     resource_model = ResourceModel(state_dim=17, memory_size=2000)
     value_model = ValueModel(state_dim=17, memory_size=250)
