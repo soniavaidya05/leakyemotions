@@ -194,12 +194,6 @@ class RewardPredictor1(nn.Module):
 
         self.model_type = "Transformer"
         self.d_model = d_model
-        self.positional_encoder = PositionalEncoding(
-            dim_model=d_model,
-            dropout_p=dropout_p,
-            max_len=5000
-        )
-
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
             nhead=num_heads,
@@ -207,6 +201,17 @@ class RewardPredictor1(nn.Module):
             dropout=dropout_p,
         )
 
+        # PositionalEncoding takes a tensor with shape [seq_len, batch_size, k]
+        # and returns the same shape
+        #
+        # Our input is [batch_size, seq_len * k], so we'll need to reshape it
+        # The input consists of a flattened sequence of (object_state, value) pairs.
+        # There are 40 such pairs, and the entire shape is (batch_size, 720)
+        self.pos_encoder = PositionalEncoding(
+            d_model=720 // 40,  # 720 / 40 = 18
+            dropout_p=dropout_p,
+            max_len=40,
+        )
         self.transformer_encoder = nn.TransformerEncoder(
             encoder_layer,
             num_layers=num_encoder_layers,
@@ -221,7 +226,11 @@ class RewardPredictor1(nn.Module):
         self.criterion = nn.MSELoss()
 
     def forward(self, x):
-        x = self.positional_encoder(x)
+        # X has shape [batch_size, seq_len * k]
+        # Reshape x so that it has shape [seq_len, batch_size, k]
+        # where k is the number of features per object_state
+        x = x.view(-1, 40, 18).transpose(0, 1)
+        x = self.pos_encoder(x)
         x = self.transformer_encoder(x)
         x = x.mean(dim=1)  # not sure what this is for (layer norm?)
         x = self.out(x)
@@ -276,6 +285,7 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, token_embedding: torch.tensor) -> torch.tensor:
         # Residual connection + pos encoding
+        # token_embedding shape: [seq_len, batch_size, dim_model]
         return self.dropout(token_embedding + self.pos_encoding[:token_embedding.size(0), :])
 
 
