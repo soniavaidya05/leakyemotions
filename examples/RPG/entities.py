@@ -9,8 +9,8 @@ class EmptyObject(Object):
     '''
     Base empty object.
     '''
-    def __init__(self, color, cfg):
-        super().__init__(color)
+    def __init__(self, appearance, cfg):
+        super().__init__(appearance)
         self.passable = True # EmptyObjects can be traversed
         self.sprite = f'{cfg.root}/examples/RPG/assets/white.png'
 
@@ -28,8 +28,8 @@ class Wall(Object):
     '''
     Base wall object.
     '''
-    def __init__(self, color, cfg):
-        super().__init__(color)
+    def __init__(self, appearance, cfg):
+        super().__init__(appearance)
         self.value = -1 # Walls penalize contact
         self.sprite = f'{cfg.root}/examples/RPG/assets/pink.png'
 
@@ -38,11 +38,11 @@ class Gem(Object):
     Base gem object.
 
     Parameters:
-        color: The appearance of the gem. \n
+        appearance: The appearance of the gem. \n
         cfg: The configuration object.
     '''
-    def __init__(self, color, cfg):
-        super().__init__(color)
+    def __init__(self, appearance, cfg):
+        super().__init__(appearance)
         self.cfg = cfg
         self.value = cfg.entity.Gem.value
         self.passable = True
@@ -53,11 +53,11 @@ class Coin(Object):
     Base gem object.
 
     Parameters:
-        color: The appearance of the gem. \n
+        appearance: The appearance of the gem. \n
         cfg: The configuration object.
     '''
-    def __init__(self, color, cfg):
-        super().__init__(color)
+    def __init__(self, appearance, cfg):
+        super().__init__(appearance)
         self.cfg = cfg
         self.value = cfg.entity.Coin.value
         self.passable = True
@@ -68,11 +68,11 @@ class Food(Object):
     Base gem object.
 
     Parameters:
-        color: The appearance of the gem. \n
+        appearance: The appearance of the gem. \n
         cfg: The configuration object.
     '''
-    def __init__(self, color, cfg):
-        super().__init__(color)
+    def __init__(self, appearance, cfg):
+        super().__init__(appearance)
         self.cfg = cfg
         self.value = cfg.entity.Food.value
         self.passable = True
@@ -83,11 +83,11 @@ class Bone(Object):
     Base gem object.
 
     Parameters:
-        color: The appearance of the gem. \n
+        appearance: The appearance of the gem. \n
         cfg: The configuration object.
     '''
-    def __init__(self, color, cfg):
-        super().__init__(color)
+    def __init__(self, appearance, cfg):
+        super().__init__(appearance)
         self.cfg = cfg
         self.value = cfg.entity.Bone.value
         self.passable = True

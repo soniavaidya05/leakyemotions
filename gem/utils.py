@@ -51,7 +51,8 @@ def visual_field(
         colors = color_map(C)
 
     # Create an array of equivalent shape to the world map, with C appearance channels
-    new = np.stack([np.zeros_like(world, dtype=np.float64) for _ in range(C)], axis = 0).squeeze()
+    new = np.stack([np.zeros_like(world, dtype=np.float64) for _ in range(C)], axis = 0)[:, :, :, 0]
+    print(new.shape)
     # Get wall appearance from the world object (just pick the first wall object for simplicity)
     wall_appearance = GridworldEnv.get_entities_(world, 'Wall')[0].appearance
 
