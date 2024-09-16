@@ -5,6 +5,7 @@ from IPython.display import clear_output
 class ModelHumanPlayer:
 
     def __init__(self, action_space, memory_size):
+        self.name = "iqn"
         self.action_space = np.arange(action_space)
         self.memory_size = memory_size
         self.num_frames = memory_size

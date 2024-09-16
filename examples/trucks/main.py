@@ -182,7 +182,7 @@ if __name__ == '__main__':
     cfg = load_config(args)
 
     # Set up the run parameters (including where to save and load the models)
-    model_directory = f'{root}/examples/trucks/models/checkpoints'
+    model_directory = f'{root}/examples/trucks/checkpoints'
     run_params = [
         {
             'custom_eps': 0.7,
