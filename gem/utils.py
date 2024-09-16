@@ -163,7 +163,7 @@ def visual_field_MultiLayer(
                 if world.shape[-1] > 1:
                     new[:, H, W, layer] = world[H, W, layer].appearance
                 else: 
-                    new[:, H, W] = colors[world[H, W, layer].kind]
+                    new[:, H, W] = world[H, W, layer].appearance
         combined_state += new
     new = combined_state
 
