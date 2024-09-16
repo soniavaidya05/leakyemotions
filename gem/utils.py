@@ -64,7 +64,7 @@ def visual_field(
             new[:, H, W] = colors[world[H, W, 0].kind]
         else:
             new[:, H, W] = world[H, W, 0].appearance
-    print(world[location].kind)
+
     # If no location, return the full visual field
     if location is None:
         if return_rgb:
@@ -114,9 +114,9 @@ def visual_field(
         else:
             new = new.astype(np.float64)
             #==rotate==#
-            new = jax.numpy.rot90(new, k=world[location].direction % 4)
+            new = np.rot90(new, k=world[location].direction % 4, axes=(1,2)).copy()
             #==========#
-            return new.astype(np.float64)
+            return new
    
         
 def visual_field_sprite(
