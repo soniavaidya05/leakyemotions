@@ -1,54 +1,47 @@
-from collections import deque
-import random
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from matplotlib import pyplot as plt
 import numpy as np
+from IPython.display import clear_output
 
-from gem.models.memory import Memory
-from gem.models.perception import agent_visualfield
+class ModelHumanPlayer:
 
-import matplotlib.pyplot as plt
+    def __init__(self, action_space, memory_size):
+        self.action_space = np.arange(action_space)
+        self.memory_size = memory_size
+        self.num_frames = memory_size
+        self.show = False
 
-
-class ModelClassPlayer:
-
-    kind = "humanPlayer"  # class variable shared by all instances
-
-    def __init__(self, actionSpace, replay_size):
-        self.modeltype = "humanPlayer"
-        self.actionSpace = actionSpace
-        self.inputType = "keyboard"
-        self.replay = deque([], maxlen=replay_size)
-
-    def take_action(self, params):
-        """
-        Presnts a visual image to a player and they can take an action in the game
-        """
-
-        pytorchInput, epsilon = params
-        inp = pytorchInput.squeeze(0).permute(0, 3, 1, 2).numpy()
-        img = np.squeeze(inp)
-
-        # something like above
-
-        # img = needs to convert the pytorchInput back into RGB
-        # change (1,3,9,9) back to (9,9,3)
-
-        plt.subplot(1, 2, 1)
-        plt.imshow(img)
-        plt.subplot(1, 2, 2)
-        plt.imshow(img)
-        plt.show()
-
+    def take_action(self, state):
+        
+        if self.show:
+            clear_output(wait = True)
+            for i in range(self.memory_size):
+                frame = state[:, i, :, :, :].squeeze().permute(1, 2, 0).numpy().astype(np.uint8)
+                plt.subplot(1, self.memory_size, i+1)
+                plt.imshow(frame)
+            plt.show()
+        
         done = 0
         while done == 0:
-            action = int(input("Select Action: "))
-            if action in self.actionSpace:
-                done = 1
+            action_ = input("Select Action: ")
+            if action_ in ["w", "a", "s", "d"]:
+                if action_ == "w":
+                    action = 0
+                elif action_ == "s":
+                    action = 1
+                elif action_ == "a":
+                    action = 2
+                elif action_ == "d":
+                    action = 3
+            elif action_ in ["0", "1", "2", "3"]:
+                action = int(action_)
             else:
                 print("Please try again. Possible actions are below.")
-                print(self.actionSpace)
+                print(self.action_space)
                 # we can have iinputType above also be joystick, or other controller
+            if action is not None:
+                if action in self.action_space:
+                    done = 1
 
         return action
+
+
