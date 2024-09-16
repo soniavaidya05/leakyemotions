@@ -119,6 +119,10 @@ class Agent(Object):
             'wall': 0
         }
 
+        #=== rotate ===#
+        self.direction = 0
+        #==============#
+
 
     def init_replay(self,  
                     state_shape: Optional[ArrayLike] = None
@@ -166,6 +170,16 @@ class Agent(Object):
             new_location = (self.location[0], self.location[1] - 1, self.location[2])
         if action == 3:
             new_location = (self.location[0], self.location[1] + 1, self.location[2])
+
+        ####### rotate #############
+        if action == 4: 
+            new_location = self.location 
+            self.direction -= 1 
+        if action == 5: 
+            new_location = self.location 
+            self.direction += 1 
+        ###########################
+
         return new_location
     
     def pov(self,
@@ -231,7 +245,7 @@ class Agent(Object):
         next_state = self.pov(env)
 
         # Increment the encounter list
-        self.encounters[target_object.kind.lower()] += 1
+        # self.encounters[target_object.kind.lower()] += 1
 
         return state, action, reward, next_state, done
         
