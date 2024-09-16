@@ -1,6 +1,6 @@
 experiment:
   name: cleanup
-  epochs: 2000
+  epochs: 1
   max_turns: 100
   epsilon_decay: 0.0001
 
@@ -10,8 +10,11 @@ env:
   layers: 3
   channels: 8
   default_object: EmptyObject
-  full_mdp: False
+  full_mdp: True
   vision: 4
+  pollution_threshold: 1
+  apple_spawn_chance: 0.05
+  pollution_spawn_chance: 0.05
 
 agent:
   agent:

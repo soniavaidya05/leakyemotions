@@ -104,21 +104,24 @@ def visual_field(
                     new[index] = colors['Wall'][C]
                 else:
                     new[index] = wall_appearance[C]
+                    
         # Return the agent's sliced observation space
+        k = 0 if not hasattr(world[location], "direction") else world[location].direction % 4
+
         if return_rgb:
             new = new.astype(np.uint8).transpose((1, 2, 0)) 
             #==rotate==#
-            new = jax.numpy.rot90(new, k=world[location].direction % 4)
+            new = jax.numpy.rot90(new, k=k)
             #==========#
             return new
         else:
             new = new.astype(np.float64)
             #==rotate==#
-            new = np.rot90(new, k=world[location].direction % 4, axes=(1,2)).copy()
+            new = np.rot90(new, k=k, axes=(1,2)).copy()
             #==========#
             return new
 
-def visual_field_MultiLayer(
+def visual_field_multilayer(
         world: np.ndarray,
         color_map,      
         location: Optional[ArrayLike] = None,
@@ -163,7 +166,8 @@ def visual_field_MultiLayer(
                     new[:, H, W, layer] = world[H, W, layer].appearance
                 else: 
                     new[:, H, W] = world[H, W, layer].appearance
-    new = np.sum(new, axis=-1)
+    else:
+        new = np.sum(new, axis=-1)
 
     # If no location, return the full visual field
     if location is None:

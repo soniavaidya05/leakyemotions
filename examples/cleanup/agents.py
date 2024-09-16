@@ -4,7 +4,7 @@ from typing import Optional, Sequence
 from examples.trucks.agents import Memory
 from gem.models.ann import ANN
 from gem.primitives import Object, GridworldEnv
-from gem.utils import visual_field
+from gem.utils import visual_field, visual_field_multilayer
 
 class Agent(Object):
   """Cleanup agent."""
@@ -13,6 +13,7 @@ class Agent(Object):
 
     super().__init__(appearance)
 
+    self.cfg = cfg
     self.vision = cfg.agent.agent.vision
     self.direction = 0 # 90 degree rotation: default at 0 degrees
     self.action_space = [0, 1, 2, 3, 4, 5, 6]
@@ -39,7 +40,7 @@ class Agent(Object):
 
     priority = torch.tensor(0.1)
     num_frames = self.model.num_frames
-    if self.cfg.full_mdp:
+    if self.cfg.env.full_mdp:
       state = torch.zeros(1, num_frames, *self.model.state_size).float()
     else:
       # Number of one-hot code channels
@@ -49,7 +50,7 @@ class Agent(Object):
 
     action = torch.tensor(7.0) # Action outside the action space
     reward = torch.tensor(0.0)
-    done = torch.tensor()
+    done = torch.tensor(0.0)
     exp = (priority, (state, action, reward, state, done))
     self.episode_memory.append(exp)
 
@@ -77,7 +78,7 @@ class Agent(Object):
       next_location = (self.location[0] + shift[0], self.location[1] + shift[1], self.location[2])
     
     if action == 2: # BACK
-      shift = shifts[2]
+      shift = shifts[1]
       next_location = (self.location[0] + shift[0], self.location[1] + shift[1], self.location[2])
 
     if action == 3: # TURN CLOCKWISE
@@ -104,10 +105,10 @@ class Agent(Object):
 
     # If the environment is a full MDP, get the whole world image
     if env.full_mdp:
-        image = visual_field(env.world, env.color_map, channels=self.cfg.model.iqn.parameters.state_size[0])
+        image = visual_field_multilayer(env.world, env.color_map, channels=env.channels)
     # Otherwise, use the agent observation function
     else:
-        image = visual_field(env.world, env.color_map, self.location, self.vision, channels=self.cfg.model.iqn.parameters.state_size[0])
+        image = visual_field_multilayer(env.world, env.color_map, self.location, self.vision, env.channels)
 
     # Update the latest state to the observation
     state_now = torch.tensor(image).unsqueeze(0)
@@ -132,13 +133,13 @@ class Agent(Object):
     # Get the interaction reward
     reward += target_object.value
 
-    # Add to the encounter record
-    if str(target_object) in self.encounters.keys():
-        self.encounters[str(target_object)] += 1 
-
     # Get the next state   
     next_state = self.pov(env)
 
     return state, action, reward, next_state, False
+  
+  def reset(self) -> None:
+    self.episode_memory.clear()
+    self.init_replay()
 
 

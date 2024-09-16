@@ -27,7 +27,7 @@ class River(Object):
 
   def transition(self, env: GridworldEnv):
     # Add pollution with a random probability
-    if random.random() > self.cfg.env.pollution_spawn_chance:
+    if random.random() < self.cfg.env.pollution_spawn_chance:
       env.spawn(self.location)
 
 class Pollution(Object):
@@ -57,7 +57,7 @@ class AppleTree(Object):
     # If the pollution threshold has not been reached...
     if not env.pollution > self.cfg.env.pollution_threshold:
       # Add apples with a random probability
-      if random.random() > self.cfg.env.apple_spawn_chance:
+      if random.random() < self.cfg.env.apple_spawn_chance:
         env.spawn(self.location)
 
 class Apple(Object):
@@ -65,7 +65,7 @@ class Apple(Object):
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
     self.cfg = cfg
-    self.value = cfg.value # Reward for eating the apple
+    self.value = 1 # Reward for eating the apple
 
   def transition(self, env: GridworldEnv):
     # Check the current tile on the agent layer for agents

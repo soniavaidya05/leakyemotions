@@ -41,6 +41,7 @@ class Cleanup(GridworldEnv):
     self.object_layer = 0
     self.agent_layer = 1
     self.beam_layer = 2
+    self.pollution = 0
     super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(cfg, self.appearances['EmptyObject']))
     self.populate()
 
@@ -64,7 +65,7 @@ class Cleanup(GridworldEnv):
         'Agent': [150.0, 150.0, 150.0],
         'Wall': [50.0, 50.0, 50.0],
         'Apple': [0.0, 200.0, 0.0],
-        'AppleTree': [100.0, 200.0, 0.0],
+        'AppleTree': [100.0, 100.0, 0.0],
         'River': [0.0, 0.0, 200.0],
         'Pollution': [0, 100.0, 200.0],
         'CleanBeam': [200.0, 255.0, 200.0],
@@ -83,17 +84,21 @@ class Cleanup(GridworldEnv):
       # If the index is the first or last, replace the location with a wall
       if H in [0, self.height - 1] or W in [0, self.width - 1]:
         self.world[index] = Wall(self.cfg, self.appearances["Wall"])
+        self.world[index].location = index
       # Define river, orchard, and potential agent spawn points
       elif L == 0:
         # Top third = river
         if H > 0 and H < (self.height // 3):
           self.world[index] = River(self.cfg, self.appearances["River"])
+          self.world[index].location = index
         # Bottom third = orchard
         elif H > (self.height - 1 - (self.height // 3)) and H < (self.height - 1):
           self.world[index] = AppleTree(self.cfg, self.appearances["AppleTree"])
+          self.world[index].location = index
         # Middle third = potential agent spawn points
         else:
-          spawn_points.append(index)
+          spawn_index = [index[0], index[1], self.agent_layer]
+          spawn_points.append(spawn_index)
 
       
     # Place agents randomly based on the spawn points chosen
@@ -104,8 +109,28 @@ class Cleanup(GridworldEnv):
       self.world[loc] = agent
       agent.location = loc
 
+  def get_entities_for_transition(self):
+    entities = []
+    for index, x in np.ndenumerate(self.world):
+      if index[-1] == 0 and x.kind != "Wall":
+        entities.append(x)
+    return entities
+  
+  def measure_pollution(self) -> float:
+    pollution_tiles = 0
+    river_tiles = 0
+    for index, x in np.ndenumerate(self.world):
+      if x.kind == "Pollution":
+        pollution_tiles += 1
+        river_tiles += 1
+      elif x.kind == "River":
+        river_tiles += 1
+    return pollution_tiles / river_tiles
+
   def spawn(self, location) -> None:
     # Get the kind of spawn function to apply.
+    print(location)
+    print(self.world[location])
     spawn_type = self.world[location].kind
 
     match(spawn_type):
@@ -119,8 +144,9 @@ class Cleanup(GridworldEnv):
         new_object = AppleTree(self.cfg, self.appearances["AppleTree"])
       case "EmptyObject": # EmptyObject generates itself
         new_object = self.world[location]
-
+    
     self.world[location] = new_object
+    new_object.location = location
 
 
 
