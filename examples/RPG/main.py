@@ -16,7 +16,7 @@ elif current_path[-1] == 'RPG':
     root = os.path.abspath('../..')
 # Base case: specify the folder manually
 else:
-    root = os.path.abspath('/Users/rgelpi/Documents/GitHub/transformers') # Change the wd as needed.
+    root = os.path.abspath('~/Documents/GitHub/agentarium') # Change the wd as needed.
 
 # Make sure the transformers directory is in PYTHONPATH
 if root not in sys.path:
@@ -156,12 +156,13 @@ def run(cfg, **kwargs):
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", help="path to config file", default='./examples/RPG/config.yaml')
+    parser.add_argument("--config", help="path to config file", default='./configs/config.yaml')
+    print(os.path.abspath('.'))
     args = parser.parse_args()
     cfg = load_config(args)
     init_log(cfg)
     run(cfg, 
-        load_weights=f'{cfg.root}/examples/RPG/models/checkpoints/iRainbowModel_20230916-14091694890560.pkl',
+        # load_weights=f'{cfg.root}/examples/RPG/models/checkpoints/iRainbowModel_20230916-14091694890560.pkl',
         save_weights=f'{cfg.root}/examples/RPG/models/checkpoints/{cfg.model.iqn.type}_{datetime.now().strftime("%Y%m%d-%H%m%s")}.pkl')
 
 if __name__ == '__main__':
