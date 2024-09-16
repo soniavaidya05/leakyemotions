@@ -149,7 +149,6 @@ def visual_field_MultiLayer(
     wall_appearance = GridworldEnv.get_entities_(world, 'Wall')[0].appearance
 
     # Iterate through the world and assign the appearance of the object at that location
-    combined_state = 0
     for layer in range(world.shape[-1]):
         for index, _ in np.ndenumerate(world[:, :, layer]):
             H, W = index # Get the coordinates
@@ -164,8 +163,7 @@ def visual_field_MultiLayer(
                     new[:, H, W, layer] = world[H, W, layer].appearance
                 else: 
                     new[:, H, W] = world[H, W, layer].appearance
-        combined_state += new
-    new = combined_state
+    new = np.sum(new, axis=-1)
 
     # If no location, return the full visual field
     if location is None:
