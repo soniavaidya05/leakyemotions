@@ -33,7 +33,7 @@ class ModelHumanPlayer:
                     action = 2
                 elif action_ == "d":
                     action = 3
-            elif action_ in ["0", "1", "2", "3"]:
+            elif action_ in ["0", "1", "2", "3", "4", "5"]:
                 action = int(action_)
             else:
                 print("Please try again. Possible actions are below.")

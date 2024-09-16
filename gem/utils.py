@@ -7,6 +7,7 @@ import os
 import torch
 import random
 import numpy as np
+import jax
 
 from typing import Optional, Union, Sequence
 from numpy.typing import ArrayLike
@@ -63,7 +64,7 @@ def visual_field(
             new[:, H, W] = colors[world[H, W, 0].kind]
         else:
             new[:, H, W] = world[H, W, 0].appearance
-
+    print(world[location].kind)
     # If no location, return the full visual field
     if location is None:
         if return_rgb:
@@ -103,12 +104,20 @@ def visual_field(
                     new[index] = colors['Wall'][C]
                 else:
                     new[index] = wall_appearance[C]
-
         # Return the agent's sliced observation space
         if return_rgb:
-            return new.astype(np.uint8).transpose((1, 2, 0)) 
+            new = new.astype(np.uint8).transpose((1, 2, 0)) 
+            #==rotate==#
+            new = jax.numpy.rot90(new, k=world[location].direction % 4)
+            #==========#
+            return new
         else:
+            new = new.astype(np.float64)
+            #==rotate==#
+            new = jax.numpy.rot90(new, k=world[location].direction % 4)
+            #==========#
             return new.astype(np.float64)
+   
         
 def visual_field_sprite(
     world: np.ndarray, 
