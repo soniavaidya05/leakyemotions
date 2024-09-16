@@ -105,7 +105,23 @@ class Cleanup(GridworldEnv):
       agent.location = loc
 
   def spawn(self, location) -> None:
-    pass
+    # Get the kind of spawn function to apply.
+    spawn_type = self.world[location].kind
+
+    match(spawn_type):
+      case "River": # River generates Pollution
+        new_object = Pollution(self.cfg, self.appearances["Pollution"])
+      case "Pollution": #Pollution is cleaned into River
+        new_object = River(self.cfg, self.appearances["River"])
+      case "AppleTree": # AppleTree generates Apple
+        new_object = Apple(self.cfg, self.appearances["Apple"])
+      case "Apple": # Apple is eaten, becoming AppleTree
+        new_object = AppleTree(self.cfg, self.appearances["AppleTree"])
+      case "EmptyObject": # EmptyObject generates itself
+        new_object = self.world[location]
+
+    self.world[location] = new_object
+
 
 
 
