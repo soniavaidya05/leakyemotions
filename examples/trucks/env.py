@@ -57,7 +57,7 @@ class FoodTrucks(GridworldEnv):
             H, W, L = index
             # If the index is the first or last, replace the location with a wall
             if H in [0, self.height - 1] or W in [0, self.width - 1]:
-                self.world[index] = Wall(color=self.colors['Wall'])
+                self.world[index] = Wall(appearance=self.colors['Wall'])
 
         # Normal mode: randomly placed in the environment
         if not self.baker_mode:
@@ -69,7 +69,7 @@ class FoodTrucks(GridworldEnv):
         else:
             wall_locs = [(self.height // 2, x, 0) for x in range(4,self.height - 1)]
             for wall_loc in wall_locs:
-                self.world[wall_loc] = Wall(color = self.colors['Wall'])
+                self.world[wall_loc] = Wall(appearance = self.colors['Wall'])
             
             candidate_locs = [(1, 1, 0), (1, self.height - 2, 0), (self.height - 2, 1, 0)]
             loc_index = np.random.choice(len(candidate_locs), size = 3, replace = False)

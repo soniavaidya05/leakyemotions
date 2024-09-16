@@ -19,4 +19,4 @@ agent:
     model: iqn
     vision: 4
     memory_size: 100
-    appearance: [0, 255, 0, 0, 0, 0, 0, 0]
+    appearance: [255, 0, 0, 0, 0, 0, 0, 0]

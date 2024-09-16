@@ -97,12 +97,12 @@ class Agent(Object):
         memory_size: The size of the replay buffer
     '''
     def __init__(self, 
-                 color: list, 
+                 appearance: list, 
                  model: ANN, 
                  cfg,
                  location = None
                 ):
-        super().__init__(color)
+        super().__init__(appearance)
         self.cfg = cfg
         self.vision = self.cfg.vision
         self.location = location

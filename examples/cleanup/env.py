@@ -104,6 +104,11 @@ class Cleanup(GridworldEnv):
       self.world[loc] = agent
       agent.location = loc
 
+  def spawn(self, location) -> None:
+    pass
+
+
+
     
 
       
