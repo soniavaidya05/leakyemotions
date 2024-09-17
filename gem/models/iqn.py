@@ -24,6 +24,7 @@ iRainbowModel (contains two IQN networks; one for local and one for target)
  - soft_update: set weights of target network to be a mixture of weights from local and target network
  - transfer_memories: transfer memories from the agent to the model
 """
+
 # ------------------------ #
 # region: Imports          #
 # ------------------------ #
@@ -48,6 +49,7 @@ from gem.models.buffer import ReplayBuffer
 # endregion                #
 # ------------------------ #
 
+
 class IQN(nn.Module):
     """The IQN Q-network."""
 
@@ -59,7 +61,7 @@ class IQN(nn.Module):
         seed: int,
         n_quantiles: int,
         num_frames: int = 5,
-        device: Union[str, torch.device] = 'cpu',
+        device: Union[str, torch.device] = "cpu",
     ) -> None:
 
         super(IQN, self).__init__()
@@ -91,7 +93,9 @@ class IQN(nn.Module):
         """
         Calculating the cosinus values depending on the number of tau samples
         """
-        taus = torch.rand(batch_size, n_tau).unsqueeze(-1).to(self.device) # (batch_size, n_tau, 1)  .to(self.device)
+        taus = (
+            torch.rand(batch_size, n_tau).unsqueeze(-1).to(self.device)
+        )  # (batch_size, n_tau, 1)  .to(self.device)
         cos = torch.cos(taus * self.pis)
 
         assert cos.shape == (batch_size, n_tau, self.n_cos), "cos shape is incorrect"
@@ -121,13 +125,17 @@ class IQN(nn.Module):
         x = torch.relu(x)
 
         # Calculate cos values
-        cos, taus = self.calc_cos(batch_size, num_tau)  # cos.shape = (batch, num_tau, layer_size)
-        cos = cos.view(batch_size * num_tau, self.n_cos) # (1 * 12, 64)
+        cos, taus = self.calc_cos(
+            batch_size, num_tau
+        )  # cos.shape = (batch, num_tau, layer_size)
+        cos = cos.view(batch_size * num_tau, self.n_cos)  # (1 * 12, 64)
 
         # Pass cos through linear layer and activation function
         cos = self.cos_embedding(cos)
         cos = torch.relu(cos)
-        cos_x = cos.view(batch_size, num_tau, self.cos_layer_out)  # cos_x.shape = (batch, num_tau, layer_size)
+        cos_x = cos.view(
+            batch_size, num_tau, self.cos_layer_out
+        )  # cos_x.shape = (batch, num_tau, layer_size)
 
         # x has shape (batch, layer_size) for multiplication –> reshape to (batch, 1, layer)
         x = (x.unsqueeze(1) * cos_x).view(batch_size * num_tau, self.cos_layer_out)
@@ -147,6 +155,7 @@ class IQN(nn.Module):
         quantiles, _ = self.forward(inputs, self.n_quantiles)
         actions = quantiles.mean(dim=1)
         return actions
+
 
 class iRainbowModel(DoubleANN):
     """Interacts with and learns from the environment."""
@@ -190,11 +199,13 @@ class iRainbowModel(DoubleANN):
             LR (float): Learning rate \n
             TAU (float): Network weight soft update rate \n
             N (int): Number of quantiles
-            
+
         """
 
         # Initialize base ANN parameters
-        super(iRainbowModel, self).__init__(state_size, action_size, layer_size, epsilon, device, seed)
+        super(iRainbowModel, self).__init__(
+            state_size, action_size, layer_size, epsilon, device, seed
+        )
 
         # iRainbow-specific parameters
         self.num_frames = num_frames
@@ -205,7 +216,7 @@ class iRainbowModel(DoubleANN):
         self.n_step = n_step
         self.sync_freq = sync_freq
         self.model_update_freq = model_update_freq
-        
+
         # IQN-Network
         self.qnetwork_local = IQN(
             state_size,
@@ -227,7 +238,7 @@ class iRainbowModel(DoubleANN):
         ).to(device)
 
         # Aliases for saving to disk
-        self.models = {'local': self.qnetwork_local, 'target': self.qnetwork_target}
+        self.models = {"local": self.qnetwork_local, "target": self.qnetwork_target}
 
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
 
@@ -241,8 +252,8 @@ class iRainbowModel(DoubleANN):
         )
 
     def __str__(self):
-        return f'iRainbowModel(in_size={np.array(self.state_size).prod() * self.memory_size},out_size={self.action_size})'
-    
+        return f"iRainbowModel(in_size={np.array(self.state_size).prod() * self.memory_size},out_size={self.action_size})"
+
     def take_action(self, state, eval=False) -> int:
         """Returns actions for given state as per current policy. Acting only every 4 frames!
 
@@ -253,10 +264,10 @@ class iRainbowModel(DoubleANN):
 
         """
         # Epsilon-greedy action selection
-        if (random.random() > self.epsilon):  
+        if random.random() > self.epsilon:
             state = np.array(state)
-            state = (torch.from_numpy(state).float().to(self.device)) 
-            
+            state = torch.from_numpy(state).float().to(self.device)
+
             self.qnetwork_local.eval()
             with torch.no_grad():
                 action_values = self.qnetwork_local.get_qvalues(state)  # .mean(0)
@@ -269,8 +280,8 @@ class iRainbowModel(DoubleANN):
             return action[0]
 
     def train_model(self) -> torch.Tensor:
-        """Update value parameters using given batch of experience tuples. 
-        Note that the training loop CANNOT be named `train()` or training()` 
+        """Update value parameters using given batch of experience tuples.
+        Note that the training loop CANNOT be named `train()` or training()`
         as this conflicts with `nn.Module` superclass functions.
 
         Params
@@ -308,11 +319,17 @@ class iRainbowModel(DoubleANN):
 
             # Quantile Huber loss
             td_error = Q_targets - Q_expected
-            assert td_error.shape == (self.BATCH_SIZE, self.N, self.N,), "wrong td error shape"
+            assert td_error.shape == (
+                self.BATCH_SIZE,
+                self.N,
+                self.N,
+            ), "wrong td error shape"
             huber_l = calculate_huber_loss(td_error, 1.0)
             quantil_l = abs(taus - (td_error.detach() < 0).float()) * huber_l / 1.0
 
-            loss = quantil_l.sum(dim=1).mean(dim=1)  # , keepdim=True if per weights get multipl
+            loss = quantil_l.sum(dim=1).mean(
+                dim=1
+            )  # , keepdim=True if per weights get multipl
             loss = loss.mean()
 
             # Minimize the loss
@@ -322,7 +339,7 @@ class iRainbowModel(DoubleANN):
 
             # ------------------- update target network ------------------- #
             self.soft_update()
-            
+
         return loss
 
     def soft_update(self) -> None:
@@ -358,32 +375,31 @@ class iRainbowModel(DoubleANN):
                 self.memory.add(state, action, reward, next_state, done)
 
     def start_epoch_action(self, **kwargs) -> None:
-        '''
+        """
         Model actions before agent takes an action.
 
         Parameters:
             **kwargs: All local variables are passed into the model
-        '''
-        if kwargs['epoch'] % self.sync_freq == 0:
-            self.qnetwork_target.load_state_dict(
-                self.qnetwork_local.state_dict()
-            )
-    
+        """
+        if kwargs["epoch"] % self.sync_freq == 0:
+            self.qnetwork_target.load_state_dict(self.qnetwork_local.state_dict())
+
     def end_epoch_action(self, **kwargs) -> None:
-        '''
+        """
         Model actions computed after each agent takes an action.
 
         Parameters:
             **kwargs: All local variables are passed into the model
-        '''
-        self.transfer_memories(kwargs['agent'], extra_reward = True)
+        """
+        self.transfer_memories(kwargs["agent"], extra_reward=True)
 
-        if kwargs['epoch'] > 200 and kwargs['epoch'] % self.model_update_freq == 0:
-            kwargs['loss'] = self.train_model()
-            if 'game_vars' in kwargs:
-                kwargs['game_vars'].losses.append(kwargs['loss'])
+        if kwargs["epoch"] > 200 and kwargs["epoch"] % self.model_update_freq == 0:
+            kwargs["loss"] = self.train_model()
+            if "game_vars" in kwargs:
+                kwargs["game_vars"].losses.append(kwargs["loss"])
             else:
-                kwargs['losses'] += kwargs['loss']
+                kwargs["losses"] += kwargs["loss"]
+
 
 def calculate_huber_loss(td_errors, k=1.0) -> torch.Tensor:
     """
