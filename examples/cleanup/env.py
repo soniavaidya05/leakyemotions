@@ -129,8 +129,8 @@ class Cleanup(GridworldEnv):
 
   def spawn(self, location) -> None:
     # Get the kind of spawn function to apply.
-    print(location)
-    print(self.world[location])
+    #print(location)
+    #print(self.world[location])
     spawn_type = self.world[location].kind
 
     match(spawn_type):
