@@ -114,7 +114,7 @@ class Cleanup(GridworldEnv):
   def get_entities_for_transition(self):
     entities = []
     for index, x in np.ndenumerate(self.world):
-      if index[-1] == 0 and x.kind != "Wall":
+      if (x.kind != "Wall") and (x.kind != "Agent"):
         entities.append(x)
     return entities
   
@@ -131,8 +131,6 @@ class Cleanup(GridworldEnv):
 
   def spawn(self, location) -> None:
     # Get the kind of spawn function to apply.
-    #print(location)
-    #print(self.world[location])
     spawn_type = self.world[location].kind
 
     match(spawn_type):
@@ -144,6 +142,10 @@ class Cleanup(GridworldEnv):
         new_object = Apple(self.cfg, self.appearances["Apple"])
       case "Apple": # Apple is eaten, becoming AppleTree
         new_object = AppleTree(self.cfg, self.appearances["AppleTree"])
+      case "CleanBeam": # CleanBeam disappears, becoming EmptyObject
+        new_object = EmptyObject(self.cfg, self.appearances["EmptyObject"])
+      case "ZapBeam": # CleanBeam disappears, becoming EmptyObject
+        new_object = EmptyObject(self.cfg, self.appearances["EmptyObject"])
       case "EmptyObject": # EmptyObject generates itself
         new_object = self.world[location]
     

@@ -108,19 +108,43 @@ class Agent(Object):
         """Generate a beam extending cfg.agent.agent.beam_radius pixels
         out in front of the agent."""
 
-        # Get the forward movement tile
+        # Get the tiles above and adjacent to the agent.
+        up_vector = Vector(0, 0, layer = 1, direction=self.direction)
         forward_vector = Vector(1, 0, direction=self.direction)
         right_vector = Vector(0, 1, direction=self.direction)
         left_vector = Vector(0, -1, direction=self.direction)
 
-        # Candidate beam locations
+        tile_above = Location(*self.location) + up_vector
+
+        # Candidate beam locations:
+        #   1. (1, i+1) tiles ahead of the tile above the agent
+        #   2. (0, i) tiles ahead of the tile above and to the right/left of the agent.
         beam_locs = [
-            Location(*self.location) + (forward_vector * 1), # 1 pixel ahead
-            Location(*self.location) + (forward_vector * 2), # 2 pixel ahead
+            (tile_above + (forward_vector * i)) for i in range(1, self.cfg.agent.agent.beam_radius + 1)
+        ] + [
+            (tile_above + (right_vector) + (forward_vector * i)) for i in range(self.cfg.agent.agent.beam_radius)
+        ] + [
+            (tile_above + (left_vector) + (forward_vector * i)) for i in range(self.cfg.agent.agent.beam_radius)
         ]
 
-        # Check beam layer for walls...
+        # Check beam layer to determine which locations are valid...
+        valid_locs = [
+            loc for loc in beam_locs if env.valid_location(loc)
+        ]
 
+        # Exclude any locations that have walls...
+        placeable_locs = [
+            loc for loc in valid_locs if not env.world[loc.to_tuple()].kind == "Wall"
+        ]
+
+        # Then, place beams in all of the remaining valid locations.
+        for loc in placeable_locs:
+            if action == 5:
+                env.remove(loc.to_tuple())
+                env.add(loc.to_tuple(), CleanBeam(self.cfg, env.appearances["CleanBeam"]))
+            elif action == 6:
+                env.remove(loc.to_tuple())
+                env.add(loc.to_tuple(), ZapBeam(self.cfg, env.appearances["ZapBeam"]))
 
     def pov(self, env) -> torch.Tensor:
         """
@@ -148,6 +172,10 @@ class Agent(Object):
 
         # Attempt the transition
         attempted_location = self.act(action)
+
+        # Generate beams, if necessary
+        if action in [5, 6]:
+            self.spawn_beam(env, action)
 
         # Get the candidate reward objects
         reward_locations = [
@@ -189,6 +217,14 @@ class Beam(Object):
         super().__init__(appearance)
         self.cfg = cfg
         self.sprite = f'{cfg.root}/examples/cleanup/assets/beam.png'
+        self.turn_counter = 0
+
+    def transition(self, env: GridworldEnv):
+        # Beams persist for one full turn, then disappear.
+        if self.turn_counter >= 1:
+            env.spawn(self.location)
+        else:
+            self.turn_counter += 1
 
 class CleanBeam(Beam):
     def __init__(self, cfg, appearance):
@@ -197,7 +233,8 @@ class CleanBeam(Beam):
 class ZapBeam(Beam):
     def __init__(self, cfg, appearance):
         super().__init__(cfg, appearance)
-        self.sprite = f'{cfg.root}/examples/cleanup/assets/zap.png'                
+        self.sprite = f'{cfg.root}/examples/cleanup/assets/zap.png'     
+        self.value = -1           
 
 # ------------------- #
 # endregion           #

@@ -122,6 +122,31 @@ class GridworldEnv:
         '''
         return self.world[target_location]
     
+    def valid_location(self, index: tuple[int, ...] | Location) -> bool:
+        """Check if the given index is in the world.
+        
+        Parameters:
+            index: A tuple of coordinates or Location.
+        
+        Return:
+            bool: Whether the index is in env.world."""
+        # Cast to tuple if it is a location
+        if isinstance(index, Location):
+            index = index.to_tuple()
+        # Get world shape
+        shape = self.world.shape
+        # Can't compare if the tuples are of unequal size
+        if len(index) != len(shape):
+            raise IndexError(f"Index {index} and world shape {shape} must be the same length.")
+        # Indices of less than 0 are not valid locations on a grid
+        if min(index) < 0:
+            return False
+        # Otherwise, check if the index value exceeds the world shape on any dimension.
+        for x, y in zip(shape, index):
+            if y >= x:
+                return False
+        return True
+    
     def get_entities(self, entity, locs = False) -> list:
         '''
         Return a list of entities or a list of their locations in the world.
@@ -219,27 +244,48 @@ class Location:
         # Unimplemented
         else:
             raise NotImplementedError
+        
+    def __eq__(self, other) -> bool:
+        """Equality"""
 
+        # Compare a location
+        if isinstance(other, Location):
+            return True if ((self.x == other.x) and (self.y == other.y) and (self.z == other.z)) else False
+        
+        # Compare a vector    
+        elif isinstance(other, Vector):
+            return self == other.compute()
+        
+        # Compare a tuple
+        elif isinstance(other, tuple):
+            if len(other) == 2:
+                return True if ((self.x == other[0]) and (self.y == other[1]) and (self.dims == 2)) else False
+            else:
+                return True if ((self.x == other[0]) and (self.y == other[1]) and (self.z == other[2])) else False
+            
+        # Unimplemented
+        else:
+            raise NotImplementedError
             
 class Vector:
-    def __init__(self, *urdl: list[int], direction: int = 0): # Default direction: 0 degrees / UP / North
+    def __init__(self, forward: int, right: int, backward: int = 0, left: int = 0, layer = 0, direction: int = 0): # Default direction: 0 degrees / UP / North
         """
         Initialize a vector object.
         
         Parameters:
-            *urdl: An unpacked tuple of ints indicating the number of steps forward, right, or (optionally) backward or left.
-            Technically, only the first two are necessary, since negative vectors are supported.
-            direction: (int) A compass direction. 0 = NORTH, 1 = EAST, 2 = SOUTH, 3 = WEST.
+            forward: (int) The number of steps forward.
+            right: (int) The number of steps right.
+            backward: (int, Optional) The number of steps backward. Since negative vectors are supported, this can be carried by the forward value.
+            left: (int, Optional) The number of steps left. Since negative vectors are supported, this can be carried by the right value.
+            layer: (int, Optional) The number of layers up (positive) or down (negative).
+            direction: (int, default = 0) A compass direction. 0 = NORTH, 1 = EAST, 2 = SOUTH, 3 = WEST.
             """
         self.direction = direction
-        self.forward = urdl[0]
-        self.right = urdl[1]
-        if len(urdl) > 2:
-            self.backward = urdl[2]
-            self.left = urdl[3]
-        else:
-            self.backward = 0
-            self.left = 0
+        self.forward = forward
+        self.right = right
+        self.backward = backward
+        self.left = left
+        self.layer = layer
 
     def __repr__(self):
         return f"Vector(direction={self.direction},forward={self.forward},right={self.right},backward={self.backward},left={self.left}"
@@ -251,7 +297,7 @@ class Vector:
         """Multiply a location by an integer amount."""
 
         if isinstance(other, int):
-            return Vector(self.forward * other, self.right * other, self.backward * other, self.left * other, self.direction)
+            return Vector(self.forward * other, self.right * other, self.backward * other, self.left * other, self.layer * other, self.direction)
         
         # Unimplemented
         else:
@@ -260,10 +306,20 @@ class Vector:
     def __add__(self, other) -> Vector:
         """Add two vectors together. The vectors must be with respect to the same direction."""
         if isinstance(other, Vector):
-            assert self.direction == other.direction, "Vectors must have the same direction."
-            return Vector(self.forward + other.forward, self.right + other.right, self.backward + other.backward, self.left + other.left, direction=self.direction)
+            # Rotate the vector to match the current direction.
+            other.rotate(self.direction)
+            return Vector(
+                self.forward + other.forward, 
+                self.right + other.right, 
+                self.backward + other.backward, 
+                self.left + other.left, 
+                self.layer + other.layer, 
+                direction=self.direction
+            )
+        else:
+            raise NotImplementedError
         
-    def rotate(self, new_direction: int) -> None:
+    def rotate(self, new_direction: int) -> Vector:
         """Rotate the vector to face a new direction. """
         num_rotations = (self.direction - new_direction) % 4
         match(num_rotations):
@@ -291,7 +347,7 @@ class Vector:
             case 3:  # LEFT
                 forward, right, backward, left = (Location(0, -1), Location(-1, 0), Location(0, 1), Location(1, 0))
         
-        return (forward * self.forward) + (right * self.right) + (backward * self.backward) + (left * self.left)
+        return (forward * self.forward) + (right * self.right) + (backward * self.backward) + (left * self.left) + Location(0, 0, self.layer)
     
     def to_tuple(self) -> tuple[int, ...]:
         return self.compute().to_tuple()
