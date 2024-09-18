@@ -16,9 +16,10 @@ class Agent(Object):
 
         self.cfg = cfg
         self.vision = cfg.agent.agent.vision
-        self.direction = 0  # 90 degree rotation: default at 0 degrees
+        self.direction = 2  # 90 degree rotation: default at 180 degrees (facing down)
         self.action_space = [0, 1, 2, 3, 4, 5, 6]
-        has_transitions = True
+        self.has_transitions = True
+        self.sprite = f'{self.cfg.root}/examples/cleanup/assets/hero.png'
 
         # training-related features
         self.action_type = "neural_network"
@@ -29,6 +30,16 @@ class Agent(Object):
 
         # logging features
         self.outcome_record = {"harvest": 0, "zap": 0, "get_zapped": 0, "clean": 0}
+
+    def sprite_loc(self) -> None:
+        """Determine the agent's sprite based on the location."""
+        sprite_directions = [
+            f'{self.cfg.root}/examples/cleanup/assets/hero-back.png', # up
+            f'{self.cfg.root}/examples/cleanup/assets/hero-right.png', # right
+            f'{self.cfg.root}/examples/cleanup/assets/hero.png', # down
+            f'{self.cfg.root}/examples/cleanup/assets/hero-left.png' # left
+        ]
+        self.sprite = sprite_directions[self.direction]
 
     def init_replay(self) -> None:
         """Fill in blank images for the LSTM."""
@@ -90,6 +101,8 @@ class Agent(Object):
 
         if action == 4:  # TURN COUNTERCLOCKWISE
             self.direction = (self.direction - 1) % 4
+
+        self.sprite_loc()
 
         return next_location
 

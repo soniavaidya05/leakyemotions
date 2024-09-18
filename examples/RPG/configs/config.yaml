@@ -82,5 +82,5 @@ replay:
   turns: 100
 
 # Root folder for accessing file structure and modules
-root: '/Users/rgelpi/Documents/GitHub/transformers'
+root: '/Users/rgelpi/Documents/GitHub/agentarium'
 log: True

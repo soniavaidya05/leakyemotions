@@ -11,6 +11,7 @@ import random
 from gem.primitives import GridworldEnv
 from examples.cleanup.entities import (
     EmptyObject,
+    Sand,
     Wall,
     River,
     Pollution,
@@ -97,6 +98,7 @@ class Cleanup(GridworldEnv):
           self.world[index].location = index
         # Middle third = potential agent spawn points
         else:
+          self.world[index] = Sand(self.cfg, self.appearances["EmptyObject"])
           spawn_index = [index[0], index[1], self.agent_layer]
           spawn_points.append(spawn_index)
 
