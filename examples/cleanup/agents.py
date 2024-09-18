@@ -6,6 +6,9 @@ from gem.models.ann import ANN
 from gem.primitives import Object, GridworldEnv
 from gem.utils import visual_field, visual_field_multilayer
 
+# ------------------- #
+# region: Agent class #
+# ------------------- #
 
 class Agent(Object):
     """Cleanup agent."""
@@ -60,12 +63,8 @@ class Agent(Object):
         exp = (priority, (state, action, reward, state, done))
         self.episode_memory.append(exp)
 
-    def movement(self, action: int) -> tuple[int, ...]:
-
-        # Default location
-        next_location = self.location
-
-        # Define the forward (index 0) and back (index 1) movements
+    def shifts(self):
+        """Define the forward and backward movement tiles"""
         match (self.direction):
             case 0:  # UP
                 shifts = [(-1, 0), (1, 0)]
@@ -75,6 +74,24 @@ class Agent(Object):
                 shifts = [(1, 0), (-1, 0)]
             case 3:  # LEFT
                 shifts = [(0, -1), (0, 1)]
+        return shifts
+
+    def act(self, action: int) -> tuple[int, ...]:
+        """Act on the environment.
+        
+        Params:
+            action: (int) An integer indicating the action to take.
+            
+        Return:
+            tuple[int, ...] A location tuple indicating the updated
+            location of the agent.
+        """
+
+        # Default location
+        next_location = self.location
+        
+        # Define the forward (index 0) and back (index 1) movements
+        shifts = self.shifts()
 
         if action == 0:  # NOOP
             pass
@@ -105,6 +122,14 @@ class Agent(Object):
         self.sprite_loc()
 
         return next_location
+    
+    def spawn_beam(self, env: GridworldEnv, action):
+        """Generate a beam extending cfg.agent.agent.beam_radius pixels
+        out in front of the agent."""
+
+        # Get the forward movement tile
+        shifts = self.shifts()
+
 
     def pov(self, env) -> torch.Tensor:
         """
@@ -131,7 +156,7 @@ class Agent(Object):
         reward = 0
 
         # Attempt the transition
-        attempted_location = self.movement(action)
+        attempted_location = self.act(action)
 
         # Get the candidate reward objects
         reward_locations = [
@@ -156,6 +181,33 @@ class Agent(Object):
         self.episode_memory.clear()
         # self.init_replay()
 
+# ------------------- #
+# endregion           #
+# ------------------- #
+
+# ------------------- #
+# region: Beams       #
+# ------------------- #
+
+class Beam(Object):
+    """Generic beam class for agent beams."""
+    def __init__(self, cfg, appearance):
+        super().__init__(appearance)
+        self.cfg = cfg
+        self.sprite = f'{cfg.root}/examples/cleanup/assets/beam.png'
+
+class CleanBeam(Beam):
+    def __init__(self, cfg, appearance):
+        super().__init__(cfg, appearance)
+
+class ZapBeam(Beam):
+    def __init__(self, cfg, appearance):
+        super().__init__(cfg, appearance)
+        self.sprite = f'{cfg.root}/examples/cleanup/assets/zap.png'                
+
+# ------------------- #
+# endregion           #
+# ------------------- #
 
 """
 -------------------

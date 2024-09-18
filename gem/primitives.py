@@ -1,4 +1,5 @@
 from __future__ import annotations
+import numpy as np
 
 # ----------------------------------------------------- #
 #        Abstract class for environment objects         #
@@ -38,8 +39,6 @@ class Object:
     
     def transition(self, env: GridworldEnv):
         pass # Entities do not have a transition function by default
-
-import numpy as np
 
 class GridworldEnv:
     '''
@@ -153,3 +152,82 @@ class GridworldEnv:
     # --------------------------- #
     # endregion: helper functions #
     # --------------------------- #
+
+class Location:
+    def __init__(self, *dims):
+        self.dims = len(dims)
+        self.x = dims[0]
+        self.y = dims[1]
+        if len(dims) > 2:
+            self.z = dims[2]
+        else:
+            self.z = 0
+
+    def __add__(self, other) -> Location:
+        """Add a location or vector.
+        
+        Params:
+            other: An object of type Location or Vector.
+            
+        Return:
+            Location: The new location."""
+        
+        # Add location
+        if isinstance(other, Location):
+            return Location(self.x + other.x, self.y + other.y, self.z + other.z)
+
+        # Add a vector    
+        elif isinstance(other, Vector):
+            return self + other.compute()
+
+        # Add a tuple
+        elif isinstance(other, tuple):
+            if self.dims == 2:
+                return Location(self.x + other[0], self.y + other[1])
+            elif len(other) == 2:
+                return Location(self.x + other[0], self.y + other[1], self.z)
+            else:
+                return Location(self.x + other[0], self.y + other[1], self.z + other[2])
+    
+        # Unimplemented
+        else:
+            raise NotImplementedError
+        
+    def __mul__(self, other) -> Location:
+        """Multiply a location by an integer amount."""
+
+        if isinstance(other, int):
+            return Location(self.x * other, self.y * other, self.z * other)
+        
+        # Unimplemented
+        else:
+            raise NotImplementedError
+
+            
+class Vector:
+    def __init__(self, *urdl: list[int], direction: int = 0): # Default direction: 0 degrees / UP / North
+        self.direction = direction
+        self.forward = urdl[0]
+        self.right = urdl[1]
+        self.backward = urdl[2]
+        self.left = urdl[3]
+    
+    def compute(self) -> Location:
+        """Given a direction being faced and a number of paces
+        forward / right / backward / left, compute the location."""
+
+        match(self.direction):
+            case 0:  # UP
+                forward, right, backward, left = (Location(-1, 0), Location(0, 1), Location(1, 0), Location(0, -1))
+            case 1:  # RIGHT
+                forward, right, backward, left = (Location(0, 1), Location(1, 0), Location(0, -1), Location(-1, 0))
+            case 2:  # DOWN
+                forward, right, backward, left = (Location(1, 0), Location(0, -1), Location(-1, 0), Location(0, 1))
+            case 3:  # LEFT
+                forward, right, backward, left = (Location(0, -1), Location(-1, 0), Location(0, 1), Location(1, 0))
+        
+        return (forward * self.forward) + (right * self.right) + (backward * self.backward) + (left * self.left)
+
+            
+
+        
