@@ -11,19 +11,30 @@ class EmptyObject(Object):
     super().__init__(appearance)
     self.cfg = cfg
     self.passable = True
+    self.sprite = f'{cfg.root}/examples/cleanup/assets/empty.png'
+
+class Sand(Object):
+  """Sand class for the Cleanup Game."""
+  def __init__(self, cfg, appearance):
+    super().__init__(appearance)
+    self.cfg = cfg
+    self.passable = True
+    self.sprite = f'{cfg.root}/examples/cleanup/assets/sand.png'
 
 class Wall(Object):
   """Wall class for the Cleanup Game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
     self.cfg = cfg
+    self.sprite = f'{cfg.root}/examples/cleanup/assets/wall.png'
 
 class River(Object):
   """River class for the Cleanup game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
     self.cfg = cfg
-    has_transitions = True
+    self.has_transitions = True
+    self.sprite = f'{cfg.root}/examples/cleanup/assets/water.png'
 
   def transition(self, env: GridworldEnv):
     # Add pollution with a random probability
@@ -35,7 +46,8 @@ class Pollution(Object):
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
     self.cfg = cfg
-    has_transitions = True
+    self.has_transitions = True
+    self.sprite = f'{cfg.root}/examples/cleanup/assets/pollution.png'
 
   def transition(self, env: GridworldEnv):
     # Check the current tile on the beam layer for cleaning beams
@@ -51,7 +63,8 @@ class AppleTree(Object):
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
     self.cfg = cfg
-    has_transitions = True
+    self.has_transitions = True
+    self.sprite = f'{cfg.root}/examples/cleanup/assets/grass.png'
 
   def transition(self, env: GridworldEnv):
     # If the pollution threshold has not been reached...
@@ -66,6 +79,7 @@ class Apple(Object):
     super().__init__(appearance)
     self.cfg = cfg
     self.value = 1 # Reward for eating the apple
+    self.sprite = f'{cfg.root}/examples/cleanup/assets/apple_grass.png'
 
   def transition(self, env: GridworldEnv):
     # Check the current tile on the agent layer for agents
