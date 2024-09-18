@@ -35,6 +35,8 @@ class Agent(Object):
         self.num_memories = cfg.agent.agent.memory_size
         self.init_rnn_state = None
 
+        self.rotation = cfg.agent.agent.rotation
+
         # logging features
         self.outcome_record = {"harvest": 0, "zap": 0, "get_zapped": 0, "clean": 0}
 
@@ -67,7 +69,7 @@ class Agent(Object):
         exp = (priority, (state, action, reward, state, done))
         self.episode_memory.append(exp)
 
-    def act(self, action: int) -> tuple[int, ...]:
+    def act(self, action: int, rotate=False) -> tuple[int, ...]:
         """Act on the environment.
 
         Params:
@@ -81,27 +83,55 @@ class Agent(Object):
         # Default location
         next_location = self.location
 
-        if action == 0:  # NOOP
-            pass
+        if self.rotation:
 
-        if action == 1:  # FORWARD
-            forward_vector = Vector(1, 0, direction=self.direction)
-            cur_location = Location(*self.location)
-            next_location = (cur_location + forward_vector).to_tuple()
+            if action == 0:  # NOOP
+                pass
+            if action == 1:  # FORWARD
+                forward_vector = Vector(1, 0, direction=self.direction)
+                cur_location = Location(*self.location)
+                next_location = (cur_location + forward_vector).to_tuple()
+            if action == 2:  # BACK
+                backward_vector = Vector(-1, 0, direction=self.direction)
+                cur_location = Location(*self.location)
+                next_location = (cur_location + backward_vector).to_tuple()
+            if action == 3:  # TURN CLOCKWISE
+                # Add 90 degrees; modulo 4 to ensure range of [0, 1, 2, 3]
+                self.direction = (self.direction + 1) % 4
+            if action == 4:  # TURN COUNTERCLOCKWISE
+                self.direction = (self.direction - 1) % 4
 
-        if action == 2:  # BACK
-            backward_vector = Vector(-1, 0, direction=self.direction)
-            cur_location = Location(*self.location)
-            next_location = (cur_location + backward_vector).to_tuple()
+            self.sprite_loc()
 
-        if action == 3:  # TURN CLOCKWISE
-            # Add 90 degrees; modulo 4 to ensure range of [0, 1, 2, 3]
-            self.direction = (self.direction + 1) % 4
-
-        if action == 4:  # TURN COUNTERCLOCKWISE
-            self.direction = (self.direction - 1) % 4
-
-        self.sprite_loc()
+        else:
+            if action == 0:  # UP
+                self.sprite = f"{self.cfg.root}/examples/RPG/assets/hero-back.png"
+                next_location = (
+                    self.location[0] - 1,
+                    self.location[1],
+                    self.location[2],
+                )
+            if action == 1:  # DOWN
+                self.sprite = f"{self.cfg.root}/examples/RPG/assets/hero.png"
+                next_location = (
+                    self.location[0] + 1,
+                    self.location[1],
+                    self.location[2],
+                )
+            if action == 2:  # LEFT
+                self.sprite = f"{self.cfg.root}/examples/RPG/assets/hero-left.png"
+                next_location = (
+                    self.location[0],
+                    self.location[1] - 1,
+                    self.location[2],
+                )
+            if action == 3:  # RIGHT
+                self.sprite = f"{self.cfg.root}/examples/RPG/assets/hero-right.png"
+                next_location = (
+                    self.location[0],
+                    self.location[1] + 1,
+                    self.location[2],
+                )
 
         return next_location
 

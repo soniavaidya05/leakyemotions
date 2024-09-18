@@ -13,8 +13,8 @@ env:
   full_mdp: True
   vision: 4
   pollution_threshold: 1.0
-  apple_spawn_chance: 0.05
-  pollution_spawn_chance: 0.05
+  apple_spawn_chance: 0.001
+  pollution_spawn_chance: 0.00
 
 agent:
   agent:
@@ -24,5 +24,6 @@ agent:
     memory_size: 100
     appearance: [255, 0, 0, 0, 0, 0, 0, 0]
     beam_radius: 3
+    rotation: False
 
-root: '~/Documents/GitHub/agentarium'
+root: '~/GitHub/agentarium'
