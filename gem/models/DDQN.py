@@ -307,6 +307,7 @@ class doubleDQN:
         self.beta = beta
         self.beta_increment = beta_increment
         self.capacity = capacity
+        self.rng_key = jax.random.PRNGKey(0)
 
         self.local_model = QNetwork(number_of_actions=number_of_actions)
         self.target_model = QNetwork(number_of_actions=number_of_actions)
@@ -334,7 +335,7 @@ class doubleDQN:
         self.optimizer = optax.adam(lr)
         self.optimizer_state = self.optimizer.init(self.local_model_params)
 
-    def take_action(self, state, epsilon, rng):
+    def take_action(self, state, epsilon):
         """
         Selects an action based on the current state, using an epsilon-greedy strategy.
 
@@ -370,9 +371,6 @@ class doubleDQN:
         - The selected action, either random or the best according to the model.
         """
 
-        seed = int(time.time() * 1000)
-        rng = jax.random.PRNGKey(seed)
-
         # Split the RNG key
         self.rng_key, rng_key_action = jax.random.split(self.rng_key)
 
@@ -380,20 +378,16 @@ class doubleDQN:
         state = state.reshape(-1)
 
         # Generate a random number using JAX's random number generator
-        random_number = jax.random.uniform(rng, minval=0.0, maxval=1.0)
+        random_number = jax.random.uniform(rng_key_action, shape=())
 
         if random_number < epsilon:
             # Exploration: choose a random action
-            # Corrected by adding shape=()
-            seed = int(time.time() * 1000)
-            rng = jax.random.PRNGKey(seed)
+            self.rng_key, rng_key_random = jax.random.split(self.rng_key)
             action = jax.random.randint(
-                rng, shape=(), minval=0, maxval=self.number_of_actions
+                rng_key_random, shape=(), minval=0, maxval=self.number_of_actions
             )
         else:
             # Exploitation: choose the best action based on model prediction
-            seed = int(time.time() * 1000)
-            rng = jax.random.PRNGKey(seed)
             q_values = self.local_model.apply(
                 {"params": self.local_model_params}, jnp.array([state])
             )
@@ -472,34 +466,28 @@ class doubleDQN:
             # Extract data from the sampled batch
             states = np.array([exp[0].numpy() for exp in sampled_batch])
             actions = np.array([exp[1] for exp in sampled_batch])
-            rewards = np.array([exp[2] for exp in sampled_batch])
+            rewards = np.array([exp[2] for exp in sampled_batch]).reshape(-1, 1)
             next_states = np.array([exp[3].numpy() for exp in sampled_batch])
-            dones = np.array([exp[4] for exp in sampled_batch])
-            weights = jnp.array(weights)
+            dones = np.array([exp[4] for exp in sampled_batch]).reshape(-1, 1)
+            weights = jnp.array(weights).reshape(-1, 1)
 
             def loss_fn(params):
                 q_values = self.local_model.apply({"params": params}, states)
                 next_q_values = self.target_model.apply({"params": params}, next_states)
                 max_next_q_values = jnp.max(next_q_values, axis=1)
                 target_q_values = rewards + (
-                    self.gamma * max_next_q_values * (1 - dones)
+                    self.gamma * max_next_q_values * (1 - dones.reshape(-1, 1))
                 )
                 actions_one_hot = jax.nn.one_hot(actions, self.number_of_actions)
                 predicted_q_values = jnp.sum(q_values * actions_one_hot, axis=1)
 
-                # Calculate TD errors
-                # note: this is the absolute value of the TD error?
-                # td_errors = jnp.abs(predicted_q_values - target_q_values)
-                td_errors = (predicted_q_values - target_q_values) ** 2
+                # Calculate TD errors (use absolute value)
+                td_errors = jnp.abs(predicted_q_values - target_q_values)
 
                 # Calculate the weighted loss using importance sampling weights
-
                 weighted_loss = jnp.mean(td_errors * jnp.array(weights))
 
-                scalar_weighted_loss = jnp.reshape(
-                    weighted_loss, ()
-                )  # Reshape to scalar
-                return scalar_weighted_loss
+                return weighted_loss
 
             grad_fn = jax.value_and_grad(loss_fn)
             loss, gradients = grad_fn(self.local_model_params)
@@ -533,6 +521,8 @@ class doubleDQN:
         else:
             batch = self.replay_buffer.sample(batch_size)
             states, actions, rewards, next_states, dones = batch
+            dones = dones.reshape(-1, 1)
+            rewards = rewards.reshape(-1, 1)
 
             def loss_fn(params):
                 q_values = self.local_model.apply({"params": params}, states)

@@ -30,25 +30,6 @@ class Agent(Object):
         # logging features
         self.outcome_record = {"harvest": 0, "zap": 0, "get_zapped": 0, "clean": 0}
 
-    def init_replay(self) -> None:
-        """Fill in blank images for the LSTM."""
-
-        priority = torch.tensor(0.1)
-        num_frames = self.model.num_frames
-        if self.cfg.env.full_mdp:
-            state = torch.zeros(1, num_frames, *self.model.state_size).float()
-        else:
-            # Number of one-hot code channels
-            C = len(self.appearance)
-            H = W = self.vision * 2 + 1
-            state = torch.zeros(1, num_frames, C, H, W).float()
-
-        action = torch.tensor(7.0)  # Action outside the action space
-        reward = torch.tensor(0.0)
-        done = torch.tensor(0.0)
-        exp = (priority, (state, action, reward, state, done))
-        self.episode_memory.append(exp)
-
     def movement(self, action: int) -> tuple[int, ...]:
 
         # Default location
@@ -97,13 +78,6 @@ class Agent(Object):
         """
         Defines the agent's observation function
         """
-        # Get the previous state
-        previous_state = self.episode_memory.get_last_memory("states")
-
-        # Get the frames from the previous state
-        current_state = previous_state.clone()
-
-        current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
 
         # If the environment is a full MDP, get the whole world image
         if env.full_mdp:
@@ -116,20 +90,13 @@ class Agent(Object):
                 env.world, env.color_map, self.location, self.vision, env.channels
             )
 
-        # Update the latest state to the observation
-        state_now = torch.tensor(image).unsqueeze(0)
-        current_state[:, -1, :, :, :] = state_now
+        current_state = torch.tensor(image).unsqueeze(0)
 
         return current_state
 
-    def transition(self, env: GridworldEnv):
+    def transition(self, env: GridworldEnv, state, action):
         """Changes the world based on action taken."""
-        # Get current state
-        state = self.pov(env)
         reward = 0
-
-        # Take action based on current state
-        action = self.model.take_action(state)
 
         # Attempt the transition
         attempted_location = self.movement(action)
@@ -151,8 +118,63 @@ class Agent(Object):
         # Get the next state
         next_state = self.pov(env)
 
-        return state, action, reward, next_state, False
+        return reward, next_state, False
 
     def reset(self) -> None:
         self.episode_memory.clear()
-        self.init_replay()
+        # self.init_replay()
+
+
+"""
+-------------------
+old functions below
+-------------------
+"""
+
+
+def pov_old(self, env) -> torch.Tensor:
+    """
+    Defines the agent's observation function
+    """
+    # Get the previous state
+    previous_state = self.episode_memory.get_last_memory("states")
+
+    # Get the frames from the previous state
+    current_state = previous_state.clone()
+
+    current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
+
+    # If the environment is a full MDP, get the whole world image
+    if env.full_mdp:
+        image = visual_field_multilayer(env.world, env.color_map, channels=env.channels)
+    # Otherwise, use the agent observation function
+    else:
+        image = visual_field_multilayer(
+            env.world, env.color_map, self.location, self.vision, env.channels
+        )
+
+    # Update the latest state to the observation
+    state_now = torch.tensor(image).unsqueeze(0)
+    current_state[:, -1, :, :, :] = state_now
+
+    return current_state
+
+
+def init_replay(self) -> None:
+    """Fill in blank images for the LSTM."""
+
+    priority = torch.tensor(0.1)
+    num_frames = self.model.num_frames
+    if self.cfg.env.full_mdp:
+        state = torch.zeros(1, num_frames, *self.model.state_size).float()
+    else:
+        # Number of one-hot code channels
+        C = len(self.appearance)
+        H = W = self.vision * 2 + 1
+        state = torch.zeros(1, num_frames, C, H, W).float()
+
+    action = torch.tensor(7.0)  # Action outside the action space
+    reward = torch.tensor(0.0)
+    done = torch.tensor(0.0)
+    exp = (priority, (state, action, reward, state, done))
+    self.episode_memory.append(exp)
