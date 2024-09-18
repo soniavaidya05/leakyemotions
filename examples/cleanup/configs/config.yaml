@@ -25,4 +25,4 @@ agent:
     appearance: [255, 0, 0, 0, 0, 0, 0, 0]
     beam_radius: 3
 
-root: '/Users/rgelpi/Documents/GitHub/agentarium'
+root: '~/Documents/GitHub/agentarium'

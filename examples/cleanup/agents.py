@@ -5,7 +5,7 @@ import numpy as np
 
 from examples.trucks.agents import Memory
 from gem.models.ann import ANN
-from gem.primitives import Object, GridworldEnv
+from gem.primitives import Object, GridworldEnv, Location, Vector
 from gem.utils import visual_field, visual_field_multilayer
 from gem.models.grid_cells import positional_embedding
 
@@ -66,19 +66,6 @@ class Agent(Object):
         exp = (priority, (state, action, reward, state, done))
         self.episode_memory.append(exp)
 
-    def shifts(self):
-        """Define the forward and backward movement tiles"""
-        match (self.direction):
-            case 0:  # UP
-                shifts = [(-1, 0), (1, 0)]
-            case 1:  # RIGHT
-                shifts = [(0, 1), (0, -1)]
-            case 2:  # DOWN
-                shifts = [(1, 0), (-1, 0)]
-            case 3:  # LEFT
-                shifts = [(0, -1), (0, 1)]
-        return shifts
-
     def act(self, action: int) -> tuple[int, ...]:
         """Act on the environment.
         
@@ -92,28 +79,19 @@ class Agent(Object):
 
         # Default location
         next_location = self.location
-        
-        # Define the forward (index 0) and back (index 1) movements
-        shifts = self.shifts()
 
         if action == 0:  # NOOP
             pass
 
         if action == 1:  # FORWARD
-            shift = shifts[0]
-            next_location = (
-                self.location[0] + shift[0],
-                self.location[1] + shift[1],
-                self.location[2],
-            )
+            forward_vector = Vector(1, 0, direction=self.direction)
+            cur_location = Location(*self.location)
+            next_location = (cur_location + forward_vector).to_tuple()
 
         if action == 2:  # BACK
-            shift = shifts[1]
-            next_location = (
-                self.location[0] + shift[0],
-                self.location[1] + shift[1],
-                self.location[2],
-            )
+            backward_vector = Vector(-1, 0, direction=self.direction)
+            cur_location = Location(*self.location)
+            next_location = (cur_location + backward_vector).to_tuple()
 
         if action == 3:  # TURN CLOCKWISE
             # Add 90 degrees; modulo 4 to ensure range of [0, 1, 2, 3]
@@ -131,7 +109,17 @@ class Agent(Object):
         out in front of the agent."""
 
         # Get the forward movement tile
-        shifts = self.shifts()
+        forward_vector = Vector(1, 0, direction=self.direction)
+        right_vector = Vector(0, 1, direction=self.direction)
+        left_vector = Vector(0, -1, direction=self.direction)
+
+        # Candidate beam locations
+        beam_locs = [
+            Location(*self.location) + (forward_vector * 1), # 1 pixel ahead
+            Location(*self.location) + (forward_vector * 2), # 2 pixel ahead
+        ]
+
+        # Check beam layer for walls...
 
 
     def pov(self, env) -> torch.Tensor:

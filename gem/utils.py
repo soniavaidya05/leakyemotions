@@ -273,10 +273,10 @@ def visual_field_sprite(
             for j in range(bounds[2], bounds[3] + 1):
                 if i < 0 or j < 0 or i >= world.shape[0] or j >= world.shape[1]:
                     # Tile is out of bounds, use wall_app
-                    tile_image = Image.open(wall_sprite).resize(tile_size).convert('RGBA')
+                    tile_image = Image.open(os.path.expanduser(wall_sprite)).resize(tile_size).convert('RGBA')
                 else:
                     tile_appearance = world[i, j, z].sprite
-                    tile_image = Image.open(tile_appearance).resize(tile_size).convert('RGBA')
+                    tile_image = Image.open(os.path.expanduser(tile_appearance)).resize(tile_size).convert('RGBA')
 
                 tile_image_array = np.array(tile_image)
                 alpha = tile_image_array[:, :, 3]
@@ -356,7 +356,7 @@ def animate(
     '''
     path = folder + filename + '.gif'
 
-    frames[0].save(path, format = 'GIF', append_images = frames[1:], save_all = True, duration = 100, loop = 0)
+    frames[0].save(os.path.expanduser(path), format = 'GIF', append_images = frames[1:], save_all = True, duration = 100, loop = 0)
 
 # --------------------------- #
 # endregion: Visualizations   #

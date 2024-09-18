@@ -150,6 +150,11 @@ class Cleanup(GridworldEnv):
     self.world[location] = new_object
     new_object.location = location
 
+  def reset(self):
+    """Reset the environment."""
+    self.create_world()
+    self.populate()
+
 
 
 

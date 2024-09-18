@@ -155,13 +155,30 @@ class GridworldEnv:
 
 class Location:
     def __init__(self, *dims):
+        """Initialize a Location object.
+        
+        Parameters:
+            *dims: An unpacked tuple of coordinates. Supports up to three (x, y, z)."""
         self.dims = len(dims)
         self.x = dims[0]
         self.y = dims[1]
-        if len(dims) > 2:
+        if self.dims > 2:
             self.z = dims[2]
         else:
             self.z = 0
+
+    def to_tuple(self) -> tuple[int, ...]:
+        """Cast the Location back to a tuple."""
+        if self.dims == 2:
+            return (self.x, self.y)
+        else:
+            return (self.x, self.y, self.z)
+
+    def __repr__(self):
+        return f"Location({self.x}, {self.y}, {self.z})"
+
+    def __str__(self):
+        return repr(self)
 
     def __add__(self, other) -> Location:
         """Add a location or vector.
@@ -206,12 +223,60 @@ class Location:
             
 class Vector:
     def __init__(self, *urdl: list[int], direction: int = 0): # Default direction: 0 degrees / UP / North
+        """
+        Initialize a vector object.
+        
+        Parameters:
+            *urdl: An unpacked tuple of ints indicating the number of steps forward, right, or (optionally) backward or left.
+            Technically, only the first two are necessary, since negative vectors are supported.
+            direction: (int) A compass direction. 0 = NORTH, 1 = EAST, 2 = SOUTH, 3 = WEST.
+            """
         self.direction = direction
         self.forward = urdl[0]
         self.right = urdl[1]
-        self.backward = urdl[2]
-        self.left = urdl[3]
+        if len(urdl) > 2:
+            self.backward = urdl[2]
+            self.left = urdl[3]
+        else:
+            self.backward = 0
+            self.left = 0
+
+    def __repr__(self):
+        return f"Vector(direction={self.direction},forward={self.forward},right={self.right},backward={self.backward},left={self.left}"
     
+    def __str__(self):
+        return repr(self)
+    
+    def __mul__(self, other) -> Vector:
+        """Multiply a location by an integer amount."""
+
+        if isinstance(other, int):
+            return Vector(self.forward * other, self.right * other, self.backward * other, self.left * other, self.direction)
+        
+        # Unimplemented
+        else:
+            raise NotImplementedError
+        
+    def __add__(self, other) -> Vector:
+        """Add two vectors together. The vectors must be with respect to the same direction."""
+        if isinstance(other, Vector):
+            assert self.direction == other.direction, "Vectors must have the same direction."
+            return Vector(self.forward + other.forward, self.right + other.right, self.backward + other.backward, self.left + other.left, direction=self.direction)
+        
+    def rotate(self, new_direction: int) -> None:
+        """Rotate the vector to face a new direction. """
+        num_rotations = (self.direction - new_direction) % 4
+        match(num_rotations):
+            case 0:
+                pass
+            case 1:
+                self.right, self.backward, self.left, self.forward = self.forward, self.right, self.backward, self.left
+            case 2:
+                self.backward, self.left, self.forward, self.right = self.forward, self.right, self.backward, self.left
+            case 3:
+                self.left, self.forward, self.right, self.backward = self.forward, self.right, self.backward, self.left
+        self.direction = new_direction
+     
     def compute(self) -> Location:
         """Given a direction being faced and a number of paces
         forward / right / backward / left, compute the location."""
@@ -227,6 +292,9 @@ class Vector:
                 forward, right, backward, left = (Location(0, -1), Location(-1, 0), Location(0, 1), Location(1, 0))
         
         return (forward * self.forward) + (right * self.right) + (backward * self.backward) + (left * self.left)
+    
+    def to_tuple(self) -> tuple[int, ...]:
+        return self.compute().to_tuple()
 
             
 
