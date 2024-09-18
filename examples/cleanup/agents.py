@@ -1,10 +1,13 @@
 import torch
 from typing import Optional, Sequence
 
+import numpy as np
+
 from examples.trucks.agents import Memory
 from gem.models.ann import ANN
 from gem.primitives import Object, GridworldEnv
 from gem.utils import visual_field, visual_field_multilayer
+from gem.models.grid_cells import positional_embedding
 
 
 class Agent(Object):
@@ -116,7 +119,10 @@ class Agent(Object):
             reward += obj.value
 
         # Get the next state
-        next_state = self.pov(env)
+        location_code = positional_embedding(self.location, env, 3, 3)
+        next_state = np.concatenate([self.pov(env).flatten(), location_code]).reshape(
+            1, -1
+        )
 
         return reward, next_state, False
 
