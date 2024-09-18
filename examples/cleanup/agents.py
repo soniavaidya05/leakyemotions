@@ -6,12 +6,13 @@ import numpy as np
 from examples.trucks.agents import Memory
 from gem.models.ann import ANN
 from gem.primitives import Object, GridworldEnv, Location, Vector
-from gem.utils import visual_field, visual_field_multilayer
+from gem.utils import visual_field, visual_field_multilayer, one_hot_encode
 from gem.models.grid_cells import positional_embedding
 
 # ------------------- #
 # region: Agent class #
 # ------------------- #
+
 
 class Agent(Object):
     """Cleanup agent."""
@@ -25,7 +26,7 @@ class Agent(Object):
         self.direction = 2  # 90 degree rotation: default at 180 degrees (facing down)
         self.action_space = [0, 1, 2, 3, 4, 5, 6]
         self.has_transitions = True
-        self.sprite = f'{self.cfg.root}/examples/cleanup/assets/hero.png'
+        self.sprite = f"{self.cfg.root}/examples/cleanup/assets/hero.png"
 
         # training-related features
         self.action_type = "neural_network"
@@ -40,10 +41,10 @@ class Agent(Object):
     def sprite_loc(self) -> None:
         """Determine the agent's sprite based on the location."""
         sprite_directions = [
-            f'{self.cfg.root}/examples/cleanup/assets/hero-back.png', # up
-            f'{self.cfg.root}/examples/cleanup/assets/hero-right.png', # right
-            f'{self.cfg.root}/examples/cleanup/assets/hero.png', # down
-            f'{self.cfg.root}/examples/cleanup/assets/hero-left.png' # left
+            f"{self.cfg.root}/examples/cleanup/assets/hero-back.png",  # up
+            f"{self.cfg.root}/examples/cleanup/assets/hero-right.png",  # right
+            f"{self.cfg.root}/examples/cleanup/assets/hero.png",  # down
+            f"{self.cfg.root}/examples/cleanup/assets/hero-left.png",  # left
         ]
         self.sprite = sprite_directions[self.direction]
 
@@ -68,10 +69,10 @@ class Agent(Object):
 
     def act(self, action: int) -> tuple[int, ...]:
         """Act on the environment.
-        
+
         Params:
             action: (int) An integer indicating the action to take.
-            
+
         Return:
             tuple[int, ...] A location tuple indicating the updated
             location of the agent.
@@ -103,13 +104,13 @@ class Agent(Object):
         self.sprite_loc()
 
         return next_location
-    
+
     def spawn_beam(self, env: GridworldEnv, action):
         """Generate a beam extending cfg.agent.agent.beam_radius pixels
         out in front of the agent."""
 
         # Get the tiles above and adjacent to the agent.
-        up_vector = Vector(0, 0, layer = 1, direction=self.direction)
+        up_vector = Vector(0, 0, layer=1, direction=self.direction)
         forward_vector = Vector(1, 0, direction=self.direction)
         right_vector = Vector(0, 1, direction=self.direction)
         left_vector = Vector(0, -1, direction=self.direction)
@@ -119,18 +120,23 @@ class Agent(Object):
         # Candidate beam locations:
         #   1. (1, i+1) tiles ahead of the tile above the agent
         #   2. (0, i) tiles ahead of the tile above and to the right/left of the agent.
-        beam_locs = [
-            (tile_above + (forward_vector * i)) for i in range(1, self.cfg.agent.agent.beam_radius + 1)
-        ] + [
-            (tile_above + (right_vector) + (forward_vector * i)) for i in range(self.cfg.agent.agent.beam_radius)
-        ] + [
-            (tile_above + (left_vector) + (forward_vector * i)) for i in range(self.cfg.agent.agent.beam_radius)
-        ]
+        beam_locs = (
+            [
+                (tile_above + (forward_vector * i))
+                for i in range(1, self.cfg.agent.agent.beam_radius + 1)
+            ]
+            + [
+                (tile_above + (right_vector) + (forward_vector * i))
+                for i in range(self.cfg.agent.agent.beam_radius)
+            ]
+            + [
+                (tile_above + (left_vector) + (forward_vector * i))
+                for i in range(self.cfg.agent.agent.beam_radius)
+            ]
+        )
 
         # Check beam layer to determine which locations are valid...
-        valid_locs = [
-            loc for loc in beam_locs if env.valid_location(loc)
-        ]
+        valid_locs = [loc for loc in beam_locs if env.valid_location(loc)]
 
         # Exclude any locations that have walls...
         placeable_locs = [
@@ -141,7 +147,9 @@ class Agent(Object):
         for loc in placeable_locs:
             if action == 5:
                 env.remove(loc.to_tuple())
-                env.add(loc.to_tuple(), CleanBeam(self.cfg, env.appearances["CleanBeam"]))
+                env.add(
+                    loc.to_tuple(), CleanBeam(self.cfg, env.appearances["CleanBeam"])
+                )
             elif action == 6:
                 env.remove(loc.to_tuple())
                 env.add(loc.to_tuple(), ZapBeam(self.cfg, env.appearances["ZapBeam"]))
@@ -193,15 +201,17 @@ class Agent(Object):
 
         # Get the next state
         location_code = positional_embedding(self.location, env, 3, 3)
-        next_state = np.concatenate([self.pov(env).flatten(), location_code]).reshape(
-            1, -1
-        )
+        direction = one_hot_encode(self.direction, 4)
+        next_state = np.concatenate(
+            [self.pov(env).flatten(), location_code, direction]
+        ).reshape(1, -1)
 
         return reward, next_state, False
 
     def reset(self) -> None:
         self.episode_memory.clear()
         # self.init_replay()
+
 
 # ------------------- #
 # endregion           #
@@ -211,12 +221,14 @@ class Agent(Object):
 # region: Beams       #
 # ------------------- #
 
+
 class Beam(Object):
     """Generic beam class for agent beams."""
+
     def __init__(self, cfg, appearance):
         super().__init__(appearance)
         self.cfg = cfg
-        self.sprite = f'{cfg.root}/examples/cleanup/assets/beam.png'
+        self.sprite = f"{cfg.root}/examples/cleanup/assets/beam.png"
         self.turn_counter = 0
 
     def transition(self, env: GridworldEnv):
@@ -226,15 +238,18 @@ class Beam(Object):
         else:
             self.turn_counter += 1
 
+
 class CleanBeam(Beam):
     def __init__(self, cfg, appearance):
         super().__init__(cfg, appearance)
 
+
 class ZapBeam(Beam):
     def __init__(self, cfg, appearance):
         super().__init__(cfg, appearance)
-        self.sprite = f'{cfg.root}/examples/cleanup/assets/zap.png'     
-        self.value = -1           
+        self.sprite = f"{cfg.root}/examples/cleanup/assets/zap.png"
+        self.value = -1
+
 
 # ------------------- #
 # endregion           #
