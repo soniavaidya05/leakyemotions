@@ -13,12 +13,13 @@ env:
   full_mdp: True
   vision: 4
   pollution_threshold: 1.0
+  initial_apples: 20
   apple_spawn_chance: 0.001
   pollution_spawn_chance: 0.00
 
 agent:
   agent:
-    num: 4
+    num: 1
     model: iqn
     vision: 4
     memory_size: 100
@@ -26,4 +27,4 @@ agent:
     beam_radius: 3
     rotation: False
 
-root: '~/GitHub/agentarium'
+root: '~/Documents/GitHub/agentarium'

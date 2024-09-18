@@ -77,6 +77,7 @@ class Cleanup(GridworldEnv):
   def populate(self) -> None:
   
     spawn_points = []
+    apple_spawn_points = []
         
     # First, create the walls
     for index in np.ndindex(self.world.shape):
@@ -96,20 +97,26 @@ class Cleanup(GridworldEnv):
         elif H > (self.height - 1 - (self.height // 3)) and H < (self.height - 1):
           self.world[index] = AppleTree(self.cfg, self.appearances["AppleTree"])
           self.world[index].location = index
+          apple_spawn_points.append(index)
         # Middle third = potential agent spawn points
         else:
           self.world[index] = Sand(self.cfg, self.appearances["EmptyObject"])
           spawn_index = [index[0], index[1], self.agent_layer]
           spawn_points.append(spawn_index)
 
+    # Place apples randomly based on the spawn points chosen
+    loc_index = np.random.choice(len(apple_spawn_points), size = self.cfg.env.initial_apples, replace = False)
+    locs = [apple_spawn_points[i] for i in loc_index]
+    for loc in locs:
+      loc = tuple(loc)
+      self.add(loc, Apple(self.cfg, self.appearances["Apple"]))
       
     # Place agents randomly based on the spawn points chosen
     loc_index = np.random.choice(len(spawn_points), size = len(self.agents), replace = False)
     locs = [spawn_points[i] for i in loc_index]
     for loc, agent in zip(locs, self.agents):
       loc = tuple(loc)
-      self.world[loc] = agent
-      agent.location = loc
+      self.add(loc, agent)
 
   def get_entities_for_transition(self):
     entities = []
