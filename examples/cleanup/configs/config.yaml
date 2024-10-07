@@ -14,7 +14,7 @@ env:
   vision: 4
   pollution_threshold: 1.0
   initial_apples: 20
-  apple_spawn_chance: 0.001
+  apple_spawn_chance: 0.002
   pollution_spawn_chance: 0.00
 
 agent:
