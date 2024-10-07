@@ -44,6 +44,7 @@ class Cleanup(GridworldEnv):
     self.beam_layer = 2
     self.pollution = 0
     super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(cfg, self.appearances['EmptyObject']))
+    self.mode = "APPLE"
     self.populate()
 
   def color_map(self, C) -> dict:
@@ -89,20 +90,29 @@ class Cleanup(GridworldEnv):
         self.world[index].location = index
       # Define river, orchard, and potential agent spawn points
       elif L == 0:
-        # Top third = river
-        if H > 0 and H < (self.height // 3):
-          self.world[index] = River(self.cfg, self.appearances["River"])
-          self.world[index].location = index
-        # Bottom third = orchard
-        elif H > (self.height - 1 - (self.height // 3)) and H < (self.height - 1):
+        if self.mode != "APPLE":
+          # Top third = river
+          if H > 0 and H < (self.height // 3):
+            self.world[index] = River(self.cfg, self.appearances["River"])
+            self.world[index].location = index
+          # Bottom third = orchard
+          elif H > (self.height - 1 - (self.height // 3)) and H < (self.height - 1):
+            self.world[index] = AppleTree(self.cfg, self.appearances["AppleTree"])
+            self.world[index].location = index
+            apple_spawn_points.append(index)
+          # Middle third = potential agent spawn points
+          else:
+            self.world[index] = Sand(self.cfg, self.appearances["EmptyObject"])
+            spawn_index = [index[0], index[1], self.agent_layer]
+            spawn_points.append(spawn_index)
+        else:
           self.world[index] = AppleTree(self.cfg, self.appearances["AppleTree"])
           self.world[index].location = index
-          apple_spawn_points.append(index)
-        # Middle third = potential agent spawn points
-        else:
-          self.world[index] = Sand(self.cfg, self.appearances["EmptyObject"])
-          spawn_index = [index[0], index[1], self.agent_layer]
-          spawn_points.append(spawn_index)
+          if ((H % 2) == 0) and ((W % 2) == 0):
+            spawn_index = [index[0], index[1], self.agent_layer]
+            spawn_points.append(spawn_index)
+          else:
+            apple_spawn_points.append(index)
 
     # Place apples randomly based on the spawn points chosen
     loc_index = np.random.choice(len(apple_spawn_points), size = self.cfg.env.initial_apples, replace = False)

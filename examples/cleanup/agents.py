@@ -184,7 +184,7 @@ class Agent(Object):
                 env.remove(loc.to_tuple())
                 env.add(loc.to_tuple(), ZapBeam(self.cfg, env.appearances["ZapBeam"]))
 
-    def pov(self, env) -> torch.Tensor:
+    def pov(self, env: GridworldEnv) -> torch.Tensor:
         """
         Defines the agent's observation function
         """
@@ -201,6 +201,33 @@ class Agent(Object):
             )
 
         current_state = torch.tensor(image).unsqueeze(0)
+
+        return current_state
+    
+    def pov_stack(self, env: GridworldEnv) -> torch.Tensor:
+        """
+        Defines the agent's observation function
+        """
+        # Get the previous state
+        previous_state = self.episode_memory.get_last_memory("states")
+
+        # Get the frames from the previous state
+        current_state = previous_state.clone()
+
+        current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
+
+        # If the environment is a full MDP, get the whole world image
+        if env.full_mdp:
+            image = visual_field_multilayer(env.world, env.color_map, channels=env.channels)
+        # Otherwise, use the agent observation function
+        else:
+            image = visual_field_multilayer(
+                env.world, env.color_map, self.location, self.vision, env.channels
+            )
+
+        # Update the latest state to the observation
+        state_now = torch.tensor(image).unsqueeze(0)
+        current_state[:, -1, :, :, :] = state_now
 
         return current_state
 

@@ -10,7 +10,7 @@ env:
   layers: 3
   channels: 8
   default_object: EmptyObject
-  full_mdp: True
+  full_mdp: False
   vision: 4
   pollution_threshold: 1.0
   initial_apples: 20
