@@ -259,9 +259,10 @@ class Agent(Object):
         # Get the next state
         location_code = positional_embedding(self.location, env, 3, 3)
         direction = one_hot_encode(self.direction, 4)
-        next_state = np.concatenate(
-            [self.pov(env).flatten(), location_code, direction]
-        ).reshape(1, -1)
+        # next_state = np.concatenate(
+        #     [self.pov(env).flatten(), location_code, direction]
+        # ).reshape(1, -1)
+        next_state = self.pov_stack(env)
 
         return reward, next_state, False
 
