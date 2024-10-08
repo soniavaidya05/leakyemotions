@@ -150,3 +150,4 @@ examples/RPG/models/checkpoints/
 examples/RPG/data
 gem/.DS_Store
 examples/cleanup/data/
+examples/cleanup/runs/

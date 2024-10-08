@@ -21,10 +21,11 @@ agent:
   agent:
     num: 1
     model: iqn
-    vision: 4
+    vision: 5
     memory_size: 100
     appearance: [255, 0, 0, 0, 0, 0, 0, 0]
     beam_radius: 3
     rotation: False
 
 root: '~/Documents/GitHub/agentarium'
+log: True
