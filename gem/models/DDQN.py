@@ -1,4 +1,5 @@
 # JAX Imports for automatic differentiation and numerical operations
+from typing import Sequence
 import jax
 import jax.numpy as jnp
 import jax.random
@@ -74,6 +75,62 @@ class ReplayBuffer:
 
     def __len__(self):
         return len(self.buffer)
+    
+
+class ClaasyReplayBuffer:
+
+    def __init__(self, capacity: int, obs_shape: Sequence[int]):
+        self.capacity = capacity
+        self.obs_shape = obs_shape
+        self.buffer = np.zeros((capacity, *obs_shape), dtype=np.float32)
+        self.actions = np.zeros(capacity, dtype=np.int32)
+        self.rewards = np.zeros(capacity, dtype=np.float32)
+        self.dones = np.zeros(capacity, dtype=np.float32)
+        self.idx = 0
+        self.size = 0
+    
+    def add(self, obs, action, reward, done):
+        """
+        Add an experience to the replay buffer.
+
+        Args:
+            obs (np.ndarray): The observation/state.
+            action (int): The action taken.
+            reward (float): The reward received.
+            done (bool): Whether the episode terminated after this step.
+        """
+        self.buffer[self.idx] = obs
+        self.actions[self.idx] = action
+        self.rewards[self.idx] = reward
+        self.dones[self.idx] = done
+        self.idx = (self.idx + 1) % self.capacity
+        self.size = min(self.size + 1, self.capacity)
+
+    def sample(self, batch_size, stacked_frames=1):
+        """
+        Sample a batch of experiences from the replay buffer.
+
+        Args:
+            batch_size (int): The number of experiences to sample.
+            stacked_frames (int): The number of frames to stack together.
+        
+        Returns:
+            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]: 
+                A tuple containing the states, actions, rewards, next states, dones, and 
+                invalid (meaning stacked frmaes cross episode boundary).
+        """
+        indices = np.random.choice(self.size, batch_size - stacked_frames - 1, replace=False)
+        indices = indices[:, np.newaxis]
+        indices = (indices + np.arange(stacked_frames))
+
+        states = self.buffer[indices]
+        next_states = self.states[indices + 1]
+        actions = self.actions[indices[:, -1]]
+        rewards  = self.rewards[indices[:, -1]]
+        dones = self.dones[indices[:, -1]]
+        valid = 1. - np.any(self.dones[indices[:, :-1]], axis=-1)
+
+        return states, actions, rewards, next_states, dones, valid
 
 
 class PrioritizedReplayBuffer:
