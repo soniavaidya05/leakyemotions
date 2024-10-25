@@ -5,14 +5,14 @@ The IQN learns an estimate of the entire distribution of possible rewards (Q-val
 some action.
 
 Source code is based on Dittert, Sebastian. "Implicit Quantile Networks (IQN) for Distributional
-Reinforcement Learning and Extensions." https://github.com/BY571/IQN. (2020). 
+Reinforcement Learning and Extensions." https://github.com/BY571/IQN. (2020).
 
 Structure:
 
 IQN
  - calc_cos: calculate the cos values
  - forward: input pass through linear layer, get modified by cos values, pass through NOISY linear layer, and calculate output based on value and advantage
- - get_qvalues: set action probabilities as the mean of the quantiles 
+ - get_qvalues: set action probabilities as the mean of the quantiles
 
 ReplayBuffer
  - add: add new experience to memory (multistep return is disabled for now)
@@ -41,7 +41,7 @@ import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
 
 # Import gem-specific packages
-from gem.models.layers import NoisyLinear
+from gem.layers import NoisyLinear
 from gem.models.ann import DoubleANN
 from gem.models.buffer import ReplayBuffer
 
