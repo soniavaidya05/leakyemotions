@@ -44,6 +44,7 @@ from torch.nn.utils import clip_grad_norm_
 from gem.models.layers import NoisyLinear
 from gem.models.ann import DoubleANN
 from gem.models.buffer import ReplayBuffer
+from gem.models.DDQN import ClaasyReplayBuffer as Buffer
 
 # ------------------------ #
 # endregion                #
@@ -116,9 +117,11 @@ class IQN(nn.Module):
         input = input + noise
 
         # Flatten the input from [1, N, 7, 9, 9] to [1, N * 7 * 9 * 9]
-        batch_size, timesteps, C, H, W = input.size()
-        c_out = input.view(batch_size * timesteps, C, H, W)
-        r_in = c_out.view(batch_size, -1)
+        # batch_size, timesteps, C, H, W = input.size()
+        # c_out = input.view(batch_size * timesteps, C, H, W)
+        # r_in = c_out.view(batch_size, -1)
+        batch_size, _ = input.size()
+        r_in = input.view(batch_size, -1)
 
         # Pass input through linear layer and activation function ([1, 250])
         x = self.head1(r_in)
@@ -242,13 +245,17 @@ class iRainbowModel(DoubleANN):
 
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
 
-        self.memory = ReplayBuffer(
-            BUFFER_SIZE,
-            self.BATCH_SIZE,
-            self.device,
-            seed,
-            self.GAMMA,
-            n_step,
+        # self.memory = ReplayBuffer(
+        #     BUFFER_SIZE,
+        #     self.BATCH_SIZE,
+        #     self.device,
+        #     seed,
+        #     self.GAMMA,
+        #     n_step,
+        # )
+        self.memory = Buffer(
+            capacity=BUFFER_SIZE,
+            obs_shape=(np.array(self.state_size).prod(),)
         )
 
     def __str__(self):
