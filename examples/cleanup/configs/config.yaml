@@ -26,6 +26,7 @@ agent:
     appearance: [255, 0, 0, 0, 0, 0, 0, 0]
     beam_radius: 3
     rotation: False
+    num_frames: 5
 
 root: '~/Documents/GitHub/agentarium'
-log: True
+log: False

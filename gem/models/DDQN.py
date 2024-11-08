@@ -131,6 +131,30 @@ class ClaasyReplayBuffer:
         valid = 1. - np.any(self.dones[indices[:, :-1]], axis=-1)
 
         return states, actions, rewards, next_states, dones, valid
+    
+    def clear(self):
+        """Zero out the arrays."""
+        self.buffer = np.zeros((self.capacity, *self.obs_shape), dtype=np.float32)
+        self.actions = np.zeros(self.capacity, dtype=np.int32)
+        self.rewards = np.zeros(self.capacity, dtype=np.float32)
+        self.dones = np.zeros(self.capacity, dtype=np.float32)
+        self.idx = 0
+        self.size = 0
+
+    def getidx(self):
+        return self.idx
+    
+    def current_state(self, stacked_frames=1):
+        return self.buffer[self.idx-stacked_frames:self.idx]
+    
+    def __repr__(self):
+        return f"Buffer(capacity={self.capacity}, obs_shape={self.obs_shape})"
+    
+    def __str__(self):
+        return repr(self)
+    
+    def __len__(self):
+        return len(self.buffer)
 
 
 class PrioritizedReplayBuffer:
