@@ -3,11 +3,12 @@ import abc
 
 import torch
 
-from gem.primitives import GridworldEnv, Object
+from environment import GridworldEnv
+from entity import Entity
 from gem.config import Cfg
 
 
-class Agent(Object):
+class Agent(Entity):
     """Abstract agent class."""
     def __init__(self, cfg: Cfg, appearance, model, action_space, location = None):
 
@@ -23,13 +24,14 @@ class Agent(Object):
         self.vision = cfg.agent.agent.vision
         self.has_transitions = True
 
-        # Agent subclass only attributes that every Agent is likely to have
-        # TODO: self.action_type?
-
         # TODO: episode_memory/Memory class required for every agent? trucks=RPG implementations fine?
+        # Memory will be property of the model instead of the Agent class
+        # the Agent should have an add_memory function (ref cleanup agent)
+        # want an abstract Model class (for functions like memory.clear / reset)
         # TODO: self.num_memories? = cfg.agent.agent.memory_size (as in cleanup) or .num_memories (as in RPG)?
 
     # TODO: memory (LSTM) and therefore replay needs to be initialized for every agent?
+    # answer: put this in the Memory class
     # @abc.abstractmethod
     # def init_replay(self) -> None:
     #     pass
