@@ -119,12 +119,12 @@ class ClaasyReplayBuffer:
                 A tuple containing the states, actions, rewards, next states, dones, and 
                 invalid (meaning stacked frmaes cross episode boundary).
         """
-        indices = np.random.choice(self.size, batch_size - stacked_frames - 1, replace=False)
+        indices = np.random.choice(max(1, self.size - stacked_frames - 1),  batch_size, replace=False)
         indices = indices[:, np.newaxis]
         indices = (indices + np.arange(stacked_frames))
 
         states = self.buffer[indices]
-        next_states = self.states[indices + 1]
+        next_states = self.buffer[indices + 1]
         actions = self.actions[indices[:, -1]]
         rewards  = self.rewards[indices[:, -1]]
         dones = self.dones[indices[:, -1]]
