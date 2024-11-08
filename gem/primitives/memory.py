@@ -1,11 +1,13 @@
-from typing import Optional
 
+from typing import Optional
+import abc
 
 class Memory:
     """
-    Abstract agent class.
+    Abstract memory class.
     """
 
+    # TODO: is memory_size needed? doesn't seem to be used anywhere in the code currently (in Memory or Agents)
     def __init__(self, memory_size: int):
         self.priorities = []
         self.states = []
@@ -59,3 +61,7 @@ class Memory:
             )
         else:
             return getattr(self, attr)[-1]
+
+    @abc.abstractmethod
+    def init_replay(self) -> None:
+        pass

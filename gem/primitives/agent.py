@@ -2,6 +2,7 @@
 import abc
 
 import torch
+import numpy as np
 
 from environment import GridworldEnv
 from entity import Entity
@@ -24,17 +25,8 @@ class Agent(Entity):
         self.vision = cfg.agent.agent.vision
         self.has_transitions = True
 
-        # TODO: episode_memory/Memory class required for every agent? trucks=RPG implementations fine?
-        # Memory will be property of the model instead of the Agent class
-        # the Agent should have an add_memory function (ref cleanup agent)
-        # want an abstract Model class (for functions like memory.clear / reset)
-        # TODO: self.num_memories? = cfg.agent.agent.memory_size (as in cleanup) or .num_memories (as in RPG)?
-
-    # TODO: memory (LSTM) and therefore replay needs to be initialized for every agent?
-    # answer: put this in the Memory class
-    # @abc.abstractmethod
-    # def init_replay(self) -> None:
-    #     pass
+        # TODO: Memory will be property of the model instead of the Agent class
+        # -> does every model need a memory?
 
     @abc.abstractmethod
     def act(self, action) -> tuple[int, ...]:
@@ -60,4 +52,13 @@ class Agent(Entity):
         """
         Changes the environment based on action taken by the agent.
         """
+        pass
+
+    # TODO: leave as implemented or change to abstract?
+    def add_memory(self, state: np.ndarray, action: int, reward: float, done: bool) -> None:
+        """Add an experience to the memory."""
+        self.model.memory.add(state, action, reward, done)
+
+    @abc.abstractmethod
+    def reset(self) -> None:
         pass
