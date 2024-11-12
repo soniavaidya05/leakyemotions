@@ -1,7 +1,7 @@
 from examples.RPG.agents import Agent, color_map
 from examples.RPG.entities import Coin, Bone, Food, Gem, Wall
 
-from gem.models.iqn import iRainbowModel
+from agentarium.models.iqn import iRainbowModel
 import argparse
 import yaml
 import os

@@ -7,11 +7,11 @@ import numpy as np
 import random
 
 # Import gem-specific packages
-from gem.primitives import GridworldEnv
+from agentarium.primitives import GridworldEnv
 from examples.trucks.entities import (
-    Object,
+    Entity,
     Wall,
-    EmptyObject
+    EmptyEntity
 )
 from examples.trucks.agents import (
     Agent
@@ -32,7 +32,7 @@ class FoodTrucks(GridworldEnv):
         self,
         cfg: Cfg,
         agents: list[Agent],
-        entities: list[Object]
+        entities: list[Entity]
     ):
         self.cfg = cfg
         self.channels = cfg.env.channels
@@ -41,7 +41,7 @@ class FoodTrucks(GridworldEnv):
         self.baker_mode = cfg.env.baker_mode
         self.agents = agents
         self.trucks = entities
-        super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(self.colors['EmptyObject']))
+        super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_Entity)(self.colors['EmptyEntity']))
         self.populate()
 
     # --------------------------- #
@@ -50,7 +50,7 @@ class FoodTrucks(GridworldEnv):
 
     def populate(self):
         '''
-        Populate the world with objects
+        Populate the world with Entitys
         '''
         # First, create the walls
         for index in np.ndindex(self.world.shape):

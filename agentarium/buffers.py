@@ -1,22 +1,183 @@
+from __future__ import annotations
+
 # --------------- #
 # region: Imports #
 # --------------- #
 
-from __future__ import annotations
-# Import base packages
-import torch
-import numpy as np
+# Standard Python library imports for data structures and randomness
+import heapq
 import random
+import numpy as np
+import torch
 import dill
 import os
+
 from collections import deque, namedtuple
-from typing import Union
+from typing import Sequence, Union
 
 # --------------- #
 # endregion       #
 # --------------- #
 
 class ReplayBuffer:
+    """
+    ReplayBuffer for Reinforcement Learning
+    """
+
+    def __init__(self, capacity):
+        self.buffer = deque(maxlen=capacity)
+
+    def add(self, state, action, reward, next_state, done):
+        self.buffer.append((state, action, reward, next_state, done))
+
+    def sample(self, batch_size):
+        sampled_experiences = random.sample(self.buffer, batch_size)
+
+        # Convert tensors to NumPy arrays and ensure consistent shapes
+        states = np.array([exp[0].numpy() for exp in sampled_experiences])
+        actions = np.array([exp[1] for exp in sampled_experiences])
+        rewards = np.array([exp[2] for exp in sampled_experiences])
+        next_states = np.array([exp[3].numpy() for exp in sampled_experiences])
+        dones = np.array([exp[4] for exp in sampled_experiences])
+
+        return states, actions, rewards, next_states, dones
+
+    def __len__(self):
+        return len(self.buffer)
+    
+
+class ClaasyReplayBuffer:
+
+    def __init__(self, capacity: int, obs_shape: Sequence[int]):
+        self.capacity = capacity
+        self.obs_shape = obs_shape
+        self.buffer = np.zeros((capacity, *obs_shape), dtype=np.float32)
+        self.actions = np.zeros(capacity, dtype=np.int64)
+        self.rewards = np.zeros(capacity, dtype=np.float32)
+        self.dones = np.zeros(capacity, dtype=np.float32)
+        self.idx = 0
+        self.size = 0
+    
+    def add(self, obs, action, reward, done):
+        """
+        Add an experience to the replay buffer.
+
+        Args:
+            obs (np.ndarray): The observation/state.
+            action (int): The action taken.
+            reward (float): The reward received.
+            done (bool): Whether the episode terminated after this step.
+        """
+        self.buffer[self.idx] = obs
+        self.actions[self.idx] = action
+        self.rewards[self.idx] = reward
+        self.dones[self.idx] = done
+        self.idx = (self.idx + 1) % self.capacity
+        self.size = min(self.size + 1, self.capacity)
+
+    def sample(self, batch_size: int, stacked_frames: int = 1):
+        """
+        Sample a batch of experiences from the replay buffer.
+
+        Args:
+            batch_size (int): The number of experiences to sample.
+            stacked_frames (int): The number of frames to stack together.
+        
+        Returns:
+            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]: 
+                A tuple containing the states, actions, rewards, next states, dones, and 
+                invalid (meaning stacked frmaes cross episode boundary).
+        """
+        indices = np.random.choice(max(1, self.size - stacked_frames - 1),  batch_size, replace=False)
+        indices = indices[:, np.newaxis]
+        indices = (indices + np.arange(stacked_frames))
+
+        states = torch.from_numpy(self.buffer[indices]).view(batch_size, -1)
+        next_states = torch.from_numpy(self.buffer[indices + 1]).view(batch_size, -1)
+        actions = torch.from_numpy(self.actions[indices[:, -1]]).view(batch_size, -1)
+        rewards  = torch.from_numpy(self.rewards[indices[:, -1]]).view(batch_size, -1)
+        dones = torch.from_numpy(self.dones[indices[:, -1]]).view(batch_size, -1)
+        valid = torch.from_numpy(1. - np.any(self.dones[indices[:, :-1]], axis=-1)).view(batch_size, -1)
+
+        return states, actions, rewards, next_states, dones, valid
+    
+    def clear(self):
+        """Zero out the arrays."""
+        self.buffer = np.zeros((self.capacity, *self.obs_shape), dtype=np.float32)
+        self.actions = np.zeros(self.capacity, dtype=np.int64)
+        self.rewards = np.zeros(self.capacity, dtype=np.float32)
+        self.dones = np.zeros(self.capacity, dtype=np.float32)
+        self.idx = 0
+        self.size = 0
+
+    def getidx(self):
+        return self.idx
+    
+    def current_state(self, stacked_frames=1):
+        if self.idx < stacked_frames:
+            diff = self.idx - stacked_frames
+            return np.concatenate((self.buffer[diff%len(self):], self.buffer[:self.idx]))
+        return self.buffer[self.idx-stacked_frames:self.idx]
+    
+    def __repr__(self):
+        return f"Buffer(capacity={self.capacity}, obs_shape={self.obs_shape})"
+    
+    def __str__(self):
+        return repr(self)
+    
+    def __len__(self):
+        return self.capacity
+
+
+class PrioritizedReplayBuffer:
+    def __init__(self, capacity, default_priority=1.0):
+        self.buffer = []
+        self.priority_queue = []  # Min-heap for efficient priority management
+        self.capacity = capacity
+        self.default_priority = default_priority
+        self.size = 0
+        self.total_priority = 0  # Initialize total_priority
+
+    def add(self, state, action, reward, next_state, done):
+        priority = self.default_priority
+        experience = (state, action, reward, next_state, done, priority)
+        if self.size < self.capacity:
+            heapq.heappush(self.priority_queue, (priority, self.size))
+            self.buffer.append(experience)
+            self.size += 1
+        else:
+            _, min_priority_index = heapq.heappop(self.priority_queue)
+            self.total_priority -= self.buffer[min_priority_index][5]
+            self.buffer[min_priority_index] = experience
+            heapq.heappush(self.priority_queue, (priority, min_priority_index))
+        self.total_priority += priority  # Update total_priority when adding
+
+    def sample(self, batch_size, alpha=0.6, beta=0.4):
+        priorities = [exp[5] for exp in self.buffer]
+        scaled_priorities = np.array(priorities) ** alpha
+        probabilities = scaled_priorities / np.sum(scaled_priorities)
+
+        sampled_indices = np.random.choice(self.size, batch_size, p=probabilities)
+        sampled_experiences = [self.buffer[idx] for idx in sampled_indices]
+
+        # Calculate importance-sampling weights
+        weights = [
+            (1.0 / (self.size * probabilities[idx])) ** beta for idx in sampled_indices
+        ]
+        max_weight = max(weights)
+        normalized_weights = [w / max_weight for w in weights]
+
+        return sampled_experiences, normalized_weights, sampled_indices
+
+    def update_priorities(self, indices, priorities):
+        for i, priority in zip(indices, priorities):
+            # Update the experience with the new priority
+            self.buffer[i] = self.buffer[i][:5] + (priority,)
+
+    def __len__(self):
+        return len(self.buffer)
+
+class ReplayBuffer2:
     """Fixed-size buffer to store experience tuples."""
 
     def __init__(self, buffer_size, batch_size, device, seed, gamma, n_step=1):
@@ -155,7 +316,7 @@ class ReplayBuffer:
             return memories
 
 
-class ActionBatchReplayBuffer(ReplayBuffer):
+class ActionBatchReplayBuffer(ReplayBuffer2):
 
     """
     Container for batching actions into the appropriate number of timesteps for the BC model.
@@ -217,7 +378,7 @@ class ActionBatchReplayBuffer(ReplayBuffer):
     def get_game(self):
         return self.experience
     
-class GameReplayBuffer(ReplayBuffer):
+class GameReplayBuffer(ReplayBuffer2):
     """
     Replay buffer where batch samples include the entire game trajectory.
 

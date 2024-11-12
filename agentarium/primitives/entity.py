@@ -1,6 +1,5 @@
 
 from __future__ import annotations
-from environment import GridworldEnv
 
 # ----------------------------------------------------- #
 #        Abstract class for environment objects         #
@@ -37,5 +36,5 @@ class Entity:
     def __repr__(self):
         return f'{self.__class__.__name__}(appearance={self.appearance},value={self.value})'
 
-    def transition(self, env: GridworldEnv):
+    def transition(self, env):
         pass # Entities do not have a transition function by default

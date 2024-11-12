@@ -1,20 +1,16 @@
 import torch
-from typing import Optional, Sequence
-
 import numpy as np
 
-from examples.trucks.agents import Memory
-from gem.models.ann import ANN
-from gem.primitives import Object, GridworldEnv, Location, Vector
-from gem.utils import visual_field, visual_field_multilayer, one_hot_encode
-from gem.models.grid_cells import positional_embedding
+from agentarium.primitives import Agent, Entity, GridworldEnv, Location, Vector
+from agentarium.visual_field import visual_field_multilayer
+from agentarium.utils import one_hot_encode
+from agentarium.embedding import positional_embedding
 
-# ------------------- #
-# region: Agent class #
-# ------------------- #
+# --------------------------- #
+# region: Cleanup agent class #
+# --------------------------- #
 
-
-class Agent(Object):
+class CleanupAgent(Agent):
     """Cleanup agent."""
 
     def __init__(self, cfg, appearance, model):
@@ -247,21 +243,21 @@ class Agent(Object):
 
         return reward, next_state, False
 
-    def reset(self) -> None:
-        self.model.memory.clear()
-        # self.init_replay()
+    def reset(self, env: GridworldEnv) -> None:
+        # self.model.memory.clear()
+        self.init_replay(env)
 
 
-# ------------------- #
-# endregion           #
-# ------------------- #
+# --------------------------- #
+# endregion                   #
+# --------------------------- #
 
-# ------------------- #
-# region: Beams       #
-# ------------------- #
+# --------------------------- #
+# region: Beams               #
+# --------------------------- #
 
 
-class Beam(Object):
+class Beam(Entity):
     """Generic beam class for agent beams."""
 
     def __init__(self, cfg, appearance):
@@ -290,9 +286,9 @@ class ZapBeam(Beam):
         self.value = -1
 
 
-# ------------------- #
-# endregion           #
-# ------------------- #
+# --------------------------- #
+# endregion                   #
+# --------------------------- #
 
 """
 -------------------

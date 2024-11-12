@@ -8,9 +8,9 @@ import numpy as np
 import random
 
 # Import gem-specific packages
-from gem.primitives import GridworldEnv
+from agentarium.primitives import GridworldEnv
 from examples.cleanup.entities import (
-    EmptyObject,
+    EmptyEntity,
     Sand,
     Wall,
     River,
@@ -43,7 +43,7 @@ class Cleanup(GridworldEnv):
     self.agent_layer = 1
     self.beam_layer = 2
     self.pollution = 0
-    super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(cfg, self.appearances['EmptyObject']))
+    super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(cfg, self.appearances['EmptyEntity']))
     self.mode = "APPLE"
     self.populate()
 
@@ -51,7 +51,7 @@ class Cleanup(GridworldEnv):
     """Color map for visualization."""
     if C == 8:
       colors = {
-        'EmptyObject': [0 for _ in range(self.channels)],
+        'EmptyEntity': [0 for _ in range(self.channels)],
         'Agent': [255 if x == 0 else 0 for x in range(self.channels)],
         'Wall': [255 if x == 1 else 0 for x in range(self.channels)],
         'Apple': [255 if x == 2 else 0 for x in range(self.channels)],
@@ -63,7 +63,7 @@ class Cleanup(GridworldEnv):
       }
     else:
       colors = {
-        'EmptyObject': [0.0, 0.0, 0.0],
+        'EmptyEntity': [0.0, 0.0, 0.0],
         'Agent': [150.0, 150.0, 150.0],
         'Wall': [50.0, 50.0, 50.0],
         'Apple': [0.0, 200.0, 0.0],
@@ -102,7 +102,7 @@ class Cleanup(GridworldEnv):
             apple_spawn_points.append(index)
           # Middle third = potential agent spawn points
           else:
-            self.world[index] = Sand(self.cfg, self.appearances["EmptyObject"])
+            self.world[index] = Sand(self.cfg, self.appearances["EmptyEntity"])
             spawn_index = [index[0], index[1], self.agent_layer]
             spawn_points.append(spawn_index)
         else:
@@ -159,11 +159,11 @@ class Cleanup(GridworldEnv):
         new_object = Apple(self.cfg, self.appearances["Apple"])
       case "Apple": # Apple is eaten, becoming AppleTree
         new_object = AppleTree(self.cfg, self.appearances["AppleTree"])
-      case "CleanBeam": # CleanBeam disappears, becoming EmptyObject
-        new_object = EmptyObject(self.cfg, self.appearances["EmptyObject"])
-      case "ZapBeam": # CleanBeam disappears, becoming EmptyObject
-        new_object = EmptyObject(self.cfg, self.appearances["EmptyObject"])
-      case "EmptyObject": # EmptyObject generates itself
+      case "CleanBeam": # CleanBeam disappears, becoming EmptyEntity
+        new_object = EmptyEntity(self.cfg, self.appearances["EmptyEntity"])
+      case "ZapBeam": # CleanBeam disappears, becoming EmptyEntity
+        new_object = EmptyEntity(self.cfg, self.appearances["EmptyEntity"])
+      case "EmptyEntity": # EmptyEntity generates itself
         new_object = self.world[location]
     
     self.world[location] = new_object

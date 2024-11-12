@@ -1,10 +1,10 @@
-from gem.primitives import Object
+from agentarium.primitives import Entity
 
 # ----------------------------------------------------- #
 # region: Environment object classes for Baker ToM task #
 # ----------------------------------------------------- #
 
-class EmptyObject(Object):
+class EmptyEntity(Entity):
     '''
     Base empty object.
     '''
@@ -12,7 +12,7 @@ class EmptyObject(Object):
         super().__init__(appearance)
         self.passable = True # EmptyObjects can be traversed
 
-class Wall(Object):
+class Wall(Entity):
     '''
     Base wall object.
     '''
@@ -20,7 +20,7 @@ class Wall(Object):
         super().__init__(appearance)
         self.value = -1 # Walls penalize contact
 
-class Truck(Object):
+class Truck(Entity):
     '''
     Base truck object.
 

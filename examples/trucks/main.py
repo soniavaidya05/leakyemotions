@@ -31,7 +31,7 @@ import argparse
 from datetime import datetime
 
 # Import gem-specific packages
-from gem.config import load_config, init_log, Cfg
+from agentarium.config import load_config, init_log, Cfg
 from examples.trucks.env import FoodTrucks
 from examples.trucks.config import create_models, create_agents, create_entities
 from examples.trucks.utils import GameVars

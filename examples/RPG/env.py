@@ -5,10 +5,9 @@
 from examples.RPG.entities import Gem, Coin, Food, Bone, EmptyObject, Wall
 from examples.RPG.agents import Agent, color_map
 
-from gem.primitives import GridworldEnv
+from agentarium.primitives import GridworldEnv, Entity
 
 import numpy as np
-import matplotlib.pyplot as plt
 import random
 
 
@@ -23,8 +22,8 @@ class RPG(GridworldEnv):
         self.channels = cfg.env.channels
         self.colors = color_map(self.channels)
         self.full_mdp = cfg.env.full_mdp
-        self.agents = agents
-        self.entities = entities
+        self.agents: list[Agent] = agents
+        self.entities: list[Entity] = entities
         self.item_spawn_prob = cfg.env.prob.item_spawn
         self.item_choice_prob = cfg.env.prob.item_choice
         self.tile_size = cfg.env.tile_size
@@ -38,6 +37,8 @@ class RPG(GridworldEnv):
         '''
         self.create_world()
         self.populate()
+        for agent in self.agents:
+            agent.reset(self)
 
     def create_world(self):
         '''

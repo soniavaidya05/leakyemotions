@@ -11,26 +11,26 @@ from matplotlib import pyplot as plt
 from typing import Union, Sequence
 
 # Import gem-specific packages
-from gem.utils import (
-    visual_field, 
+from agentarium.utils import ( 
     random_seed, 
     set_seed, 
     fig2img, 
     nearest_2_power, 
     minmax,
 )
-from gem.models.buffer import ActionBatchReplayBuffer as Buffer
+from agentarium.visual_field import visual_field
+from agentarium.buffers import ActionBatchReplayBuffer as Buffer
 from examples.trucks.env import FoodTrucks
 from examples.trucks.utils import (
     color_map,
     GameVars
 )
 from examples.trucks.config import (
-    load_config,
     create_agents,
     create_entities,
     create_models
 )
+from agentarium.config import load_config
 
 # --------------- #
 # endregion       #

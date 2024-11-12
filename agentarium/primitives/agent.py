@@ -4,9 +4,8 @@ import abc
 import torch
 import numpy as np
 
-from environment import GridworldEnv
-from entity import Entity
-from gem.config import Cfg
+from agentarium.primitives.environment import GridworldEnv, Entity
+from agentarium.config import Cfg
 
 
 class Agent(Entity):

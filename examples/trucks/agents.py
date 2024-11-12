@@ -8,9 +8,9 @@ from numpy.typing import ArrayLike
 import torch
 
 # Import gem packages
-from gem.utils import visual_field
-from gem.models.ann import ANN
-from gem.primitives import Object, GridworldEnv
+from agentarium.visual_field import visual_field
+from agentarium.models.ann import ANN
+from agentarium.primitives import Entity, GridworldEnv
 from examples.trucks.utils import color_map
 
 # --------------- #
@@ -53,10 +53,10 @@ class Memory:
         state, action, reward, nextstate, done = exp1
         # Add to replay
         self.priorities.append(priority)
-        self.states.append(state)
+        self.states.append(state.view(1, -1))
         self.actions.append(action)
         self.rewards.append(reward)
-        self.nextstates.append(nextstate)
+        self.nextstates.append(nextstate.view(1, -1))
         self.dones.append(done)
 
     def get_last_memory(self, attr: Optional[str] = None):
@@ -86,7 +86,7 @@ class Memory:
 # region: Agent class for the Baker ToM task            #
 # ----------------------------------------------------- #
 
-class Agent(Object):
+class Agent(Entity):
     '''
     Base agent object.
 
@@ -224,6 +224,7 @@ class Agent(Object):
 
         # Get current state
         state = self.pov(env)
+        _state = state.view(1, -1)
         reward = 0
 
         # Take action based on current state
@@ -246,7 +247,6 @@ class Agent(Object):
 
         # Increment the encounter list
         # self.encounters[target_object.kind.lower()] += 1
-
         return state, action, reward, next_state, done
         
     def reset(self) -> None:

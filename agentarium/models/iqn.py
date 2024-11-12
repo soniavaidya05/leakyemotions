@@ -41,10 +41,10 @@ import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
 
 # Import gem-specific packages
-from gem.layers import NoisyLinear
-from gem.models.ann import DoubleANN
-from gem.models.buffer import ReplayBuffer
-from gem.models.DDQN import ClaasyReplayBuffer as Buffer
+from agentarium.layers import NoisyLinear
+from agentarium.models.ann import DoubleANN
+# from agentarium.models.buffer import ReplayBuffer
+from agentarium.models.DDQN import ClaasyReplayBuffer as Buffer
 
 # ------------------------ #
 # endregion                #
@@ -120,6 +120,7 @@ class IQN(nn.Module):
         # batch_size, timesteps, C, H, W = input.size()
         # c_out = input.view(batch_size * timesteps, C, H, W)
         # r_in = c_out.view(batch_size, -1)
+
         batch_size, _ = input.size()
         r_in = input.view(batch_size, -1)
 
@@ -259,7 +260,7 @@ class iRainbowModel(DoubleANN):
         )
 
     def __str__(self):
-        return f"iRainbowModel(in_size={np.array(self.state_size).prod() * self.memory_size},out_size={self.action_size})"
+        return f"iRainbowModel(in_size={np.array(self.state_size).prod() * self.num_frames},out_size={self.action_size})"
 
     def take_action(self, state, eval=False) -> int:
         """Returns actions for given state as per current policy. Acting only every 4 frames!
@@ -301,7 +302,7 @@ class iRainbowModel(DoubleANN):
 
         if len(self.memory) > self.BATCH_SIZE:
 
-            states, actions, rewards, next_states, dones = self.memory.sample()
+            states, actions, rewards, next_states, dones, valid = self.memory.sample(batch_size=self.BATCH_SIZE, stacked_frames=self.num_frames)
 
             # Get max predicted Q values (for next states) from target model
             Q_targets_next, _ = self.qnetwork_target(next_states, self.N)
@@ -332,6 +333,9 @@ class iRainbowModel(DoubleANN):
                 self.N,
             ), "wrong td error shape"
             huber_l = calculate_huber_loss(td_error, 1.0)
+            # Zero out loss on invalid actions (when you clip past the end of an episode)
+            huber_l = huber_l * valid.unsqueeze(-1)
+
             quantil_l = abs(taus - (td_error.detach() < 0).float()) * huber_l / 1.0
 
             loss = quantil_l.sum(dim=1).mean(
@@ -369,17 +373,18 @@ class iRainbowModel(DoubleANN):
         """
         Transfer the indiviudual memories to the model
         """
-        exp = agent.episode_memory.get_last_memory()
-        (_, state, action, reward, next_state, done) = exp
-        state = state.squeeze(0)
-        next_state = next_state.squeeze(0)
-        self.memory.add(state, action, reward, next_state, done)
+        # exp = agent.episode_memory.get_last_memory()
+        # (_, state, action, reward, next_state, done) = exp
+        # state = state.squeeze(0)
+        # next_state = next_state.squeeze(0)
+        # self.memory.add(state, action, reward, done)
 
-        # If the reward for this episode is high, duplicate the memory to increase the probability of sampling it
-        # On/Off has little effect on the performance
-        if extra_reward == True and abs(reward) > 9:
-            for _ in range(oversamples):
-                self.memory.add(state, action, reward, next_state, done)
+        # # If the reward for this episode is high, duplicate the memory to increase the probability of sampling it
+        # # On/Off has little effect on the performance
+        # if extra_reward == True and abs(reward) > 9:
+        #     for _ in range(oversamples):
+        #         self.memory.add(state, action, reward, done)
+        pass
 
     def start_epoch_action(self, **kwargs) -> None:
         """

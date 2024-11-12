@@ -7,17 +7,15 @@ import os
 import torch
 import random
 import numpy as np
-import jax
 
 from typing import Optional, Union, Sequence
 from matplotlib import pyplot as plt
 from numpy.typing import ArrayLike
 from PIL import Image
 from PIL.PngImagePlugin import PngImageFile
-from IPython.display import clear_output
 
 # Import gem packages
-from gem.primitives import GridworldEnv
+from agentarium.primitives import GridworldEnv
 
 # --------------- #
 # endregion       #

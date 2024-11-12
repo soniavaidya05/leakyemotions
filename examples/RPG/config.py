@@ -3,12 +3,12 @@
 # --------------- #
 
 # Import gem packages
-from gem.config import (
+from agentarium.config import (
     Cfg
 )
-from gem.models.iqn import iRainbowModel
+from agentarium.models.iqn import iRainbowModel
 from examples.trucks.agents import Agent
-from examples.trucks.entities import Truck, Object
+from examples.trucks.entities import Truck, Entity
 from examples.trucks.utils import color_map
 
 # --------------- #
@@ -95,7 +95,7 @@ def create_agents(
 
     return agents
 
-def create_entities(cfg: Cfg) -> list[Object]:
+def create_entities(cfg: Cfg) -> list[Entity]:
     '''
     Create a list of entities used for the task.
 

@@ -1,11 +1,11 @@
-from gem.primitives import Object
+from agentarium.primitives import Entity
 import random
 
 # ----------------------------------------------------- #
 # region: Environment object classes for Baker ToM task #
 # ----------------------------------------------------- #
 
-class EmptyObject(Object):
+class EmptyObject(Entity):
     '''
     Base empty object.
     '''
@@ -24,7 +24,7 @@ class EmptyObject(Object):
         if random.random() < env.item_spawn_prob * 0.02: # NOTE: If this rate is too high, the environment gets overrun
             env.spawn(self.location)
 
-class Wall(Object):
+class Wall(Entity):
     '''
     Base wall object.
     '''
@@ -33,7 +33,7 @@ class Wall(Object):
         self.value = -1 # Walls penalize contact
         self.sprite = f'{cfg.root}/examples/RPG/assets/pink.png'
 
-class Gem(Object):
+class Gem(Entity):
     '''
     Base gem object.
 
@@ -48,7 +48,7 @@ class Gem(Object):
         self.passable = True
         self.sprite = f'{cfg.root}/examples/RPG/assets/gem.png'
 
-class Coin(Object):
+class Coin(Entity):
     '''
     Base gem object.
 
@@ -63,7 +63,7 @@ class Coin(Object):
         self.passable = True
         self.sprite = f'{cfg.root}/examples/RPG/assets/coin.png'
 
-class Food(Object):
+class Food(Entity):
     '''
     Base gem object.
 
@@ -78,7 +78,7 @@ class Food(Object):
         self.passable = True
         self.sprite = f'{cfg.root}/examples/RPG/assets/food.png'
 
-class Bone(Object):
+class Bone(Entity):
     '''
     Base gem object.
 

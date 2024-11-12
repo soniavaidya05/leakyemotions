@@ -1,20 +1,20 @@
 import random
 
-from gem.primitives import Object, GridworldEnv
+from agentarium.primitives import Entity, GridworldEnv
 
 # --------------------------------------------------- #
-# region: Environment object classes for Cleanup Task #
+# region: Environment Entity classes for Cleanup Task #
 # --------------------------------------------------- #
 
-class EmptyObject(Object):
-  """Empty object class for the Cleanup Game."""
+class EmptyEntity(Entity):
+  """Empty Entity class for the Cleanup Game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
     self.cfg = cfg
     self.passable = True
     self.sprite = f'{cfg.root}/examples/cleanup/assets/empty.png'
 
-class Sand(Object):
+class Sand(Entity):
   """Sand class for the Cleanup Game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
@@ -22,14 +22,14 @@ class Sand(Object):
     self.passable = True
     self.sprite = f'{cfg.root}/examples/cleanup/assets/sand.png'
 
-class Wall(Object):
+class Wall(Entity):
   """Wall class for the Cleanup Game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
     self.cfg = cfg
     self.sprite = f'{cfg.root}/examples/cleanup/assets/wall.png'
 
-class River(Object):
+class River(Entity):
   """River class for the Cleanup game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
@@ -42,7 +42,7 @@ class River(Object):
     if random.random() < self.cfg.env.pollution_spawn_chance:
       env.spawn(self.location)
 
-class Pollution(Object):
+class Pollution(Entity):
   """Pollution class for the Cleanup game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
@@ -59,7 +59,7 @@ class Pollution(Object):
       env.spawn(self.location)
 
 
-class AppleTree(Object):
+class AppleTree(Entity):
   """Potential apple class for the Cleanup game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
@@ -74,7 +74,7 @@ class AppleTree(Object):
       if random.random() < self.cfg.env.apple_spawn_chance:
         env.spawn(self.location)
 
-class Apple(Object):
+class Apple(Entity):
   """Apple class for the Cleanup game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)

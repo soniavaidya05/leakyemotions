@@ -24,17 +24,16 @@ if root not in sys.path:
 # endregion                #
 # ------------------------ #
 
+from agentarium.primitives import Entity
 from examples.RPG.utils import (
-    init_log, parse_args, load_config,
+    init_log, load_config,
     create_models,
     create_agents,
     create_entities
 )
-
-from examples.trucks.utils import GameVars
-
 from examples.RPG.env import RPG
 from examples.RPG.agents import Agent
+from examples.trucks.utils import GameVars
 import random
 
 # endregion                #
@@ -43,8 +42,8 @@ import random
 def run(cfg, **kwargs):
     # Initialize the environment and get the agents
     models = create_models(cfg)
-    agents = create_agents(cfg, models)
-    entities = create_entities(cfg)
+    agents: list[Agent] = create_agents(cfg, models)
+    entities: list[Entity] = create_entities(cfg)
     env = RPG(cfg, agents, entities)
 
     # Set up tensorboard logging
@@ -66,8 +65,8 @@ def run(cfg, **kwargs):
 
         # Reset the environment at the start of each epoch
         env.reset()
-        for agent in env.agents:
-            agent.reset()
+        # for agent in env.agents:
+        #     agent.reset()
         random.shuffle(agents)
 
         done = 0 
@@ -100,11 +99,11 @@ def run(cfg, **kwargs):
                 done_
                 ) = agent.transition(env)
 
+                agent.add_memory(state, action, reward, done)
+
                 if turn >= cfg.experiment.max_turns or done_:
                     done = 1
-
-                exp = (1, (state, action, reward, next_state, done))
-                agent.episode_memory.append(exp)
+                    agent.add_final_memory(next_state)
 
                 game_points += reward
 
@@ -162,7 +161,7 @@ def main():
     cfg = load_config(args)
     init_log(cfg)
     run(cfg, 
-        # load_weights=f'{cfg.root}/examples/RPG/models/checkpoints/iRainbowModel_20230916-14091694890560.pkl',
+        load_weights=f'{cfg.root}/examples/RPG/models/checkpoints/iRainbowModel_20241111-13111731350843.pkl',
         save_weights=f'{cfg.root}/examples/RPG/models/checkpoints/{cfg.model.iqn.type}_{datetime.now().strftime("%Y%m%d-%H%m%s")}.pkl')
 
 if __name__ == '__main__':

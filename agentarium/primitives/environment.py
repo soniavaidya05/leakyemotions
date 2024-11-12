@@ -1,5 +1,7 @@
 from __future__ import annotations
 import numpy as np
+from agentarium.primitives.entity import Entity
+from agentarium.primitives.location import Location
 
 
 class GridworldEnv:
@@ -38,7 +40,7 @@ class GridworldEnv:
     # region: helper functions    #
     # --------------------------- #
 
-    def add(self, target_location, entity):
+    def add(self, target_location, entity: Entity) -> None:
         '''
         Adds an entity to the world at a location
         Will replace any existing entity at that location

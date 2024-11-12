@@ -6,8 +6,8 @@ from typing import Optional
 from numpy.typing import ArrayLike
 
 # Import gem packages
-from gem.primitives import GridworldEnv
-from gem.utils import shift
+from agentarium.primitives import GridworldEnv
+from agentarium.utils import shift
 
 # TODO: color_map isn't always required, so why does it not default to None?
 def visual_field(
