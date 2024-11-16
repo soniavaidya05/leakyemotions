@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "agentarium"
+version = "0.0.0"  # Placeholder
+description = "A flexible framework for developing reinforcement learning algorithms."
+authors = ["Yibing Ju <bing.ju@mail.utoronto.ca>"]  # TODO: add other authors
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10.0"
+matplotlib = "^3.6.1"
+numpy = "^1.23.4"
+pyyaml = "^6.0.2"
+
+torch = "^2.5.1"
+jax = "^0.4.35"
+flax = "^0.10.1"
+
+# used in buffer.py
+dill = "^0.3.9"
+# used in human_player.py
+ipython = "^8.29.0"
+# used in transformer.py
+einops = "^0.8.0"
+# used in utils.py
+pillow = "^11.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
