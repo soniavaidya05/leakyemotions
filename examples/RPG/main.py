@@ -1,13 +1,13 @@
 # ------------------------ #
 # region: Imports          #
-import sys
 import os
+import sys
 from datetime import datetime
 
 # ------------------------ #
 # region: path nonsense    #
 # Determine appropriate paths for imports and storage
-root = os.path.abspath('~/Documents/GitHub/agentarium') # Change the wd as needed.
+root = os.path.abspath("~/Documents/GitHub/agentarium")  # Change the wd as needed.
 
 # Make sure the transformers directory is in PYTHONPATH
 if root not in sys.path:
@@ -15,21 +15,18 @@ if root not in sys.path:
 # endregion                #
 # ------------------------ #
 
-from agentarium.primitives import Entity
-from agentarium.logging_utils import GameLogger
-from examples.RPG.utils import (
-    init_log, load_config,
-    create_models,
-    create_agents,
-    create_entities
-)
-from examples.RPG.env import RPG
-from examples.RPG.agents import Agent
-
 import random
+
+from agentarium.logging_utils import GameLogger
+from agentarium.primitives import Entity
+from examples.RPG.agents import Agent
+from examples.RPG.env import RPG
+from examples.RPG.utils import (create_agents, create_entities, create_models,
+                                init_log, load_config)
 
 # endregion                #
 # ------------------------ #
+
 
 def run(cfg, **kwargs):
     # Initialize the environment and get the agents
@@ -41,6 +38,7 @@ def run(cfg, **kwargs):
     # Set up tensorboard logging
     if cfg.log:
         from torch.utils.tensorboard import SummaryWriter
+
         writer = SummaryWriter(
             log_dir=f'{root}/examples/RPG/runs/{datetime.now().strftime("%Y%m%d-%H%m%s")}/'
         )
@@ -49,9 +47,9 @@ def run(cfg, **kwargs):
     game_vars = GameLogger(cfg.experiment.epochs)
 
     # If a path to a model is specified in the run, load those weights
-    if 'load_weights' in kwargs:
+    if "load_weights" in kwargs:
         for agent in agents:
-            agent.model.load(file_path = kwargs.get('load_weights'))
+            agent.model.load(file_path=kwargs.get("load_weights"))
 
     for epoch in range(cfg.experiment.epochs):
 
@@ -84,12 +82,7 @@ def run(cfg, **kwargs):
             # Agent transition
             for agent in agents:
 
-                (state,
-                action,
-                reward,
-                next_state,
-                done_
-                ) = agent.transition(env)
+                (state, action, reward, next_state, done_) = agent.transition(env)
 
                 agent.add_memory(state, action, reward, done)
 
@@ -114,25 +107,25 @@ def run(cfg, **kwargs):
 
         # Add scalars to Tensorboard
         if cfg.log:
-            writer.add_scalar('Loss', loss, epoch)
-            writer.add_scalar('Reward', game_points, epoch)
-            writer.add_scalar('Epsilon', agent.model.epsilon, epoch)
+            writer.add_scalar("Loss", loss, epoch)
+            writer.add_scalar("Reward", game_points, epoch)
+            writer.add_scalar("Epsilon", agent.model.epsilon, epoch)
             writer.add_scalars(
-                'Encounters',
+                "Encounters",
                 {
-                    'Gem': agents[0].encounters['Gem'],
-                    'Coin': agents[0].encounters['Coin'],
-                    'Food': agents[0].encounters['Food'],
-                    'Bone': agents[0].encounters['Bone'],
-                    'Wall': agents[0].encounters['Wall'],
-                }, epoch)
+                    "Gem": agents[0].encounters["Gem"],
+                    "Coin": agents[0].encounters["Coin"],
+                    "Food": agents[0].encounters["Food"],
+                    "Bone": agents[0].encounters["Bone"],
+                    "Wall": agents[0].encounters["Wall"],
+                },
+                epoch,
+            )
 
         # Special action: update epsilon
         for agent in agents:
             new_epsilon = agent.model.epsilon - cfg.experiment.epsilon_decay
             agent.model.epsilon = max(new_epsilon, 0.01)
-
-
 
     # Close the tensorboard log
 
@@ -140,21 +133,28 @@ def run(cfg, **kwargs):
         writer.close()
 
     # If a file path has been specified, save the weights to the specified path
-    if 'save_weights' in kwargs:
+    if "save_weights" in kwargs:
         for agent in agents:
-            agent.model.save(file_path = kwargs.get('save_weights'))
+            agent.model.save(file_path=kwargs.get("save_weights"))
+
 
 def main():
     import argparse
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", help="path to config file", default='./configs/config.yaml')
-    print(os.path.abspath('.'))
+    parser.add_argument(
+        "--config", help="path to config file", default="./configs/config.yaml"
+    )
+    print(os.path.abspath("."))
     args = parser.parse_args()
     cfg = load_config(args)
     init_log(cfg)
-    run(cfg,
+    run(
+        cfg,
         # load_weights=f'{cfg.root}/examples/RPG/models/checkpoints/iRainbowModel_20241111-13111731350843.pkl',
-        save_weights=f'{cfg.root}/examples/RPG/models/checkpoints/{cfg.model.iqn.type}_{datetime.now().strftime("%Y%m%d-%H%m%s")}.pkl')
+        save_weights=f'{cfg.root}/examples/RPG/models/checkpoints/{cfg.model.iqn.type}_{datetime.now().strftime("%Y%m%d-%H%m%s")}.pkl',
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
