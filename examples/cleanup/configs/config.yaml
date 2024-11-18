@@ -19,7 +19,6 @@ env:
 model:
   iqn:
     type: iRainbowModel
-    device: cpu
     parameters:
       action_size: 4
       layer_size: 250
@@ -33,6 +32,7 @@ model:
       sync_freq: 200
       model_update_freq: 4
       epsilon: 0.01
+      device: cpu
 
 agent:
   agent:

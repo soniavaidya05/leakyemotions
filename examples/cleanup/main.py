@@ -18,11 +18,7 @@ if root not in sys.path:
 from agentarium.primitives import Entity
 from agentarium.logging_utils import GameLogger
 from agentarium.config import load_config
-from examples.RPG.utils import (
-    load_config,
-    create_models,
-    create_agents
-)
+from agentarium.models.iqn import iRainbowModel
 
 from examples.cleanup.env import Cleanup
 from examples.cleanup.agents import CleanupAgent
@@ -30,8 +26,20 @@ from examples.cleanup.agents import CleanupAgent
 # endregion                #
 # ------------------------ #
 
-def run(**kwargs):
-    pass
+def run(cfg, **kwargs):
+    # Set up the model and agents
+    models = []
+    agents = []
+    for i in cfg.agent.agent.num:
+        models.append(iRainbowModel(
+            **cfg.model.iqn.parameters
+        ))
+        agents.append(CleanupAgent(
+            cfg,
+            model=models[i]
+        ))
+    # Set up the environment
+    env = Cleanup(cfg, agents)
 
 def main():
     import argparse

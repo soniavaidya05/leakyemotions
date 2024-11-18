@@ -1,21 +1,21 @@
-from gem.primitives import Object, GridworldEnv
+from agentarium.primitives import Entity, GridworldEnv
 
-class EmptyObject(Object):
-  """Empty object class for the Cleanup Game."""
+class EmptyEntity(Entity):
+  """Empty entity class for the Cleanup Game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
     self.cfg = cfg
     self.passable = True
     self.sprite = f'{cfg.root}/examples/cleanup/assets/empty.png'
 
-class Water(Object):
+class Water(Entity):
   """River class for the Cleanup game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
     self.cfg = cfg
     self.sprite = f'{cfg.root}/examples/cleanup/assets/water.png'
 
-class Land(Object):
+class Land(Entity):
   """Potential apple class for the Cleanup game."""
   def __init__(self, cfg, appearance):
     super().__init__(appearance)
