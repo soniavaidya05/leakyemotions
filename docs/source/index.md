@@ -13,6 +13,7 @@ tutorials/how_to
 :hidden:
 :caption: Reference
 
+reference/primitives
 reference/models
 ```
 

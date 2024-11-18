@@ -3,7 +3,7 @@ import csv
 import numpy as np
 import pathlib
 import torch
-import wandb
+# import wandb
 
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence
@@ -139,7 +139,7 @@ class GameLogger:
         del self.turns[:]
         del self.losses[:]
         del self.rewards[:]
-    
+
     def record_turn(
         self,
         epoch: int,
@@ -161,13 +161,13 @@ class GameLogger:
             **kwargs
         ) -> None:
         '''
-        Take the results from a given epoch (epoch #, turn #, loss, and reward) 
+        Take the results from a given epoch (epoch #, turn #, loss, and reward)
         and return a formatted string that can be printed to the command line.
 
-        If `jupyter-mode` is passed in as a flag, variables need to be passed 
+        If `jupyter-mode` is passed in as a flag, variables need to be passed
         in with the `kwargs`.
         '''
-        
+
         if 'jupyter-mode' in flags:
             assert all(key in kwargs.keys() for key in ('epoch', 'turn', 'reward')), 'Jupyter mode requires the current epoch, turn, and reward to be passed in as kwargs.'
             clear_output(wait = True)
@@ -191,4 +191,3 @@ class GameLogger:
 # --------------------------- #
 # endregion                   #
 # --------------------------- #
-    

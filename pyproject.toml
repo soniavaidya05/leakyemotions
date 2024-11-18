@@ -5,6 +5,7 @@ description = "A flexible framework for developing reinforcement learning algori
 authors = ["Yibing Ju <bing.ju@mail.utoronto.ca>"]  # TODO: add other authors
 license = "MIT"
 readme = "README.md"
+packages = [{ include = "agentarium" }, { include = "examples" }]
 
 [tool.poetry.dependencies]
 python = "^3.11.0"

@@ -61,7 +61,7 @@ def run(cfg, **kwargs):
         #     agent.reset()
         random.shuffle(agents)
 
-        done = 0 
+        done = 0
         turn = 0
         losses = 0
         game_points = 0
@@ -105,7 +105,7 @@ def run(cfg, **kwargs):
         for agent in agents:
             loss = agent.model.train_model()
             losses += loss
-            
+
             # Add the game variables to the game object
             game_vars.record_turn(epoch, turn, loss.detach().numpy(), game_points)
 
@@ -132,13 +132,13 @@ def run(cfg, **kwargs):
             new_epsilon = agent.model.epsilon - cfg.experiment.epsilon_decay
             agent.model.epsilon = max(new_epsilon, 0.01)
 
-    
-    
+
+
     # Close the tensorboard log
-    
+
     if cfg.log:
         writer.close()
-    
+
     # If a file path has been specified, save the weights to the specified path
     if 'save_weights' in kwargs:
         for agent in agents:
@@ -152,7 +152,7 @@ def main():
     args = parser.parse_args()
     cfg = load_config(args)
     init_log(cfg)
-    run(cfg, 
+    run(cfg,
         # load_weights=f'{cfg.root}/examples/RPG/models/checkpoints/iRainbowModel_20241111-13111731350843.pkl',
         save_weights=f'{cfg.root}/examples/RPG/models/checkpoints/{cfg.model.iqn.type}_{datetime.now().strftime("%Y%m%d-%H%m%s")}.pkl')
 
