@@ -23,9 +23,17 @@ conda activate gem
 
 ### Getting started
 
-Gem uses the [poetry](https://python-poetry.org/) package manager to manage its dependencies. Start by installing poetry by running ``pip install poetry``. To install gem in development mode, run the following command:
+Gem uses the [poetry](https://python-poetry.org/) package manager to manage its dependencies. Start by installing poetry by running ``pip install poetry``.
+
+To install Gem as an user, run the following command:
 ```
 poetry install
+```
+in the folder containing the ``pyproject.toml`` file.
+
+To install Gem in development mode, run the following command:
+```
+poetry install --with dev
 ```
 in the folder containing the ``pyproject.toml`` file.
 
