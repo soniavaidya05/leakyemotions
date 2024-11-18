@@ -1,56 +1,71 @@
 <img style="width: 75px" src="https://github.com/social-ai-uoft/gem/blob/main/media/gem-pendant.png" />
 
+TODO: change the badges?
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/social-ai-uoft/gem/main.svg)](https://results.pre-commit.ci/latest/github/social-ai-uoft/gem/main) ![pytest status](https://github.com/social-ai-uoft/gem/workflows/PyTest/badge.svg)
 
-# gem
+# Agentarium
 
-Gem is a general-purpose reinforcement learning engine that enables researchers, developers, and students to develop
-and deploy reinforcement learning algorithms on new and pre-existing environments.
+Agentarium is a general-purpose reinforcement learning engine that enables researchers, developers, and students to 
+develop and deploy reinforcement learning algorithms on new and pre-existing environments.
 
-Gem can be regarded as an “operating system” for the RL process, in the sense that it unifies and abstracts foundational components from environment simulation all the way to policy search, exploration, and function approximation.
+Agentarium can be regarded as an “operating system” for the RL process, in the sense that it unifies and abstracts 
+foundational components from environment simulation all the way to policy search, exploration, and function 
+approximation.
 
-Our hope is that Gem will foster new research ideas, applications, and tools for a unified RL approach. We believe Gem will accelerate the rate of progress of the RL research space, as well as allow us to experiment with our own solutions to both novel and long-standing RL problems.
+Our hope is that Agentarium will foster new research ideas, applications, and tools for a unified RL approach. We 
+believe Agentarium will accelerate the rate of progress of the RL research space, as well as allow us to experiment 
+with our own solutions to both novel and long-standing RL problems.
 
-### NOTE: Gem is extremely experimental and subject to change!
+[!NOTE]
+Agentarium is extremely experimental and subject to change!
 
 ## Development
 
-**NOTE**: We recommend you follow these instructions in a fresh conda/virtual environment to keep packages isolated from other environments and/or Python versions. Python 3.9+ is required. If you have conda, run
+**NOTE**: We recommend you follow these instructions in a fresh conda/virtual environment to keep packages isolated 
+from other environments and/or Python versions. Python 3.9+ is required. If you have conda, run
 ```
-conda create --name gem python=3.9
-conda activate gem
+conda create --name agentarium python=3.9
+conda activate agentraium
 ```
 
 ### Getting started
 
-Gem uses the [poetry](https://python-poetry.org/) package manager to manage its dependencies. Start by installing poetry by running ``pip install poetry``.
+Agentarium uses the [poetry](https://python-poetry.org/) package manager to manage its dependencies. Start by 
+running ```poetry --version``` in your terminal to make sure you have poetry installed.
 
-To install Gem as an user, run the following command:
+[!WARNING]
+If you do not have poetry, use ```pipx install poetry``` (not pip) to make sure you do not have poetry installed in the 
+same environment that Agentarium is using. 
+See the [poetry](https://python-poetry.org/) documentation for more information and 
+installation instructions.
+
+With poetry available, to install Agentarium as an user, run the following command:
 ```
 poetry install
 ```
 in the folder containing the ``pyproject.toml`` file.
 
-To install Gem in development mode, run the following command:
+To install Agentarium in development mode, run the following command:
 ```
 poetry install --with dev
 ```
 in the folder containing the ``pyproject.toml`` file.
 
-See the [poetry](https://python-poetry.org/) documentation for more information and
-installation instructions.
+### Examples
 
-## Examples
-
-We've implemented a number of environments and algorithms in Gem. See the [examples](/examples/) folder for more information.
-
+TODO
 
 ### Workflow Tools
-We use a number of tools to simplify the development workflow for contributors. Among these tools include code formatters and linters (such as [autopep8](https://pypi.python.org/pypi/autopep8) and [flake8](https://pypi.python.org/pypi/flake8)) to report style errors and (try to) automatically format your code wherever possible, along with testing frameworks (such as [pytest](https://pypi.python.org/pypi/pytest)) to automatically test the code.
+We use a number of tools to simplify the development workflow for contributors. Among these tools include code 
+formatters (such as [black](https://github.com/python/black)) to report style errors and (try to) 
+automatically format your code wherever possible, along with testing frameworks (such as 
+[pytest](https://pypi.python.org/pypi/pytest)) to automatically test the code.
 
-Though you may manually run these tools, we include a [pre-commit](https://pre-commit.com/) configuration to automatically run all CI tasks whenever you attempt to commit to the Gem repository. **We highly recommend you use pre-commit as pull requests will NOT be merged unless you pass ALL CI checks (including the pre-commit CI check).**
+We have included a [pre-commit](https://pre-commit.com/) configuration to automatically run all CI tasks whenever you 
+attempt to commit to the Agentarium repository. **We highly recommend you use pre-commit as pull requests will NOT be 
+merged unless you pass ALL CI checks (including the pre-commit CI check).**
 
-To setup pre-commit, start by confirming that its installed by running:
+To set up pre-commit, start by confirming that it's installed by running:
 ```
 pre-commit --version
 ```
@@ -58,7 +73,39 @@ If this fails, you'll need to install pre-commit by running ``pip install pre-co
 ```
 pre-commit install
 ```
-in the folder containing ``.pre-commit-config.yaml`` file. Now pre-commit will run automatically on every ``git commit``!
+in the folder containing ``.pre-commit-config.yaml`` file.
+
+Afterward, the Git hooks will be run automatically at every new commit.
+
+You may also run these hooks manually with `pre-commit run --all-files`. If needed, you can skip the hooks (not 
+recommended) with `git commit --no-verify -m <commit message>`.
+**Note:** you may have to run `pre-commit run --all-files` manually a couple of times to make it pass when you commit, 
+as each formatting tool will first format the code and fail the first time but should pass the second time.
+
+### Writing documentation
+
+To contribute to the documentation, you may add, delete, or edit files in the ```.\docs\source``` folder. This project 
+uses [Sphinx](https://www.sphinx-doc.org/) to auto-build files in ```.rst```, ```.md```, or ```.ipynb``` format into 
+html.
+
+Note that since Agentarium is private (for now), we cannot host the documentation online yet. To view your documentation
+changes locally, navigate to the ```.\docs``` folder and run the following command:
+
+Windows:
+```
+.\make html
+```
+
+Other systems:
+```
+make html
+```
+
+Then, view the updated documentations by opening ```.\docs\build\html\index.html``` with the browser of your choice.
+
+**Note:** if the changes you made were not reflected across all the pages, you may have to run ```.\make clean``` 
+(on Windows) or ```make clean``` (on other systems) before the above command to ensure the documentation is built from 
+scratch. It is generally good practice to do so anyway but may take slightly longer.
 
 ## Citing the project
 
@@ -66,13 +113,15 @@ TODO: Insert paper citation here
 
 ## Maintainers
 
-Gem is currently maintained by [Shon Verch](https://github.com/galacticglum) (aka @galacticglum), [Wil Cunningham](https://www.psych.utoronto.ca/people/directories/all-faculty/william-cunningham) (aka [@wacunn](https://github.com/wacunn)), [Paul Stillman](https://www.paulstillman.com/) (aka [@paulstillman](https://github.com/paulstillman)), and [Ethan Jackson](https://github.com/ethancjackson) (aka @ethancjackson).
+TODO: update the list of people here
+
+Agentarium is currently maintained by [Shon Verch](https://github.com/galacticglum) (aka @galacticglum), [Wil Cunningham](https://www.psych.utoronto.ca/people/directories/all-faculty/william-cunningham) (aka [@wacunn](https://github.com/wacunn)), [Paul Stillman](https://www.paulstillman.com/) (aka [@paulstillman](https://github.com/paulstillman)), and [Ethan Jackson](https://github.com/ethancjackson) (aka @ethancjackson).
 
 **Important Note: We do not do technical support, nor consulting** and don't answer personal questions per email. If you have any questions, concerns, or suggestions, please post them on the [GitHub issues page](https://github.com/social-ai-uoft/gem/issues) or the [GitHub discussion page](https://github.com/social-ai-uoft/gem/discussions).
 
 ## Contributing
 
-Gem is open source and is developed by a community of researchers, developers, and students. We welcome contributions from all levels of the community. To get started, please read the [contributing guide](CONTRIBUTING.md).
+Agentarium is open source and is developed by a community of researchers, developers, and students. We welcome contributions from all levels of the community. To get started, please read the [contributing guide](CONTRIBUTING.md).
 
 ## Acknowledgments
 
