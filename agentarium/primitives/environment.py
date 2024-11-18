@@ -111,7 +111,7 @@ class GridworldEnv:
                 return False
         return True
 
-    def get_entities(self, entity, locs = False) -> list:
+    def get_entities(self, entity, locs = False) -> list[Entity]:
         '''
         Return a list of entities or a list of their locations in the world.
         '''
@@ -125,7 +125,7 @@ class GridworldEnv:
         return entities
 
     @staticmethod
-    def get_entities_(world, entity, locs = False) -> list:
+    def get_entities_(world, entity, locs = False) -> list[Entity]:
         '''
         Return a list of entities or a list of their locations in the world.
         '''
