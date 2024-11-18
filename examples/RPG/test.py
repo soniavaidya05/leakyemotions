@@ -34,7 +34,7 @@ from examples.RPG.utils import (
     create_models,
     Cfg
 )
-from examples.trucks.utils import GameVars
+from agentarium.logging_utils import GameLogger
 
 # --------------- #
 # endregion       #
@@ -101,7 +101,7 @@ def eval_model(*flags,
     # Create a list to add frames to
     if 'frames' in flags:
         game_objects['frames'] = []
-    scores = GameVars(max_epochs=n_games)
+    scores = GameLogger(max_epochs=n_games)
 
     # ----------------- #
     # region: Game loop #

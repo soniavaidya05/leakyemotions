@@ -23,7 +23,7 @@ from agentarium.buffers import ActionBatchReplayBuffer as Buffer
 from examples.trucks.env import FoodTrucks
 from examples.trucks.utils import (
     color_map,
-    GameVars
+    GameLogger
 )
 from examples.trucks.config import (
     create_agents,
@@ -99,7 +99,7 @@ def eval_model(*flags,
     # Create a list to add frames to
     if 'frames' in flags:
         game_objects['frames'] = []
-    scores = GameVars(max_epochs=n_games)
+    scores = GameLogger(max_epochs=n_games)
 
     # ----------------- #
     # region: Game loop #

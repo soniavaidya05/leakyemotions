@@ -7,16 +7,7 @@ from datetime import datetime
 # ------------------------ #
 # region: path nonsense    #
 # Determine appropriate paths for imports and storage
-current_path = os.path.abspath('.').split('/')
-# If we are already in the base directory...
-if current_path[-1] == 'transformers':
-    root = os.path.abspath('.')
-# From the RPG directory, we need to go up two folders
-elif current_path[-1] == 'RPG':
-    root = os.path.abspath('../..')
-# Base case: specify the folder manually
-else:
-    root = os.path.abspath('~/Documents/GitHub/agentarium') # Change the wd as needed.
+root = os.path.abspath('~/Documents/GitHub/agentarium') # Change the wd as needed.
 
 # Make sure the transformers directory is in PYTHONPATH
 if root not in sys.path:
@@ -25,6 +16,7 @@ if root not in sys.path:
 # ------------------------ #
 
 from agentarium.primitives import Entity
+from agentarium.logging_utils import GameLogger
 from examples.RPG.utils import (
     init_log, load_config,
     create_models,
@@ -33,7 +25,7 @@ from examples.RPG.utils import (
 )
 from examples.RPG.env import RPG
 from examples.RPG.agents import Agent
-from examples.trucks.utils import GameVars
+
 import random
 
 # endregion                #
@@ -54,7 +46,7 @@ def run(cfg, **kwargs):
         )
 
     # Container for game variables (epoch, turn, loss, reward)
-    game_vars = GameVars(cfg.experiment.epochs)
+    game_vars = GameLogger(cfg.experiment.epochs)
 
     # If a path to a model is specified in the run, load those weights
     if 'load_weights' in kwargs:
@@ -161,7 +153,7 @@ def main():
     cfg = load_config(args)
     init_log(cfg)
     run(cfg, 
-        load_weights=f'{cfg.root}/examples/RPG/models/checkpoints/iRainbowModel_20241111-13111731350843.pkl',
+        # load_weights=f'{cfg.root}/examples/RPG/models/checkpoints/iRainbowModel_20241111-13111731350843.pkl',
         save_weights=f'{cfg.root}/examples/RPG/models/checkpoints/{cfg.model.iqn.type}_{datetime.now().strftime("%Y%m%d-%H%m%s")}.pkl')
 
 if __name__ == '__main__':

@@ -8,7 +8,6 @@ env:
   height: 21
   width: 31
   layers: 3
-  channels: 8
   default_object: EmptyObject
   full_mdp: False
   vision: 4
@@ -17,16 +16,35 @@ env:
   apple_spawn_chance: 0.002
   pollution_spawn_chance: 0.00
 
+model:
+  iqn:
+    type: iRainbowModel
+    device: cpu
+    parameters:
+      action_size: 4
+      layer_size: 250
+      n_step: 3
+      BATCH_SIZE: 64
+      BUFFER_SIZE: 1024
+      LR: 0.00025
+      TAU: .001
+      GAMMA: 0.99
+      N: 12
+      sync_freq: 200
+      model_update_freq: 4
+      epsilon: 0.01
+
 agent:
   agent:
     num: 1
     model: iqn
-    vision: 5
-    memory_size: 100
-    appearance: [255, 0, 0, 0, 0, 0, 0, 0]
     beam_radius: 3
     rotation: False
-    num_frames: 5
+    obs:
+      channels: 8
+      vision: 5
+      num_frames: 5
+      embeddings: 3
 
 root: '~/Documents/GitHub/agentarium'
 log: False

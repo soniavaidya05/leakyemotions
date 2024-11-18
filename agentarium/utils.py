@@ -158,7 +158,7 @@ def image_from_array(image: np.ndarray | list[np.ndarray]) -> Image:
     return output
 
 
-def fig2img(fig):
+def fig2img(fig) -> Image:
     """Convert a Matplotlib figure to a PIL Image.
 
     NOTE: DO NOT use this with plt.show(), as it will not work and will return a blank image.
@@ -181,7 +181,7 @@ def animate(
     frames: Sequence[PngImageFile],
     filename: Union[str, os.PathLike],
     folder: Union[str, os.PathLike],
-):
+) -> None:
     """
     Take an array of frames and assemble them into a GIF with the given path.
 
@@ -234,7 +234,7 @@ def random_seed() -> int:
     return seed
 
 
-def shift(array: ArrayLike, shift: Sequence, cval=np.nan):
+def shift(array: ArrayLike, shift: Sequence, cval=np.nan) -> np.ndarray:
     """
     Returns copy of array shifted by offset, with fill using constant.
 
@@ -244,6 +244,9 @@ def shift(array: ArrayLike, shift: Sequence, cval=np.nan):
         into the function. \n
         cval: The value to replace any new elements introduced into the
         offset array. By default, replaces them with nan's.
+
+    Return:
+        np.ndarray: The shifted array
     """
     offset = np.atleast_1d(shift)
     assert len(offset) == array.ndim
@@ -302,7 +305,7 @@ def minmax(n: int, minimum: int, maximum: int) -> int:
         return n
 
 
-def one_hot_encode(value, num_classes):
+def one_hot_encode(value, num_classes) -> np.ndarray:
     # Create a zero array of length num_classes
     one_hot = np.zeros(num_classes)
 
@@ -310,7 +313,6 @@ def one_hot_encode(value, num_classes):
     one_hot[value] = 1
 
     return one_hot
-
 
 # --------------------------- #
 # endregion                   #

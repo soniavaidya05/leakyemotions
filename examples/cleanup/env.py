@@ -3,9 +3,7 @@
 # --------------------------------- #
 
 # Import base packages
-import jax.numpy as jnp
 import numpy as np
-import random
 
 # Import gem-specific packages
 from agentarium.primitives import GridworldEnv
@@ -19,7 +17,7 @@ from examples.cleanup.entities import (
     Apple
 )
 from examples.cleanup.agents import (
-    Agent
+    Agent, color_map
 )
 from examples.trucks.config import Cfg
 
@@ -38,7 +36,7 @@ class Cleanup(GridworldEnv):
     self.channels = cfg.env.channels # default: # of entity classes + 1 (agent class) + 2 (beam types)
     self.full_mdp = cfg.env.full_mdp
     self.agents = agents
-    self.appearances = self.color_map(self.channels)
+    self.appearances = color_map(self.channels)
     self.object_layer = 0
     self.agent_layer = 1
     self.beam_layer = 2
@@ -46,34 +44,6 @@ class Cleanup(GridworldEnv):
     super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(cfg, self.appearances['EmptyEntity']))
     self.mode = "APPLE"
     self.populate()
-
-  def color_map(self, C) -> dict:
-    """Color map for visualization."""
-    if C == 8:
-      colors = {
-        'EmptyEntity': [0 for _ in range(self.channels)],
-        'Agent': [255 if x == 0 else 0 for x in range(self.channels)],
-        'Wall': [255 if x == 1 else 0 for x in range(self.channels)],
-        'Apple': [255 if x == 2 else 0 for x in range(self.channels)],
-        'AppleTree': [255 if x == 3 else 0 for x in range(self.channels)],
-        'River': [255 if x == 4 else 0 for x in range(self.channels)],
-        'Pollution': [255 if x == 5 else 0 for x in range(self.channels)],
-        'CleanBeam': [255 if x == 6 else 0 for x in range(self.channels)],
-        'ZapBeam': [255 if x == 7 else 0 for x in range(self.channels)]
-      }
-    else:
-      colors = {
-        'EmptyEntity': [0.0, 0.0, 0.0],
-        'Agent': [150.0, 150.0, 150.0],
-        'Wall': [50.0, 50.0, 50.0],
-        'Apple': [0.0, 200.0, 0.0],
-        'AppleTree': [100.0, 100.0, 0.0],
-        'River': [0.0, 0.0, 200.0],
-        'Pollution': [0, 100.0, 200.0],
-        'CleanBeam': [200.0, 255.0, 200.0],
-        'ZapBeam': [255.0, 200.0, 200.0]
-      }
-    return colors
   
   def populate(self) -> None:
   

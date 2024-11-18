@@ -34,7 +34,7 @@ from datetime import datetime
 from agentarium.config import load_config, init_log, Cfg
 from examples.trucks.env import FoodTrucks
 from examples.trucks.config import create_models, create_agents, create_entities
-from examples.trucks.utils import GameVars
+from agentarium.logging_utils import GameLogger
 
 # endregion                #
 # ------------------------ #
@@ -75,7 +75,7 @@ def run_game(
         )
 
     # Container for game variables (epoch, turn, loss, reward)
-    game_vars = GameVars(cfg.experiment.epochs)
+    game_vars = GameLogger(cfg.experiment.epochs)
 
     # If a path to a model is specified in the run, load those weights
     if 'load_weights' in kwargs:

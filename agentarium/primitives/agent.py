@@ -24,9 +24,6 @@ class Agent(Entity):
         self.vision = cfg.agent.agent.vision
         self.has_transitions = True
 
-        # TODO: Memory will be property of the model instead of the Agent class
-        # -> does every model need a memory?
-
     @abc.abstractmethod
     def act(self, action) -> tuple[int, ...]:
         """Act on the environment.
