@@ -4,8 +4,11 @@
 .. automodule:: agentarium.primitives
 ```
 
-```{toctree}
-primitives/environment
-primitives/entity
-primitives/agent
+```{eval-rst}
+.. toctree::
+    :maxdepth: 1
+    
+    primitives/environment
+    primitives/entity
+    primitives/agent
 ```
