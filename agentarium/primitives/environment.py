@@ -8,8 +8,15 @@ from agentarium.primitives.entity import Entity
 
 class GridworldEnv:
     """
-    Abstract gridworld environment class with basic functions
+    Basic gridworld environment class with functions for getting and manipulating the locations of entities.
     """
+
+    height: int
+    width: int
+    layers: int
+    default_entity: Entity
+
+    world: np.array
 
     def __init__(self, height: int, width: int, layers: int, default_entity: Entity):
         self.height = height
@@ -38,18 +45,24 @@ class GridworldEnv:
 
     def add(self, target_location, entity: Entity) -> None:
         """
-        Adds an entity to the world at a location
-        Will replace any existing entity at that location
+        Adds an entity to the world at a location.
+        Will replace any existing entity at that location.
+
+        Args:
+            target_location (Location): the location of the entity
         """
         entity.location = target_location
         self.world[target_location] = entity
 
     def remove(self, target_location) -> Entity:
         """
-        Remove the entity at a location and return it
+        Remove the entity at a location.
 
         Args:
-            target_location: the location of the entity
+            target_location (Location): the location of the entity
+
+        Returns:
+            Entity: the entity previously at the given location
         """
         entity = self.world[target_location]
         self.world[target_location] = self.default_entity
@@ -58,12 +71,14 @@ class GridworldEnv:
 
     def move(self, entity, new_location) -> bool:
         """
-        Move an entity from a location to a new location
-        Return True if successful, False otherwise
+        Move an entity to a new location.
 
         Args:
             entity: entity to be moved
-            new_location: location to move the entity
+            new_location: location to move the entity to
+
+        Returns:
+            bool: True if move was successful (i.e. the entity currently at new_location is passable), False otherwise
         """
         if self.world[new_location].passable:
             self.remove(new_location)
@@ -78,17 +93,18 @@ class GridworldEnv:
 
     def observe(self, target_location) -> Entity:
         """
-        Observes the entity at a location
+        Observes the entity at a location.
         """
         return self.world[target_location]
 
     def valid_location(self, index: tuple[int, ...] | Location) -> bool:
-        """Check if the given index is in the world.
+        """
+        Check if the given index is in the world.
 
-        Parameters:
-            index: A tuple of coordinates or Location.
+        Args:
+            index(tuple[int, ...] | Location): A tuple of coordinates or a Location object.
 
-        Return:
+        Returns:
             bool: Whether the index is in env.world."""
         # Cast to tuple if it is a location
         if isinstance(index, Location):
@@ -109,6 +125,7 @@ class GridworldEnv:
                 return False
         return True
 
+    # TODO: formalize this function
     def get_entities(self, entity, locs=False) -> list[Entity]:
         """
         Return a list of entities or a list of their locations in the world.
