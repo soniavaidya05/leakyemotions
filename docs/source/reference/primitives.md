@@ -1,8 +1,13 @@
 # Primitives
 
-TODO: finish this page
-```{eval-rst}
-..autodoc::
+```{toctree}
+:hidden:
 
-..autoclass::
+primitives/environment
+primitives/entity
+primitives/agent
+```
+
+```{eval-rst}
+.. automodule:: agentarium.primitives
 ```

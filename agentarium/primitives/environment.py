@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy as np
 from agentarium.primitives.entity import Entity
-from agentarium.primitives.location import Location
+from agentarium.location import Location
 
 
 class GridworldEnv:
