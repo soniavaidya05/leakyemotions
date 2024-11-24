@@ -1,5 +1,5 @@
-
 from __future__ import annotations
+
 
 class Location:
     def __init__(self, *dims):
@@ -73,7 +73,11 @@ class Location:
 
         # Compare a location
         if isinstance(other, Location):
-            return True if ((self.x == other.x) and (self.y == other.y) and (self.z == other.z)) else False
+            return (
+                True
+                if ((self.x == other.x) and (self.y == other.y) and (self.z == other.z))
+                else False
+            )
 
         # Compare a vector
         elif isinstance(other, Vector):
@@ -82,16 +86,41 @@ class Location:
         # Compare a tuple
         elif isinstance(other, tuple):
             if len(other) == 2:
-                return True if ((self.x == other[0]) and (self.y == other[1]) and (self.dims == 2)) else False
+                return (
+                    True
+                    if (
+                        (self.x == other[0])
+                        and (self.y == other[1])
+                        and (self.dims == 2)
+                    )
+                    else False
+                )
             else:
-                return True if ((self.x == other[0]) and (self.y == other[1]) and (self.z == other[2])) else False
+                return (
+                    True
+                    if (
+                        (self.x == other[0])
+                        and (self.y == other[1])
+                        and (self.z == other[2])
+                    )
+                    else False
+                )
 
         # Unimplemented
         else:
             raise NotImplementedError
 
+
 class Vector:
-    def __init__(self, forward: int, right: int, backward: int = 0, left: int = 0, layer = 0, direction: int = 0): # Default direction: 0 degrees / UP / North
+    def __init__(
+        self,
+        forward: int,
+        right: int,
+        backward: int = 0,
+        left: int = 0,
+        layer=0,
+        direction: int = 0,
+    ):  # Default direction: 0 degrees / UP / North
         """
         Initialize a vector object.
 
@@ -102,7 +131,7 @@ class Vector:
             left: (int, Optional) The number of steps left. Since negative vectors are supported, this can be carried by the right value.
             layer: (int, Optional) The number of layers up (positive) or down (negative).
             direction: (int, default = 0) A compass direction. 0 = NORTH, 1 = EAST, 2 = SOUTH, 3 = WEST.
-            """
+        """
         self.direction = direction
         self.forward = forward
         self.right = right
@@ -120,7 +149,14 @@ class Vector:
         """Multiply a location by an integer amount."""
 
         if isinstance(other, int):
-            return Vector(self.forward * other, self.right * other, self.backward * other, self.left * other, self.layer * other, self.direction)
+            return Vector(
+                self.forward * other,
+                self.right * other,
+                self.backward * other,
+                self.left * other,
+                self.layer * other,
+                self.direction,
+            )
 
         # Unimplemented
         else:
@@ -137,40 +173,81 @@ class Vector:
                 self.backward + other.backward,
                 self.left + other.left,
                 self.layer + other.layer,
-                direction=self.direction
+                direction=self.direction,
             )
         else:
             raise NotImplementedError
 
     def rotate(self, new_direction: int):
-        """Rotate the vector to face a new direction. """
+        """Rotate the vector to face a new direction."""
         num_rotations = (self.direction - new_direction) % 4
-        match(num_rotations):
+        match (num_rotations):
             case 0:
                 pass
             case 1:
-                self.right, self.backward, self.left, self.forward = self.forward, self.right, self.backward, self.left
+                self.right, self.backward, self.left, self.forward = (
+                    self.forward,
+                    self.right,
+                    self.backward,
+                    self.left,
+                )
             case 2:
-                self.backward, self.left, self.forward, self.right = self.forward, self.right, self.backward, self.left
+                self.backward, self.left, self.forward, self.right = (
+                    self.forward,
+                    self.right,
+                    self.backward,
+                    self.left,
+                )
             case 3:
-                self.left, self.forward, self.right, self.backward = self.forward, self.right, self.backward, self.left
+                self.left, self.forward, self.right, self.backward = (
+                    self.forward,
+                    self.right,
+                    self.backward,
+                    self.left,
+                )
         self.direction = new_direction
 
     def compute(self) -> Location:
         """Given a direction being faced and a number of paces
         forward / right / backward / left, compute the location."""
 
-        match(self.direction):
+        match (self.direction):
             case 0:  # UP
-                forward, right, backward, left = (Location(-1, 0), Location(0, 1), Location(1, 0), Location(0, -1))
+                forward, right, backward, left = (
+                    Location(-1, 0),
+                    Location(0, 1),
+                    Location(1, 0),
+                    Location(0, -1),
+                )
             case 1:  # RIGHT
-                forward, right, backward, left = (Location(0, 1), Location(1, 0), Location(0, -1), Location(-1, 0))
+                forward, right, backward, left = (
+                    Location(0, 1),
+                    Location(1, 0),
+                    Location(0, -1),
+                    Location(-1, 0),
+                )
             case 2:  # DOWN
-                forward, right, backward, left = (Location(1, 0), Location(0, -1), Location(-1, 0), Location(0, 1))
+                forward, right, backward, left = (
+                    Location(1, 0),
+                    Location(0, -1),
+                    Location(-1, 0),
+                    Location(0, 1),
+                )
             case 3:  # LEFT
-                forward, right, backward, left = (Location(0, -1), Location(-1, 0), Location(0, 1), Location(1, 0))
+                forward, right, backward, left = (
+                    Location(0, -1),
+                    Location(-1, 0),
+                    Location(0, 1),
+                    Location(1, 0),
+                )
 
-        return (forward * self.forward) + (right * self.right) + (backward * self.backward) + (left * self.left) + Location(0, 0, self.layer)
+        return (
+            (forward * self.forward)
+            + (right * self.right)
+            + (backward * self.backward)
+            + (left * self.left)
+            + Location(0, 0, self.layer)
+        )
 
     def to_tuple(self) -> tuple[int, ...]:
         return self.compute().to_tuple()

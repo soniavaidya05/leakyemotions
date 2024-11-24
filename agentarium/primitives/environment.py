@@ -1,20 +1,17 @@
 from __future__ import annotations
+
 import numpy as np
-from agentarium.primitives.entity import Entity
+
 from agentarium.location import Location
+from agentarium.primitives.entity import Entity
 
 
 class GridworldEnv:
-    '''
+    """
     Abstract gridworld environment class with basic functions
-    '''
-    def __init__(
-        self,
-        height: int,
-        width: int,
-        layers: int,
-        default_entity: Entity
-    ):
+    """
+
+    def __init__(self, height: int, width: int, layers: int, default_entity: Entity):
         self.height = height
         self.width = width
         self.layers = layers
@@ -22,13 +19,12 @@ class GridworldEnv:
         self.create_world()
 
     def create_world(self):
-        '''
+        """
         Create a gridworld of dimensions H x W x L.
-        '''
+        """
 
         self.world = np.full(
-            (self.height, self.width, self.layers),
-            Entity(appearance=[0., 0., 0.])
+            (self.height, self.width, self.layers), Entity(appearance=[0.0, 0.0, 0.0])
         )
 
         # Define the location of each entity
@@ -41,34 +37,34 @@ class GridworldEnv:
     # --------------------------- #
 
     def add(self, target_location, entity: Entity) -> None:
-        '''
+        """
         Adds an entity to the world at a location
         Will replace any existing entity at that location
-        '''
+        """
         entity.location = target_location
         self.world[target_location] = entity
 
     def remove(self, target_location) -> Entity:
-        '''
+        """
         Remove the entity at a location and return it
 
         Args:
             target_location: the location of the entity
-        '''
+        """
         entity = self.world[target_location]
         self.world[target_location] = self.default_entity
         self.world[target_location].location = target_location
         return entity
 
     def move(self, entity, new_location) -> bool:
-        '''
+        """
         Move an entity from a location to a new location
         Return True if successful, False otherwise
 
         Args:
             entity: entity to be moved
             new_location: location to move the entity
-        '''
+        """
         if self.world[new_location].passable:
             self.remove(new_location)
             previous_location = entity.location
@@ -81,9 +77,9 @@ class GridworldEnv:
             return False
 
     def observe(self, target_location) -> Entity:
-        '''
+        """
         Observes the entity at a location
-        '''
+        """
         return self.world[target_location]
 
     def valid_location(self, index: tuple[int, ...] | Location) -> bool:
@@ -101,7 +97,9 @@ class GridworldEnv:
         shape = self.world.shape
         # Can't compare if the tuples are of unequal size
         if len(index) != len(shape):
-            raise IndexError(f"Index {index} and world shape {shape} must be the same length.")
+            raise IndexError(
+                f"Index {index} and world shape {shape} must be the same length."
+            )
         # Indices of less than 0 are not valid locations on a grid
         if min(index) < 0:
             return False
@@ -111,10 +109,10 @@ class GridworldEnv:
                 return False
         return True
 
-    def get_entities(self, entity, locs = False) -> list[Entity]:
-        '''
+    def get_entities(self, entity, locs=False) -> list[Entity]:
+        """
         Return a list of entities or a list of their locations in the world.
-        '''
+        """
         entities = []
         for index, x in np.ndenumerate(self.world):
             if x.kind == entity:
@@ -125,10 +123,10 @@ class GridworldEnv:
         return entities
 
     @staticmethod
-    def get_entities_(world, entity, locs = False) -> list[Entity]:
-        '''
+    def get_entities_(world, entity, locs=False) -> list[Entity]:
+        """
         Return a list of entities or a list of their locations in the world.
-        '''
+        """
         entities = []
         for index, x in np.ndenumerate(world):
             if x.kind == entity:
