@@ -1,13 +1,11 @@
 # Primitives
 
-```{toctree}
-:hidden:
+```{eval-rst}
+.. automodule:: agentarium.primitives
+```
 
+```{toctree}
 primitives/environment
 primitives/entity
 primitives/agent
-```
-
-```{eval-rst}
-.. automodule:: agentarium.primitives
 ```
