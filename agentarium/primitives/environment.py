@@ -7,8 +7,15 @@ from agentarium.primitives.entity import Entity
 
 
 class GridworldEnv:
-    """
+    r"""
     Basic gridworld environment class with functions for getting and manipulating the locations of entities.
+
+    Attributes:
+        - :attr:`height` - The height of the gridworld.
+        - :attr:`width` - The width of the gridworld.
+        - :attr:`layers` - The number of layers that the gridworld has.
+        - :attr:`default_entity` - The entity that the gridworld is filled with at creation by default.
+        - :attr:`world` - A representation of the gridworld as a Numpy array of Entities, with dimensions height x width x layers.
     """
 
     height: int
@@ -50,6 +57,7 @@ class GridworldEnv:
 
         Args:
             target_location (Location): the location of the entity
+            entity (Entity): the entity to be added
         """
         entity.location = target_location
         self.world[target_location] = entity

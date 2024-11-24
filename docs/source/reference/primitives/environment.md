@@ -35,5 +35,5 @@ TODO: formalize get_entities() and get_entities_()
     
 .. autoattribute:: agentarium.primitives.GridworldEnv.world
 
-    A representation of the gridworld as an Numpy array of Entities, with dimensions height x width x layers.
+    A representation of the gridworld as a Numpy array of Entities, with dimensions height x width x layers.
 ```
