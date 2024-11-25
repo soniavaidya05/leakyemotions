@@ -1,6 +1,7 @@
 import numpy as np
 
-from agentarium.primitives import Agent, Entity, GridworldEnv, Location, Vector
+from agentarium.primitives import Agent, Entity, GridworldEnv
+from agentarium.location import Location, Vector
 from agentarium.visual_field import visual_field_multilayer
 from agentarium.utils import one_hot_encode
 from agentarium.embedding import positional_embedding
@@ -19,7 +20,7 @@ class CleanupAgent(Agent):
         action_space = [0, 1, 2, 3, 4, 5, 6]
         super().__init__(cfg, appearance, model, action_space)
 
-        # Additional attributes 
+        # Additional attributes
         self.num_frames = cfg.obs.num_frames
         self.embedding_size = cfg.obs.embeddings
         self.direction = 2  # 90 degree rotation: default at 180 degrees (facing down)
@@ -34,7 +35,7 @@ class CleanupAgent(Agent):
     def sprite(self):
         """Agent sprite."""
         return self._sprite
-    
+
     @sprite.setter
     def sprite(self, new_sprite):
         """Update the agent sprite with the name of a new sprite."""
@@ -197,7 +198,7 @@ class CleanupAgent(Agent):
         current_state = image.flatten()
 
         return current_state
-    
+
     def embed_loc(self, env: GridworldEnv) -> np.ndarray:
         """
         Obtain the agent's positional embedding.
@@ -209,7 +210,7 @@ class CleanupAgent(Agent):
             np.ndarray: The agent's positional code.
         """
         return positional_embedding(self.location, env, self.embedding_size, self.embedding_size)
-    
+
     def current_state(self, env: GridworldEnv) -> np.ndarray:
         """
         Obtain the agent's observation function.
@@ -226,12 +227,12 @@ class CleanupAgent(Agent):
         state = np.concatenate((pov, pos, ohe))
         prev_states = self.model.memory.current_state(stacked_frames=self.num_frames-1)
         current_state = np.vstack((prev_states, state))
-    
+
         return current_state
-    
+
     def add_memory(self, state: np.ndarray, action: int, reward: float, done: bool) -> None:
         """Add an experience to the memory.
-        
+
         Parameters:
             state: (np.ndarray)
             action: (int)
