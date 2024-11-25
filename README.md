@@ -45,9 +45,16 @@ poetry install
 ```
 in the folder containing the ``pyproject.toml`` file.
 
+If you wish to install additional dependencies, such as tensorboard for logging needs, 
+you can include the extra dependencies like so:
+```
+poetry install --with extras
+```
+in the folder containing the ``pyproject.toml`` file.
+
 To install Agentarium in development mode, run the following command:
 ```
-poetry install --with dev
+poetry install --with dev,extras
 ```
 in the folder containing the ``pyproject.toml`` file.
 
