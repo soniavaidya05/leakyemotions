@@ -152,3 +152,6 @@ examples/RPG/data
 gem/.DS_Store
 examples/cleanup/data/
 examples/cleanup/runs/
+pyvenv.cfg
+/bin
+/share
