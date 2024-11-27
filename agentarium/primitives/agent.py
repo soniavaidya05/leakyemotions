@@ -9,13 +9,19 @@ from agentarium.primitives.environment import Entity, GridworldEnv
 
 
 class Agent(Entity):
-    r"""
+    """
     An abstract class for agents, a special type of entities. Note that this is a subclass of Entity.
 
     Attributes:
         - :attr:`cfg` - The configuration to use for this agent.
         - :attr:`model` - The model that this agent uses.
-        - :attr:`action_space` - The set of actions that the agent is able to take.
+        - :attr:`action_space` - The range of actions that the agent is able to take, represented by a list of integers.
+
+            .. warning::
+                Currently, each element in :code:`action_space` should be the index of that element.
+                In other words, it should be a list of neighbouring integers in increasing order starting at 0.
+
+                For example, if the agent has 4 possible actions, it should have :code:`action_space = [0, 1, 2, 3]`.
 
     Attributes that override parent (Entity)'s default values:
         - :attr:`vision` - set at time of initialization based on the cfg provided, instead of defaulting to None.
@@ -24,21 +30,33 @@ class Agent(Entity):
 
     cfg: Cfg
     model: Any
-    action_space: Any
+    action_space: list[int]
 
     def __init__(self, cfg: Cfg, appearance, model, action_space, location=None):
-
         # initializations based on parameters
         self.cfg = cfg
         self.model = model
         self.action_space = action_space
         self.location = location
 
-        super.__init__(appearance)
+        super().__init__(appearance)
 
         # overriding parent default attributes
         self.vision = cfg.agent.agent.vision
         self.has_transitions = True
+
+    def add_memory(
+        self, state: np.ndarray, action: int, reward: float, done: bool
+    ) -> None:
+        """Add an experience to the memory.
+
+        Args:
+            state (np.ndarray): the state to be added.
+            action (int): the action taken by the agent.
+            reward (float): the reward received by the agent.
+            done (bool): whether the episode terminated after this experience.
+        """
+        self.model.memory.add(state, action, reward, done)
 
     @abc.abstractmethod
     def act(self, action) -> tuple[int, ...]:
@@ -79,13 +97,6 @@ class Agent(Entity):
             torch.Tensor: the result of the transition.
         """
         pass
-
-    # TODO: leave as implemented or change to abstract?
-    def add_memory(
-        self, state: np.ndarray, action: int, reward: float, done: bool
-    ) -> None:
-        """Add an experience to the memory."""
-        self.model.memory.add(state, action, reward, done)
 
     @abc.abstractmethod
     def reset(self) -> None:

@@ -5,15 +5,21 @@
 ```
 
 ## Methods
-Note that the following methods must be implemented in any implementation of this abstract class.
 
 ```{eval-rst}
+.. note::
+    The following methods are provided for you. You might override them in your own implementation if necessary.
+
+.. automethod:: agentarium.primitives.Agent.add_memory
+
+.. note::
+    The following methods are abstract and therefore must be implemented in any class that inherits this class.
+
 .. automethod:: agentarium.primitives.Agent.act
 .. automethod:: agentarium.primitives.Agent.pov
 .. automethod:: agentarium.primitives.Agent.transition
 .. automethod:: agentarium.primitives.Agent.reset
 ```
-TODO: get an answer on add_memory()
 
 ## Attributes
 ```{eval-rst}
