@@ -50,43 +50,42 @@ class GridworldEnv:
     # region: helper functions    #
     # --------------------------- #
 
-    def add(self, target_location, entity: Entity) -> None:
+    def add(self, target_location: Location, entity: Entity) -> None:
         """
-        Adds an entity to the world at a location.
-        Will replace any existing entity at that location.
+        Adds an entity to the world at a location, replacing any existing entity at that location.
 
         Args:
-            target_location (Location): the location of the entity
-            entity (Entity): the entity to be added
+            target_location (Location): the location of the entity.
+            entity (Entity): the entity to be added.
         """
         entity.location = target_location
         self.world[target_location] = entity
 
-    def remove(self, target_location) -> Entity:
+    def remove(self, target_location: Location) -> Entity:
         """
         Remove the entity at a location.
 
         Args:
-            target_location (Location): the location of the entity
+            target_location (Location): the location of the entity.
 
         Returns:
-            Entity: the entity previously at the given location
+            Entity: the entity previously at the given location.
         """
         entity = self.world[target_location]
         self.world[target_location] = self.default_entity
         self.world[target_location].location = target_location
         return entity
 
-    def move(self, entity, new_location) -> bool:
+    def move(self, entity: Entity, new_location: Location) -> bool:
         """
         Move an entity to a new location.
 
         Args:
-            entity: entity to be moved
-            new_location: location to move the entity to
+            entity (Entity): entity to be moved.
+            new_location (Location): location to move the entity to.
 
         Returns:
-            bool: True if move was successful (i.e. the entity currently at new_location is passable), False otherwise
+            bool: True if move was successful (i.e. the entity currently at new_location is passable), False otherwise.
         """
         if self.world[new_location].passable:
             self.remove(new_location)
@@ -99,9 +98,15 @@ class GridworldEnv:
         else:
             return False
 
-    def observe(self, target_location) -> Entity:
+    def observe(self, target_location: Location) -> Entity:
         """
         Observes the entity at a location.
+
+        Args:
+            target_location (Location): the location to observe.
+
+        Returns:
+            Entity: the entity at the observed location.
         """
         return self.world[target_location]
 
@@ -110,10 +115,11 @@ class GridworldEnv:
         Check if the given index is in the world.
 
         Args:
-            index(tuple[int, ...] | Location): A tuple of coordinates or a Location object.
+            index (tuple[int, ...] | Location): A tuple of coordinates or a Location object.
 
         Returns:
-            bool: Whether the index is in env.world."""
+            bool: Whether the index is in env.world.
+        """
         # Cast to tuple if it is a location
         if isinstance(index, Location):
             index = index.to_tuple()
