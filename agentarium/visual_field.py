@@ -40,7 +40,7 @@ def visual_field(
         :, :, :, 0
     ]
     # Get wall appearance from the world object (just pick the first wall object for simplicity)
-    wall_appearance = GridworldEnv.get_entities_(world, "Wall")[0].appearance
+    wall_appearance = GridworldEnv.get_entities_of_kind(world, "Wall")[0].appearance
 
     # Iterate through the world and assign the appearance of the object at that location
     for index, _ in np.ndenumerate(world[:, :, 0]):
@@ -146,7 +146,7 @@ def visual_field_multilayer(
         [np.zeros_like(world, dtype=np.float64) for _ in range(C)], axis=0
     ).squeeze()
     # Get wall appearance from the world object (just pick the first wall object for simplicity)
-    wall_appearance = GridworldEnv.get_entities_(world, "Wall")[0].appearance
+    wall_appearance = GridworldEnv.get_entities_of_kind(world, "Wall")[0].appearance
 
     # Iterate through the world and assign the appearance of the object at that location
     for layer in range(world.shape[-1]):

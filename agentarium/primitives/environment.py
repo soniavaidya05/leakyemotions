@@ -139,32 +139,22 @@ class GridworldEnv:
                 return False
         return True
 
-    # TODO: formalize this function
-    def get_entities(self, entity, locs=False) -> list[Entity]:
-        """
-        Return a list of entities or a list of their locations in the world.
-        """
-        entities = []
-        for index, x in np.ndenumerate(self.world):
-            if x.kind == entity:
-                if locs:
-                    entities.append(index)
-                else:
-                    entities.append(x)
-        return entities
-
     @staticmethod
-    def get_entities_(world, entity, locs=False) -> list[Entity]:
+    def get_entities_of_kind(world, kind: str) -> list[Entity]:
         """
-        Return a list of entities or a list of their locations in the world.
+        Given the kind of an entity, return a list of entities in a world that are the same kind.
+
+        Args:
+            world (np.array): the world of a particular GridworldEnv.
+            kind (str): the class string (or string representation) of the query entity.
+
+        Returns:
+            list[Entity]: a list of all entities in the world that have the same kind.
         """
         entities = []
-        for index, x in np.ndenumerate(world):
-            if x.kind == entity:
-                if locs:
-                    entities.append(index)
-                else:
-                    entities.append(x)
+        for _, x in np.ndenumerate(world):
+            if x.kind == kind:
+                entities.append(x)
         return entities
 
     # --------------------------- #

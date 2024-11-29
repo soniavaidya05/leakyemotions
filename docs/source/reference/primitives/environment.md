@@ -5,6 +5,7 @@
 ```
 
 ## Methods
+### Class Methods
 ```{eval-rst}
 .. automethod:: agentarium.primitives.GridworldEnv.add
 .. automethod:: agentarium.primitives.GridworldEnv.remove
@@ -13,7 +14,13 @@
 .. automethod:: agentarium.primitives.GridworldEnv.valid_location
 ```
 
-TODO: formalize get_entities() and get_entities_()
+### Static Methods
+```{eval-rst}
+.. tip::
+    You can still call a static method using an instance.
+
+.. automethod:: agentarium.primitives.GridworldEnv.get_entities_of_kind
+```
 
 ## Attributes
 ```{eval-rst}
