@@ -22,7 +22,7 @@ Agentarium is extremely experimental and subject to change!
 ## Development
 
 **NOTE**: We recommend you follow these instructions in a fresh conda/virtual environment to keep packages isolated 
-from other environments and/or Python versions. Python 3.11+ is required. To create a virtual environment, 
+from other environments and/or Python versions. Python 3.11+ is required. To create a [virtual environment](https://docs.python.org/3/library/venv.html), 
 navigate to your project directory in the terminal and run:
 ```
 python -m venv ./venv
