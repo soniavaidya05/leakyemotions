@@ -32,9 +32,7 @@ class WoodNode(Entity):
     self._sprite = f'{self.cfg.root}/examples/cleanup/assets/grass.png'
     self.has_transitions = True
     self.resources = 0
-    if random.random() < self.cfg.env.resource_spawn_chance:
-      self.resources = random.randint(5, 10)
-      self.sprite('apple_grass')
+    self.renew()
 
   @property
   def sprite(self) -> str:
@@ -44,12 +42,16 @@ class WoodNode(Entity):
   def sprite(self, new_sprite: str):
     self._sprite = f'{self.cfg.root}/examples/cleanup/assets/' + new_sprite + '.png'
 
+  def renew(self) -> None:
+    if random.random() < self.cfg.env.resource_spawn_chance:
+      self.resources = random.randint(5, 10)
+      self.sprite('apple_grass')
+
   def transition(self, env: GridworldEnv) -> None:
     if self.resources == 0:
       self.sprite('grass')
-      if random.random() < self.cfg.env.resource_spawn_chance:
-        self.resources = random.randint(5, 10)
-        self.sprite('apple_grass')
+      self.renew()
+      
 
 
 

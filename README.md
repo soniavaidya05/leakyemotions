@@ -22,10 +22,10 @@ Agentarium is extremely experimental and subject to change!
 ## Development
 
 **NOTE**: We recommend you follow these instructions in a fresh conda/virtual environment to keep packages isolated 
-from other environments and/or Python versions. Python 3.9+ is required. If you have conda, run
+from other environments and/or Python versions. Python 3.11+ is required. If you have conda, run
 ```
-conda create --name agentarium python=3.9
-conda activate agentraium
+conda create --name agentarium python=3.11
+conda activate agentarium
 ```
 
 ### Getting started
