@@ -7,6 +7,7 @@ TODO: Some introduction paragraph that gives an overview about Agentarium.
 :caption: Tutorials
 
 tutorials/how_to
+tutorials/configuration_files
 ```
 
 ```{toctree}
@@ -15,6 +16,7 @@ tutorials/how_to
 
 reference/primitives
 reference/models
+reference/config
 ```
 
 ```{toctree}
