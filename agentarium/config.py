@@ -2,12 +2,13 @@
 # region: Imports #
 # --------------- #
 
-#Import base packages
+# Import base packages
 import yaml
 import os
 import argparse
 
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Self, Any
+
 
 # --------------- #
 # endregion       #
@@ -18,43 +19,71 @@ from typing import Optional, Sequence, Union
 # --------------------------- #
 
 class Cfg:
-    '''
+    """
     Configuration class for parsing the YAML configuration file.
-    '''
-    def __init__(self, in_dict:dict):
-        assert isinstance(in_dict, dict)
+
+    Note that nested config parameters are parsed as nested Cfg objects.
+    """
+    experiment: Self
+    name: str
+    epochs: int
+    max_turns: int
+
+    env: Self
+    height: int
+    width: int
+    layers: int
+    default_object: Any
+
+    model: Self
+
+    agent: Self
+    num: int
+    model: Any
+    appearance: Any
+
+    root: str
+    log: bool
+
+    def __init__(self, in_dict: dict):
+        """Recursively turn the dictionary into attributes for this class."""
         for key, val in in_dict.items():
             if isinstance(val, (list, tuple)):
                 setattr(self, key, [Cfg(x) if isinstance(x, dict) else x for x in val])
             else:
                 setattr(self, key, Cfg(val) if isinstance(val, dict) else val)
 
+
 def init_log(cfg: Cfg) -> None:
     print(f'╔═════════════════════════════════════════════════════╗')
     print(f'║                                                     ║')
     print(f'║        Starting experiment: {str(cfg.experiment.name).ljust(16)}        ║')
-    print(f'║        Epochs: {str(cfg.experiment.epochs).ljust(5)}  Max turns: {str(cfg.experiment.max_turns).ljust(3)}  Log: {"Yes" if cfg.log else "No "}      ║')
+    print(
+        f'║        Epochs: {str(cfg.experiment.epochs).ljust(5)}  Max turns: {str(cfg.experiment.max_turns).ljust(3)}  Log: {"Yes" if cfg.log else "No "}      ║')
     print(f'║        Saving to: {str(cfg.save_dir).ljust(26)}        ║')
     print(f'║                                                     ║')
     print(f'╚═════════════════════════════════════════════════════╝')
     print(f'')
 
+
 def parse_args(
         command_line: bool = True,
         args: Optional[Sequence[str]] = None
 ) -> argparse.Namespace:
-    '''
+    """
     Helper function for preparsing the arguments.
 
-    Parameters:
-        args: (Optional) A sequence of command line-like arguments.
-        By default, the function uses the default `--config` argument
-        to get the file from `./config.yaml`. \n
-        Unknown arguments (i.e., not `--config`) are ignored.
-    
+    Args:
+        command_line (bool): whether arguments are passed in through the command line. Defaults to True.
+        args (Optional[Sequence[str]]): A sequence of command line-like arguments, if not reading from command line. Defaults to None.
+
+            .. Note::
+                By default, the function uses the default `--config` argument to get the file from `./config.yaml`. \n
+                Unknown arguments (i.e., not `--config`) are ignored.
+
     Returns:
-        The argparse.Namespace object containing the args
-    '''
+        argpase.Namespace: the argparse.Namespace object containing the args.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default='./config.yaml', help="path to config file")
     # By default, parse the arguments
@@ -68,16 +97,17 @@ def parse_args(
             args, _ = parser.parse_known_args(args)
     return args
 
+
 def load_config(args: argparse.Namespace) -> Cfg:
-    '''
+    """
     Load the parsed arguments into the Cfg class.
 
     Parameters:
-        args: The argparse.Namespace object containing the args
+        args (argparse.Namespace): the parsed arguments, where args.config must contain the path to the config file.
 
     Returns:
-        A Cfg class object with the configurations for the experiment
-    '''
+        A Cfg class object with the configurations for the experiment.
+    """
     if args.config is None or not os.path.isfile(args.config):
         raise ValueError("Config file not found, please make sure you've included a path to the config file.")
 
@@ -85,7 +115,7 @@ def load_config(args: argparse.Namespace) -> Cfg:
         config = yaml.safe_load(f)
 
     config = Cfg(config)
-    
+
     return config
 # --------------------------- #
 # endregion: config functions #
