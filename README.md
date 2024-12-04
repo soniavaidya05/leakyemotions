@@ -67,6 +67,10 @@ poetry install --with dev,extras
 ```
 in the folder containing the ``pyproject.toml`` file.
 
+[!NOTE]
+If cannot run your script from terminal due to errors like ```module 'agentarium' not found```, check if your virtual environment is activated. 
+If it is, and you are still getting the same error, try running ```poetry run python your_script.py```.
+
 ### Examples
 
 TODO
@@ -93,19 +97,19 @@ in the folder containing ``.pre-commit-config.yaml`` file.
 
 Afterward, the Git hooks will be run automatically at every new commit.
 
-You may also run these hooks manually with `pre-commit run --all-files`. If needed, you can skip the hooks (not 
-recommended) with `git commit --no-verify -m <commit message>`.
-**Note:** you may have to run `pre-commit run --all-files` manually a couple of times to make it pass when you commit, 
+You may also run these hooks manually with ```pre-commit run --all-files```. If needed, you can skip the hooks (not 
+recommended) with ```git commit --no-verify -m <commit message>```.
+**Note:** you may have to run ```pre-commit run --all-files``` manually a couple of times to make it pass when you commit, 
 as each formatting tool will first format the code and fail the first time but should pass the second time.
 
 ### Writing documentation
 
-To contribute to the documentation, you may add, delete, or edit files in the ```.\docs\source``` folder. This project 
-uses [Sphinx](https://www.sphinx-doc.org/) to auto-build files in ```.rst```, ```.md```, or ```.ipynb``` format into 
+To contribute to the documentation, you may add, delete, or edit files in the ``.\docs\source`` folder. This project 
+uses [Sphinx](https://www.sphinx-doc.org/) to auto-build files in ``.rst``, ``.md``, or ``.ipynb`` format into 
 html.
 
 Note that since Agentarium is private (for now), we cannot host the documentation online yet. To view your documentation
-changes locally, navigate to the ```.\docs``` folder and run the following command:
+changes locally, navigate to the ``.\docs`` folder and run the following command:
 
 Windows:
 ```
@@ -117,7 +121,7 @@ Other systems:
 make html
 ```
 
-Then, view the updated documentations by opening ```.\docs\build\html\index.html``` with the browser of your choice.
+Then, view the updated documentations by opening ``.\docs\build\html\index.html`` with the browser of your choice.
 
 **Note:** if the changes you made were not reflected across all the pages, you may have to run ```.\make clean``` 
 (on Windows) or ```make clean``` (on other systems) before the above command to ensure the documentation is built from 
