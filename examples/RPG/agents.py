@@ -50,14 +50,18 @@ class Agent:
         """Add an experience to the memory."""
         self.model.memory.add(state, action, reward, float(done))
     
-    def add_final_memory(self, state: np.ndarray) -> None:
+
+    def add_final_memory(self, env: GridworldEnv) -> None:
+        state = self.current_state(env)
         self.model.memory.add(state, 0, 0.0, float(True))
+
 
     def current_state(self, env: GridworldEnv) -> np.ndarray:
         state = self.pov(env)
         prev_states = self.model.memory.current_state(stacked_frames=self.num_frames-1)
         current_state = np.vstack((prev_states, state))
         return current_state
+
 
     def pov(self, env: GridworldEnv) -> np.ndarray:
         """
@@ -79,6 +83,7 @@ class Agent:
 
         return current_state
         
+
     def movement(self,
                  action: int
                  ) -> tuple:
@@ -100,8 +105,9 @@ class Agent:
             new_location = (self.location[0], self.location[1] + 1, self.location[2])
         return new_location
     
+
     def transition(self,
-                   env) -> tuple:
+                   env: GridworldEnv) -> tuple:
         '''
         Changes the world based on the action taken.
         '''

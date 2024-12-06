@@ -32,15 +32,18 @@ class CleanupAgent(Agent):
         # logging features
         self.outcome_record = {"harvest": 0, "zap": 0, "get_zapped": 0, "clean": 0}
 
+
     @property
     def sprite(self):
         """Agent sprite."""
         return self._sprite
 
+
     @sprite.setter
     def sprite(self, new_sprite):
         """Update the agent sprite with the name of a new sprite."""
         self._sprite = self.sprite_path + new_sprite + ".png"
+
 
     def sprite_loc(self) -> None:
         """Determine the agent's sprite based on the location."""
@@ -52,6 +55,7 @@ class CleanupAgent(Agent):
         ]
         self.sprite(sprite_directions[self.direction])
 
+
     def init_replay(self, env: GridworldEnv) -> None:
         """Fill in blank images for the memory buffer."""
 
@@ -62,14 +66,15 @@ class CleanupAgent(Agent):
         for _ in range(self.num_frames):
             self.model.memory.add(state, action, reward, done)
 
-    def act(self, action: int) -> tuple[int, ...]:
-        """Act on the environment.
+
+    def movement(self, action: int) -> tuple[int, ...]:
+        """Helper function for action: move up, down, right, left in the environment.
 
         Params:
             action: (int) An integer indicating the action to take.
 
         Return:
-            tuple[int, ...] A location tuple indicating the updated
+            tuple[int, ...] A location tuple indicating the attempted
             location of the agent.
         """
 
@@ -125,6 +130,34 @@ class CleanupAgent(Agent):
 
         return next_location
 
+
+    def act(self, env: GridworldEnv, state: np.ndarray) -> tuple[int, ...]:
+        """
+        Act on the environment.
+
+        Params:
+            env: (GridWorldEnv) The environment to act in.
+            state: (np.ndarray) The state to pass into the model.
+
+        Return:
+            int: The action chosen by the model.
+            tuple[int, ...]: A location tuple indicating the attempted
+            location of the agent.
+        """
+
+        # Take the model action
+        action = self.model.take_action(state)
+        
+        # Attempt the transition
+        attempted_location = self.movement(action)
+        # Generate beams, if necessary
+        if action in [4, 5]:
+            self.spawn_beam(env, action)
+            attempted_location = self.location
+        
+        return action, attempted_location
+
+
     def spawn_beam(self, env: GridworldEnv, action):
         """Generate a beam extending cfg.agent.agent.beam_radius pixels
         out in front of the agent."""
@@ -174,6 +207,7 @@ class CleanupAgent(Agent):
                 env.remove(loc.to_tuple())
                 env.add(loc.to_tuple(), ZapBeam(self.cfg, env.appearances["ZapBeam"]))
 
+
     def pov(self, env: GridworldEnv) -> np.ndarray:
         """
         Defines the agent's visual field function.
@@ -200,6 +234,7 @@ class CleanupAgent(Agent):
 
         return current_state
 
+
     def embed_loc(self, env: GridworldEnv) -> np.ndarray:
         """
         Obtain the agent's positional embedding.
@@ -213,6 +248,7 @@ class CleanupAgent(Agent):
         return positional_embedding(
             self.location, env, self.embedding_size, self.embedding_size
         )
+
 
     def current_state(self, env: GridworldEnv) -> np.ndarray:
         """
@@ -235,6 +271,7 @@ class CleanupAgent(Agent):
 
         return current_state
 
+
     def add_memory(
         self, state: np.ndarray, action: int, reward: float, done: bool
     ) -> None:
@@ -248,16 +285,20 @@ class CleanupAgent(Agent):
         """
         self.model.memory.add(state, action, reward, done)
 
-    def transition(self, env: GridworldEnv, action: int):
+
+    def add_final_memory(self, env: GridworldEnv) -> None:
+        """Add the last memory to the memory buffer."""
+        state = self.current_state(env)
+        self.model.memory.add(state, 0, 0.0, float(True))
+        
+
+    def transition(self, env: GridworldEnv) -> tuple[np.ndarray, int, float, bool]:
         """Changes the world based on action taken."""
         reward = 0
 
-        # Attempt the transition
-        attempted_location = self.act(action)
+        current_state = self.current_state(env)
 
-        # Generate beams, if necessary
-        if action in [4, 5]:
-            self.spawn_beam(env, action)
+        action, attempted_location = self.act(current_state)
 
         # Get the candidate reward objects
         reward_locations = [
@@ -273,15 +314,9 @@ class CleanupAgent(Agent):
         for obj in reward_objects:
             reward += obj.value
 
-        # Get the next state
-        location_code = positional_embedding(self.location, env, 3, 3)
-        direction = one_hot_encode(self.direction, 4)
-        # next_state = np.concatenate(
-        #     [self.pov(env).flatten(), location_code, direction]
-        # ).reshape(1, -1)
-        next_state = self.pov_stack(env)
+        # Return S, A, R, D
+        return current_state, action, reward, False
 
-        return reward, next_state, False
 
     def reset(self, env: GridworldEnv) -> None:
         # self.model.memory.clear()
@@ -305,6 +340,7 @@ class Beam(Entity):
         self.cfg = cfg
         self.sprite = f"{cfg.root}/examples/cleanup/assets/beam.png"
         self.turn_counter = 0
+
 
     def transition(self, env: GridworldEnv):
         # Beams persist for one full turn, then disappear.

@@ -6,7 +6,7 @@
 import numpy as np
 
 # Import gem-specific packages
-from agentarium.primitives import GridworldEnv
+from agentarium.primitives import GridworldEnv, Entity
 from examples.cleanup.entities import (
     EmptyEntity,
     Sand,
@@ -17,7 +17,7 @@ from examples.cleanup.entities import (
     Apple
 )
 from examples.cleanup.agents import (
-    Agent, color_map
+    CleanupAgent, color_map
 )
 from examples.trucks.config import Cfg
 
@@ -30,7 +30,7 @@ class Cleanup(GridworldEnv):
   def __init__(
     self,
     cfg: Cfg,
-    agents: list[Agent]
+    agents: list[CleanupAgent]
   ):
     self.cfg = cfg
     self.channels = cfg.env.channels # default: # of entity classes + 1 (agent class) + 2 (beam types)
@@ -43,6 +43,7 @@ class Cleanup(GridworldEnv):
     self.pollution = 0
     super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(cfg, self.appearances['EmptyEntity']))
     self.mode = "APPLE"
+    self.turn = 0
     self.populate()
   
   def populate(self) -> None:
@@ -98,7 +99,7 @@ class Cleanup(GridworldEnv):
       loc = tuple(loc)
       self.add(loc, agent)
 
-  def get_entities_for_transition(self):
+  def get_entities_for_transition(self) -> list[Entity]:
     entities = []
     for index, x in np.ndenumerate(self.world):
       if (x.kind != "Wall") and (x.kind != "Agent"):
@@ -138,6 +139,26 @@ class Cleanup(GridworldEnv):
     
     self.world[location] = new_object
     new_object.location = location
+
+  def transition(self) -> None:
+    """
+    Environment transition function.
+    """
+
+    self.turn += 1
+
+    for entity in self.get_entities_for_transition():
+      entity.transition(self)
+
+    for agent in self.agents:
+      state, action, reward, done = agent.transition(self)
+      agent.add_memory(state, action, reward, done)
+
+      if self.turn >= self.cfg.experiment.max_turns or done:
+        agent.add_final_memory(self)
+
+      
+
 
   def reset(self):
     """Reset the environment."""
