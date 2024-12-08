@@ -16,6 +16,7 @@ class GridworldEnv:
         - :attr:`layers` - The number of layers that the gridworld has.
         - :attr:`default_entity` - The entity that the gridworld is filled with at creation by default.
         - :attr:`world` - A representation of the gridworld as a Numpy array of Entities, with dimensions height x width x layers.
+        - :attr:`turn` - The number of turns taken by the environment.
     """
 
     height: int
@@ -24,6 +25,7 @@ class GridworldEnv:
     default_entity: Entity
 
     world: np.array
+    turn: int
 
     def __init__(self, height: int, width: int, layers: int, default_entity: Entity):
         self.height = height
@@ -31,6 +33,7 @@ class GridworldEnv:
         self.layers = layers
         self.default_entity = default_entity
         self.create_world()
+        self.turn = 0
 
     def create_world(self):
         """
@@ -45,10 +48,6 @@ class GridworldEnv:
         for index, x in np.ndenumerate(self.world):
             self.world[index] = self.default_entity
             self.world[index].location = index
-
-    # --------------------------- #
-    # region: helper functions    #
-    # --------------------------- #
 
     def add(self, target_location: Location, entity: Entity) -> None:
         """
@@ -110,6 +109,20 @@ class GridworldEnv:
         """
         return self.world[target_location]
 
+    def take_turn(self) -> None:
+        """
+        Performs a full step in the environment.
+
+        This function iterates through the environment and performs transition() for each entity.
+        """
+        for _, x in np.ndenumerate(self.world):
+            x.transition(self)
+        self.turn += 1
+
+    # --------------------------- #
+    # region: utility functions   #
+    # --------------------------- #
+
     def valid_location(self, index: tuple[int, ...] | Location) -> bool:
         """
         Check if the given index is in the world.
@@ -157,6 +170,6 @@ class GridworldEnv:
                 entities.append(x)
         return entities
 
-    # --------------------------- #
-    # endregion: helper functions #
-    # --------------------------- #
+    # ---------------------------- #
+    # endregion: utility functions #
+    # ---------------------------- #

@@ -6,19 +6,18 @@
 
 ## Methods
 
+### Abstract Methods
 ```{eval-rst}
-.. note::
-    The following methods are provided for you. You might override them in your own implementation if necessary.
-
-.. automethod:: agentarium.primitives.Agent.add_memory
-
-.. note::
-    The following methods are abstract and therefore must be implemented in any class that inherits this class.
-
-.. automethod:: agentarium.primitives.Agent.act
-.. automethod:: agentarium.primitives.Agent.pov
-.. automethod:: agentarium.primitives.Agent.transition
 .. automethod:: agentarium.primitives.Agent.reset
+.. automethod:: agentarium.primitives.Agent.pov
+.. automethod:: agentarium.primitives.Agent.get_action
+.. automethod:: agentarium.primitives.Agent.act
+.. automethod:: agentarium.primitives.Agent.is_done
+```
+### Non-Abstract Methods
+```{eval-rst}
+.. automethod:: agentarium.primitives.Agent.add_memory
+.. automethod:: agentarium.primitives.Agent.transition
 ```
 
 ## Attributes

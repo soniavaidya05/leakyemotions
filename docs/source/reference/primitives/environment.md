@@ -11,6 +11,7 @@
 .. automethod:: agentarium.primitives.GridworldEnv.remove
 .. automethod:: agentarium.primitives.GridworldEnv.move
 .. automethod:: agentarium.primitives.GridworldEnv.observe
+.. automethod:: agentarium.primitives.GridworldEnv.take_turn
 .. automethod:: agentarium.primitives.GridworldEnv.valid_location
 ```
 
@@ -43,4 +44,8 @@
 .. autoattribute:: agentarium.primitives.GridworldEnv.world
 
     A representation of the gridworld as a Numpy array of Entities, with dimensions height x width x layers.
+    
+.. autoattribute:: agentarium.primitives.GridworldEnv.turn
+
+    The number of turns taken by the environment.
 ```

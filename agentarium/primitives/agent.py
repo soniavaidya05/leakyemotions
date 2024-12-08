@@ -45,6 +45,65 @@ class Agent(Entity):
         self.vision = cfg.agent.agent.vision
         self.has_transitions = True
 
+    @abc.abstractmethod
+    def reset(self) -> None:
+        """
+        Reset the agent (and its memory).
+        """
+        pass
+
+    @abc.abstractmethod
+    def pov(self, env: GridworldEnv) -> np.ndarray:
+        """
+        Defines the agent's observation function.
+
+        Args:
+            env (GridworldEnv): the environment that this agent is observing.
+
+        Returns:
+            torch.Tensor: the observed state.
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_action(self, state: np.ndarray) -> int:
+        """
+        Gets the action to take based on the current state from the agent's model.
+
+        Args:
+            state (torch.Tensor): the current state observed by the agent.
+
+        Returns:
+            int: the action chosen by the agent's model given the state.
+        """
+        pass
+
+    @abc.abstractmethod
+    def act(self, env: GridworldEnv, action: int) -> float:
+        """Act on the environment.
+
+        Args:
+            action: an element from this agent's action space indicating the action to take.
+
+        Returns:
+            float: the reward associated with the action taken.
+        """
+        pass
+
+    @abc.abstractmethod
+    def is_done(self, env: GridworldEnv) -> bool:
+        """Determines if the agent is done acting given the environment.
+
+        This might be based on the experiment's maximum number of turns from the agent's cfg file.
+
+        Args:
+            env (GridworldEnv): the environment that the agent is in.
+
+        Returns:
+            bool: whether the agent is done acting. False by default.
+        """
+        pass
+
     def add_memory(
         self, state: np.ndarray, action: int, reward: float, done: bool
     ) -> None:
@@ -58,49 +117,21 @@ class Agent(Entity):
         """
         self.model.memory.add(state, action, reward, done)
 
-    @abc.abstractmethod
-    def act(self, action) -> tuple[int, ...]:
-        """Act on the environment.
-
-        Args:
-            action: an element from this agent's action space indicating the action to take.
-
-        Returns:
-            tuple[int, ...]: A location tuple indicating the updated location of the agent.
+    def transition(self, env: GridworldEnv) -> None:
         """
-        pass
+        Processes a full transition step for the agent.
 
-    @abc.abstractmethod
-    def pov(self, env: GridworldEnv) -> torch.Tensor:
-        """
-        Defines the agent's observation function.
-
-        Args:
-            env (GridworldEnv): the environment that this agent is observing.
-
-        Returns:
-            torch.Tensor: the observed information.
-        """
-        pass
-
-    @abc.abstractmethod
-    def transition(self, env: GridworldEnv, state, action) -> torch.Tensor:
-        """
-        Changes the environment based on action taken by the agent.
+        This function does the following:
+        - Get the current state from the environment through :func:`pov()`
+        - Get the action based on the current state through :func:`get_action()`
+        - Changes the environment based on the action and obtains the reward through :func:`act()`
+        - Determines if the agent is done through :func:`is_done()`
 
         Args:
             env (GridworldEnv): the environment that this agent is acting in.
-            state: the current state.
-            action: an element from this agent's action space indicating the action taken.
-
-        Returns:
-            torch.Tensor: the result of the transition.
         """
-        pass
-
-    @abc.abstractmethod
-    def reset(self) -> None:
-        """
-        Reset the agent (and its memory).
-        """
-        pass
+        state = self.pov(env)
+        action = self.get_action(state)
+        reward = self.act(env, action)
+        done = self.is_done(env)
+        self.add_memory(state, action, reward, done)
