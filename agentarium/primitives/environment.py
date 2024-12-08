@@ -115,9 +115,9 @@ class GridworldEnv:
 
         This function iterates through the environment and performs transition() for each entity.
         """
+        self.turn += 1
         for _, x in np.ndenumerate(self.world):
             x.transition(self)
-        self.turn += 1
 
     # --------------------------- #
     # region: utility functions   #
