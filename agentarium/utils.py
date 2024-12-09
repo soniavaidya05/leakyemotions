@@ -44,7 +44,7 @@ def visual_field_sprite(
     """
 
     # get wall sprite
-    wall_sprite = GridworldEnv.get_entities_(world, "Wall")[0].sprite
+    wall_sprite = GridworldEnv.get_entities_of_kind(world, "Wall")[0].sprite
 
     # If no location is provided, place the location on the centre of the map with enough space to see the whole world map
     if location is None:
