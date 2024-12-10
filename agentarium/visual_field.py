@@ -3,7 +3,7 @@ from typing import Optional
 
 import jax
 import numpy as np
-from numpy.typing import ArrayLike
+from typing import Sequence
 
 # Import gem packages
 from agentarium.primitives import GridworldEnv
@@ -13,7 +13,7 @@ from agentarium.utils import shift
 def visual_field(
     world: np.ndarray,
     color_map=None,
-    location: Optional[ArrayLike] = None,
+    location: Optional[Sequence] = None,
     vision: Optional[int] = None,
     channels: int = 5,
     return_rgb=False,
@@ -119,7 +119,7 @@ def visual_field(
 def visual_field_multilayer(
     world: np.ndarray,
     color_map=None,
-    location: Optional[ArrayLike] = None,
+    location: Optional[Sequence] = None,
     vision: Optional[int] = None,
     channels: int = 5,
     return_rgb=False,
