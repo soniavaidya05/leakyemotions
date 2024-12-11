@@ -7,6 +7,12 @@ class Location(tuple):
 
     This class provides additional functionality for calculations, such as addition and scalar multiplication.
     Since it is a subclass of tuple, Location objects are immutable.
+
+    Examples:
+        >>> Location(1, 2, 3) + Location(2, 4, 8)
+        Location(3, 6, 11)
+        >>> Location(2, 4) * 3
+        Location(6, 12)
     """
 
     def __init__(self, *coords):
@@ -129,6 +135,24 @@ class Location(tuple):
 
 
 class Vector:
+    """
+    A class that represents vectors. Handy for calculations involving beams and more.
+
+    Attributes:
+        - :attr:`forward`: The number of steps forward.
+        - :attr:`right`: The number of steps right.
+        - :attr:`backward`: (Optional) The number of steps backward. Since negative vectors are supported, this can be carried by the forward value.
+        - :attr:`left`: (Optional) The number of steps left. Since negative vectors are supported, this can be carried by the right value.
+        - :attr:`layer`: (Optional) The number of layers up (positive) or down (negative).
+        - :attr:`direction`: (Optional) A compass direction. 0 = NORTH, 1 = EAST, 2 = SOUTH, 3 = WEST.
+    """
+
+    forward: int
+    right: int
+    backward: int
+    left: int
+    layer: int
+    direction: int
 
     def __init__(
         self,
