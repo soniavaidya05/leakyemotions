@@ -1,10 +1,9 @@
 import abc
-from typing import Any
 
 import numpy as np
-import torch
 
 from agentarium.config import Cfg
+from agentarium.models import AgentariumModel
 from agentarium.primitives.environment import Entity, GridworldEnv
 
 
@@ -29,7 +28,7 @@ class Agent(Entity):
     """
 
     cfg: Cfg
-    model: Any
+    model: AgentariumModel
     action_space: list[int]
 
     def __init__(self, cfg: Cfg, appearance, model, action_space, location=None):
@@ -42,7 +41,7 @@ class Agent(Entity):
         super().__init__(appearance)
 
         # overriding parent default attributes
-        self.vision = cfg.agent.agent.vision
+        self.vision = cfg.agent.agent.obs.vision
         self.has_transitions = True
 
     @abc.abstractmethod

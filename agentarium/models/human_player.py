@@ -1,49 +1,59 @@
-from matplotlib import pyplot as plt
 import numpy as np
+from typing import Sequence
 from IPython.display import clear_output
+from agentarium.models import AgentariumModel
+from agentarium.buffers import ClaasyReplayBuffer
+from agentarium.utils import plot
 
-class ModelHumanPlayer:
+class HumanPlayer(AgentariumModel):
+  """
+  Model subclass for a human player
+  """
+  def __init__(
+      self, 
+      input_size: Sequence[int], 
+      action_space: int,
+      memory_size: int,
+      show: bool = True
+    ):
+    self.name = ""
+    self.action_space = np.arange(action_space)
+    self.input_size = input_size
+    # TODO: add way to review/revisit previous memories using buffer?
+    self.memory = ClaasyReplayBuffer(
+      capacity=memory_size, obs_shape=input_size
+    )
+    self.num_frames = memory_size
+    self.show = show
 
-    def __init__(self, action_space, state_size, memory_size):
-        self.name = "iqn"
-        self.action_space = np.arange(action_space)
-        self.state_size = state_size
-        self.memory_size = memory_size
-        self.num_frames = memory_size
-        self.show = False
+  def take_action(self, state: np.ndarray | list[np.ndarray]):
+    """Observe a visual field sprite output."""
+    
+    if self.show:
+      clear_output(wait = True)
+      plot(state)
+    
+    done = False
+    while not done:
+      action_ = input("Select Action: ")
+      if action_ in ["w", "a", "s", "d"]:
+        if action_ == "w":
+          action = 0
+        elif action_ == "s":
+          action = 1
+        elif action_ == "a":
+          action = 2
+        elif action_ == "d":
+          action = 3
+      elif action_ in [str(act) for act in self.action_space]:
+        action = int(action_)
+      else:
+        print("Please try again. Possible actions are below.")
+        print(self.action_space)
+      if action is not None:
+        if action in self.action_space:
+          done = True
 
-    def take_action(self, state):
-        
-        if self.show:
-            clear_output(wait = True)
-            for i in range(self.memory_size):
-                frame = state[:, i, :, :, :].squeeze().permute(1, 2, 0).numpy().astype(np.uint8)
-                plt.subplot(1, self.memory_size, i+1)
-                plt.imshow(frame)
-            plt.show()
-        
-        done = 0
-        while done == 0:
-            action_ = input("Select Action: ")
-            if action_ in ["w", "a", "s", "d"]:
-                if action_ == "w":
-                    action = 0
-                elif action_ == "s":
-                    action = 1
-                elif action_ == "a":
-                    action = 2
-                elif action_ == "d":
-                    action = 3
-            elif action_ in [str(act) for act in self.action_space]:
-                action = int(action_)
-            else:
-                print("Please try again. Possible actions are below.")
-                print(self.action_space)
-                # we can have iinputType above also be joystick, or other controller
-            if action is not None:
-                if action in self.action_space:
-                    done = 1
-
-        return action
+    return action
 
 

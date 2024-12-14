@@ -87,7 +87,7 @@ class Apple(Entity):
     agent_location = self.location[0], self.location[1], env.agent_layer
     
     # If there is an agent on this tile, spawn an apple tree tile
-    if env.world[agent_location].kind == "Agent":
+    if env.world[agent_location].kind == "CleanupAgent":
       env.spawn(self.location)
 
 # --------------------------------------------------- #

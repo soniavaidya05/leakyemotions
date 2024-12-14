@@ -152,8 +152,7 @@ class GridworldEnv:
                 return False
         return True
 
-    @staticmethod
-    def get_entities_of_kind(world, kind: str) -> list[Entity]:
+    def get_entities_of_kind(self, kind: str) -> list[Entity]:
         """
         Given the kind of an entity, return a list of entities in a world that are the same kind.
 
@@ -165,7 +164,7 @@ class GridworldEnv:
             list[Entity]: a list of all entities in the world that have the same kind.
         """
         entities = []
-        for _, x in np.ndenumerate(world):
+        for _, x in np.ndenumerate(self.world):
             if x.kind == kind:
                 entities.append(x)
         return entities

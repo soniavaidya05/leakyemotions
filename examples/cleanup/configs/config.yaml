@@ -8,9 +8,8 @@ env:
   height: 21
   width: 31
   layers: 3
-  default_object: EmptyObject
+  default_object: EmptyEntity
   full_mdp: False
-  vision: 4
   pollution_threshold: 1.0
   initial_apples: 20
   apple_spawn_chance: 0.002
@@ -20,11 +19,11 @@ model:
   iqn:
     type: iRainbowModel
     parameters:
-      action_size: 4
+      action_space: 4
       layer_size: 250
       n_step: 3
       BATCH_SIZE: 64
-      BUFFER_SIZE: 1024
+      memory_size: 1024
       LR: 0.00025
       TAU: .001
       GAMMA: 0.99

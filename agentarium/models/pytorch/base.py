@@ -4,16 +4,16 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from typing import Union
-from numpy.typing import ArrayLike
+from typing import Sequence
+from agentarium.models import AgentariumModel
 
-class ANN(nn.Module):  
+class PyTorchModel(nn.Module, AgentariumModel):  
     '''
-    Generic abstract neural network model class with helper functions common across all models
+    Generic abstract PyTorch model.
 
     Parameters:
-        state_size: (ArrayLike) The dimensions of the input state, not including batch or timesteps. \n
-        action_size: (int) The number of model outputs.
+        input_size: (Sequence[int]) The dimensions of the input state, not including batch or timesteps. \n
+        action_space: (int) The number of model outputs.
         layer_size: (int) The size of hidden layers.
         epsilon: (float) The rate of epsilon-greedy actions.
         device: (Union[str, torch.device]) The device to perform computations on.
@@ -23,24 +23,25 @@ class ANN(nn.Module):
 
     def __init__(
         self,
-        state_size: ArrayLike,
-        action_size: int,
+        input_size: Sequence[int],
+        action_space: int,
         layer_size: int,
         epsilon: float,
-        device: Union[str, torch.device],
+        device: str | torch.device,
         seed: int
         ):
 
-        super(ANN, self).__init__()
-        self.state_size = state_size
-        self.action_size = action_size
+        super().__init__()
+        self.input_size = input_size
+        self.action_space = action_space
         self.layer_size = layer_size
         self.epsilon = epsilon
         self.device = device
         self.seed = torch.manual_seed(seed)
+        self.optimizer: torch.optim.Adam = None
 
     def __str__(self):
-        return f'{self.__class__.__name__}(in_size={np.array(self.state_size).prod()},out_size={self.action_size})'
+        return f'{self.__class__.__name__}(in_size={np.array(self.input_size).prod()},out_size={self.action_space})'
 
     # ---------------------------------- #
     # region: Abstract methods           #
@@ -49,7 +50,7 @@ class ANN(nn.Module):
     # ---------------------------------- #
 
     @abc.abstractmethod
-    def train_model(self) -> torch.Tensor:
+    def train_step(self) -> torch.Tensor:
         '''
         Update value parameters.
         '''
@@ -62,7 +63,6 @@ class ANN(nn.Module):
         '''
         pass
 
-    @abc.abstractmethod
     def start_epoch_action(self):
         '''
         Actions for the model to perform before it interacts
@@ -74,7 +74,6 @@ class ANN(nn.Module):
         '''
         pass
 
-    @abc.abstractmethod
     def end_epoch_action(self):
         '''
         Actions for the model to perform after it interacts
@@ -93,23 +92,50 @@ class ANN(nn.Module):
     # region: Helper functions           #
     # ---------------------------------- #
 
-    def set_epsilon(self, new_epsilon: float) -> None:
+    def save(
+        self, 
+        file_path: str | os.PathLike
+    ) -> None:
         '''
-        Replaces the current model epsilon with the provided value.
+        Save the model weights and parameters in the specified location.
+
+        Parameters:
+            file_path: The full path to the model, including file extension.
         '''
-        self.epsilon = new_epsilon
+        torch.save(
+            {
+                'model': self.state_dict(),
+                'optimizer': self.optimizer.state_dict(),
+            },
+            file_path
+        )
+
+    def load(
+        self, 
+        file_path: str | os.PathLike
+    ) -> None:
+        '''
+        Load the model weights and parameters from the specified location.
+
+        Parameters:
+            file_path: The full path to the model, including file extension.
+        '''
+        checkpoint = torch.load(file_path)
+
+        self.load_state_dict(checkpoint['model'])
+        self.optimizer.load_state_dict(checkpoint['target'])
 
     # ---------------------------------- #
     # endregion: Helper functions        #
     # ---------------------------------- #
 
-class DoubleANN(ANN):
+class DoublePyTorchModel(PyTorchModel):
     '''
     Generic abstract neural network model class with helper functions common across all models
 
     Parameters:
-        state_size: (ArrayLike) The dimensions of the input state, not including batch or timesteps. \n
-        action_size: (int) The number of model outputs.
+        input_size: (Sequence[int]) The dimensions of the input state, not including batch or timesteps. \n
+        action_space: (int) The number of model outputs.
         layer_size: (int) The size of hidden layers.
         epsilon: (float) The rate of epsilon-greedy actions.
         device: (Union[str, torch.device]) The device to perform computations on.
@@ -120,21 +146,20 @@ class DoubleANN(ANN):
 
     def __init__(
         self,
-        state_size: ArrayLike,
-        action_size: int,
+        input_size: Sequence[int],
+        action_space: int,
         layer_size: int,
         epsilon: float,
-        device: Union[str, torch.device],
+        device: str | torch.device,
         seed: int,
         ):
-        super(DoubleANN, self).__init__(state_size, action_size, layer_size, epsilon, device, seed)
+        super().__init__(input_size, action_space, layer_size, epsilon, device, seed)
 
-        self.models = {'local': None, 'target': None}
-        self.optimizer = None
+        self.models: dict[str, nn.Module] = {'local': None, 'target': None}
 
     def save(
         self, 
-        file_path: Union[str, os.PathLike]
+        file_path: str | os.PathLike
     ) -> None:
         '''
         Save the model weights and parameters in the specified location.
@@ -153,7 +178,7 @@ class DoubleANN(ANN):
 
     def load(
         self, 
-        file_path: Union[str, os.PathLike]
+        file_path: str | os.PathLike
     ) -> None:
         '''
         Load the model weights and parameters from the specified location.

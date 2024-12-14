@@ -11,11 +11,9 @@ from agentarium.utils import shift
 
 
 def visual_field(
-    world: np.ndarray,
-    color_map=None,
+    env: GridworldEnv,
     location: Optional[Sequence] = None,
     vision: Optional[int] = None,
-    channels: int = 5,
     return_rgb=False,
 ) -> np.ndarray:
     """
@@ -30,7 +28,9 @@ def visual_field(
     Returns:
         An np.ndarray of C x H x W, determined either by the world size or the vision size.
     """
-    C = channels  # Number of channels
+    C = env.channels  # Number of channels
+    world = env.world
+    color_map = env.appearances
     if return_rgb:
         C = 3
         colors = color_map(C)
@@ -40,7 +40,7 @@ def visual_field(
         :, :, :, 0
     ]
     # Get wall appearance from the world object (just pick the first wall object for simplicity)
-    wall_appearance = GridworldEnv.get_entities_of_kind(world, "Wall")[0].appearance
+    wall_appearance = env.get_entities_of_kind("Wall")[0].appearance
 
     # Iterate through the world and assign the appearance of the object at that location
     for index, _ in np.ndenumerate(world[:, :, 0]):
@@ -117,11 +117,9 @@ def visual_field(
 
 
 def visual_field_multilayer(
-    world: np.ndarray,
-    color_map=None,
+    env: GridworldEnv,
     location: Optional[Sequence] = None,
     vision: Optional[int] = None,
-    channels: int = 5,
     return_rgb=False,
 ) -> np.ndarray:
     """
@@ -136,7 +134,9 @@ def visual_field_multilayer(
     Returns:
         An np.ndarray of C x H x W, determined either by the world size or the vision size.
     """
-    C = channels  # Number of channels
+    C = env.channels  # Number of channels
+    world = env.world
+    color_map = env.appearances
     if return_rgb:
         C = 3
         colors = color_map(C)
@@ -146,7 +146,7 @@ def visual_field_multilayer(
         [np.zeros_like(world, dtype=np.float64) for _ in range(C)], axis=0
     ).squeeze()
     # Get wall appearance from the world object (just pick the first wall object for simplicity)
-    wall_appearance = GridworldEnv.get_entities_of_kind(world, "Wall")[0].appearance
+    wall_appearance = env.get_entities_of_kind("Wall")[0].appearance
 
     # Iterate through the world and assign the appearance of the object at that location
     for layer in range(world.shape[-1]):
@@ -160,6 +160,8 @@ def visual_field_multilayer(
                     new[:, H, W] = colors[world[H, W, layer].kind]
             else:
                 if world.shape[-1] > 1:
+                    # print(world[H, W, layer].appearance)
+                    # print(world[H, W, layer])
                     new[:, H, W, layer] = world[H, W, layer].appearance
                 else:
                     new[:, H, W] = world[H, W, layer].appearance

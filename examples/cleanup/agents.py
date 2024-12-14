@@ -5,6 +5,7 @@ from agentarium.location import Location, Vector
 from agentarium.primitives import Agent, Entity, GridworldEnv
 from agentarium.utils import one_hot_encode
 from agentarium.visual_field import visual_field_multilayer
+from agentarium.utils import visual_field_sprite
 
 # --------------------------- #
 # region: Cleanup agent class #
@@ -17,15 +18,15 @@ class CleanupAgent(Agent):
     def __init__(self, cfg, model):
 
         # Instantiate basic agent
-        appearance = color_map(cfg.obs.channels)
+        appearance = color_map(cfg.agent.agent.obs.channels)['Agent']
         action_space = [0, 1, 2, 3, 4, 5, 6]
         super().__init__(cfg, appearance, model, action_space)
 
         # Additional attributes
-        self.num_frames = cfg.obs.num_frames
-        self.embedding_size = cfg.obs.embeddings
+        self.num_frames = self.cfg.agent.agent.obs.num_frames
+        self.embedding_size = self.cfg.agent.agent.obs.embeddings
         self.direction = 2  # 90 degree rotation: default at 180 degrees (facing down)
-        self.rotation = cfg.agent.agent.rotation
+        self.rotation = self.cfg.agent.agent.rotation
         self.sprite_path = f"{cfg.root}/examples/cleanup/assets/"
         self._sprite = self.sprite_path + "hero" + ".png"
 
@@ -53,18 +54,19 @@ class CleanupAgent(Agent):
             "hero",  # down
             "hero-left",  # left
         ]
-        self.sprite(sprite_directions[self.direction])
+        self.sprite = sprite_directions[self.direction]
 
 
     def init_replay(self, env: GridworldEnv) -> None:
         """Fill in blank images for the memory buffer."""
 
-        state = np.zeros_like(self.current_state(env))
-        action = 0  # Action outside the action space
-        reward = 0.0
-        done = 0.0
-        for _ in range(self.num_frames):
-            self.model.memory.add(state, action, reward, done)
+        if self.model.model_name != "HumanPlayer":
+            state = np.zeros_like(self.pov(env))
+            action = 0  # Action outside the action space
+            reward = 0.0
+            done = 0.0
+            for i in range(self.num_frames):
+                self.add_memory(state[0, i, :], action, reward, done)
 
 
     def movement(self, action: int) -> tuple[int, ...]:
@@ -208,9 +210,9 @@ class CleanupAgent(Agent):
                 env.add(loc.to_tuple(), ZapBeam(self.cfg, env.appearances["ZapBeam"]))
 
 
-    def pov(self, env: GridworldEnv) -> np.ndarray:
+    def _environment_pov(self, env: GridworldEnv) -> np.ndarray:
         """
-        Defines the agent's visual field function.
+        Defines the agent's BASE visual field function.
 
         Parameters:
             env: (GridworldEnv) The environment to observe.
@@ -221,21 +223,17 @@ class CleanupAgent(Agent):
 
         # If the environment is a full MDP, get the whole world image
         if env.full_mdp:
-            image = visual_field_multilayer(
-                env.world, env.color_map, channels=env.channels
-            )
+            image = visual_field_multilayer(env)
         # Otherwise, use the agent observation function
         else:
-            image = visual_field_multilayer(
-                env.world, env.color_map, self.location, self.vision, env.channels
-            )
+            image = visual_field_multilayer(env, self.location, self.vision)
 
         current_state = image.flatten()
 
         return current_state
 
 
-    def embed_loc(self, env: GridworldEnv) -> np.ndarray:
+    def _embedding_pov(self, env: GridworldEnv) -> np.ndarray:
         """
         Obtain the agent's positional embedding.
 
@@ -250,18 +248,9 @@ class CleanupAgent(Agent):
         )
 
 
-    def current_state(self, env: GridworldEnv) -> np.ndarray:
-        """
-        Obtain the agent's observation function.
-
-        Parameters:
-            env: (GridworldEnv) The environment to observe.
-
-        Return:
-            np.ndarray: The agent's positional code.
-        """
-        pov = self.pov(env)
-        pos = self.embed_loc(env)
+    def pov(self, env: GridworldEnv) -> np.ndarray:
+        pov = self._environment_pov(env)
+        pos = self._embedding_pov(env)
         ohe = one_hot_encode(self.direction, 4)
         state = np.concatenate((pov, pos, ohe))
         prev_states = self.model.memory.current_state(
@@ -269,7 +258,8 @@ class CleanupAgent(Agent):
         )
         current_state = np.vstack((prev_states, state))
 
-        return current_state
+        # Batch size of 1
+        return current_state[np.newaxis, :]
 
 
     def add_memory(
@@ -288,7 +278,7 @@ class CleanupAgent(Agent):
 
     def add_final_memory(self, env: GridworldEnv) -> None:
         """Add the last memory to the memory buffer."""
-        state = self.current_state(env)
+        state = self.pov(env)[:, -1, :]
         self.model.memory.add(state, 0, 0.0, float(True))
         
 
@@ -296,9 +286,16 @@ class CleanupAgent(Agent):
         """Changes the world based on action taken."""
         reward = 0
 
-        current_state = self.current_state(env)
-
-        action, attempted_location = self.act(current_state)
+        if self.model.model_name == "HumanPlayer":
+            current_state = visual_field_sprite(env, location = self.location, vision = self.vision)
+            action, attempted_location = self.act(env, current_state)
+            current_state = np.vstack([layer[np.newaxis] for layer in current_state])
+        else:
+            current_state = self.pov(env)
+            # Use full state history to act
+            action, attempted_location = self.act(env, current_state)
+            # Clip to latest state only.
+            current_state = current_state[:, -1, :]
 
         # Get the candidate reward objects
         reward_locations = [
@@ -371,20 +368,21 @@ class ZapBeam(Beam):
 # --------------------------- #
 
 
-def color_map(self, C: int) -> dict:
+def color_map(self) -> dict:
     """Color map for visualization."""
+    C: int = self
     assert C in [3, 8], "Must use 3 [RGB] or 8 channels."
     if C == 8:
         colors = {
-            "EmptyEntity": [0 for _ in range(self.channels)],
-            "Agent": [255 if x == 0 else 0 for x in range(self.channels)],
-            "Wall": [255 if x == 1 else 0 for x in range(self.channels)],
-            "Apple": [255 if x == 2 else 0 for x in range(self.channels)],
-            "AppleTree": [255 if x == 3 else 0 for x in range(self.channels)],
-            "River": [255 if x == 4 else 0 for x in range(self.channels)],
-            "Pollution": [255 if x == 5 else 0 for x in range(self.channels)],
-            "CleanBeam": [255 if x == 6 else 0 for x in range(self.channels)],
-            "ZapBeam": [255 if x == 7 else 0 for x in range(self.channels)],
+            "EmptyEntity": [0 for _ in range(C)],
+            "Agent": [255 if x == 0 else 0 for x in range(C)],
+            "Wall": [255 if x == 1 else 0 for x in range(C)],
+            "Apple": [255 if x == 2 else 0 for x in range(C)],
+            "AppleTree": [255 if x == 3 else 0 for x in range(C)],
+            "River": [255 if x == 4 else 0 for x in range(C)],
+            "Pollution": [255 if x == 5 else 0 for x in range(C)],
+            "CleanBeam": [255 if x == 6 else 0 for x in range(C)],
+            "ZapBeam": [255 if x == 7 else 0 for x in range(C)],
         }
     else:
         colors = {

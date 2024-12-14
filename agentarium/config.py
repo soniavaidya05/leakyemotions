@@ -54,6 +54,9 @@ class Cfg:
             else:
                 setattr(self, key, Cfg(val) if isinstance(val, dict) else val)
 
+    def to_dict(self):
+        return self.__dict__
+
 
 def init_log(cfg: Cfg) -> None:
     print(f"╔═════════════════════════════════════════════════════╗")

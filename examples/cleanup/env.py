@@ -6,7 +6,7 @@
 import numpy as np
 
 # Import gem-specific packages
-from agentarium.primitives import GridworldEnv, Entity
+from agentarium.primitives import GridworldEnv, Entity, Agent
 from examples.cleanup.entities import (
     EmptyEntity,
     Sand,
@@ -19,7 +19,7 @@ from examples.cleanup.entities import (
 from examples.cleanup.agents import (
     CleanupAgent, color_map
 )
-from examples.trucks.config import Cfg
+from agentarium.config import Cfg
 
 # --------------------------------- #
 # endregion: Imports                #
@@ -27,13 +27,14 @@ from examples.trucks.config import Cfg
 
 class Cleanup(GridworldEnv):
   """Cleanup Environment."""
+
   def __init__(
     self,
     cfg: Cfg,
     agents: list[CleanupAgent]
   ):
     self.cfg = cfg
-    self.channels = cfg.env.channels # default: # of entity classes + 1 (agent class) + 2 (beam types)
+    self.channels = cfg.agent.agent.obs.channels # default: # of entity classes + 1 (agent class) + 2 (beam types)
     self.full_mdp = cfg.env.full_mdp
     self.agents = agents
     self.appearances = color_map(self.channels)
@@ -46,6 +47,7 @@ class Cleanup(GridworldEnv):
     self.turn = 0
     self.populate()
   
+
   def populate(self) -> None:
   
     spawn_points = []
@@ -99,13 +101,15 @@ class Cleanup(GridworldEnv):
       loc = tuple(loc)
       self.add(loc, agent)
 
+
   def get_entities_for_transition(self) -> list[Entity]:
     entities = []
     for index, x in np.ndenumerate(self.world):
-      if (x.kind != "Wall") and (x.kind != "Agent"):
+      if not isinstance(x, Wall) and not isinstance(x, Agent):
         entities.append(x)
     return entities
   
+
   def measure_pollution(self) -> float:
     pollution_tiles = 0
     river_tiles = 0
@@ -116,6 +120,7 @@ class Cleanup(GridworldEnv):
       elif x.kind == "River":
         river_tiles += 1
     return pollution_tiles / river_tiles
+
 
   def spawn(self, location) -> None:
     # Get the kind of spawn function to apply.
@@ -140,7 +145,8 @@ class Cleanup(GridworldEnv):
     self.world[location] = new_object
     new_object.location = location
 
-  def transition(self) -> None:
+
+  def take_turn(self) -> None:
     """
     Environment transition function.
     """
@@ -164,6 +170,9 @@ class Cleanup(GridworldEnv):
     """Reset the environment."""
     self.create_world()
     self.populate()
+    for agent in self.agents:
+      agent.reset(self)
+      agent.init_replay(self)
 
 
 

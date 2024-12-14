@@ -16,7 +16,6 @@ if root not in sys.path:
 # ------------------------ #
 
 from agentarium.primitives import Entity
-from agentarium.logging_utils import GameLogger
 from agentarium.config import load_config
 from agentarium.models.iqn import iRainbowModel
 

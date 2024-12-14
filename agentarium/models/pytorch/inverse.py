@@ -7,12 +7,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from numpy.typing import ArrayLike
-from typing import Union
+from typing import Sequence
 from matplotlib import pyplot as plt
 
-from gem.models.buffer import ReplayBuffer
-from gem.models.ann import ANN
+from agentarium.buffers import ReplayBuffer
+from agentarium.models.pytorch.base import PyTorchModel
 
 # --------------- #
 # endregion       #
@@ -25,7 +24,7 @@ class BC(nn.Module):
 
     def __init__(
             self,
-            state_size: ArrayLike,
+            state_size: Sequence[int],
             action_size: int,
             layer_size: int,
             n_channels: int,
@@ -107,7 +106,7 @@ class BC(nn.Module):
             future_state
         )
     
-class MLPBCModel(ANN):
+class MLPBCModel(PyTorchModel):
     '''
     MLP-based behavioural cloning model with experience replay.
     '''
@@ -115,11 +114,11 @@ class MLPBCModel(ANN):
     def __init__(
         self,
         # Base ANN parameters
-        state_size: ArrayLike,
+        state_size: Sequence[int],
         action_size: int,
         layer_size: int,
         epsilon: float,
-        device: Union[str, torch.device],
+        device: str | torch.device,
         seed: int,
         # BC model parameters
         n_channels: int,
@@ -245,13 +244,13 @@ class Encoder(nn.Module):
     '''
     def __init__(
         self,
-        state_size: ArrayLike,
+        state_size: Sequence[int],
         cnn_config
     ):
 
         pass
 
-class WorldModel(ANN):
+class WorldModel(PyTorchModel):
     '''
     Encoder-decoder inverse model. Observing another agent's current state `s`, 
     reconstruct the agent's trajectory `ŝ, â, ŝ'`. 
@@ -259,11 +258,11 @@ class WorldModel(ANN):
     def __init__(
         self,
         # Base ANN parameters
-        state_size: ArrayLike,
+        state_size: Sequence[int],
         action_size: int,
         layer_size: int,
         epsilon: float,
-        device: Union[str, torch.device],
+        device: str | torch.device,
         seed: int,
         # BC model parameters
         n_channels: int,

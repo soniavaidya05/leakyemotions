@@ -8,9 +8,8 @@ import torch
 import random
 import numpy as np
 
-from typing import Optional, Union, Sequence
+from typing import Optional, Sequence
 from matplotlib import pyplot as plt
-from numpy.typing import ArrayLike
 from PIL import Image
 from PIL.PngImagePlugin import PngImageFile
 
@@ -26,8 +25,8 @@ from agentarium.primitives import GridworldEnv
 # --------------------------- #
 
 def visual_field_sprite(
-    world: np.ndarray,
-    location: Optional[ArrayLike] = None,
+    env: GridworldEnv,
+    location: Optional[Sequence] = None,
     vision: Optional[int] = None,
     tile_size: Sequence[int] = [16, 16],
 ) -> list[np.ndarray]:
@@ -35,16 +34,21 @@ def visual_field_sprite(
     Create an agent visual field of size (2k + 1, 2k + 1) tiles
 
     Parameters:
-        location: (ArrayLike, Optional) defines the location to centre the visualization on \n
+        location: (Sequence, Optional) defines the location to centre the visualization on \n
         vision: (int, Optional) defines the size of the visualization of (2v + 1, 2v + 1) pixels \n
         tile_size: (Sequence[int]) defines the size of the sprites. Default: 16 x 16.
 
     Returns:
         A list of np.ndarrays of C x H x W, determined either by the world size or the vision size.
     """
+    world = env.world
 
     # get wall sprite
-    wall_sprite = GridworldEnv.get_entities_of_kind(world, "Wall")[0].sprite
+    wall_sprite = env.get_entities_of_kind("Wall")[0].sprite
+    
+    if env.full_mdp:
+        vision = None
+        location = None
 
     # If no location is provided, place the location on the centre of the map with enough space to see the whole world map
     if location is None:
@@ -179,8 +183,8 @@ def fig2img(fig) -> Image:
 
 def animate(
     frames: Sequence[PngImageFile],
-    filename: Union[str, os.PathLike],
-    folder: Union[str, os.PathLike],
+    filename: str | os.PathLike,
+    folder: str | os.PathLike,
 ) -> None:
     """
     Take an array of frames and assemble them into a GIF with the given path.
@@ -234,7 +238,7 @@ def random_seed() -> int:
     return seed
 
 
-def shift(array: ArrayLike, shift: Sequence, cval=np.nan) -> np.ndarray:
+def shift(array: Sequence, shift: Sequence, cval=np.nan) -> np.ndarray:
     """
     Returns copy of array shifted by offset, with fill using constant.
 
