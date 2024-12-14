@@ -49,23 +49,23 @@ class GridworldEnv:
             self.world[index] = self.default_entity
             self.world[index].location = index
 
-    def add(self, target_location: Location, entity: Entity) -> None:
+    def add(self, target_location: tuple[int, ...], entity: Entity) -> None:
         """
         Adds an entity to the world at a location, replacing any existing entity at that location.
 
         Args:
-            target_location (Location): the location of the entity.
+            target_location (tuple[int, ...]): the location of the entity.
             entity (Entity): the entity to be added.
         """
         entity.location = target_location
         self.world[target_location] = entity
 
-    def remove(self, target_location: Location) -> Entity:
+    def remove(self, target_location: tuple[int, ...]) -> Entity:
         """
         Remove the entity at a location.
 
         Args:
-            target_location (Location): the location of the entity.
+            target_location (tuple[int, ...]): the location of the entity.
 
         Returns:
             Entity: the entity previously at the given location.
@@ -75,13 +75,13 @@ class GridworldEnv:
         self.world[target_location].location = target_location
         return entity
 
-    def move(self, entity: Entity, new_location: Location) -> bool:
+    def move(self, entity: Entity, new_location: tuple[int, ...]) -> bool:
         """
         Move an entity to a new location.
 
         Args:
             entity (Entity): entity to be moved.
-            new_location (Location): location to move the entity to.
+            new_location (tuple[int, ...]): location to move the entity to.
 
         Returns:
             bool: True if move was successful (i.e. the entity currently at new_location is passable), False otherwise.
@@ -97,12 +97,12 @@ class GridworldEnv:
         else:
             return False
 
-    def observe(self, target_location: Location) -> Entity:
+    def observe(self, target_location: tuple[int, ...]) -> Entity:
         """
         Observes the entity at a location.
 
         Args:
-            target_location (Location): the location to observe.
+            target_location (tuple[int, ...]): the location to observe.
 
         Returns:
             Entity: the entity at the observed location.
@@ -116,6 +116,7 @@ class GridworldEnv:
         This function iterates through the environment and performs transition() for each entity.
         """
         self.turn += 1
+        # TODO: transition agents & entities separately?
         for _, x in np.ndenumerate(self.world):
             x.transition(self)
 
@@ -123,12 +124,12 @@ class GridworldEnv:
     # region: utility functions   #
     # --------------------------- #
 
-    def valid_location(self, index: tuple[int, ...] | Location) -> bool:
+    def valid_location(self, index: tuple[int, ...]) -> bool:
         """
         Check if the given index is in the world.
 
         Args:
-            index (tuple[int, ...] | Location): A tuple of coordinates or a Location object.
+            index (tuple[int, ...]): A tuple of coordinates or a Location object.
 
         Returns:
             bool: Whether the index is in env.world.

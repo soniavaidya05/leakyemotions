@@ -17,6 +17,7 @@ tutorials/configuration_files
 reference/primitives
 reference/models
 reference/config
+reference/location
 ```
 
 ```{toctree}

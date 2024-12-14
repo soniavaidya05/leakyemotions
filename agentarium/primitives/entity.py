@@ -23,7 +23,7 @@ class Entity:
     """
 
     appearance: Any
-    location: Optional[Location]
+    location: Optional[tuple[int, ...]]
     value: float
     passable: bool
     has_transitions: bool

@@ -1,19 +1,41 @@
 from __future__ import annotations
 
 
-class Location:
-    def __init__(self, *dims):
-        """Initialize a Location object.
+class Location(tuple):
+    """
+    A custom subclass of tuple that represents a location in the environment.
+
+    This class provides additional functionality for calculations, such as addition and scalar multiplication.
+    Since it is a subclass of tuple, Location objects are immutable.
+
+    Examples:
+        >>> Location(1, 2, 3) + Location(2, 4, 8)
+        Location(3, 6, 11)
+        >>> Location(2, 4) * 3
+        Location(6, 12)
+    """
+
+    def __init__(self, *coords):
+        """Initialize the Location object's attibutes for calculations.
 
         Parameters:
-            *dims: An unpacked tuple of coordinates. Supports up to three (x, y, z)."""
-        self.dims = len(dims)
-        self.x = dims[0]
-        self.y = dims[1]
+            *coords: An unpacked tuple of coordinates. Supports up to three (x, y, z).
+        """
+        self.dims = len(coords)
+        self.x = coords[0]
+        self.y = coords[1]
         if self.dims > 2:
-            self.z = dims[2]
+            self.z = coords[2]
         else:
             self.z = 0
+
+    def __new__(cls, *coords):
+        """Instantiate a new Location object.
+
+        Parameters:
+            *coords: An unpacked tuple of coordinates. Supports up to three (x, y, z).
+        """
+        return super().__new__(cls, coords)
 
     def to_tuple(self) -> tuple[int, ...]:
         """Cast the Location back to a tuple."""
@@ -28,97 +50,117 @@ class Location:
     def __str__(self):
         return repr(self)
 
-    def __add__(self, other) -> Location:
-        """Add a location or vector.
+    def __add__(self, other: tuple | Vector) -> Location:
+        """Add a coordinate or a vector to this location.
 
         Params:
-            other: An object of type Location or Vector.
+            other (tuple | Vector): A set of coordinates (can be a Location object) or a vector.
 
         Return:
-            Location: The new location."""
+            Location: The resulting location."""
 
-        # Add location
-        if isinstance(other, Location):
-            return Location(self.x + other.x, self.y + other.y, self.z + other.z)
+        # Add a tuple/Location
+        if isinstance(other, tuple):
+            if len(other) == 2:
+                return Location(self.x + other[0], self.y + other[1], self.z)
+            else:
+                return Location(self.x + other[0], self.y + other[1], self.z + other[2])
 
         # Add a vector
         elif isinstance(other, Vector):
             return self + other.compute()
 
-        # Add a tuple
-        elif isinstance(other, tuple):
-            if self.dims == 2:
-                return Location(self.x + other[0], self.y + other[1])
-            elif len(other) == 2:
-                return Location(self.x + other[0], self.y + other[1], self.z)
-            else:
-                return Location(self.x + other[0], self.y + other[1], self.z + other[2])
-
-        # Unimplemented
+        # TypeError
         else:
-            raise NotImplementedError
+            raise TypeError(
+                "Unable to add object of type "
+                + type(other).__name__
+                + " to a Location."
+            )
 
-    def __mul__(self, other) -> Location:
-        """Multiply a location by an integer amount."""
+    def __mul__(self, other: int) -> Location:
+        """Multiply a location by an integer amount (scalar multiplication).
+
+        Params:
+            other (int): The scalar to multiply by.
+
+        Returns:
+            Location: The resulting location.
+        """
 
         if isinstance(other, int):
             return Location(self.x * other, self.y * other, self.z * other)
 
-        # Unimplemented
+        # Unimplemented; we may want to implement other types of products in the future?
         else:
             raise NotImplementedError
 
-    def __eq__(self, other) -> bool:
-        """Equality"""
+    def __eq__(self, other: tuple | Vector) -> bool:
+        """Compare self with another coordinate or a vector.
 
-        # Compare a location
-        if isinstance(other, Location):
-            return (
-                True
-                if ((self.x == other.x) and (self.y == other.y) and (self.z == other.z))
-                else False
-            )
+        Params:
+            other (tuple | Vector): A set of coordinates (can be a Location object) or a vector.
+
+        Returns:
+            bool: whether this Location has the same dimension and the same values as the other object.
+        """
+        # Compare a tuple
+        if isinstance(other, tuple):
+            if len(other) == 2:
+                return (
+                    (self.x == other[0]) and (self.y == other[1]) and (self.dims == 2)
+                )
+            else:
+                return (
+                    (self.x == other[0])
+                    and (self.y == other[1])
+                    and (self.z == other[2])
+                )
 
         # Compare a vector
         elif isinstance(other, Vector):
             return self == other.compute()
 
-        # Compare a tuple
-        elif isinstance(other, tuple):
-            if len(other) == 2:
-                return (
-                    True
-                    if (
-                        (self.x == other[0])
-                        and (self.y == other[1])
-                        and (self.dims == 2)
-                    )
-                    else False
-                )
-            else:
-                return (
-                    True
-                    if (
-                        (self.x == other[0])
-                        and (self.y == other[1])
-                        and (self.z == other[2])
-                    )
-                    else False
-                )
-
-        # Unimplemented
+        # TypeError
         else:
-            raise NotImplementedError
+            raise TypeError(
+                "Unable to compare object of type "
+                + type(other).__name__
+                + " with a Location."
+            )
+
+    def __len__(self):
+        """Return the dimension of this Location."""
+        return self.dims
 
 
 class Vector:
+    """
+    A class that represents vectors. Handy for calculations involving beams and more.
+
+    Attributes:
+        - :attr:`forward`: The number of steps forward.
+        - :attr:`right`: The number of steps right.
+        - :attr:`backward`: (Optional) The number of steps backward. Since negative vectors are supported, this can be carried by the forward value.
+        - :attr:`left`: (Optional) The number of steps left. Since negative vectors are supported, this can be carried by the right value.
+        - :attr:`layer`: (Optional) The number of layers up (positive) or down (negative).
+        - :attr:`direction`: (Optional) A compass direction. 0 = NORTH, 1 = EAST, 2 = SOUTH, 3 = WEST.
+    """
+
+    forward: int
+    right: int
+    backward: int
+    left: int
+    layer: int
+    direction: int
+
     def __init__(
         self,
         forward: int,
         right: int,
         backward: int = 0,
         left: int = 0,
-        layer=0,
+        layer: int = 0,
         direction: int = 0,
     ):  # Default direction: 0 degrees / UP / North
         """
@@ -127,10 +169,10 @@ class Vector:
         Parameters:
             forward: (int) The number of steps forward.
             right: (int) The number of steps right.
-            backward: (int, Optional) The number of steps backward. Since negative vectors are supported, this can be carried by the forward value.
-            left: (int, Optional) The number of steps left. Since negative vectors are supported, this can be carried by the right value.
-            layer: (int, Optional) The number of layers up (positive) or down (negative).
-            direction: (int, default = 0) A compass direction. 0 = NORTH, 1 = EAST, 2 = SOUTH, 3 = WEST.
+            backward: (int, Optional) The number of steps backward. Since negative vectors are supported, this can be carried by the forward value. Defaults to 0.
+            left: (int, Optional) The number of steps left. Since negative vectors are supported, this can be carried by the right value. Defaults to 0.
+            layer: (int, Optional) The number of layers up (positive) or down (negative). Defaults to 0.
+            direction: (int, Optional) A compass direction. 0 = NORTH, 1 = EAST, 2 = SOUTH, 3 = WEST. Defaults to 0.
         """
         self.direction = direction
         self.forward = forward
