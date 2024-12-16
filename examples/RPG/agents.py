@@ -1,12 +1,12 @@
 from examples.RPG.entities import Wall, EmptyObject
-from examples.trucks.utils import color_map
+from examples.cleanup.agents import color_map
 
 from ast import literal_eval as make_tuple
 from typing import Optional
 import torch
 import numpy as np
 
-from agentarium.visual_field import visual_field
+from agentarium.observation.visual_field import visual_field
 from agentarium.primitives import GridworldEnv
 
 class Agent:

@@ -11,7 +11,7 @@ from typing import Sequence
 from matplotlib import pyplot as plt
 
 from agentarium.buffers import ReplayBuffer
-from agentarium.models.pytorch.base import PyTorchModel
+from agentarium.models.pytorch.pytorch_base import PyTorchModel
 
 # --------------- #
 # endregion       #

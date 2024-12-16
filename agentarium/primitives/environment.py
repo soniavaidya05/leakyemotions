@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-
 import numpy as np
 
 from agentarium.location import Location
@@ -46,7 +45,7 @@ class GridworldEnv:
         """
 
         self.world = np.full(
-            (self.height, self.width, self.layers), Entity(appearance=[0.0, 0.0, 0.0])
+            (self.height, self.width, self.layers), Entity()
         )
 
         # Define the location of each entity

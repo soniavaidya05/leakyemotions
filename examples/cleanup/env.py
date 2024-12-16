@@ -5,7 +5,7 @@
 # Import base packages
 import numpy as np
 
-# Import gem-specific packages
+# Import agentarium-specific packages
 from agentarium.primitives import GridworldEnv, Entity, Agent
 from examples.cleanup.entities import (
     EmptyEntity,
@@ -16,9 +16,7 @@ from examples.cleanup.entities import (
     AppleTree,
     Apple
 )
-from examples.cleanup.agents import (
-    CleanupAgent, color_map
-)
+from examples.cleanup.agents import CleanupAgent
 from agentarium.config import Cfg
 
 # --------------------------------- #
@@ -31,19 +29,19 @@ class Cleanup(GridworldEnv):
   def __init__(
     self,
     cfg: Cfg,
-    agents: list[CleanupAgent]
+    agents: list[CleanupAgent],
+    mode: str = "DEFAULT"
   ):
     self.cfg = cfg
     self.channels = cfg.agent.agent.obs.channels # default: # of entity classes + 1 (agent class) + 2 (beam types)
     self.full_mdp = cfg.env.full_mdp
     self.agents = agents
-    self.appearances = color_map(self.channels)
     self.object_layer = 0
     self.agent_layer = 1
     self.beam_layer = 2
     self.pollution = 0
-    super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(cfg, self.appearances['EmptyEntity']))
-    self.mode = "APPLE"
+    super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(cfg))
+    self.mode = mode
     self.turn = 0
     self.populate()
   
@@ -59,28 +57,24 @@ class Cleanup(GridworldEnv):
 
       # If the index is the first or last, replace the location with a wall
       if H in [0, self.height - 1] or W in [0, self.width - 1]:
-        self.world[index] = Wall(self.cfg, self.appearances["Wall"])
-        self.world[index].location = index
+        self.add(index, Wall(self.cfg))
       # Define river, orchard, and potential agent spawn points
       elif L == 0:
         if self.mode != "APPLE":
           # Top third = river
           if H > 0 and H < (self.height // 3):
-            self.world[index] = River(self.cfg, self.appearances["River"])
-            self.world[index].location = index
+            self.add(index, River(self.cfg))
           # Bottom third = orchard
           elif H > (self.height - 1 - (self.height // 3)) and H < (self.height - 1):
-            self.world[index] = AppleTree(self.cfg, self.appearances["AppleTree"])
-            self.world[index].location = index
+            self.add(index, AppleTree(self.cfg))
             apple_spawn_points.append(index)
           # Middle third = potential agent spawn points
           else:
-            self.world[index] = Sand(self.cfg, self.appearances["EmptyEntity"])
+            self.add(index, Sand(self.cfg))
             spawn_index = [index[0], index[1], self.agent_layer]
             spawn_points.append(spawn_index)
         else:
-          self.world[index] = AppleTree(self.cfg, self.appearances["AppleTree"])
-          self.world[index].location = index
+          self.add(index, AppleTree(self.cfg))
           if ((H % 2) == 0) and ((W % 2) == 0):
             spawn_index = [index[0], index[1], self.agent_layer]
             spawn_points.append(spawn_index)
@@ -92,7 +86,7 @@ class Cleanup(GridworldEnv):
     locs = [apple_spawn_points[i] for i in loc_index]
     for loc in locs:
       loc = tuple(loc)
-      self.add(loc, Apple(self.cfg, self.appearances["Apple"]))
+      self.add(loc, Apple(self.cfg))
       
     # Place agents randomly based on the spawn points chosen
     loc_index = np.random.choice(len(spawn_points), size = len(self.agents), replace = False)
@@ -122,30 +116,6 @@ class Cleanup(GridworldEnv):
     return pollution_tiles / river_tiles
 
 
-  def spawn(self, location) -> None:
-    # Get the kind of spawn function to apply.
-    spawn_type = self.world[location].kind
-
-    match(spawn_type):
-      case "River": # River generates Pollution
-        new_object = Pollution(self.cfg, self.appearances["Pollution"])
-      case "Pollution": #Pollution is cleaned into River
-        new_object = River(self.cfg, self.appearances["River"])
-      case "AppleTree": # AppleTree generates Apple
-        new_object = Apple(self.cfg, self.appearances["Apple"])
-      case "Apple": # Apple is eaten, becoming AppleTree
-        new_object = AppleTree(self.cfg, self.appearances["AppleTree"])
-      case "CleanBeam": # CleanBeam disappears, becoming EmptyEntity
-        new_object = EmptyEntity(self.cfg, self.appearances["EmptyEntity"])
-      case "ZapBeam": # CleanBeam disappears, becoming EmptyEntity
-        new_object = EmptyEntity(self.cfg, self.appearances["EmptyEntity"])
-      case "EmptyEntity": # EmptyEntity generates itself
-        new_object = self.world[location]
-    
-    self.world[location] = new_object
-    new_object.location = location
-
-
   def take_turn(self) -> None:
     """
     Environment transition function.
@@ -161,9 +131,7 @@ class Cleanup(GridworldEnv):
       agent.add_memory(state, action, reward, done)
 
       if self.turn >= self.cfg.experiment.max_turns or done:
-        agent.add_final_memory(self)
-
-      
+        agent.add_final_memory(self) 
 
 
   def reset(self):

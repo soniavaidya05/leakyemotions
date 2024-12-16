@@ -2,6 +2,10 @@
 # region: Game data storage   #
 # --------------------------- #
 
+import numpy as np
+import torch
+from IPython.display import clear_output
+
 
 class GameLogger:
     """
@@ -75,8 +79,7 @@ class GameLogger:
 
     def __repr__(self):
         return f"{self.__class__.__name__}(n_games={len(self.epochs)})"
-
-
+    
 # --------------------------- #
 # endregion                   #
 # --------------------------- #

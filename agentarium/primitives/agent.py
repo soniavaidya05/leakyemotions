@@ -31,14 +31,14 @@ class Agent(Entity):
     model: AgentariumModel
     action_space: list[int]
 
-    def __init__(self, cfg: Cfg, appearance, model, action_space, location=None):
+    def __init__(self, cfg: Cfg, model, action_space, location=None):
         # initializations based on parameters
         self.cfg = cfg
         self.model = model
         self.action_space = action_space
         self.location = location
 
-        super().__init__(appearance)
+        super().__init__()
 
         # overriding parent default attributes
         self.vision = cfg.agent.agent.obs.vision
