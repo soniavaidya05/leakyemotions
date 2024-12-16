@@ -5,8 +5,6 @@
 import numpy as np
 
 from agentarium.primitives import Entity
-# TODO: test if this (& type hinting the environment in code) would cause an issue
-from examples.treasurehunt.env import TreasurehuntEnv
 
 
 class EmptySpace(Entity):

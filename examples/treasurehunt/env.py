@@ -1,5 +1,7 @@
 """The environment for treasurehunt, a simple example for the purpose of a tutorial."""
 
+# TODO: 2nd file to write!
+
 import random
 from email.policy import default
 
@@ -8,14 +10,12 @@ import numpy as np
 
 # Import primitive types
 from agentarium.primitives import Agent, Entity, GridworldEnv
-from examples.treasurehunt.agents import TreasurehuntAgent
 # Import experiment specific classes
 from examples.treasurehunt.entities import EmptySpace, Gem, Wall
 
 
-# TODO: visual_field() needs a significant overhaul. Not good!
-# TODO: related to ^: why are entity appearances 255, not 1, in cleanup?
-class TreasurehuntEnv(GridworldEnv):
+# TODO: change appearances of everything
+class Treasurehunt(GridworldEnv):
     """
     Treasurehunt environment.
     """
