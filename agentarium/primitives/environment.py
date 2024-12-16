@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from agentarium.location import Location
-from agentarium.primitives.entity import Entity
+from agentarium.primitives import Agent, Entity
 
 
 class GridworldEnv:
@@ -113,12 +113,18 @@ class GridworldEnv:
         """
         Performs a full step in the environment.
 
-        This function iterates through the environment and performs transition() for each entity.
+        This function iterates through the environment and performs transition() for each entity,
+        then transitions each agent.
         """
         self.turn += 1
-        # TODO: transition agents & entities separately?
+        agents = []
         for _, x in np.ndenumerate(self.world):
-            x.transition(self)
+            if not isinstance(x, Agent):
+                agents.append(x)
+            else:
+                x.transition(self)
+        for agent in agents:
+            agent.transition(self)
 
     # --------------------------- #
     # region: utility functions   #
