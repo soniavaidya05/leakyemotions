@@ -7,6 +7,7 @@
 ## Methods
 ### Class Methods
 ```{eval-rst}
+.. automethod:: agentarium.primitives.GridworldEnv.create_world
 .. automethod:: agentarium.primitives.GridworldEnv.add
 .. automethod:: agentarium.primitives.GridworldEnv.remove
 .. automethod:: agentarium.primitives.GridworldEnv.move
@@ -39,7 +40,7 @@
 
 .. autoattribute:: agentarium.primitives.GridworldEnv.default_entity
 
-    The entity that the gridworld is filled with at creation by default.
+    An entity that the gridworld is filled with at creation by default.
     
 .. autoattribute:: agentarium.primitives.GridworldEnv.world
 

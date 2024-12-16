@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import copy
+
 import numpy as np
 
 from agentarium.location import Location
@@ -14,7 +16,7 @@ class GridworldEnv:
         - :attr:`height` - The height of the gridworld.
         - :attr:`width` - The width of the gridworld.
         - :attr:`layers` - The number of layers that the gridworld has.
-        - :attr:`default_entity` - The entity that the gridworld is filled with at creation by default.
+        - :attr:`default_entity` - An entity that the gridworld is filled with at creation by default.
         - :attr:`world` - A representation of the gridworld as a Numpy array of Entities, with dimensions height x width x layers.
         - :attr:`turn` - The number of turns taken by the environment.
     """
@@ -35,9 +37,12 @@ class GridworldEnv:
         self.create_world()
         self.turn = 0
 
-    def create_world(self):
+    def create_world(self) -> None:
         """
-        Create a gridworld of dimensions H x W x L.
+        Assigns self.world a new gridworld of size self.height x self.width x self.layers filled with copies of self.default_entity.
+        Also sets self.turn to 0.
+
+        This function is used in self.__init__(), and may be useful for resetting environments.
         """
 
         self.world = np.full(
@@ -46,8 +51,11 @@ class GridworldEnv:
 
         # Define the location of each entity
         for index, x in np.ndenumerate(self.world):
-            self.world[index] = self.default_entity
+            # we have to make deep copies of default_entity since it's an instance
+            self.world[index] = copy.deepcopy(self.default_entity)
             self.world[index].location = index
+
+        self.turn = 0
 
     def add(self, target_location: tuple[int, ...], entity: Entity) -> None:
         """
