@@ -20,9 +20,9 @@ def visual_field(
     Visualize the world.
 
     Parameters:
-        location: (ArrayLike, Optional) defines the location to centre the visualization on \n
-        vision: (int, Optional) defines the size of the visualization of (2v + 1, 2v + 1) pixels \n
-        channels: (int) defines the size of the visualization. By default, 5 channels. \n
+        env: (GridworldEnv) The environment to get the visual field from.
+        location: (Sequence, Optional) defines the location to centre the visualization on.
+        vision: (int, Optional) defines the size of the visualization of (2v + 1, 2v + 1) pixels.
         return_rgb: (bool) Whether to return the image as a plottable RGB image.
 
     Returns:
