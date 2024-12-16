@@ -259,7 +259,7 @@ class CleanupAgent(Agent):
         current_state = np.vstack((prev_states, state))
 
         # Batch size of 1
-        return current_state[np.newaxis, :]
+        return current_state.reshape(1, -1)
 
 
     def add_memory(

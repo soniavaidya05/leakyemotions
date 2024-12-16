@@ -21,7 +21,7 @@ class Observation:
       entity_list (list[str]): A list of entities that appears in the environment.
     
     Returns:
-      dict[str, list[float]]: - A dictionary object matching each entity to
+      dict[str, list[float]]: A dictionary object matching each entity to
       an appearance.
     """
     entity_map: dict[str, list[float]] = {}
