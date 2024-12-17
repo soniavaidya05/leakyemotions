@@ -14,7 +14,7 @@ from flax.training.train_state import TrainState
 # Agentarium imports
 from agentarium.buffers import ClaasyReplayBuffer
 from agentarium.models import AgentariumModel
-from agentarium.models.jax.base import QNetwork
+from agentarium.models.jax.jax_base import QNetwork
 
 class DoubleDQNAgent(AgentariumModel):
     """

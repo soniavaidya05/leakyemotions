@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import copy
-
 import numpy as np
 
 from agentarium.location import Location
-from agentarium.primitives import Agent, Entity
+from agentarium.primitives import Entity
 
 
 class GridworldEnv:
@@ -26,7 +25,7 @@ class GridworldEnv:
     layers: int
     default_entity: Entity
 
-    world: np.array
+    world: np.ndarray
     turn: int
 
     def __init__(self, height: int, width: int, layers: int, default_entity: Entity):
@@ -46,7 +45,7 @@ class GridworldEnv:
         """
 
         self.world = np.full(
-            (self.height, self.width, self.layers), Entity(appearance=[0.0, 0.0, 0.0])
+            (self.height, self.width, self.layers), Entity()
         )
 
         # Define the location of each entity
@@ -127,7 +126,7 @@ class GridworldEnv:
         self.turn += 1
         agents = []
         for _, x in np.ndenumerate(self.world):
-            if not isinstance(x, Agent):
+            if hasattr(x, "model"):
                 agents.append(x)
             else:
                 x.transition(self)

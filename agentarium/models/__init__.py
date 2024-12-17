@@ -1,1 +1,1 @@
-from agentarium.models.base import AgentariumModel
+from agentarium.models.base_model import AgentariumModel

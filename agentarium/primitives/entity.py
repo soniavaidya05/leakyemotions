@@ -22,15 +22,13 @@ class Entity:
         - :attr:`kind` - The class string of the object.
     """
 
-    appearance: Any
     location: Optional[tuple[int, ...]]
     value: float
     passable: bool
     has_transitions: bool
     kind: str
 
-    def __init__(self, appearance):
-        self.appearance = appearance  # Every object needs an appearance
+    def __init__(self):
         self.location = None
         self.value = 0  # By default, entities provide no reward to agents
         self.passable = (
@@ -43,7 +41,7 @@ class Entity:
         return str(self.__class__.__name__)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(appearance={self.appearance},value={self.value})"
+        return f"{self.__class__.__name__}(value={self.value})"
 
     def transition(self, env):
         """

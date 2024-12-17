@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 from typing import Union
 from datetime import datetime
 
-# Import gem-specific packages
+# Import agentarium-specific packages
 from agentarium.utils import ( 
     visual_field_sprite,
     random_seed, 

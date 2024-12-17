@@ -13,7 +13,7 @@ from flax.training.train_state import TrainState
 # Agentarium imports
 from agentarium.buffers import ClaasyReplayBuffer
 from agentarium.models import AgentariumModel
-from agentarium.models.jax.base import IQNetwork, compute_quantile_td_target_from_state, quantile_bellman_residual_loss
+from agentarium.models.jax.jax_base import IQNetwork, compute_quantile_td_target_from_state, quantile_bellman_residual_loss
 
 class IQNAgent(AgentariumModel):
     """

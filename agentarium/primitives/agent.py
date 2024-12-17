@@ -23,21 +23,25 @@ class Agent(Entity):
                 For example, if the agent has 4 possible actions, it should have :code:`action_space = [0, 1, 2, 3]`.
 
     Attributes that override parent (Entity)'s default values:
+        - :attr:`vision` - set at time of initialization based on the cfg provided, instead of defaulting to None.
         - :attr:`has_transitions` - Defaults to True instead of False.
     """
 
+    cfg: Cfg
     model: AgentariumModel
     action_space: list[int]
 
-    def __init__(self, appearance, model, action_space, location=None):
+    def __init__(self, cfg: Cfg, model, action_space, location=None):
         # initializations based on parameters
+        self.cfg = cfg
         self.model = model
         self.action_space = action_space
         self.location = location
 
-        super().__init__(appearance)
+        super().__init__()
 
         # overriding parent default attributes
+        self.vision = cfg.agent.agent.obs.vision
         self.has_transitions = True
 
     @abc.abstractmethod

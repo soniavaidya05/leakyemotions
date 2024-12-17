@@ -1,11 +1,11 @@
 import numpy as np
 
-from agentarium.embedding import positional_embedding
 from agentarium.location import Location, Vector
 from agentarium.primitives import Agent, Entity, GridworldEnv
-from agentarium.utils import one_hot_encode
-from agentarium.visual_field import visual_field_multilayer
-from agentarium.utils import visual_field_sprite
+from agentarium.utils.helpers import one_hot_encode
+from agentarium.observation import observation, embedding
+from agentarium.utils.visualization import visual_field_sprite
+from examples.cleanup.entities import EmptyEntity
 
 # --------------------------- #
 # region: Cleanup agent class #
@@ -18,9 +18,19 @@ class CleanupAgent(Agent):
     def __init__(self, cfg, model):
 
         # Instantiate basic agent
-        appearance = color_map(cfg.agent.agent.obs.channels)['Agent']
         action_space = [0, 1, 2, 3, 4, 5, 6]
-        super().__init__(cfg, appearance, model, action_space)
+        super().__init__(cfg, model, action_space)
+
+        # Define the observation space for the Cleanup Agent
+        self.obs_fn = observation.Observation(
+            entity_list=["EmptyEntity", "CleanupAgent", "Wall",
+                         "River", "Pollution", "AppleTree",
+                         "Apple", "CleanBeam", "ZapBeam"],
+            vision_radius=self.vision             
+        )
+        self.obs_fn.override_entity_map(
+            entity_map=entity_map(num_channels=cfg.agent.agent.obs.channels)
+        )
 
         # Additional attributes
         self.num_frames = self.cfg.agent.agent.obs.num_frames
@@ -203,11 +213,11 @@ class CleanupAgent(Agent):
             if action == 4:
                 env.remove(loc.to_tuple())
                 env.add(
-                    loc.to_tuple(), CleanBeam(self.cfg, env.appearances["CleanBeam"])
+                    loc.to_tuple(), CleanBeam(self.cfg)
                 )
             elif action == 5:
                 env.remove(loc.to_tuple())
-                env.add(loc.to_tuple(), ZapBeam(self.cfg, env.appearances["ZapBeam"]))
+                env.add(loc.to_tuple(), ZapBeam(self.cfg))
 
 
     def _environment_pov(self, env: GridworldEnv) -> np.ndarray:
@@ -220,17 +230,7 @@ class CleanupAgent(Agent):
         Return:
             np.ndarray: The visual field of the agent.
         """
-
-        # If the environment is a full MDP, get the whole world image
-        if env.full_mdp:
-            image = visual_field_multilayer(env)
-        # Otherwise, use the agent observation function
-        else:
-            image = visual_field_multilayer(env, self.location, self.vision)
-
-        current_state = image.flatten()
-
-        return current_state
+        return self.obs_fn.observe(env, self.location).flatten()
 
 
     def _embedding_pov(self, env: GridworldEnv) -> np.ndarray:
@@ -243,7 +243,7 @@ class CleanupAgent(Agent):
         Return:
             np.ndarray: The agent's positional code.
         """
-        return positional_embedding(
+        return embedding.positional_embedding(
             self.location, env, self.embedding_size, self.embedding_size
         )
 
@@ -259,7 +259,7 @@ class CleanupAgent(Agent):
         current_state = np.vstack((prev_states, state))
 
         # Batch size of 1
-        return current_state[np.newaxis, :]
+        return current_state.reshape(1, -1)
 
 
     def add_memory(
@@ -332,8 +332,8 @@ class CleanupAgent(Agent):
 class Beam(Entity):
     """Generic beam class for agent beams."""
 
-    def __init__(self, cfg, appearance):
-        super().__init__(appearance)
+    def __init__(self, cfg):
+        super().__init__()
         self.cfg = cfg
         self.sprite = f"{cfg.root}/examples/cleanup/assets/beam.png"
         self.turn_counter = 0
@@ -342,19 +342,19 @@ class Beam(Entity):
     def transition(self, env: GridworldEnv):
         # Beams persist for one full turn, then disappear.
         if self.turn_counter >= 1:
-            env.spawn(self.location)
+            env.add(self.location, EmptyEntity(self.cfg))
         else:
             self.turn_counter += 1
 
 
 class CleanBeam(Beam):
-    def __init__(self, cfg, appearance):
-        super().__init__(cfg, appearance)
+    def __init__(self, cfg):
+        super().__init__(cfg)
 
 
 class ZapBeam(Beam):
-    def __init__(self, cfg, appearance):
-        super().__init__(cfg, appearance)
+    def __init__(self, cfg):
+        super().__init__(cfg)
         self.sprite = f"{cfg.root}/examples/cleanup/assets/zap.png"
         self.value = -1
 
@@ -364,18 +364,18 @@ class ZapBeam(Beam):
 # --------------------------- #
 
 # --------------------------- #
-# region: Color map           #
+# region: Entity map          #
 # --------------------------- #
 
 
-def color_map(self) -> dict:
+def entity_map(num_channels: int) -> dict:
     """Color map for visualization."""
-    C: int = self
+    C = num_channels
     assert C in [3, 8], "Must use 3 [RGB] or 8 channels."
     if C == 8:
         colors = {
             "EmptyEntity": [0 for _ in range(C)],
-            "Agent": [255 if x == 0 else 0 for x in range(C)],
+            "CleanupAgent": [255 if x == 0 else 0 for x in range(C)],
             "Wall": [255 if x == 1 else 0 for x in range(C)],
             "Apple": [255 if x == 2 else 0 for x in range(C)],
             "AppleTree": [255 if x == 3 else 0 for x in range(C)],
@@ -387,7 +387,7 @@ def color_map(self) -> dict:
     else:
         colors = {
             "EmptyEntity": [0.0, 0.0, 0.0],
-            "Agent": [150.0, 150.0, 150.0],
+            "CleanupAgent": [150.0, 150.0, 150.0],
             "Wall": [50.0, 50.0, 50.0],
             "Apple": [0.0, 200.0, 0.0],
             "AppleTree": [100.0, 100.0, 0.0],
