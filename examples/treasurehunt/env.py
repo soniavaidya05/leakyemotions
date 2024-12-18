@@ -9,7 +9,7 @@ from email.policy import default
 import numpy as np
 
 # Import primitive types
-from agentarium.primitives import Agent, Entity, GridworldEnv
+from agentarium.primitives import GridworldEnv
 # Import experiment specific classes
 from examples.treasurehunt.entities import EmptyEntity, Gem, Wall
 
@@ -20,7 +20,7 @@ class Treasurehunt(GridworldEnv):
     Treasurehunt environment.
     """
 
-    def __init__(self, height, width, agents, gem_value, spawn_prob):
+    def __init__(self, height, width, gem_value, spawn_prob, max_turns, agents):
         layers = 2
         default_entity = EmptyEntity()
         super().__init__(height, width, layers, default_entity)
@@ -28,7 +28,9 @@ class Treasurehunt(GridworldEnv):
         self.gem_value = gem_value
         self.spawn_prob = spawn_prob
         self.agents = agents
+        self.max_turns = max_turns
 
+        self.game_score = 0
         self.populate()
 
     def populate(self):
@@ -67,6 +69,7 @@ class Treasurehunt(GridworldEnv):
     def reset(self):
         """Reset the environment and all its agents."""
         self.create_world()
+        self.game_score = 0
         self.populate()
         for agent in self.agents:
             agent.reset(self)

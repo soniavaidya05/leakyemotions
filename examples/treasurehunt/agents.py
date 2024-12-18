@@ -13,9 +13,9 @@ class TreasurehuntAgent(Agent):
     A treasurehunt agent that uses the iqn model.
     """
 
-    def __init__(self, model):
+    def __init__(self, observation, model):
         action_space = [0, 1, 2, 3]  # up, down, left, right
-        super().__init__(model, action_space)
+        super().__init__(observation, model, action_space)
 
         self.sprite = (
             "~/Documents/GitHub/agentarium/examples/treasurehunt/assets/hero.png"
@@ -32,8 +32,9 @@ class TreasurehuntAgent(Agent):
 
     def pov(self, env: GridworldEnv) -> np.ndarray:
         """Returns the state observed by the agent, from the flattened visual field."""
-        # TODO
-        pass
+        image = self.observation.observe(env, self.location)
+        # flatten the image to get the state
+        return image.reshape(1, -1)
 
     def get_action(self, state: np.ndarray) -> int:
         """Gets the action from the model, using the stacked states"""
@@ -62,6 +63,7 @@ class TreasurehuntAgent(Agent):
         # get reward obtained from object at new_location
         target_object = env.observe(new_location)
         reward = target_object.value
+        env.game_score += reward
 
         # try moving to new_location
         env.move(self, new_location)
@@ -69,4 +71,4 @@ class TreasurehuntAgent(Agent):
         return reward
 
     def is_done(self, env: GridworldEnv) -> bool:
-        return False
+        return env.turn >= env.max_turns
