@@ -23,9 +23,9 @@
 ## Attributes
 ```{eval-rst}
         
-.. autoattribute:: agentarium.primitives.Agent.cfg
+.. autoattribute:: agentarium.primitives.Agent.observation
 
-    The configuration to use for this agent.
+    The observation to use for this agent.
     
 .. autoattribute:: agentarium.primitives.Agent.model
 
