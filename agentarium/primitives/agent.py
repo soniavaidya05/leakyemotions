@@ -2,8 +2,8 @@ import abc
 
 import numpy as np
 
-from agentarium.config import Cfg
 from agentarium.models import AgentariumModel
+from agentarium.observation.observation import Observation
 from agentarium.primitives.environment import Entity, GridworldEnv
 
 
@@ -12,7 +12,7 @@ class Agent(Entity):
     An abstract class for agents, a special type of entities. Note that this is a subclass of Entity.
 
     Attributes:
-        - :attr:`cfg` - The configuration to use for this agent.
+        - :attr:`observation` - The observation to use for this agent.
         - :attr:`model` - The model that this agent uses.
         - :attr:`action_space` - The range of actions that the agent is able to take, represented by a list of integers.
 
@@ -23,17 +23,16 @@ class Agent(Entity):
                 For example, if the agent has 4 possible actions, it should have :code:`action_space = [0, 1, 2, 3]`.
 
     Attributes that override parent (Entity)'s default values:
-        - :attr:`vision` - set at time of initialization based on the cfg provided, instead of defaulting to None.
         - :attr:`has_transitions` - Defaults to True instead of False.
     """
 
-    cfg: Cfg
+    observation: Observation
     model: AgentariumModel
     action_space: list[int]
 
-    def __init__(self, cfg: Cfg, model, action_space, location=None):
+    def __init__(self, observation, model, action_space, location=None):
         # initializations based on parameters
-        self.cfg = cfg
+        self.observation = observation
         self.model = model
         self.action_space = action_space
         self.location = location
@@ -41,7 +40,6 @@ class Agent(Entity):
         super().__init__()
 
         # overriding parent default attributes
-        self.vision = cfg.agent.agent.obs.vision
         self.has_transitions = True
 
     @abc.abstractmethod
