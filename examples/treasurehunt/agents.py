@@ -13,9 +13,9 @@ class TreasurehuntAgent(Agent):
     A treasurehunt agent that uses the iqn model.
     """
 
-    def __init__(self, appearance, model):
+    def __init__(self, model):
         action_space = [0, 1, 2, 3]  # up, down, left, right
-        super().__init__(appearance, model, action_space)
+        super().__init__(model, action_space)
 
         self.sprite = (
             "~/Documents/GitHub/agentarium/examples/treasurehunt/assets/hero.png"
