@@ -1,14 +1,13 @@
 # general imports
 import torch
 
+# agentarium imports
 from agentarium.models.pytorch import PyTorchIQN
 from agentarium.observation.observation import Observation
-# agentarium imports
-from agentarium.utils.logging import GameLogger
 from agentarium.utils.visualization import (animate, image_from_array,
                                             visual_field_sprite)
-from examples.treasurehunt.agents import TreasurehuntAgent
 # imports from our example
+from examples.treasurehunt.agents import TreasurehuntAgent
 from examples.treasurehunt.env import Treasurehunt
 
 # experiment parameters
@@ -77,9 +76,6 @@ def run(env: Treasurehunt):
 
             env.take_turn()
 
-        # TODO: delete this line
-        assert all(agent.isdone(env) for agent in env.agents)
-
         # At the end of each epoch, train as long as the batch size is large enough.
         if epoch > 10:
             for agent in env.agents:
@@ -98,7 +94,6 @@ def run(env: Treasurehunt):
             print(
                 f"Epoch: {epoch}; Epsilon: {env.agents[0].model.epsilon}; Losses this period: {total_loss}; Avg. score this period: {avg_score}"
             )
-            # TODO: docs: need to create a /data folder to have the sprites save properly!
             animate(imgs, f"treasurehunt_epoch{epoch}", "../data/")
 
             # reset the data

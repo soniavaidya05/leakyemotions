@@ -4,7 +4,6 @@
 
 import numpy as np
 
-from agentarium.models.pytorch import PyTorchIQN
 from agentarium.primitives import Agent, GridworldEnv
 
 
@@ -37,7 +36,7 @@ class TreasurehuntAgent(Agent):
         return image.reshape(1, -1)
 
     def get_action(self, state: np.ndarray) -> int:
-        """Gets the action from the model, using the stacked states"""
+        """Gets the action from the model, using the stacked states."""
         prev_states = self.model.memory.current_state(
             stacked_frames=self.model.num_frames - 1
         )
@@ -48,7 +47,7 @@ class TreasurehuntAgent(Agent):
         return action
 
     def act(self, env: GridworldEnv, action: int) -> float:
-        """Act on the environment."""
+        """Act on the environment, returning the reward."""
 
         new_location = tuple()
         if action == 0:  # UP
@@ -71,4 +70,5 @@ class TreasurehuntAgent(Agent):
         return reward
 
     def is_done(self, env: GridworldEnv) -> bool:
+        """Returns whether this Agent is done."""
         return env.turn >= env.max_turns
