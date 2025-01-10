@@ -26,19 +26,20 @@ class CleanupAgent(Agent):
             entity_list=["EmptyEntity", "CleanupAgent", "Wall",
                          "River", "Pollution", "AppleTree",
                          "Apple", "CleanBeam", "ZapBeam"],
-            vision_radius=self.vision             
+            vision_radius=cfg.agent.agent.obs.vision          
         )
         self.obs_fn.override_entity_map(
             entity_map=entity_map(num_channels=cfg.agent.agent.obs.channels)
         )
 
         # Additional attributes
-        self.num_frames = self.cfg.agent.agent.obs.num_frames
-        self.embedding_size = self.cfg.agent.agent.obs.embeddings
+        self.num_frames = cfg.agent.agent.obs.num_frames
+        self.embedding_size = cfg.agent.agent.obs.embeddings
         self.direction = 2  # 90 degree rotation: default at 180 degrees (facing down)
-        self.rotation = self.cfg.agent.agent.rotation
+        self.rotation = cfg.agent.agent.rotation
         self.sprite_path = f"{cfg.root}/examples/cleanup/assets/"
         self._sprite = self.sprite_path + "hero" + ".png"
+        self.cfg = cfg
 
         # logging features
         self.outcome_record = {"harvest": 0, "zap": 0, "get_zapped": 0, "clean": 0}
@@ -71,12 +72,15 @@ class CleanupAgent(Agent):
         """Fill in blank images for the memory buffer."""
 
         if self.model.model_name != "HumanPlayer":
-            state = np.zeros_like(self.pov(env))
+            pov = np.zeros_like(self._environment_pov(env))
+            pos = np.zeros_like(self._embedding_pov(env))
+            ohe = np.zeros_like(one_hot_encode(self.direction, 4))
+            state = np.concatenate((pov, pos, ohe))
             action = 0  # Action outside the action space
             reward = 0.0
             done = 0.0
             for i in range(self.num_frames):
-                self.add_memory(state[0, i, :], action, reward, done)
+                self.add_memory(state, action, reward, done)
 
 
     def movement(self, action: int) -> tuple[int, ...]:
@@ -287,7 +291,7 @@ class CleanupAgent(Agent):
         reward = 0
 
         if self.model.model_name == "HumanPlayer":
-            current_state = visual_field_sprite(env, location = self.location, vision = self.vision)
+            current_state = visual_field_sprite(env, location = self.location, vision = self.obs_fn.vision_radius)
             action, attempted_location = self.act(env, current_state)
             current_state = np.vstack([layer[np.newaxis] for layer in current_state])
         else:

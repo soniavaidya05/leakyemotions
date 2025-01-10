@@ -3,7 +3,7 @@ from typing import Sequence
 from IPython.display import clear_output
 from agentarium.models import AgentariumModel
 from agentarium.buffers import ClaasyReplayBuffer
-from agentarium.utils import plot
+from agentarium.utils.visualization import plot
 
 class HumanPlayer(AgentariumModel):
   """

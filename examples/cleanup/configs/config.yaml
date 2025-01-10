@@ -10,10 +10,10 @@ env:
   layers: 3
   default_object: EmptyEntity
   full_mdp: False
-  pollution_threshold: 1.0
+  pollution_threshold: 0.5
   initial_apples: 20
   apple_spawn_chance: 0.002
-  pollution_spawn_chance: 0.00
+  pollution_spawn_chance: 0.009
 
 model:
   iqn:
@@ -41,7 +41,7 @@ agent:
     rotation: False
     obs:
       channels: 8
-      vision: 5
+      vision: None
       num_frames: 5
       embeddings: 3
 

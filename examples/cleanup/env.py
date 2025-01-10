@@ -122,6 +122,7 @@ class Cleanup(GridworldEnv):
     """
 
     self.turn += 1
+    self.pollution = self.measure_pollution()
 
     for entity in self.get_entities_for_transition():
       entity.transition(self)

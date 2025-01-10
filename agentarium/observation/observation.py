@@ -10,7 +10,10 @@ class Observation:
       entity_list: list[str],
       vision_radius: int | None = None
   ):
-    self.vision_radius = vision_radius
+    if not isinstance(vision_radius, int):
+      self.vision_radius = None
+    else:
+      self.vision_radius = vision_radius
     self.entity_map = self.generate_map(entity_list)
 
   def generate_map(self, entity_list: list[str]) -> dict[str, list[float]]:
