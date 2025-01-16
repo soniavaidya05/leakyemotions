@@ -1,10 +1,9 @@
 """The agent for treasurehunt, a simple example for the purpose of a tutorial."""
 
-# TODO: 3rd file to write!
-
 import numpy as np
 
-from agentarium.primitives import Agent, GridworldEnv
+from agentarium.primitives.agent import Agent
+from agentarium.primitives.environment import GridworldEnv
 
 
 class TreasurehuntAgent(Agent):
@@ -13,11 +12,11 @@ class TreasurehuntAgent(Agent):
     """
 
     def __init__(self, observation, model):
-        action_space = [0, 1, 2, 3]  # up, down, left, right
+        action_space = [0, 1, 2, 3]  # the agent can move up, down, left, or right
         super().__init__(observation, model, action_space)
 
         self.sprite = (
-            "~/Documents/GitHub/agentarium/examples/treasurehunt/assets/hero.png"
+            "./assets/hero.png"
         )
 
     def reset(self) -> None:

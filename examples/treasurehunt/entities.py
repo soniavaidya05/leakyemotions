@@ -1,30 +1,8 @@
 """The entities for treasurehunt, a simple example for the purpose of a tutorial."""
 
-# TODO: first file to write!
-
 import numpy as np
 
 from agentarium.primitives import Entity
-
-
-class EmptyEntity(Entity):
-    """An entity that represents an empty space in the treasurehunt environment."""
-
-    def __init__(self):
-        super().__init__()
-        self.passable = True  # Agents can enter EmptySpaces
-        self.sprite = (
-            "~/Documents/GitHub/agentarium/examples/treasurehunt/assets/sand.png"
-        )
-
-    def transition(self, env):
-        """
-        EmptySpaces can randomly spawn into Gems based on the item spawn probabilities dictated in the environmnet.
-        """
-        if (
-            np.random.random() < env.spawn_prob
-        ):  # NOTE: If this rate is too high, the environment gets overrun
-            env.add(self.location, Gem(env.gem_value))
 
 
 class Wall(Entity):
@@ -34,9 +12,19 @@ class Wall(Entity):
         super().__init__()
         self.value = -1  # Walls penalize contact
         self.sprite = (
-            "~/Documents/GitHub/agentarium/examples/treasurehunt/assets/wall.png"
+            "./assets/wall.png"
         )
 
+class Sand(Entity):
+    """An entity that represents a block of sand in the treasurehunt environment."""
+
+    def __init__(self):
+        super().__init__()
+        # We technically don't need to make Sand passable here since it's on a different layer from Agent
+        self.passable = True
+        self.sprite = (
+            "./assets/sand.png"
+        )
 
 class Gem(Entity):
     """An entity that represents a gem in the treasurehunt environment."""
@@ -46,5 +34,25 @@ class Gem(Entity):
         self.passable = True  # Agents can move onto Gems
         self.value = gem_value
         self.sprite = (
-            "~/Documents/GitHub/agentarium/examples/treasurehunt/assets/gem.png"
+            "./assets/gem.png"
         )
+
+
+class EmptyEntity(Entity):
+    """An entity that represents an empty space in the treasurehunt environment."""
+
+    def __init__(self):
+        super().__init__()
+        self.passable = True  # Agents can enter EmptySpaces
+        self.sprite = (
+            "./assets/empty.png"
+        )
+
+    def transition(self, env):
+        """
+        EmptySpaces can randomly spawn into Gems based on the item spawn probabilities dictated in the environmnet.
+        """
+        if (   # NOTE: If the spawn prob is too high, the environment gets overrun
+            np.random.random() < env.spawn_prob
+        ):
+            env.add(self.location, Gem(env.gem_value))
