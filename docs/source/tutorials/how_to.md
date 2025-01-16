@@ -27,7 +27,8 @@ treasurehunt
    If you want to run the provided :code:`examples\treasurehunt\main.py`, you may need to create the data folder. 
 ```
 
-We will create a custom environment named `Treasurehunt`, custom entities `EmptyEntity`, `Wall`, and `Gem`, and a custom agent `TreasurehuntAgent`. 
+We will create a custom environment named `Treasurehunt`, custom entities `EmptyEntity`, `Wall`, `Sand`, and `Gem`, and a custom agent `TreasurehuntAgent`.
+The environment will have two layers: `TreasurehuntAgent` and `EmptyEntity` will be on the top layer, and `Sand` will be on the bottom layer.
 We will then write a `main.py` script that carries out the experiment, and render parts of the experiment as gifs.
 
 Let's get started!
@@ -44,7 +45,7 @@ import numpy as np
 from agentarium.primitives import Entity
 ```
 
-Then, we create the classes `Wall` and `Gem`, with custom constructors that overwrite default parent attribute values and include sprites used for animation later on. 
+Then, we create the classes `Wall`, `Sand`, and `Gem`, with custom constructors that overwrite default parent attribute values and include sprites used for animation later on. 
 These sprites should be placed in a ``./assets/`` folder. Both `Wall` and `Gem` do not transition.
 
 ```python
@@ -55,9 +56,19 @@ class Wall(Entity):
         super().__init__()
         self.value = -1  # Walls penalize contact
         self.sprite = (
-            "~/Documents/GitHub/agentarium/examples/treasurehunt/assets/wall.png"
+            "./assets/wall.png"
         )
 
+class Sand(Entity):
+    """An entity that represents a block of sand in the treasurehunt environment."""
+
+    def __init__(self):
+        super().__init__()
+        # We technically don't need to make Sand passable here since it's on a different layer from Agent
+        self.passable = True
+        self.sprite = (
+            "./assets/sand.png"
+        )
 
 class Gem(Entity):
     """An entity that represents a gem in the treasurehunt environment."""
@@ -67,7 +78,7 @@ class Gem(Entity):
         self.passable = True  # Agents can move onto Gems
         self.value = gem_value
         self.sprite = (
-            "~/Documents/GitHub/agentarium/examples/treasurehunt/assets/gem.png"
+            "./assets/gem.png"
         )
 ```
 
@@ -83,17 +94,18 @@ class EmptyEntity(Entity):
         super().__init__()
         self.passable = True  # Agents can enter EmptySpaces
         self.sprite = (
-            "~/Documents/GitHub/agentarium/examples/treasurehunt/assets/sand.png"
+            "./assets/empty.png"
         )
 
     def transition(self, env):
         """
         EmptySpaces can randomly spawn into Gems based on the item spawn probabilities dictated in the environmnet.
         """
-        if (
+        if (   # NOTE: If the spawn prob is too high, the environment gets overrun
             np.random.random() < env.spawn_prob
-        ):  # NOTE: If this rate is too high, the environment gets overrun
+        ):
             env.add(self.location, Gem(env.gem_value))
+         
 ```
 
 ## The Environment
@@ -109,12 +121,12 @@ import numpy as np
 # Import primitive types
 from agentarium.primitives import GridworldEnv
 # Import experiment specific classes
-from examples.treasurehunt.entities import EmptyEntity, Gem, Wall
+from examples.treasurehunt.entities import Wall, Sand, Gem, EmptyEntity
 ```
 
 We create the constructor first. In addition to the attributes from `GridworldEnv`, we add the attributes `self.gem_value` 
-and `self.spawn_prob` as noted above. We also add the attributes `self.max_turns`, `self.agents`, and `self.game_score` to
-allow access to and modification of parts of the environment at the experiment level later.
+and `self.spawn_prob` as noted above. We also add the attributes `self.max_turns`, `self.agents`, and `self.game_score` 
+so that we can access these attributes of the environment at the experiment level later.
 ```python
 class Treasurehunt(GridworldEnv):
     """
@@ -137,29 +149,41 @@ class Treasurehunt(GridworldEnv):
 
 We delegate the task of actually filling in the entities and constructing `self.world` to the method `populate()`:
 ```python
+
     def populate(self):
         """
         Populate the treasurehunt world by creating walls, then randomly spawning 1 gem and 1 agent.
         Note that every space is already filled with EmptyEntity as part of super().__init__().
         """
         valid_spawn_locations = []
-        
+
         for index in np.ndindex(self.world.shape):
             y, x, z = index
             if y in [0, self.height - 1] or x in [0, self.width - 1]:
                 # Add walls around the edge of the world (when indices are first or last)
                 self.add(index, Wall())
-            else:
+            elif z == 0:  # if location is on the bottom layer, put sand there
+                self.add(index, Sand())
+            elif z == 1: # if location is on the top layer, indicate that it's possible for an agent to spawn there
                 # valid spawn location
                 valid_spawn_locations.append(index)
 
         # spawn the agents
-        agent_locations = np.random.choice(
-            np.array(valid_spawn_locations), size=len(self.agents), replace=False
+        # using np.random.choice, we choose indices in valid_spawn_locations
+        agent_locations_indices = np.random.choice(
+            len(valid_spawn_locations), size=len(self.agents), replace=False
         )
+        agent_locations = [valid_spawn_locations[i] for i in agent_locations_indices]
         for loc, agent in zip(agent_locations, self.agents):
             loc = tuple(loc)
             self.add(loc, agent)
+```
+
+```{eval-rst}
+.. note::
+   We had to work around :code:`np.random.choice` a little in order to use it. 
+   We have specifically avoided using `random.choices` because we would then need to seed np.random and random separately 
+   for reproducible results. It's generally a good idea to choose one random generator and only use that across the scope of your example.
 ```
 
 We override the parent's `reset()` method with our slightly modified version, 
@@ -172,7 +196,7 @@ since we already keep track of the agents that need to be reset (unlike in `Grid
         self.game_score = 0
         self.populate()
         for agent in self.agents:
-            agent.reset(self)
+            agent.reset()
 ```
 
 
@@ -185,7 +209,8 @@ We make our imports:
 ````python
 import numpy as np
 
-from agentarium.primitives import Agent, GridworldEnv
+from agentarium.primitives.agent import Agent
+from agentarium.primitives.environment import GridworldEnv
 ````
 
 We make our custom constructor:
@@ -196,15 +221,15 @@ class TreasurehuntAgent(Agent):
     """
 
     def __init__(self, observation, model):
-        action_space = [0, 1, 2, 3]  # up, down, left, right
+        action_space = [0, 1, 2, 3]  # the agent can move up, down, left, or right
         super().__init__(observation, model, action_space)
 
         self.sprite = (
-            "~/Documents/GitHub/agentarium/examples/treasurehunt/assets/hero.png"
+            "./assets/hero.png"
         )
 ```
 We will use `Observation` for `TreasurehuntAgent`'s observation, and `PyTorchIQN` for `TreasurehuntAgent`'s model.
-We do not create them in this file (they will be passed into `TreasurehuntAgent` externally), 
+We do not create them in this file (they will be passed into `TreasurehuntAgent`'s constructor externally), 
 but we will use the functionality that they provide by accessing the attributes of this class.
 
 
@@ -212,7 +237,7 @@ Note that unlike the other base classes we've worked on top of so far, `Agent` i
 `reset()`, `pov()`, `get_action()`, `act()`, and `is_done()`. Let's go through them one by one. 
 
 To implement {func}`agentarium.primitives.Agent.reset`, we add a number of all zero SARD's to the agent's model's memory that is equal to the number of frames that it can access.
-The "zero state" is obtained by getting the shape of the state observed by this agent through `np.prod(self.model.input_size)`, 
+The "zero state" is obtained by getting the shape of the state observed by this agent through `self.model.input_size`, 
 and then creating an all zeros array with the same shape.
 ```python
     def reset(self) -> None:
@@ -225,8 +250,8 @@ and then creating an all zeros array with the same shape.
             self.add_memory(state, action, reward, done)
 ```
 
-To implement {func}`agentarium.primitives.Agent.pov`, we get the observed image using the provided `observe()` function from the Observation class 
-(in Channels x Height x Width), and then returning the flattened image. 
+To implement {func}`agentarium.primitives.Agent.pov`, we get the observed image (in Channels x Height x Width) 
+using the provided `observe()` function from the Observation class, and then returning the flattened image. 
 ```python
     def pov(self, env: GridworldEnv) -> np.ndarray:
         """Returns the state observed by the agent, from the flattened visual field."""
@@ -250,7 +275,7 @@ and pass the stacked frames (as a horizontal vector) into the model to obtain th
         return action
 ```
 
-To implement {func}`agentarium.primitives.Agent.act`, we calculate the new locaiton based on the action taken, 
+To implement {func}`agentarium.primitives.Agent.act`, we calculate the new location based on the action taken, 
 record the reward obtained based on the entity at the new location, then try to move the agent to the new location using the provided {func}`GridworldEnv.move()`. 
 ```python
     def act(self, env: GridworldEnv, action: int) -> float:
@@ -277,7 +302,7 @@ record the reward obtained based on the entity at the new location, then try to 
         return reward
 ```
 
-Finally, we implement {func}`agentarium.primitives.Agent.act` by checking if the current turn (tracked by default in {attr}`GridworldEnv.turn`) 
+Finally, we implement {func}`agentarium.primitives.Agent.is_done` by checking if the current turn (tracked by default in {attr}`GridworldEnv.turn`) 
 exceeds the maximum number of turns. 
 ```python
     def is_done(self, env: GridworldEnv) -> bool:
@@ -307,34 +332,36 @@ from examples.treasurehunt.env import Treasurehunt
 Then, we will define our experiment parameters as global constants:
 ```python
 # experiment parameters
-EPOCHS = 1000
+EPOCHS = 500
 MAX_TURNS = 100
-EPSILON_DECAY = 0.001
-ENTITY_LIST = ["EmptyEntity", "Wall", "Gem", "TreasurehuntAgent"]
+EPSILON_DECAY = 0.0001
+ENTITY_LIST = ["EmptyEntity", "Wall",  "Sand", "Gem", "TreasurehuntAgent"]
 RECORD_PERIOD = 50  # how many epochs in each data recording period
 ```
 These parameters, as well as the world configuration and model hyperparameters later, can be extracted from this script for faster and easier adjustments using configuration files. 
 Here is a [quick tutorial](/configuration_files.md).
 
-We will first construct the observations, the models, the agents, and the environment. 
-The entities will not need to be constructed explicitly as they will be generated by the environment.
+We will first create the observations, the models, the agents, and the environment. 
+The entities will not need to be created explicitly as they will be generated by the environment.
 ```python
 def setup() -> Treasurehunt:
     """Set up all the whole environment and everything within."""
-    # world configurations
-    height = 7
-    width = 7
+    # object configurations
+    world_height = 10
+    world_width = 10
     gem_value = 10
     spawn_prob = 0.002
+    agent_vision_radius = 2
 
     # make the agents
     agent_num = 2
     agents = []
     for _ in range(agent_num):
-        observation = Observation(ENTITY_LIST)
+        observation = Observation(ENTITY_LIST, vision_radius=agent_vision_radius)
 
         model = PyTorchIQN(
-            input_size=(len(ENTITY_LIST), height, width),
+            # the agent can see r blocks on each side, so the size of the observation is (2r+1) * (2r+1)
+            input_size=(len(ENTITY_LIST), 2 * agent_vision_radius + 1, 2 * agent_vision_radius + 1),
             action_space=4,
             layer_size=250,
             epsilon=0.7,
@@ -355,7 +382,7 @@ def setup() -> Treasurehunt:
         agents.append(TreasurehuntAgent(observation, model))
 
     # make the environment
-    env = Treasurehunt(height, width, gem_value, spawn_prob, MAX_TURNS, agents)
+    env = Treasurehunt(world_height, world_width, gem_value, spawn_prob, MAX_TURNS, agents)
     return env
 ```
 
@@ -369,7 +396,7 @@ def run(env: Treasurehunt):
     imgs = []
     total_score = 0
     total_loss = 0
-    for epoch in range(EPOCHS):
+    for epoch in range(EPOCHS + 1):
         # Reset the environment at the start of each epoch
         env.reset()
         for agent in env.agents:
@@ -385,13 +412,8 @@ def run(env: Treasurehunt):
         # At the end of each epoch, train as long as the batch size is large enough.
         if epoch > 10:
             for agent in env.agents:
-                loss = agent.model.train_model()
+                loss = agent.model.train_step()
                 total_loss += loss
-
-        # Special action: update epsilon
-        for agent in env.agents:
-            new_epsilon = agent.model.epsilon - EPSILON_DECAY
-            agent.model.epsilon = max(new_epsilon, 0.01)
 
         total_score += env.game_score
 
@@ -400,12 +422,16 @@ def run(env: Treasurehunt):
             print(
                 f"Epoch: {epoch}; Epsilon: {env.agents[0].model.epsilon}; Losses this period: {total_loss}; Avg. score this period: {avg_score}"
             )
-            animate(imgs, f"treasurehunt_epoch{epoch}", "../data/")
-
+            animate(imgs, f"treasurehunt_epoch{epoch}", "./data/")
             # reset the data
             imgs = []
             total_score = 0
             total_loss = 0
+
+        # update epsilon
+        for agent in env.agents:
+            new_epsilon = agent.model.epsilon - EPSILON_DECAY
+            agent.model.epsilon = max(new_epsilon, 0.01)
 ```
 
 Finally, write the main block:
