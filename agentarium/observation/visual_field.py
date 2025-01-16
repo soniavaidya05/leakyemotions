@@ -17,7 +17,7 @@ def visual_field(
 
     Parameters:
         env (GridworldEnv): The environment to visualize.
-        entity_map (dict[str, list[float]]): The mapping 
+        entity_map (dict[str, list[float]]): The mapping
         between objects and visual appearance.
         vision (Optional, int): The agent's visual field
         radius. If none, the entire environment.
@@ -25,9 +25,9 @@ def visual_field(
         the visual field on. If none, the entire environment.
 
     Returns:
-        np.ndarray: An array of shape 
+        np.ndarray: An array of shape
         `(2 * vision + 1, 2 * vision + 1, env.layers)`.
-        Or if vision is None: 
+        Or if vision is None:
         `(env.height, env.width, env.layers)`.
     """
     # Get the number of channels used by the model.
@@ -88,6 +88,6 @@ def visual_field(
         # Return the agent's sliced observation space
         new = new.astype(np.float64)
         # ==rotate==#
-        new = np.rot90(new, k=env.world[location].direction % 4, axes=(1, 2)).copy()
+        # new = np.rot90(new, k=env.world[location].direction % 4, axes=(1, 2)).copy()
         # ==========#
         return new
