@@ -256,7 +256,7 @@ using the provided `observe()` function from the Observation class, and then ret
 ```python
     def pov(self, env: GridworldEnv) -> np.ndarray:
         """Returns the state observed by the agent, from the flattened visual field."""
-        image = self.observation.observe(env, self.location)
+        image = self.observation_spec.observe(env, self.location)
         # flatten the image to get the state
         return image.reshape(1, -1)
 ```
