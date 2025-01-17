@@ -3,7 +3,7 @@ from agentarium.observation.visual_field import visual_field
 from agentarium.utils.helpers import one_hot_encode
 from agentarium.primitives import GridworldEnv
 
-class Observation:
+class ObservationSpec:
   """Observation class for Agentarium agents."""
   def __init__(
       self,

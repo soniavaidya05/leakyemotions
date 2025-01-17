@@ -3,7 +3,7 @@ import torch
 
 # agentarium imports
 from agentarium.models.pytorch import PyTorchIQN
-from agentarium.observation.observation import Observation
+from agentarium.observation.observation import ObservationSpec
 from agentarium.utils.visualization import (animate, image_from_array,
                                             visual_field_sprite)
 # imports from our example
@@ -31,7 +31,7 @@ def setup() -> Treasurehunt:
     agent_num = 2
     agents = []
     for _ in range(agent_num):
-        observation = Observation(ENTITY_LIST, vision_radius=agent_vision_radius)
+        observation_spec = ObservationSpec(ENTITY_LIST, vision_radius=agent_vision_radius)
 
         model = PyTorchIQN(
             # the agent can see r blocks on each side, so the size of the observation is (2r+1) * (2r+1)
@@ -53,7 +53,7 @@ def setup() -> Treasurehunt:
             N=12,
         )
 
-        agents.append(TreasurehuntAgent(observation, model))
+        agents.append(TreasurehuntAgent(observation_spec, model))
 
     # make the environment
     env = Treasurehunt(world_height, world_width, gem_value, spawn_prob, MAX_TURNS, agents)

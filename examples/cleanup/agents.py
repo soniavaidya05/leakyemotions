@@ -22,7 +22,7 @@ class CleanupAgent(Agent):
         super().__init__(cfg, model, action_space)
 
         # Define the observation space for the Cleanup Agent
-        self.obs_fn = observation.Observation(
+        self.obs_fn = observation.ObservationSpec(
             entity_list=["EmptyEntity", "CleanupAgent", "Wall",
                          "River", "Pollution", "AppleTree",
                          "Apple", "CleanBeam", "ZapBeam"],

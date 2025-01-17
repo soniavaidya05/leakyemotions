@@ -23,9 +23,9 @@
 ## Attributes
 ```{eval-rst}
         
-.. autoattribute:: agentarium.primitives.Agent.observation
+.. autoattribute:: agentarium.primitives.Agent.observation_spec
 
-    The observation to use for this agent.
+    The observation specification to use for this agent.
     
 .. autoattribute:: agentarium.primitives.Agent.model
 

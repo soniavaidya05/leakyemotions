@@ -3,7 +3,7 @@ import abc
 import numpy as np
 
 from agentarium.models import AgentariumModel
-from agentarium.observation.observation import Observation
+from agentarium.observation.observation import ObservationSpec
 from agentarium.primitives.environment import Entity, GridworldEnv
 
 
@@ -12,7 +12,7 @@ class Agent(Entity):
     An abstract class for agents, a special type of entities. Note that this is a subclass of Entity.
 
     Attributes:
-        - :attr:`observation` - The observation to use for this agent.
+        - :attr:`observation_spec` - The observation specification to use for this agent.
         - :attr:`model` - The model that this agent uses.
         - :attr:`action_space` - The range of actions that the agent is able to take, represented by a list of integers.
 
@@ -26,13 +26,13 @@ class Agent(Entity):
         - :attr:`has_transitions` - Defaults to True instead of False.
     """
 
-    observation: Observation
+    observation: ObservationSpec
     model: AgentariumModel
     action_space: list[int]
 
-    def __init__(self, observation, model, action_space, location=None):
+    def __init__(self, observation_spec, model, action_space, location=None):
         # initializations based on parameters
-        self.observation = observation
+        self.observation_spec = observation_spec
         self.model = model
         self.action_space = action_space
         self.location = location
