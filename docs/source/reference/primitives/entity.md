@@ -11,10 +11,6 @@
 
 ## Attributes
 ```{eval-rst}
-.. autoattribute:: agentarium.primitives.Entity.appearance
-
-    The appearance of the object.
-    
 .. autoattribute:: agentarium.primitives.Entity.location
 
     The location of the object. It may take on the value of None when the Entity is first initialized.

@@ -5,4 +5,4 @@ Primitives include the core classes needed to represent a multi-agent Reinforcem
 # Alias to individual files
 from agentarium.primitives.entity import Entity
 from agentarium.primitives.environment import GridworldEnv
-from agentarium.primitives.agent import Agent
+# from agentarium.primitives.agent import Agent
