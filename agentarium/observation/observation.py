@@ -4,7 +4,7 @@ from agentarium.utils.helpers import one_hot_encode
 from agentarium.primitives import GridworldEnv
 
 class ObservationSpec:
-  """Observation class for Agentarium agents."""
+  """Observation specification class for Agentarium agents."""
   def __init__(
       self,
       entity_list: list[str],

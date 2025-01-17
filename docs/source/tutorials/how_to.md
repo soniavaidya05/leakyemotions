@@ -228,7 +228,7 @@ class TreasurehuntAgent(Agent):
             "./assets/hero.png"
         )
 ```
-We will use `Observation` for `TreasurehuntAgent`'s observation, and `PyTorchIQN` for `TreasurehuntAgent`'s model.
+We will use `ObservationSpec` for `TreasurehuntAgent`'s observation, and `PyTorchIQN` for `TreasurehuntAgent`'s model.
 We do not create them in this file (they will be passed into `TreasurehuntAgent`'s constructor externally), 
 but we will use the functionality that they provide by accessing the attributes of this class.
 
