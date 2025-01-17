@@ -14,7 +14,6 @@ class Entity:
     Base element class. Defines the non-optional initialization parameters for all entities.
 
     Attributes:
-        - :attr:`appearance` - The appearance of the object.
         - :attr:`location` - The location of the object. It may take on the value of None when the Entity is first initialized.
         - :attr:`value` - The reward provided to an agent upon interaction. It is 0 by default.
         - :attr:`passable` - Whether the object can be traversed by an agent. It is False by default.
