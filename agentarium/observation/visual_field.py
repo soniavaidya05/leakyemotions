@@ -88,6 +88,7 @@ def visual_field(
         # Return the agent's sliced observation space
         new = new.astype(np.float64)
         # ==rotate==#
-        # new = np.rot90(new, k=env.world[location].direction % 4, axes=(1, 2)).copy()
+        # if hasattr(env.world[location], "direction"):
+        #     new = np.rot90(new, k=env.world[location].direction % 4, axes=(1, 2)).copy()
         # ==========#
         return new
