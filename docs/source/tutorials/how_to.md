@@ -46,7 +46,7 @@ from agentarium.primitives import Entity
 ```
 
 Then, we create the classes `Wall`, `Sand`, and `Gem`, with custom constructors that overwrite default parent attribute values and include sprites used for animation later on. 
-These sprites should be placed in a ``./assets/`` folder. Both `Wall` and `Gem` do not transition.
+These sprites should be placed in a ``./assets/`` folder. All of these entities do not transition.
 
 ```python
 class Wall(Entity):
@@ -82,7 +82,7 @@ class Gem(Entity):
         )
 ```
 
-We then create `EmptyEntity`, which requires a custom transition method. 
+We then create `EmptyEntity`, which requires a custom transition method.
 Here we note that the transition method requires information such as spawn probability and gem value which must be provided through the environment. 
 Therefore, we expect them to be attributes of our custom `Treasurehunt` environment.
 
@@ -93,6 +93,7 @@ class EmptyEntity(Entity):
     def __init__(self):
         super().__init__()
         self.passable = True  # Agents can enter EmptySpaces
+        self.has_transitions = True  # EmptyEntity can transition into Gems
         self.sprite = (
             "./assets/empty.png"
         )
@@ -105,7 +106,7 @@ class EmptyEntity(Entity):
             np.random.random() < env.spawn_prob
         ):
             env.add(self.location, Gem(env.gem_value))
-         
+
 ```
 
 ## The Environment
