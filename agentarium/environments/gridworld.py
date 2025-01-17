@@ -41,9 +41,7 @@ class GridworldEnv:
         This function is used in self.__init__(), and may be useful for resetting environments.
         """
 
-        self.world = np.full(
-            (self.height, self.width, self.layers), Entity()
-        )
+        self.world = np.full((self.height, self.width, self.layers), Entity())
 
         # Define the location of each entity
         for index, x in np.ndenumerate(self.world):
@@ -125,7 +123,7 @@ class GridworldEnv:
         for _, x in np.ndenumerate(self.world):
             if hasattr(x, "model"):
                 agents.append(x)
-            else:
+            elif x.has_transitions:
                 x.transition(self)
         for agent in agents:
             agent.transition(self)
