@@ -18,7 +18,7 @@ if root not in sys.path:
 import random
 
 from agentarium.utils.logging import GameLogger
-from agentarium.primitives import Entity
+from agentarium.entities import Entity
 from examples.RPG.agents import Agent
 from examples.RPG.env import RPG
 from examples.RPG.utils import (create_agents, create_entities, create_models,

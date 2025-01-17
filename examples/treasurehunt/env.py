@@ -5,7 +5,7 @@
 import numpy as np
 
 # Import primitive types
-from agentarium.primitives import GridworldEnv
+from agentarium.environments import GridworldEnv
 # Import experiment specific classes
 from examples.treasurehunt.entities import Wall, Sand, Gem, EmptyEntity
 

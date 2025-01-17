@@ -1,7 +1,7 @@
 import numpy as np
 from agentarium.observation.visual_field import visual_field
 from agentarium.utils.helpers import one_hot_encode
-from agentarium.primitives import GridworldEnv
+from agentarium.environments import GridworldEnv
 
 class ObservationSpec:
   """Observation specification class for Agentarium agents."""

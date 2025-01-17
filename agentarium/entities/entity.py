@@ -1,13 +1,8 @@
-from __future__ import annotations
-
-from typing import Any, Optional
-
-from agentarium.location import Location
+from typing import Optional
 
 # ----------------------------------------------------- #
 #        Abstract class for environment objects         #
 # ----------------------------------------------------- #
-
 
 class Entity:
     r"""

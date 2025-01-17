@@ -6,7 +6,9 @@
 import numpy as np
 
 # Import agentarium-specific packages
-from agentarium.primitives import GridworldEnv, Entity, Agent
+from agentarium.agents import Agent
+from agentarium.entities import Entity
+from agentarium.environments import GridworldEnv
 from examples.cleanup.entities import (
     EmptyEntity,
     Sand,

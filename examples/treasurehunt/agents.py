@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from agentarium.primitives.agent import Agent
-from agentarium.primitives.environment import GridworldEnv
+from agentarium.agents import Agent
+from agentarium.environments import GridworldEnv
 
 
 class TreasurehuntAgent(Agent):

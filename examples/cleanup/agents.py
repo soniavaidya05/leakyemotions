@@ -1,7 +1,9 @@
 import numpy as np
 
 from agentarium.location import Location, Vector
-from agentarium.primitives import Agent, Entity, GridworldEnv
+from agentarium.agents import Agent
+from agentarium.entities import Entity
+from agentarium.environments import GridworldEnv
 from agentarium.utils.helpers import one_hot_encode
 from agentarium.observation import observation, embedding
 from agentarium.utils.visualization import visual_field_sprite

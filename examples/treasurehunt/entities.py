@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from agentarium.primitives import Entity
+from agentarium.entities import Entity
 
 
 class Wall(Entity):

@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 from typing import Sequence, Optional
 
 # Import agentarium-specific packages
-from agentarium.primitives import GridworldEnv
+from agentarium.environments import GridworldEnv
 
 # --------------- #
 # endregion       #

@@ -1,4 +1,5 @@
-from agentarium.primitives import Entity, GridworldEnv
+from agentarium.entities import Entity
+from agentarium.environments import GridworldEnv
 
 import random
 

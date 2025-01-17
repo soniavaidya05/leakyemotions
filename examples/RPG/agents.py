@@ -7,7 +7,7 @@ import torch
 import numpy as np
 
 from agentarium.observation.visual_field import visual_field
-from agentarium.primitives import GridworldEnv
+from agentarium.environments import GridworldEnv
 
 class Agent:
     def __init__(self, model, cfg):
