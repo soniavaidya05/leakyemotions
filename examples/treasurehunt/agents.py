@@ -2,8 +2,9 @@
 
 import numpy as np
 
-from agentarium.primitives.agent import Agent
-from agentarium.primitives.environment import GridworldEnv
+from agentarium.agents import Agent
+from agentarium.environments import GridworldEnv
+from agentarium.observation import observation
 
 
 class TreasurehuntAgent(Agent):
@@ -11,7 +12,7 @@ class TreasurehuntAgent(Agent):
     A treasurehunt agent that uses the iqn model.
     """
 
-    def __init__(self, observation_spec, model):
+    def __init__(self, observation_spec: observation.ObservationSpec, model):
         action_space = [0, 1, 2, 3]  # the agent can move up, down, left, or right
         super().__init__(observation_spec, model, action_space)
 
@@ -30,7 +31,7 @@ class TreasurehuntAgent(Agent):
 
     def pov(self, env: GridworldEnv) -> np.ndarray:
         """Returns the state observed by the agent, from the flattened visual field."""
-        image = self.observation.observe(env, self.location)
+        image = self.observation_spec.observe(env, self.location)
         # flatten the image to get the state
         return image.reshape(1, -1)
 

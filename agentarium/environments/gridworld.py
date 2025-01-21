@@ -1,11 +1,7 @@
-from __future__ import annotations
-
-import copy
-
-import numpy as np
-
 from agentarium.location import Location
-from agentarium.primitives import Entity
+from agentarium.entities.entity import Entity
+import numpy as np
+import copy
 
 
 class GridworldEnv:
@@ -181,7 +177,7 @@ class GridworldEnv:
             if x.kind == kind:
                 entities.append(x)
         return entities
-
+    
     # ---------------------------- #
     # endregion: utility functions #
     # ---------------------------- #

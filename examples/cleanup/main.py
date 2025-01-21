@@ -15,9 +15,9 @@ if root not in sys.path:
 # endregion                #
 # ------------------------ #
 
-from agentarium.primitives import Entity
+from agentarium.entities import Entity
 from agentarium.config import load_config
-from agentarium.models.iqn import iRainbowModel
+from agentarium.models.pytorch.iqn import iRainbowModel
 
 from examples.cleanup.env import Cleanup
 from examples.cleanup.agents import CleanupAgent

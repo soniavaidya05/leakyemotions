@@ -1,4 +1,4 @@
-from agentarium.primitives import Entity
+from agentarium.entities import Entity
 import random
 
 # ----------------------------------------------------- #

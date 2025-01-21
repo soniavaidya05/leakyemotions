@@ -5,7 +5,7 @@
 from examples.RPG.entities import Gem, Coin, Food, Bone, EmptyObject, Wall
 from examples.RPG.agents import Agent, color_map
 
-from agentarium.primitives import GridworldEnv, Entity
+from agentarium.environments import GridworldEnv, Entity
 
 import numpy as np
 import random
