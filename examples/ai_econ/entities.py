@@ -1,60 +1,117 @@
-from agentarium.primitives import Entity, GridworldEnv
-
 import random
 
-class EmptyEntity(Entity):
-  """Empty entity class for the AI Economist game."""
-  def __init__(self, cfg, appearance):
-    super().__init__(appearance)
-    self.cfg = cfg
-    self.passable = True
-    self.sprite = f'{cfg.root}/examples/cleanup/assets/empty.png'
+from agentarium.primitives import Entity, GridworldEnv
 
-class Water(Entity):
-  """Impassable area for the AI Economist game."""
-  def __init__(self, cfg, appearance):
-    super().__init__(appearance)
-    self.cfg = cfg
-    self.sprite = f'{cfg.root}/examples/cleanup/assets/water.png'
+
+# Entities on multiple layers
+class Wall(Entity):
+    """Impassable walls for the AI Economist game."""
+
+    def __init__(self):
+        super().__init__()
+        self.sprite = f"./assets/empty.png"
+
+
+class EmptyEntity(Entity):
+    """Empty entity class for the AI Economist game."""
+
+    def __init__(self):
+        super().__init__()
+        self.passable = True
+        self.sprite = f"./assets/empty.png"
+
+
+# Entities on layer 0 (bottom layer)
+
 
 class Land(Entity):
-  """Passable area for the AI Economist game."""
-  def __init__(self, cfg, appearance):
-    super().__init__(appearance)
-    self.cfg = cfg
-    self.sprite = f'{cfg.root}/examples/cleanup/assets/grass.png'
+    """Empty land (no resources) for the AI Economist game."""
+
+    def __init__(self):
+        super().__init__()
+        self.sprite = f"./assets/grass.png"
+
 
 class WoodNode(Entity):
-  """Potential wood area for the AI Economist game."""
-  def __init__(self, cfg, appearance):
-    super().__init__(appearance)
-    self.cfg = cfg
-    self._sprite = f'{self.cfg.root}/examples/cleanup/assets/grass.png'
-    self.has_transitions = True
-    self.resources = 0
-    self.renew()
+    """Potential wood area for the AI Economist game."""
 
-  @property
-  def sprite(self) -> str:
-    return self._sprite
-  
-  @sprite.setter
-  def sprite(self, new_sprite: str):
-    self._sprite = f'{self.cfg.root}/examples/cleanup/assets/' + new_sprite + '.png'
+    def __init__(self, cfg):
+        super().__init__()
+        self.sprite = f"./assets/grass.png"
+        self.has_transitions = True
+        self.renew_chance = cfg.env.resource_renew_chance
+        self.renew_amount = cfg.env.resource_renew_amount
+        self.num_resources = 0
+        self.renew()
 
-  def renew(self) -> None:
-    if random.random() < self.cfg.env.resource_spawn_chance:
-      self.resources = random.randint(5, 10)
-      self.sprite('apple_grass')
+    def renew(self) -> None:
+        """Sets num_resources at this node to renew_amount with chance of renew_chance."""
+        if random.random() < self.renew_chance:
+            self.num_resources = self.renew_amount
+            self.sprite = f"./assets/apple_grass.png"
 
-  def transition(self, env: GridworldEnv) -> None:
-    if self.resources == 0:
-      self.sprite('grass')
-      self.renew()
-      
+    def transition(self, env: GridworldEnv) -> None:
+        """If no resources are left, update the sprite; then, attempt to renew the node."""
+        if self.num_resources == 0:
+            self.sprite = f"./assets/grass.png"  # NOTE: change the sprite when agents deplete this instead?
+            self.renew()
 
 
+class StoneNode(Entity):
+    """Potential stone area for the AI Economist game."""
 
-      
+    def __init__(self, cfg):
+        super().__init__()
+        self.sprite = f"./assets/grass.png"
+        self.has_transitions = True
+        self.renew_chance = cfg.env.resource_renew_chance
+        self.renew_amount = cfg.env.resource_renew_amount
+        self.num_resources = 0
+        self.renew()
+
+    def renew(self) -> None:
+        """Sets num_resources at this node to renew_amount with chance of renew_chance."""
+        if random.random() < self.renew_chance:
+            self.num_resources = self.renew_amount
+            self.sprite = f"./assets/apple.png"
+
+    def transition(self, env: GridworldEnv) -> None:
+        """If no resources are left, update the sprite; then, attempt to renew the node."""
+        if self.num_resources == 0:
+            self.sprite = f"./assets/grass.png"  # NOTE: change the sprite when agents deplete this instead?
+            self.renew()
 
 
+# Entities on layer 2 (top layer)
+
+
+class BuyerWoodSignal(Entity):
+    """A signal that can be used by Markets to signal interest in buying wood."""
+
+    def __init__(self):
+        super().__init__()
+        # doesn't have a sprite yet
+
+
+class BuyerStoneSignal(Entity):
+    """A signal that can be used by Markets to signal interest in buying stone."""
+
+    def __init__(self):
+        super().__init__()
+        # doesn't have a sprite yet
+
+
+class SellerWoodSignal(Entity):
+    """A signal that can be used by Agents to signal interest in selling wood."""
+
+    def __init__(self):
+        super().__init__()
+        # doesn't have a sprite yet
+
+
+class SellerStoneSignal(Entity):
+    """A signal that can be used by Agents to signal interest in selling stone."""
+
+    def __init__(self):
+        super().__init__()
+        # doesn't have a sprite yet
