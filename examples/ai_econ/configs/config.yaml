@@ -3,3 +3,9 @@
 env:
   resource_renew_chance:
   resource_renew_amount:
+
+agent:
+  seller:
+    skilled_success_rate:
+    unskilled_success_rate:
+    sell_reward:
