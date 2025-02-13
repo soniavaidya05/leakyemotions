@@ -1,4 +1,4 @@
-import random
+import numpy as np
 
 from agentarium.entities import Entity
 from agentarium.environments import GridworldEnv
@@ -10,7 +10,7 @@ class Wall(Entity):
 
     def __init__(self):
         super().__init__()
-        self.sprite = f"./assets/empty.png"
+        self.sprite = f"./assets/wall.png"
 
 
 class EmptyEntity(Entity):
@@ -33,57 +33,62 @@ class Land(Entity):
         self.sprite = f"./assets/grass.png"
 
 
+# Entities on layer 1 (middle layer)
+
+
 class WoodNode(Entity):
     """Potential wood area for the AI Economist game."""
 
-    def __init__(self, cfg):
+    def __init__(self, renew_chance: float, renew_amount: int):
         super().__init__()
         self.sprite = f"./assets/grass.png"
+        self.passable = True
         self.has_transitions = True
-        self.renew_chance = cfg.env.resource_renew_chance
-        self.renew_amount = cfg.env.resource_renew_amount
+        self.renew_chance = renew_chance
+        self.renew_amount = renew_amount
         self.num_resources = 0
         self.renew()
 
     def renew(self) -> None:
         """Sets num_resources at this node to renew_amount with chance of renew_chance."""
-        if random.random() < self.renew_chance:
+        if np.random.random() < self.renew_chance:
             self.num_resources = self.renew_amount
-            self.sprite = f"./assets/apple_grass.png"
+            self.sprite = f"./assets/wood.png"
 
     def transition(self, env: GridworldEnv) -> None:
         """If no resources are left, update the sprite; then, attempt to renew the node."""
         if self.num_resources == 0:
-            self.sprite = f"./assets/grass.png"  # NOTE: change the sprite when agents deplete this instead?
+            self.sprite = f"./assets/wood.png"  # NOTE: change the sprite when agents deplete this instead?
             self.renew()
 
 
 class StoneNode(Entity):
     """Potential stone area for the AI Economist game."""
 
-    def __init__(self, cfg):
+    def __init__(self, renew_chance: float, renew_amount: int):
         super().__init__()
         self.sprite = f"./assets/grass.png"
+        self.passable = True
         self.has_transitions = True
-        self.renew_chance = cfg.env.resource_renew_chance
-        self.renew_amount = cfg.env.resource_renew_amount
+        self.renew_chance = renew_chance
+        self.renew_amount = renew_amount
         self.num_resources = 0
         self.renew()
 
     def renew(self) -> None:
         """Sets num_resources at this node to renew_amount with chance of renew_chance."""
-        if random.random() < self.renew_chance:
+        if np.random.random() < self.renew_chance:
             self.num_resources = self.renew_amount
-            self.sprite = f"./assets/apple.png"
+            self.sprite = f"./assets/stone.png"
 
     def transition(self, env: GridworldEnv) -> None:
         """If no resources are left, update the sprite; then, attempt to renew the node."""
         if self.num_resources == 0:
-            self.sprite = f"./assets/grass.png"  # NOTE: change the sprite when agents deplete this instead?
+            self.sprite = f"./assets/stone.png"  # NOTE: change the sprite when agents deplete this instead?
             self.renew()
 
 
-# Entities on layer 2 (top layer)
+# Entities on layer 3 (top layer)
 
 
 class BuyerWoodSignal(Entity):

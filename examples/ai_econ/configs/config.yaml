@@ -1,11 +1,11 @@
 
 
 env:
-  resource_renew_chance:
-  resource_renew_amount:
+  resource_renew_chance: 0.01
+  resource_renew_amount: 1
 
 agent:
   seller:
-    skilled_success_rate:
-    unskilled_success_rate:
-    sell_reward:
+    skilled_success_rate: 0.9
+    unskilled_success_rate: 0.3
+    sell_reward: 1

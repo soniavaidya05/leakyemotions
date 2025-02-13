@@ -3,7 +3,7 @@
 import numpy as np
 
 from agentarium.entities import Entity
-
+from agentarium.environments import GridworldEnv
 
 class Wall(Entity):
     """An entity that represents a wall in the treasurehunt environment."""
@@ -43,7 +43,7 @@ class EmptyEntity(Entity):
         self.has_transitions = True  # EmptyEntity can transition into Gems
         self.sprite = "./assets/empty.png"
 
-    def transition(self, env):
+    def transition(self, env: GridworldEnv):
         """
         EmptySpaces can randomly spawn into Gems based on the item spawn probabilities dictated in the environmnet.
         """

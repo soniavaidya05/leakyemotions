@@ -1,7 +1,5 @@
 """Agent classes for the AI Economist task. Includes the resource collectors and the market deciders."""
 
-import random
-
 import numpy as np
 
 from agentarium.agents import Agent
@@ -47,7 +45,19 @@ class Seller(Agent):
         self.wood_owned = 0
         self.stone_owned = 0
 
-        self.sprite = "./assets/hero.png"
+        self._sprite = "./assets/hero.png"
+
+    @property
+    def sprite(self):
+        """Agent sprite."""
+        return self._sprite
+    
+
+    @sprite.setter
+    def sprite(self, new_sprite):
+        """Update the agent sprite with the name of a new sprite."""
+        self._sprite = new_sprite
+
 
     def reset(self) -> None:
         """Resets the agent by fill in blank images for the memory buffer."""
@@ -58,11 +68,13 @@ class Seller(Agent):
         for _ in range(self.model.num_frames):
             self.add_memory(state, action, reward, done)
 
+
     def pov(self, env: GridworldEnv) -> np.ndarray:
         """Returns the state observed by the agent, from the flattened visual field."""
         image = self.observation_spec.observe(env, self.location)
         # flatten the image to get the state
         return image.reshape(1, -1)
+
 
     def get_action(self, state: np.ndarray) -> int:
         """Gets the action from the model, using the stacked states."""
@@ -75,6 +87,7 @@ class Seller(Agent):
         action = self.model.take_action(model_input)
         return action
 
+
     def act(self, env: GridworldEnv, action: int) -> float:
         """Act on the environment, returning the reward."""
 
@@ -82,24 +95,28 @@ class Seller(Agent):
         if 0 <= action <= 3:
             new_location = tuple()
             if action == 0:  # move north
+                self.sprite = './assets/hero-back.png'
                 new_location = (
                     self.location[0] - 1,
                     self.location[1],
                     self.location[2],
                 )
             if action == 1:  # move south
+                self.sprite = './assets/hero.png'
                 new_location = (
                     self.location[0] + 1,
                     self.location[1],
                     self.location[2],
                 )
             if action == 2:  # move west
+                self.sprite = './assets/hero-left.png'
                 new_location = (
                     self.location[0],
                     self.location[1] - 1,
                     self.location[2],
                 )
             if action == 3:  # move east
+                self.sprite = './assets/hero-right.png'
                 new_location = (
                     self.location[0],
                     self.location[1] + 1,
@@ -117,16 +134,20 @@ class Seller(Agent):
         if action == 4:
             # get the node that is directly below the agent
             node_below = env.observe(
-                self.location[0], self.location[1], self.location[2] - 1
+                (self.location[0], self.location[1], self.location[2] - 1)
             )
             if node_below.kind == "WoodNode" and node_below.num_resources > 0:
-                if random.random < self.wood_success_rate:
+                if np.random.random() < self.wood_success_rate:
                     self.wood_owned += 1
                     node_below.num_resources -= 1
+                    env.game_score += 1
+                    return 1
             elif node_below.kind == "StoneNode" and node_below.num_resources > 0:
-                if random.random < self.stone_success_rate:
+                if np.random.random() < self.stone_success_rate:
                     self.stone_owned += 1
                     node_below.num_resources -= 1
+                    env.game_score += 1
+                    return 1
             return 0
 
         # if the agent chooses to sell wood (attempts to sell 1 unit for now)
