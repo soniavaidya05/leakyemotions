@@ -44,17 +44,7 @@ class Seller(Agent):
         self.wood_owned = 0
         self.stone_owned = 0
 
-        self._sprite = "./assets/hero.png"
-
-    @property
-    def sprite(self):
-        """Agent sprite."""
-        return self._sprite
-
-    @sprite.setter
-    def sprite(self, new_sprite):
-        """Update the agent sprite with the name of a new sprite."""
-        self._sprite = new_sprite
+        self.sprite = "./assets/hero.png"
 
     def reset(self) -> None:
         """Resets the agent by fill in blank images for the memory buffer."""
@@ -209,7 +199,7 @@ class Buyer(Agent):
         self.wood_owned = 0
         self.stone_owned = 0
 
-        self.sprite = "./assets/zap.png"  # placeholder
+        self.sprite = "./assets/bank.png"
 
     def reset(self) -> None:
         """Resets the agent by fill in blank images for the memory buffer."""

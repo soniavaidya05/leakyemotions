@@ -58,7 +58,7 @@ class WoodNode(Entity):
     def transition(self, env: GridworldEnv) -> None:
         """If no resources are left, update the sprite; then, attempt to renew the node."""
         if self.num_resources == 0:
-            self.sprite = f"./assets/wood.png"  # NOTE: change the sprite when agents deplete this instead?
+            self.sprite = f"./assets/grass.png"
             self.renew()
 
 
@@ -84,7 +84,7 @@ class StoneNode(Entity):
     def transition(self, env: GridworldEnv) -> None:
         """If no resources are left, update the sprite; then, attempt to renew the node."""
         if self.num_resources == 0:
-            self.sprite = f"./assets/stone.png"  # NOTE: change the sprite when agents deplete this instead?
+            self.sprite = f"./assets/grass.png"
             self.renew()
 
 
