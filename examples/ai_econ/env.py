@@ -90,13 +90,13 @@ class EconEnv(GridworldEnv):
 
         # woodcutters: north area & south area
         woodcutters_spawn_locations = random.sample(
-            north_spawn_area, self.num_sellers // 2
-        ) + random.sample(south_spawn_area, self.num_sellers // 2)
+            north_spawn_area, self.cfg.agent.seller.num // 2
+        ) + random.sample(south_spawn_area, self.cfg.agent.seller.num // 2)
         random.shuffle(woodcutters_spawn_locations)
         # stonecutters: east area & west area
         stonecutters_spawn_locations = random.sample(
-            east_spawn_area, self.num_sellers // 2
-        ) + random.sample(west_spawn_area, self.num_sellers // 2)
+            north_spawn_area, self.cfg.agent.seller.num // 2
+        ) + random.sample(south_spawn_area, self.cfg.agent.seller.num // 2)
         random.shuffle(stonecutters_spawn_locations)
 
         for woodcutter, woodcutter_location in zip(
@@ -108,7 +108,9 @@ class EconEnv(GridworldEnv):
         ):
             self.add(stonecutter_location, stonecutter)
 
-        # TODO: place the market (I forgor. Skull)
+        # NOTE: for now we are only placing a single market (markets[0]) in the middle of the map
+        #       regardless of how many markets there are.
+        self.add((50, 50, 1), self.markets[0])
 
     def reset(self):
         """Reset the environment and all its agents."""
