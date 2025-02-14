@@ -1,10 +1,13 @@
 experiment:
+  seller_epsilon_decay: 0.0001
+  epochs:
   max_turns:
   entity_list:
+  record_period: # how many epochs in each data recording period
 
 env:
-  height:
-  width:
+  height: 51
+  width: 51
   resource_renew_chance:
   resource_renew_amount:
 
@@ -48,7 +51,7 @@ model:
 agent:
   seller:
     model:
-    num:  # population size for ONE group i.e. total num of sellers would be double this
+    num: # population size for ONE group i.e. total num of sellers would be double this
     majority_percentage:
     skilled_success_rate:
     unskilled_success_rate:
