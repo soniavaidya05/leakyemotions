@@ -10,7 +10,7 @@ from agentarium.observation.observation import ObservationSpec
 
 
 class Seller(Agent):
-    """A resource gatherer from a group that is mostly skilled at cutting wood in the AI Economist environment."""
+    """A resource gatherer in the AI Economist environment."""
 
     def __init__(
         self,
@@ -19,11 +19,10 @@ class Seller(Agent):
         is_woodcutter,
         is_majority,
         observation_spec: ObservationSpec,
-        model,
     ):
         # the actions are: move north, move south, move west, move east, extract resource, sell wood, sell stone
         action_space = [0, 1, 2, 3, 4, 5, 6]
-        super().__init__(observation_spec, model, action_space)
+        super().__init__(observation_spec, cfg.agent.seller.model, action_space)
 
         self.appearance = appearance  # the "id" of the agent
         self.is_woodcutter = (
@@ -172,3 +171,53 @@ class Seller(Agent):
     def is_done(self, env: GridworldEnv) -> bool:
         """Returns whether this Agent is done."""
         return env.turn >= env.max_turns
+
+
+class Buyer(Agent):
+    """A market (resource buyer) in the AI Economist environment."""
+
+    def __init__(
+        self,
+        cfg,
+        appearance,
+        observation_spec: ObservationSpec,
+    ):
+        # the actions are (for now): buy wood, buy stone
+        action_space = [0, 1]
+        super().__init__(observation_spec, cfg.agent.seller.model, action_space)
+
+        self.appearance = appearance  # the "id" of the agent
+
+        self.buy_reward = cfg.agent.buyer.buy_reward
+
+        self.wood_owned = 0
+        self.stone_owned = 0
+
+        self.sprite = "./assets/zap.png"  # placeholder
+
+    def reset(self) -> None:
+        """Resets the agent by fill in blank images for the memory buffer."""
+        pass
+
+    def pov(self, env: GridworldEnv) -> np.ndarray:
+        """Returns the state observed by the agent, from the flattened visual field."""
+        pass
+
+    def get_action(self, state: np.ndarray) -> int:
+        """Gets the action from the model, using the stacked states."""
+        pass
+
+    def act(self, env: GridworldEnv, action: int) -> float:
+        pass
+
+    def is_done(self, env: GridworldEnv) -> bool:
+        """Returns whether this Agent is done."""
+        pass
+
+    def add_memory(
+        self, state: np.ndarray, action: int, reward: float, done: bool
+    ) -> None:
+        pass
+
+    def transition(self, env: GridworldEnv) -> None:
+        pass

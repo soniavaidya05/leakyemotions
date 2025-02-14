@@ -1,11 +1,21 @@
-
+experiment:
+  max_turns:
 
 env:
+  height:
+  width:
   resource_renew_chance:
   resource_renew_amount:
 
 agent:
   seller:
+    model:
+    num:
+    majority_percentage:
     skilled_success_rate:
     unskilled_success_rate:
     sell_reward:
+  buyer:
+    model:
+    num:
+    buy_reward:
