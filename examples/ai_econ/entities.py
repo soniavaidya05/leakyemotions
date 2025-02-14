@@ -53,12 +53,14 @@ class WoodNode(Entity):
         """Sets num_resources at this node to renew_amount with chance of renew_chance."""
         if np.random.random() < self.renew_chance:
             self.num_resources = self.renew_amount
+            self.kind = "WoodNode"
             self.sprite = f"./assets/wood.png"
 
     def transition(self, env: GridworldEnv) -> None:
         """If no resources are left, update the sprite; then, attempt to renew the node."""
         if self.num_resources == 0:
             self.sprite = f"./assets/grass.png"
+            self.kind = "Land"
             self.renew()
 
 
@@ -79,12 +81,14 @@ class StoneNode(Entity):
         """Sets num_resources at this node to renew_amount with chance of renew_chance."""
         if np.random.random() < self.renew_chance:
             self.num_resources = self.renew_amount
+            self.kind = "StoneNode"
             self.sprite = f"./assets/stone.png"
 
     def transition(self, env: GridworldEnv) -> None:
         """If no resources are left, update the sprite; then, attempt to renew the node."""
         if self.num_resources == 0:
             self.sprite = f"./assets/grass.png"
+            self.kind = "Land"
             self.renew()
 
 
