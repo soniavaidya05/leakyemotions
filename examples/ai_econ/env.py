@@ -25,6 +25,9 @@ class EconEnv(GridworldEnv):
         # TODO: based on the size of the environment, have a hard limit on the number of agents
 
         self.max_turns = cfg.experiment.max_turns
+        self.seller_score = 0
+        self.buyer_score = 0
+
         self.populate()
 
     def populate(self):

@@ -108,13 +108,6 @@ class Seller(Agent):
                     self.location[2],
                 )
 
-            # get reward obtained from object at new_location
-            target_object = env.observe(new_location)
-            # try moving to new_location
-            env.move(self, new_location)
-
-            return target_object.value
-
         # if the agent chooses to extract
         if action == 4:
             # get the node that is directly below the agent
@@ -125,14 +118,12 @@ class Seller(Agent):
                 if np.random.random() < self.wood_success_rate:
                     self.wood_owned += 1
                     node_below.num_resources -= 1
-                    env.game_score += 1
-                    return 1
+                    return 0
             elif node_below.kind == "StoneNode" and node_below.num_resources > 0:
                 if np.random.random() < self.stone_success_rate:
                     self.stone_owned += 1
                     node_below.num_resources -= 1
-                    env.game_score += 1
-                    return 1
+                    return 0
             return 0
 
         # if the agent chooses to sell wood (attempts to sell 1 unit for now)
@@ -151,6 +142,7 @@ class Seller(Agent):
                     if env.observe((H, W, self.location[2])).kind == "Buyer":
                         self.wood_owned -= 1
                         # TODO: reflect this sale on the other end somehow??
+                        env.seller_score += self.sell_reward
                         return self.sell_reward
             return 0  # sell was unsuccessful
 
@@ -169,6 +161,7 @@ class Seller(Agent):
                     if env.observe((H, W, self.location[2])).kind == "Buyer":
                         self.stone_owned -= 1
                         # TODO: reflect this sale on the other end somehow??
+                        env.seller_score += self.sell_reward
                         return self.sell_reward
             return 0  # sell was unsuccessful
 
