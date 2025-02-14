@@ -17,10 +17,11 @@ class Seller(Agent):
         is_woodcutter,
         is_majority,
         observation_spec: ObservationSpec,
+        model,
     ):
         # the actions are: move north, move south, move west, move east, extract resource, sell wood, sell stone
         action_space = [0, 1, 2, 3, 4, 5, 6]
-        super().__init__(observation_spec, cfg.agent.seller.model, action_space)
+        super().__init__(observation_spec, model, action_space)
 
         self.appearance = appearance  # the "id" of the agent
         self.is_woodcutter = (
@@ -182,15 +183,10 @@ class Seller(Agent):
 class Buyer(Agent):
     """A market (resource buyer) in the AI Economist environment."""
 
-    def __init__(
-        self,
-        cfg,
-        appearance,
-        observation_spec: ObservationSpec,
-    ):
+    def __init__(self, cfg, appearance, observation_spec: ObservationSpec, model):
         # the actions are (for now): buy wood, buy stone
         action_space = [0, 1]
-        super().__init__(observation_spec, cfg.agent.seller.model, action_space)
+        super().__init__(observation_spec, model, action_space)
 
         self.appearance = appearance  # the "id" of the agent
 

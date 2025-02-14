@@ -1,5 +1,6 @@
 experiment:
   max_turns:
+  entity_list:
 
 env:
   height:
@@ -7,15 +8,56 @@ env:
   resource_renew_chance:
   resource_renew_amount:
 
+model:
+  seller:
+    iqn:
+      type: iRainbowModel
+      parameters:
+        action_space: 4
+        layer_size: 250
+        n_step: 3
+        BATCH_SIZE: 64
+        memory_size: 1024
+        LR: 0.00025
+        TAU: .001
+        GAMMA: 0.99
+        N: 12
+        sync_freq: 200
+        model_update_freq: 4
+        epsilon: 0.01
+        device: cpu
+  buyer:
+    iqn:
+      type: iRainbowModel
+      parameters:
+        action_space: 4
+        layer_size: 250
+        n_step: 3
+        BATCH_SIZE: 64
+        memory_size: 1024
+        LR: 0.00025
+        TAU: .001
+        GAMMA: 0.99
+        N: 12
+        sync_freq: 200
+        model_update_freq: 4
+        epsilon: 0.01
+        device: cpu
+
+
 agent:
   seller:
     model:
-    num:
+    num:  # population size for ONE group i.e. total num of sellers would be double this
     majority_percentage:
     skilled_success_rate:
     unskilled_success_rate:
     sell_reward:
+    obs:
+      entity_list: ["EmptyEntity", "Wall", "Land", "WoodNode", "StoneNode", "Seller", "Buyer"]
   buyer:
     model:
     num:
     buy_reward:
+    obs:
+      entity_list: ["EmptyEntity", "Wall", "Land", "WoodNode", "StoneNode", "Seller", "Buyer"]

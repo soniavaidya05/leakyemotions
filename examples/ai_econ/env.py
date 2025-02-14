@@ -3,80 +3,29 @@ import random
 import numpy as np
 
 from agentarium.environments import GridworldEnv
-from agentarium.observation.observation import ObservationSpec
-from examples.ai_econ.agents import Buyer, Seller
 from examples.ai_econ.entities import (EmptyEntity, Land, StoneNode, Wall,
                                        WoodNode)
 
 
-class AIEconomist(GridworldEnv):
+class EconEnv(GridworldEnv):
     """
     AI Economist environment.
     """
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, woodcutters, stonecutters, markets):
         layers = 3
         default_entity = EmptyEntity()
         super().__init__(cfg.env.height, cfg.env.width, layers, default_entity)
 
         self.cfg = cfg
-        self.entity_list = [
-            "EmptyEntity",
-            "Wall",
-            "Land",
-            "WoodNode",
-            "StoneNode",
-            "Seller",
-            "Buyer",
-        ]
-        self.woodcutters = []
-        self.stonecutters = []
-        self.markets = []
+        self.woodcutters = woodcutters
+        self.stonecutters = stonecutters
+        self.markets = markets
 
         # TODO: based on the size of the environment, have a hard limit on the number of agents
 
-        self.num_buyers = cfg.agent.buyer.num
-        self.majority_percentage = cfg.agent.buyer.majority_percentage
-        self.num_sellers = cfg.agent.seller.num
-
         self.max_turns = cfg.experiment.max_turns
-
-        self.create_agents()
         self.populate()
-
-    def create_agents(self):
-        """
-        Creates the agents for this environment.
-        Appearances are placeholders for now; 0 for woodcutters, 1 for stonecutters, and 2 for markets.
-        """
-        for i in range(0, self.num_sellers):
-            self.woodcutters.append(
-                Seller(
-                    self.cfg,
-                    appearance=0,
-                    is_majority=(i >= self.num_sellers * self.majority_percentage),
-                    is_woodcutter=True,
-                    observation_spec=ObservationSpec(self.entity_list),
-                )
-            )
-            self.stonecutters.append(
-                Seller(
-                    self.cfg,
-                    appearance=1,
-                    is_majority=(i >= self.num_sellers * self.majority_percentage),
-                    is_woodcutter=False,
-                    observation_spec=ObservationSpec(self.entity_list),
-                )
-            )
-
-        for _ in range(0, self.num_buyers):
-            self.markets.append(
-                Buyer(
-                    self.cfg,
-                    appearance=2,
-                    observation_spec=ObservationSpec(self.entity_list),
-                )
-            )
 
     def populate(self):
         """
@@ -158,6 +107,8 @@ class AIEconomist(GridworldEnv):
             self.stonecutters, stonecutters_spawn_locations
         ):
             self.add(stonecutter_location, stonecutter)
+
+        # TODO: place the market (I forgor. Skull)
 
     def reset(self):
         """Reset the environment and all its agents."""
