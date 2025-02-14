@@ -39,13 +39,13 @@ class Land(Entity):
 class WoodNode(Entity):
     """Potential wood area for the AI Economist game."""
 
-    def __init__(self, renew_chance: float, renew_amount: int):
+    def __init__(self, cfg):
         super().__init__()
         self.sprite = f"./assets/grass.png"
         self.passable = True
         self.has_transitions = True
-        self.renew_chance = renew_chance
-        self.renew_amount = renew_amount
+        self.renew_chance = cfg.env.resource_renew_chance
+        self.renew_amount = cfg.env.resource_renew_amount
         self.num_resources = 0
         self.renew()
 
@@ -67,13 +67,13 @@ class WoodNode(Entity):
 class StoneNode(Entity):
     """Potential stone area for the AI Economist game."""
 
-    def __init__(self, renew_chance: float, renew_amount: int):
+    def __init__(self, cfg):
         super().__init__()
         self.sprite = f"./assets/grass.png"
         self.passable = True
         self.has_transitions = True
-        self.renew_chance = renew_chance
-        self.renew_amount = renew_amount
+        self.renew_chance = cfg.env.resource_renew_chance
+        self.renew_amount = cfg.env.resource_renew_amount
         self.num_resources = 0
         self.renew()
 
