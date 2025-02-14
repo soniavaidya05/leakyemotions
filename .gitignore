@@ -156,3 +156,4 @@ examples/treasurehunt/data/
 pyvenv.cfg
 /bin
 /share
+examples/ai_econ/data
