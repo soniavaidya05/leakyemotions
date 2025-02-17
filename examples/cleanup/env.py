@@ -32,7 +32,6 @@ class Cleanup(GridworldEnv):
     self,
     cfg: Cfg,
     agents: list[CleanupAgent],
-    mode: str = "DEFAULT"
   ):
     self.cfg = cfg
     self.channels = cfg.agent.agent.obs.channels # default: # of entity classes + 1 (agent class) + 2 (beam types)
@@ -42,9 +41,15 @@ class Cleanup(GridworldEnv):
     self.agent_layer = 1
     self.beam_layer = 2
     self.pollution = 0
-    super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(cfg))
-    self.mode = mode
+    default_entity = EmptyEntity()
+    super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, default_entity)
+    self.mode = cfg.env.mode
+    self.max_turns = cfg.experiment.max_turns
+    self.pollution_threshold = cfg.env.pollution_threshold
+    self.pollution_spawn_chance = cfg.env.pollution_spawn_chance
+    self.apple_spawn_chance = cfg.env.apple_spawn_chance
     self.turn = 0
+    self.game_score = 0
     self.populate()
   
 
@@ -59,24 +64,24 @@ class Cleanup(GridworldEnv):
 
       # If the index is the first or last, replace the location with a wall
       if H in [0, self.height - 1] or W in [0, self.width - 1]:
-        self.add(index, Wall(self.cfg))
+        self.add(index, Wall())
       # Define river, orchard, and potential agent spawn points
       elif L == 0:
         if self.mode != "APPLE":
-          # Top third = river
-          if H > 0 and H < (self.height // 3):
-            self.add(index, River(self.cfg))
+          # Top third = river (plus section that extends further down)
+          if (H > 0 and H < (self.height // 3)) or (H < ((self.height // 3) * 2 - 1) and W in [self.width // 3, 1 + self.width // 3]):
+            self.add(index, River())
           # Bottom third = orchard
           elif H > (self.height - 1 - (self.height // 3)) and H < (self.height - 1):
-            self.add(index, AppleTree(self.cfg))
+            self.add(index, AppleTree())
             apple_spawn_points.append(index)
           # Middle third = potential agent spawn points
           else:
-            self.add(index, Sand(self.cfg))
+            self.add(index, Sand())
             spawn_index = [index[0], index[1], self.agent_layer]
             spawn_points.append(spawn_index)
         else:
-          self.add(index, AppleTree(self.cfg))
+          self.add(index, AppleTree())
           if ((H % 2) == 0) and ((W % 2) == 0):
             spawn_index = [index[0], index[1], self.agent_layer]
             spawn_points.append(spawn_index)
@@ -88,7 +93,7 @@ class Cleanup(GridworldEnv):
     locs = [apple_spawn_points[i] for i in loc_index]
     for loc in locs:
       loc = tuple(loc)
-      self.add(loc, Apple(self.cfg))
+      self.add(loc, Apple())
       
     # Place agents randomly based on the spawn points chosen
     loc_index = np.random.choice(len(spawn_points), size = len(self.agents), replace = False)
@@ -110,6 +115,7 @@ class Cleanup(GridworldEnv):
     pollution_tiles = 0
     river_tiles = 0
     for index, x in np.ndenumerate(self.world):
+      x: Entity
       if x.kind == "Pollution":
         pollution_tiles += 1
         river_tiles += 1
@@ -130,20 +136,17 @@ class Cleanup(GridworldEnv):
       entity.transition(self)
 
     for agent in self.agents:
-      state, action, reward, done = agent.transition(self)
-      agent.add_memory(state, action, reward, done)
-
-      if self.turn >= self.cfg.experiment.max_turns or done:
-        agent.add_final_memory(self) 
+      agent.transition(self)
 
 
   def reset(self):
     """Reset the environment."""
+    self.turn = 0
+    self.game_score = 0
     self.create_world()
     self.populate()
     for agent in self.agents:
-      agent.reset(self)
-      agent.init_replay(self)
+      agent.reset()
 
 
 

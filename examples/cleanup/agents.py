@@ -4,179 +4,87 @@ from agentarium.location import Location, Vector
 from agentarium.agents import Agent
 from agentarium.entities import Entity
 from agentarium.environments import GridworldEnv
-from agentarium.utils.helpers import one_hot_encode
 from agentarium.observation import observation, embedding
-from agentarium.utils.visualization import visual_field_sprite
 from examples.cleanup.entities import EmptyEntity
 
 # --------------------------- #
 # region: Cleanup agent class #
 # --------------------------- #
 
+"""The agent for treasurehunt, a simple example for the purpose of a tutorial."""
+
+
+class CleanupObservation(observation.ObservationSpec):
+    """Custom observation function for the Cleanup agent class."""
+    def __init__(
+        self,
+        entity_list: list[str],
+        vision_radius: int | None = None,
+        embedding_size: int = 3
+    ):
+        
+        super().__init__(entity_list, vision_radius)
+        self.embedding_size = embedding_size
+
+    def observe(
+        self,
+        env: GridworldEnv,
+        location: tuple | Location | None = None
+    ):
+        
+        visual_field = super().observe(env, location).flatten()
+        pos_code = embedding.positional_embedding(
+            location, env, 
+            self.embedding_size, 
+            self.embedding_size)
+        
+        return np.concatenate((visual_field, pos_code))
+
 
 class CleanupAgent(Agent):
-    """Cleanup agent."""
+    """
+    A treasurehunt agent that uses the iqn model.
+    """
 
-    def __init__(self, cfg, model):
+    def __init__(self, observation_spec: CleanupObservation, model):
+        action_space = [0, 1, 2, 3]  # the agent can move up, down, left, or right
+        super().__init__(observation_spec, model, action_space)
 
-        # Instantiate basic agent
-        action_space = [0, 1, 2, 3, 4, 5, 6]
-        super().__init__(cfg, model, action_space)
-
-        # Define the observation space for the Cleanup Agent
-        self.obs_fn = observation.ObservationSpec(
-            entity_list=["EmptyEntity", "CleanupAgent", "Wall",
-                         "River", "Pollution", "AppleTree",
-                         "Apple", "CleanBeam", "ZapBeam"],
-            vision_radius=cfg.agent.agent.obs.vision          
-        )
-        self.obs_fn.override_entity_map(
-            entity_map=entity_map(num_channels=cfg.agent.agent.obs.channels)
+        self.direction = 2 # 90 degree rotation: default at 180 degrees (facing down)
+        self.sprite = (
+            "./assets/hero.png"
         )
 
-        # Additional attributes
-        self.num_frames = cfg.agent.agent.obs.num_frames
-        self.embedding_size = cfg.agent.agent.obs.embeddings
-        self.direction = 2  # 90 degree rotation: default at 180 degrees (facing down)
-        self.rotation = cfg.agent.agent.rotation
-        self.sprite_path = f"{cfg.root}/examples/cleanup/assets/"
-        self._sprite = self.sprite_path + "hero" + ".png"
-        self.cfg = cfg
-
-        # logging features
-        self.outcome_record = {"harvest": 0, "zap": 0, "get_zapped": 0, "clean": 0}
+    def reset(self) -> None:
+        """Resets the agent by fill in blank images for the memory buffer."""
+        state = np.zeros_like(np.prod(self.model.input_size))
+        action = 0
+        reward = 0.0
+        done = False
+        for i in range(self.model.num_frames):
+            self.add_memory(state, action, reward, done)
 
 
-    @property
-    def sprite(self):
-        """Agent sprite."""
-        return self._sprite
+    def pov(self, env: GridworldEnv) -> np.ndarray:
+        """Returns the state observed by the agent, from the flattened visual field + positional code."""
+        image = self.observation_spec.observe(env, self.location)
+        # flatten the image to get the state
+        return image.reshape(1, -1)
 
 
-    @sprite.setter
-    def sprite(self, new_sprite):
-        """Update the agent sprite with the name of a new sprite."""
-        self._sprite = self.sprite_path + new_sprite + ".png"
+    def get_action(self, state: np.ndarray) -> int:
+        """Gets the action from the model, using the stacked states."""
+        prev_states = self.model.memory.current_state(
+            stacked_frames=self.model.num_frames - 1
+        )
+        stacked_states = np.vstack((prev_states, state))
 
+        model_input = stacked_states.reshape(1, -1)
+        action = self.model.take_action(model_input)
+        return action
+    
 
-    def sprite_loc(self) -> None:
-        """Determine the agent's sprite based on the location."""
-        sprite_directions = [
-            "hero-back",  # up
-            "hero-right",  # right
-            "hero",  # down
-            "hero-left",  # left
-        ]
-        self.sprite = sprite_directions[self.direction]
-
-
-    def init_replay(self, env: GridworldEnv) -> None:
-        """Fill in blank images for the memory buffer."""
-
-        if self.model.model_name != "HumanPlayer":
-            pov = np.zeros_like(self._environment_pov(env))
-            pos = np.zeros_like(self._embedding_pov(env))
-            ohe = np.zeros_like(one_hot_encode(self.direction, 4))
-            state = np.concatenate((pov, pos, ohe))
-            action = 0  # Action outside the action space
-            reward = 0.0
-            done = 0.0
-            for i in range(self.num_frames):
-                self.add_memory(state, action, reward, done)
-
-
-    def movement(self, action: int) -> tuple[int, ...]:
-        """Helper function for action: move up, down, right, left in the environment.
-
-        Params:
-            action: (int) An integer indicating the action to take.
-
-        Return:
-            tuple[int, ...] A location tuple indicating the attempted
-            location of the agent.
-        """
-
-        # Default location
-        next_location = self.location
-
-        if self.rotation:
-            if action == 0:  # FORWARD
-                forward_vector = Vector(1, 0, direction=self.direction)
-                cur_location = Location(*self.location)
-                next_location = (cur_location + forward_vector).to_tuple()
-            if action == 1:  # BACK
-                backward_vector = Vector(-1, 0, direction=self.direction)
-                cur_location = Location(*self.location)
-                next_location = (cur_location + backward_vector).to_tuple()
-            if action == 2:  # TURN CLOCKWISE
-                # Add 90 degrees; modulo 4 to ensure range of [0, 1, 2, 3]
-                self.direction = (self.direction + 1) % 4
-            if action == 3:  # TURN COUNTERCLOCKWISE
-                self.direction = (self.direction - 1) % 4
-
-        else:
-            if action == 0:  # UP
-                self.direction = 0
-                next_location = (
-                    self.location[0] - 1,
-                    self.location[1],
-                    self.location[2],
-                )
-            if action == 1:  # DOWN
-                self.direction = 2
-                next_location = (
-                    self.location[0] + 1,
-                    self.location[1],
-                    self.location[2],
-                )
-            if action == 2:  # LEFT
-                self.direction = 3
-                next_location = (
-                    self.location[0],
-                    self.location[1] - 1,
-                    self.location[2],
-                )
-            if action == 3:  # RIGHT
-                self.direction = 1
-                next_location = (
-                    self.location[0],
-                    self.location[1] + 1,
-                    self.location[2],
-                )
-
-        self.sprite_loc()
-
-        return next_location
-
-
-    def act(self, env: GridworldEnv, state: np.ndarray) -> tuple[int, ...]:
-        """
-        Act on the environment.
-
-        Params:
-            env: (GridWorldEnv) The environment to act in.
-            state: (np.ndarray) The state to pass into the model.
-
-        Return:
-            int: The action chosen by the model.
-            tuple[int, ...]: A location tuple indicating the attempted
-            location of the agent.
-        """
-
-        # Take the model action
-        action = self.model.take_action(state)
-        
-        # Attempt the transition
-        attempted_location = self.movement(action)
-        # Generate beams, if necessary
-        if action in [4, 5]:
-            self.spawn_beam(env, action)
-            attempted_location = self.location
-        
-        return action, attempted_location
-
-
-    def spawn_beam(self, env: GridworldEnv, action):
+    def spawn_beam(self, env: GridworldEnv, action: int):
         """Generate a beam extending cfg.agent.agent.beam_radius pixels
         out in front of the agent."""
 
@@ -194,15 +102,15 @@ class CleanupAgent(Agent):
         beam_locs = (
             [
                 (tile_above + (forward_vector * i))
-                for i in range(1, self.cfg.agent.agent.beam_radius + 1)
+                for i in range(1, env.cfg.agent.agent.beam_radius + 1)
             ]
             + [
                 (tile_above + (right_vector) + (forward_vector * i))
-                for i in range(self.cfg.agent.agent.beam_radius)
+                for i in range(env.cfg.agent.agent.beam_radius)
             ]
             + [
                 (tile_above + (left_vector) + (forward_vector * i))
-                for i in range(self.cfg.agent.agent.beam_radius)
+                for i in range(env.cfg.agent.agent.beam_radius)
             ]
         )
 
@@ -219,111 +127,50 @@ class CleanupAgent(Agent):
             if action == 4:
                 env.remove(loc.to_tuple())
                 env.add(
-                    loc.to_tuple(), CleanBeam(self.cfg)
+                    loc.to_tuple(), CleanBeam()
                 )
             elif action == 5:
                 env.remove(loc.to_tuple())
-                env.add(loc.to_tuple(), ZapBeam(self.cfg))
+                env.add(loc.to_tuple(), ZapBeam())
 
+    def act(self, env: GridworldEnv, action: int) -> float:
+        """Act on the environment, returning the reward."""
 
-    def _environment_pov(self, env: GridworldEnv) -> np.ndarray:
-        """
-        Defines the agent's BASE visual field function.
+        # Attempt to move
+        new_location = self.location
+        if action == 0:  # UP
+            self.direction = 0
+            self.sprite = './assets/hero-back.png'
+            new_location = (self.location[0] - 1, self.location[1], self.location[2])
+        if action == 1:  # DOWN
+            self.direction = 2
+            self.sprite = './assets/hero.png'
+            new_location = (self.location[0] + 1, self.location[1], self.location[2])
+        if action == 2:  # LEFT
+            self.direction = 3
+            self.sprite = './assets/hero-left.png'
+            new_location = (self.location[0], self.location[1] - 1, self.location[2])
+        if action == 3:  # RIGHT
+            self.direction = 1
+            self.sprite = './assets/hero-right.png'
+            new_location = (self.location[0], self.location[1] + 1, self.location[2])
 
-        Parameters:
-            env: (GridworldEnv) The environment to observe.
+        # Attempt to spawn beam
+        self.spawn_beam(env, action)
 
-        Return:
-            np.ndarray: The visual field of the agent.
-        """
-        return self.obs_fn.observe(env, self.location).flatten()
+        # get reward obtained from object at new_location
+        target_object = env.observe(new_location)
+        reward = target_object.value
+        env.game_score += reward
 
+        # try moving to new_location
+        env.move(self, new_location)
 
-    def _embedding_pov(self, env: GridworldEnv) -> np.ndarray:
-        """
-        Obtain the agent's positional embedding.
+        return reward
 
-        Parameters:
-            env: (GridworldEnv) The environment to observe.
-
-        Return:
-            np.ndarray: The agent's positional code.
-        """
-        return embedding.positional_embedding(
-            self.location, env, self.embedding_size, self.embedding_size
-        )
-
-
-    def pov(self, env: GridworldEnv) -> np.ndarray:
-        pov = self._environment_pov(env)
-        pos = self._embedding_pov(env)
-        ohe = one_hot_encode(self.direction, 4)
-        state = np.concatenate((pov, pos, ohe))
-        prev_states = self.model.memory.current_state(
-            stacked_frames=self.num_frames - 1
-        )
-        current_state = np.vstack((prev_states, state))
-
-        # Batch size of 1
-        return current_state.reshape(1, -1)
-
-
-    def add_memory(
-        self, state: np.ndarray, action: int, reward: float, done: bool
-    ) -> None:
-        """Add an experience to the memory.
-
-        Parameters:
-            state: (np.ndarray)
-            action: (int)
-            reward: (float)
-            done: (bool)
-        """
-        self.model.memory.add(state, action, reward, done)
-
-
-    def add_final_memory(self, env: GridworldEnv) -> None:
-        """Add the last memory to the memory buffer."""
-        state = self.pov(env)[:, -1, :]
-        self.model.memory.add(state, 0, 0.0, float(True))
-        
-
-    def transition(self, env: GridworldEnv) -> tuple[np.ndarray, int, float, bool]:
-        """Changes the world based on action taken."""
-        reward = 0
-
-        if self.model.model_name == "HumanPlayer":
-            current_state = visual_field_sprite(env, location = self.location, vision = self.obs_fn.vision_radius)
-            action, attempted_location = self.act(env, current_state)
-            current_state = np.vstack([layer[np.newaxis] for layer in current_state])
-        else:
-            current_state = self.pov(env)
-            # Use full state history to act
-            action, attempted_location = self.act(env, current_state)
-            # Clip to latest state only.
-            current_state = current_state[:, -1, :]
-
-        # Get the candidate reward objects
-        reward_locations = [
-            (attempted_location[0], attempted_location[1], i)
-            for i in range(env.world.shape[2])
-        ]
-        reward_objects = [env.observe(loc) for loc in reward_locations]
-
-        # Complete the transition
-        env.move(self, attempted_location)
-
-        # Get the interaction reward
-        for obj in reward_objects:
-            reward += obj.value
-
-        # Return S, A, R, D
-        return current_state, action, reward, False
-
-
-    def reset(self, env: GridworldEnv) -> None:
-        # self.model.memory.clear()
-        self.init_replay(env)
+    def is_done(self, env: GridworldEnv) -> bool:
+        """Returns whether this Agent is done."""
+        return env.turn >= env.max_turns
 
 
 # --------------------------- #
@@ -338,71 +185,30 @@ class CleanupAgent(Agent):
 class Beam(Entity):
     """Generic beam class for agent beams."""
 
-    def __init__(self, cfg):
+    def __init__(self):
         super().__init__()
-        self.cfg = cfg
-        self.sprite = f"{cfg.root}/examples/cleanup/assets/beam.png"
+        self.sprite = f"./assets/beam.png"
         self.turn_counter = 0
 
 
     def transition(self, env: GridworldEnv):
         # Beams persist for one full turn, then disappear.
         if self.turn_counter >= 1:
-            env.add(self.location, EmptyEntity(self.cfg))
+            env.add(self.location, EmptyEntity())
         else:
             self.turn_counter += 1
 
 
 class CleanBeam(Beam):
-    def __init__(self, cfg):
-        super().__init__(cfg)
+    def __init__(self):
+        super().__init__()
 
 
 class ZapBeam(Beam):
-    def __init__(self, cfg):
-        super().__init__(cfg)
-        self.sprite = f"{cfg.root}/examples/cleanup/assets/zap.png"
+    def __init__(self):
+        super().__init__()
+        self.sprite = f"./assets/zap.png"
         self.value = -1
-
-
-# --------------------------- #
-# endregion                   #
-# --------------------------- #
-
-# --------------------------- #
-# region: Entity map          #
-# --------------------------- #
-
-
-def entity_map(num_channels: int) -> dict:
-    """Color map for visualization."""
-    C = num_channels
-    assert C in [3, 8], "Must use 3 [RGB] or 8 channels."
-    if C == 8:
-        colors = {
-            "EmptyEntity": [0 for _ in range(C)],
-            "CleanupAgent": [255 if x == 0 else 0 for x in range(C)],
-            "Wall": [255 if x == 1 else 0 for x in range(C)],
-            "Apple": [255 if x == 2 else 0 for x in range(C)],
-            "AppleTree": [255 if x == 3 else 0 for x in range(C)],
-            "River": [255 if x == 4 else 0 for x in range(C)],
-            "Pollution": [255 if x == 5 else 0 for x in range(C)],
-            "CleanBeam": [255 if x == 6 else 0 for x in range(C)],
-            "ZapBeam": [255 if x == 7 else 0 for x in range(C)],
-        }
-    else:
-        colors = {
-            "EmptyEntity": [0.0, 0.0, 0.0],
-            "CleanupAgent": [150.0, 150.0, 150.0],
-            "Wall": [50.0, 50.0, 50.0],
-            "Apple": [0.0, 200.0, 0.0],
-            "AppleTree": [100.0, 100.0, 0.0],
-            "River": [0.0, 0.0, 200.0],
-            "Pollution": [0, 100.0, 200.0],
-            "CleanBeam": [200.0, 255.0, 200.0],
-            "ZapBeam": [255.0, 200.0, 200.0],
-        }
-    return colors
 
 
 # --------------------------- #

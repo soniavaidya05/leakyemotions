@@ -152,6 +152,7 @@ examples/RPG/data
 gem/.DS_Store
 examples/cleanup/data/
 examples/cleanup/runs/
+examples/cleanup/checkpoints/
 examples/treasurehunt/data/
 pyvenv.cfg
 /bin
