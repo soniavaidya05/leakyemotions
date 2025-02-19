@@ -51,6 +51,14 @@ class AgentariumModel:
     '''
     self.epsilon = new_epsilon
 
+  def start_epoch_action(self, **kwargs):
+    """Actions to perform before each epoch."""
+    pass
+
+  def end_epoch_action(self, **kwargs):
+    """Actions to perform after each epoch."""
+    pass
+
   @property
   def model_name(self):
     """Get the name of the model class."""

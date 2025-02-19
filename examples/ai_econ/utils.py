@@ -1,6 +1,8 @@
 from agentarium.models.pytorch.iqn import iRainbowModel
+from agentarium.models.base_model import AgentariumModel
 from agentarium.observation.observation import ObservationSpec
-from examples.ai_econ.agents import Buyer, Seller
+from examples.ai_econ.agents import Buyer, Seller, EconEnvObsSpec
+import torch
 
 
 def create_models(cfg):
@@ -11,23 +13,25 @@ def create_models(cfg):
     """
     woodcutter_models, stonecutter_models = [], []
     market_models = []
-    for _ in cfg.agent.seller.num:
+    for _ in range(cfg.agent.seller.num):
         model_name = cfg.agent.seller.model
-        model_type = vars(cfg.model.seller)[model_name]
+        model_type = vars(cfg.model.seller)[model_name].type
         if model_type == "iRainbowModel":
             woodcutter_models.append(
-                iRainbowModel(**vars(cfg.model.seller)[model_name].parameters)
+                iRainbowModel(**vars((cfg.model.seller))[model_name].parameters.to_dict(), seed=torch.random.seed(), input_size=(1,
+                    (len(cfg.agent.seller.obs.entity_list) * (2 * cfg.agent.seller.obs.vision_radius + 1) * (2 * cfg.agent.seller.obs.vision_radius + 1) + 2)))
             )
             stonecutter_models.append(
-                iRainbowModel(**vars(cfg.model.seller)[model_name].parameters)
+                iRainbowModel(**vars((cfg.model.seller))[model_name].parameters.to_dict(), seed=torch.random.seed(), input_size=(1,
+                    (len(cfg.agent.seller.obs.entity_list) * (2 * cfg.agent.seller.obs.vision_radius + 1) * (2 * cfg.agent.seller.obs.vision_radius + 1) + 2)))
             )
 
-    for _ in cfg.agent.buyer.num:
+    for _ in range(cfg.agent.buyer.num):
         model_name = cfg.agent.buyer.model
         model_type = vars(cfg.model.buyer)[model_name]
         if model_type == "iRainbowModel":
             market_models.append(
-                iRainbowModel(**vars(cfg.model.buyer)[model_name].parameters)
+                iRainbowModel(**vars((cfg.model.seller))[model_name].parameters.to_dict())
             )
 
     return woodcutter_models, stonecutter_models, market_models
@@ -52,7 +56,7 @@ def create_agents(cfg, woodcutter_models, stonecutter_models, market_models):
                     i >= cfg.agent.seller.num * cfg.agent.seller.majority_percentage
                 ),
                 is_woodcutter=True,
-                observation_spec=ObservationSpec(cfg.agent.seller.obs.entity_list),
+                observation_spec=EconEnvObsSpec(cfg.agent.seller.obs.entity_list, vision_radius=cfg.agent.seller.obs.vision_radius),
                 model=woodcutter_models[i],
             )
         )
@@ -64,7 +68,7 @@ def create_agents(cfg, woodcutter_models, stonecutter_models, market_models):
                     i >= cfg.agent.seller.num * cfg.agent.seller.majority_percentage
                 ),
                 is_woodcutter=False,
-                observation_spec=ObservationSpec(cfg.agent.seller.obs.entity_list),
+                observation_spec=EconEnvObsSpec(cfg.agent.seller.obs.entity_list, vision_radius=cfg.agent.seller.obs.vision_radius),
                 model=stonecutter_models[i],
             )
         )
@@ -75,7 +79,7 @@ def create_agents(cfg, woodcutter_models, stonecutter_models, market_models):
                 cfg,
                 appearance=2,
                 observation_spec=ObservationSpec(cfg.agent.buyer.obs.entity_list),
-                model=market_models[i],
+                model=AgentariumModel(0, 0, 0, 0)
             )
         )
 

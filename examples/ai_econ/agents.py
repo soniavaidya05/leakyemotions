@@ -7,6 +7,16 @@ from agentarium.environments import GridworldEnv
 from agentarium.observation.observation import ObservationSpec
 
 
+class EconEnvObsSpec(ObservationSpec):
+
+    def observe(self, env: GridworldEnv, location: tuple | None = None, resources: list[int] | None = None):
+        visual_field = super().observe(env, location).flatten()
+        if resources is not None:
+            resources = np.array(resources)
+        else:
+            resources = np.array([0, 0]) 
+        return(np.concatenate((visual_field, resources)))     
+
 class Seller(Agent):
     """A resource gatherer in the AI Economist environment."""
 
@@ -45,7 +55,10 @@ class Seller(Agent):
         self.wood_owned = 0
         self.stone_owned = 0
 
-        self.sprite = "./assets/hero.png"
+        if self.is_woodcutter:
+            self.sprite = "./assets/hero.png"
+        else:
+            self.sprite = "./assets/hero-g.png"
 
     def reset(self) -> None:
         """Resets the agent by fill in blank images for the memory buffer."""
@@ -58,7 +71,8 @@ class Seller(Agent):
 
     def pov(self, env: GridworldEnv) -> np.ndarray:
         """Returns the state observed by the agent, from the flattened visual field."""
-        image = self.observation_spec.observe(env, self.location)
+        image = self.observation_spec.observe(env, self.location, [self.wood_owned, self.stone_owned])
+
         # flatten the image to get the state
         return image.reshape(1, -1)
 
@@ -78,35 +92,50 @@ class Seller(Agent):
 
         # if the agent chooses to move
         if 0 <= action <= 3:
-            new_location = tuple()
             if action == 0:  # move north
-                self.sprite = "./assets/hero-back.png"
+                if self.is_woodcutter:
+                    self.sprite = "./assets/hero-back.png"
+                else:
+                    self.sprite = "./assets/hero-back-g.png"
                 new_location = (
                     self.location[0] - 1,
                     self.location[1],
                     self.location[2],
                 )
             if action == 1:  # move south
-                self.sprite = "./assets/hero.png"
+                if self.is_woodcutter:
+                    self.sprite = "./assets/hero.png"
+                else:
+                    self.sprite = "./assets/hero-g.png"
                 new_location = (
                     self.location[0] + 1,
                     self.location[1],
                     self.location[2],
                 )
             if action == 2:  # move west
-                self.sprite = "./assets/hero-left.png"
+                if self.is_woodcutter:
+                    self.sprite = "./assets/hero-left.png"
+                else:
+                    self.sprite = "./assets/hero-left-g.png"
                 new_location = (
                     self.location[0],
                     self.location[1] - 1,
                     self.location[2],
                 )
             if action == 3:  # move east
-                self.sprite = "./assets/hero-right.png"
+                if self.is_woodcutter:
+                    self.sprite = "./assets/hero-right.png"
+                else:
+                    self.sprite = "./assets/hero-right-g.png"
                 new_location = (
                     self.location[0],
                     self.location[1] + 1,
                     self.location[2],
                 )
+
+                    
+            # try moving to new_location
+            env.move(self, new_location)
 
         # if the agent chooses to extract
         if action == 4:

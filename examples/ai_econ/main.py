@@ -32,14 +32,14 @@ def run(env: EconEnv, cfg):
     for epoch in range(cfg.experiment.epochs + 1):
         # Reset the environment at the start of each epoch
         env.reset()
-        for i in cfg.agent.seller.num:
+        for i in range(cfg.agent.seller.num):
             env.woodcutters[i].model.start_epoch_action(**locals())
             env.stonecutters[i].model.start_epoch_action(**locals())
-        for i in cfg.agent.buyer.num:
+        for i in range(cfg.agent.buyer.num):
             env.markets[i].model.start_epoch_action(**locals())
 
         while not env.turn >= env.max_turns:
-            if epoch % cfg.env.record_period == 0:
+            if epoch % cfg.experiment.record_period == 0:
                 full_sprite = visual_field_sprite(env)
                 imgs.append(image_from_array(full_sprite))
 
@@ -47,17 +47,17 @@ def run(env: EconEnv, cfg):
 
         # At the end of each epoch, train as long as the batch size is large enough.
         if epoch > 10:
-            for i in cfg.agent.seller.num:
+            for i in range(cfg.agent.seller.num):
                 total_seller_loss += env.woodcutters[i].model.train_step()
                 total_seller_loss += env.stonecutters[i].model.train_step()
-            for i in cfg.agent.buyer.num:
+            for i in range(cfg.agent.buyer.num):
                 total_buyer_loss += env.markets[i].model.train_step()
 
         total_seller_score += env.seller_score
         current_seller_epsilon = env.woodcutters[0].model.epsilon
 
-        if epoch % cfg.env.record_period == 0:
-            avg_seller_score = total_seller_score / cfg.env.record_period
+        if epoch % cfg.experiment.record_period == 0:
+            avg_seller_score = total_seller_score / cfg.experiment.record_period
             print(
                 f"Epoch: {epoch}; Epsilon: {current_seller_epsilon}; Losses this period: {total_seller_loss}; Avg. score this period: {avg_seller_score}"
             )
@@ -68,8 +68,8 @@ def run(env: EconEnv, cfg):
             total_loss = 0
 
         # update epsilon
-        for i in cfg.agent.seller.num:
-            new_epsilon = current_seller_epsilon - cfg.env.epsilon_decay
+        for i in range(cfg.agent.seller.num):
+            new_epsilon = current_seller_epsilon - cfg.experiment.seller_epsilon_decay
             env.woodcutters[i].model.epsilon = max(new_epsilon, 0.01)
             env.stonecutters[i].model.epsilon = max(new_epsilon, 0.01)
 

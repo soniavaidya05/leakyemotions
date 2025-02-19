@@ -45,15 +45,18 @@ class EconEnv(GridworldEnv):
             if y in [0, self.height - 1] or x in [0, self.width - 1]:
                 # Add walls around the edge of the world (when indices are first or last)
                 self.add(index, Wall())
-            if (x == 15 or x == 31) and (y in range(15, 20) or y in range(31, 36)):
+            if (x == 15 or x == 35) and (y in range(15, 20) or y in range(31, 36)):
                 # Add top & bottom walls around the market area
                 self.add(index, Wall())
-            if (y == 15 or y == 31) and (x in range(15, 20) or x in range(31, 36)):
+            if (y == 15 or y == 35) and (x in range(15, 20) or x in range(31, 36)):
                 # Add left & right walls around the market area
                 self.add(index, Wall())
 
-            # resource nodes, which are on the bottom layer
             if z == 0:
+                self.add(index, Land())
+
+            # resource nodes, which are on the bottom layer
+            if z == 1:
                 # wood nodes
                 if x in range(1, 15) and y in range(1, 15):
                     self.add(index, WoodNode(self.cfg))
@@ -66,7 +69,7 @@ class EconEnv(GridworldEnv):
                     self.add(index, StoneNode(self.cfg))
                 # land
                 else:
-                    self.add(index, Land())
+                    self.add(index, EmptyEntity())
 
         # finished filling in entities; spawn agents in a separate method cause this one is getting long
         self.place_agents()
@@ -82,14 +85,14 @@ class EconEnv(GridworldEnv):
         for y, x in np.ndindex(self.height, self.width):
             if x in range(20, 31):
                 if y in range(1, 15):
-                    north_spawn_area.append((y, x, 1))
+                    north_spawn_area.append((y, x, 2))
                 if y in range(36, 50):
-                    south_spawn_area.append((y, x, 1))
+                    south_spawn_area.append((y, x, 2))
             if y in range(20, 31):
                 if x in range(1, 15):
-                    west_spawn_area.append((y, x, 1))
+                    west_spawn_area.append((y, x, 2))
                 if x in range(36, 50):
-                    east_spawn_area.append((y, x, 1))
+                    east_spawn_area.append((y, x, 2))
 
         # woodcutters: north area & south area
         woodcutters_spawn_locations = random.sample(
@@ -113,7 +116,7 @@ class EconEnv(GridworldEnv):
 
         # NOTE: for now we are only placing a single market (markets[0]) in the middle of the map
         #       regardless of how many markets there are.
-        self.add((50, 50, 1), self.markets[0])
+        self.add((25, 25, 2), self.markets[0])
 
     def reset(self):
         """Reset the environment and all its agents."""
