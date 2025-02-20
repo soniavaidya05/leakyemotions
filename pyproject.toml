@@ -1,10 +1,15 @@
-[tool.poetry]
-name = "agentarium"
-version = "0.0.0"  # Placeholder
-description = "A flexible framework for developing reinforcement learning algorithms."
-authors = ["Yibing Ju <bing.ju@mail.utoronto.ca>"]  # TODO: add other authors
-license = "MIT"
+[project]
 readme = "README.md"
+name = "agentarium"
+version = "0.1.0"
+description = "A flexible framework for developing reinforcement learning algorithms."
+license = "MIT"
+authors = [
+    {name = "Yibing Ju", email = "bing.ju@mail.utoronto.ca"}, 
+    {name = "Rebekah Gelpi", email = "rebekah.gelpi@mail.utoronto.ca"},
+]
+
+[tool.poetry]
 packages = [{ include = "agentarium" }, { include = "examples" }]
 
 [tool.poetry.dependencies]
