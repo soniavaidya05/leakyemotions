@@ -1,94 +1,91 @@
 import random
 
-from gem.primitives import Object, GridworldEnv
+from agentarium.entities import Entity
+from agentarium.environments import GridworldEnv
 
 # --------------------------------------------------- #
-# region: Environment object classes for Cleanup Task #
+# region: Environment Entity classes for Cleanup Task #
 # --------------------------------------------------- #
 
-class EmptyObject(Object):
-  """Empty object class for the Cleanup Game."""
-  def __init__(self, cfg, appearance):
-    super().__init__(appearance)
-    self.cfg = cfg
+class EmptyEntity(Entity):
+  """Empty Entity class for the Cleanup Game."""
+  def __init__(self):
+    super().__init__()
     self.passable = True
-    self.sprite = f'{cfg.root}/examples/cleanup/assets/empty.png'
+    self.sprite = f'./assets/empty.png'
 
-class Sand(Object):
+class Sand(Entity):
   """Sand class for the Cleanup Game."""
-  def __init__(self, cfg, appearance):
-    super().__init__(appearance)
-    self.cfg = cfg
+  def __init__(self):
+    super().__init__()
     self.passable = True
-    self.sprite = f'{cfg.root}/examples/cleanup/assets/sand.png'
+    self.sprite = f'./assets/sand.png'
+    # Overwrite: Sand is just a different sprite appearance for
+    # the EmptyEntity class, but is otherwise identical.
+    self.kind = 'EmptyEntity'
 
-class Wall(Object):
+class Wall(Entity):
   """Wall class for the Cleanup Game."""
-  def __init__(self, cfg, appearance):
-    super().__init__(appearance)
-    self.cfg = cfg
-    self.sprite = f'{cfg.root}/examples/cleanup/assets/wall.png'
+  def __init__(self):
+    super().__init__()
+    self.sprite = f'./assets/wall.png'
 
-class River(Object):
+class River(Entity):
   """River class for the Cleanup game."""
-  def __init__(self, cfg, appearance):
-    super().__init__(appearance)
-    self.cfg = cfg
+  def __init__(self):
+    super().__init__()
     self.has_transitions = True
-    self.sprite = f'{cfg.root}/examples/cleanup/assets/water.png'
+    self.sprite = f'./assets/water.png'
 
   def transition(self, env: GridworldEnv):
     # Add pollution with a random probability
-    if random.random() < self.cfg.env.pollution_spawn_chance:
-      env.spawn(self.location)
+    if random.random() < env.pollution_spawn_chance:
+      env.add(self.location, Pollution())
 
-class Pollution(Object):
+class Pollution(Entity):
   """Pollution class for the Cleanup game."""
-  def __init__(self, cfg, appearance):
-    super().__init__(appearance)
-    self.cfg = cfg
+  def __init__(self):
+    super().__init__()
     self.has_transitions = True
-    self.sprite = f'{cfg.root}/examples/cleanup/assets/pollution.png'
+    self.sprite = f'./assets/pollution.png'
 
   def transition(self, env: GridworldEnv):
     # Check the current tile on the beam layer for cleaning beams
     beam_location = self.location[0], self.location[1], env.beam_layer
     
     # If a cleaning beam is on this tile, spawn a river tile
-    if env.world[beam_location].kind == "CleanBeam":
-      env.spawn(self.location)
+    if env.observe(beam_location).kind == "CleanBeam":
+      env.add(self.location, River())
 
 
-class AppleTree(Object):
+class AppleTree(Entity):
   """Potential apple class for the Cleanup game."""
-  def __init__(self, cfg, appearance):
-    super().__init__(appearance)
-    self.cfg = cfg
+  def __init__(self):
+    super().__init__()
     self.has_transitions = True
-    self.sprite = f'{cfg.root}/examples/cleanup/assets/grass.png'
+    self.sprite = f'./assets/grass.png'
 
   def transition(self, env: GridworldEnv):
     # If the pollution threshold has not been reached...
-    if not env.pollution > self.cfg.env.pollution_threshold:
+    if not env.pollution > env.pollution_threshold:
       # Add apples with a random probability
-      if random.random() < self.cfg.env.apple_spawn_chance:
-        env.spawn(self.location)
+      if random.random() < env.apple_spawn_chance:
+        env.add(self.location, Apple())
 
-class Apple(Object):
+class Apple(Entity):
   """Apple class for the Cleanup game."""
-  def __init__(self, cfg, appearance):
-    super().__init__(appearance)
-    self.cfg = cfg
+  def __init__(self):
+    super().__init__()
     self.value = 1 # Reward for eating the apple
-    self.sprite = f'{cfg.root}/examples/cleanup/assets/apple_grass.png'
+    self.sprite = f'./assets/apple_grass.png'
 
   def transition(self, env: GridworldEnv):
     # Check the current tile on the agent layer for agents
     agent_location = self.location[0], self.location[1], env.agent_layer
     
     # If there is an agent on this tile, spawn an apple tree tile
-    if env.world[agent_location].kind == "Agent":
-      env.spawn(self.location)
+    if env.observe(agent_location).kind == "CleanupAgent":
+      env.add(self.location, AppleTree())
 
 # --------------------------------------------------- #
 # endregion                                           #

@@ -3,14 +3,14 @@
 # --------------------------------- #
 
 # Import base packages
-import jax.numpy as jnp
 import numpy as np
-import random
 
-# Import gem-specific packages
-from gem.primitives import GridworldEnv
+# Import agentarium-specific packages
+from agentarium.agents import Agent
+from agentarium.entities import Entity
+from agentarium.environments import GridworldEnv
 from examples.cleanup.entities import (
-    EmptyObject,
+    EmptyEntity,
     Sand,
     Wall,
     River,
@@ -18,10 +18,8 @@ from examples.cleanup.entities import (
     AppleTree,
     Apple
 )
-from examples.cleanup.agents import (
-    Agent
-)
-from examples.trucks.config import Cfg
+from examples.cleanup.agents import CleanupAgent
+from agentarium.config import Cfg
 
 # --------------------------------- #
 # endregion: Imports                #
@@ -29,52 +27,32 @@ from examples.trucks.config import Cfg
 
 class Cleanup(GridworldEnv):
   """Cleanup Environment."""
+
   def __init__(
     self,
     cfg: Cfg,
-    agents: list[Agent]
+    agents: list[CleanupAgent],
   ):
     self.cfg = cfg
-    self.channels = cfg.env.channels # default: # of entity classes + 1 (agent class) + 2 (beam types)
+    self.channels = cfg.agent.agent.obs.channels # default: # of entity classes + 1 (agent class) + 2 (beam types)
     self.full_mdp = cfg.env.full_mdp
     self.agents = agents
-    self.appearances = self.color_map(self.channels)
     self.object_layer = 0
     self.agent_layer = 1
     self.beam_layer = 2
     self.pollution = 0
-    super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, eval(cfg.env.default_object)(cfg, self.appearances['EmptyObject']))
-    self.mode = "APPLE"
+    default_entity = EmptyEntity()
+    super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, default_entity)
+    self.mode = cfg.env.mode
+    self.max_turns = cfg.experiment.max_turns
+    self.pollution_threshold = cfg.env.pollution_threshold
+    self.pollution_spawn_chance = cfg.env.pollution_spawn_chance
+    self.apple_spawn_chance = cfg.env.apple_spawn_chance
+    self.turn = 0
+    self.game_score = 0
     self.populate()
-
-  def color_map(self, C) -> dict:
-    """Color map for visualization."""
-    if C == 8:
-      colors = {
-        'EmptyObject': [0 for _ in range(self.channels)],
-        'Agent': [255 if x == 0 else 0 for x in range(self.channels)],
-        'Wall': [255 if x == 1 else 0 for x in range(self.channels)],
-        'Apple': [255 if x == 2 else 0 for x in range(self.channels)],
-        'AppleTree': [255 if x == 3 else 0 for x in range(self.channels)],
-        'River': [255 if x == 4 else 0 for x in range(self.channels)],
-        'Pollution': [255 if x == 5 else 0 for x in range(self.channels)],
-        'CleanBeam': [255 if x == 6 else 0 for x in range(self.channels)],
-        'ZapBeam': [255 if x == 7 else 0 for x in range(self.channels)]
-      }
-    else:
-      colors = {
-        'EmptyObject': [0.0, 0.0, 0.0],
-        'Agent': [150.0, 150.0, 150.0],
-        'Wall': [50.0, 50.0, 50.0],
-        'Apple': [0.0, 200.0, 0.0],
-        'AppleTree': [100.0, 100.0, 0.0],
-        'River': [0.0, 0.0, 200.0],
-        'Pollution': [0, 100.0, 200.0],
-        'CleanBeam': [200.0, 255.0, 200.0],
-        'ZapBeam': [255.0, 200.0, 200.0]
-      }
-    return colors
   
+
   def populate(self) -> None:
   
     spawn_points = []
@@ -86,28 +64,24 @@ class Cleanup(GridworldEnv):
 
       # If the index is the first or last, replace the location with a wall
       if H in [0, self.height - 1] or W in [0, self.width - 1]:
-        self.world[index] = Wall(self.cfg, self.appearances["Wall"])
-        self.world[index].location = index
+        self.add(index, Wall())
       # Define river, orchard, and potential agent spawn points
       elif L == 0:
         if self.mode != "APPLE":
-          # Top third = river
-          if H > 0 and H < (self.height // 3):
-            self.world[index] = River(self.cfg, self.appearances["River"])
-            self.world[index].location = index
+          # Top third = river (plus section that extends further down)
+          if (H > 0 and H < (self.height // 3)) or (H < ((self.height // 3) * 2 - 1) and W in [self.width // 3, 1 + self.width // 3]):
+            self.add(index, River())
           # Bottom third = orchard
           elif H > (self.height - 1 - (self.height // 3)) and H < (self.height - 1):
-            self.world[index] = AppleTree(self.cfg, self.appearances["AppleTree"])
-            self.world[index].location = index
+            self.add(index, AppleTree())
             apple_spawn_points.append(index)
           # Middle third = potential agent spawn points
           else:
-            self.world[index] = Sand(self.cfg, self.appearances["EmptyObject"])
+            self.add(index, Sand())
             spawn_index = [index[0], index[1], self.agent_layer]
             spawn_points.append(spawn_index)
         else:
-          self.world[index] = AppleTree(self.cfg, self.appearances["AppleTree"])
-          self.world[index].location = index
+          self.add(index, AppleTree())
           if ((H % 2) == 0) and ((W % 2) == 0):
             spawn_index = [index[0], index[1], self.agent_layer]
             spawn_points.append(spawn_index)
@@ -119,7 +93,7 @@ class Cleanup(GridworldEnv):
     locs = [apple_spawn_points[i] for i in loc_index]
     for loc in locs:
       loc = tuple(loc)
-      self.add(loc, Apple(self.cfg, self.appearances["Apple"]))
+      self.add(loc, Apple())
       
     # Place agents randomly based on the spawn points chosen
     loc_index = np.random.choice(len(spawn_points), size = len(self.agents), replace = False)
@@ -128,17 +102,20 @@ class Cleanup(GridworldEnv):
       loc = tuple(loc)
       self.add(loc, agent)
 
-  def get_entities_for_transition(self):
+
+  def get_entities_for_transition(self) -> list[Entity]:
     entities = []
     for index, x in np.ndenumerate(self.world):
-      if (x.kind != "Wall") and (x.kind != "Agent"):
+      if not isinstance(x, Wall) and not isinstance(x, Agent):
         entities.append(x)
     return entities
   
+
   def measure_pollution(self) -> float:
     pollution_tiles = 0
     river_tiles = 0
     for index, x in np.ndenumerate(self.world):
+      x: Entity
       if x.kind == "Pollution":
         pollution_tiles += 1
         river_tiles += 1
@@ -146,33 +123,30 @@ class Cleanup(GridworldEnv):
         river_tiles += 1
     return pollution_tiles / river_tiles
 
-  def spawn(self, location) -> None:
-    # Get the kind of spawn function to apply.
-    spawn_type = self.world[location].kind
 
-    match(spawn_type):
-      case "River": # River generates Pollution
-        new_object = Pollution(self.cfg, self.appearances["Pollution"])
-      case "Pollution": #Pollution is cleaned into River
-        new_object = River(self.cfg, self.appearances["River"])
-      case "AppleTree": # AppleTree generates Apple
-        new_object = Apple(self.cfg, self.appearances["Apple"])
-      case "Apple": # Apple is eaten, becoming AppleTree
-        new_object = AppleTree(self.cfg, self.appearances["AppleTree"])
-      case "CleanBeam": # CleanBeam disappears, becoming EmptyObject
-        new_object = EmptyObject(self.cfg, self.appearances["EmptyObject"])
-      case "ZapBeam": # CleanBeam disappears, becoming EmptyObject
-        new_object = EmptyObject(self.cfg, self.appearances["EmptyObject"])
-      case "EmptyObject": # EmptyObject generates itself
-        new_object = self.world[location]
-    
-    self.world[location] = new_object
-    new_object.location = location
+  def take_turn(self) -> None:
+    """
+    Environment transition function.
+    """
+
+    self.turn += 1
+    self.pollution = self.measure_pollution()
+
+    for entity in self.get_entities_for_transition():
+      entity.transition(self)
+
+    for agent in self.agents:
+      agent.transition(self)
+
 
   def reset(self):
     """Reset the environment."""
+    self.turn = 0
+    self.game_score = 0
     self.create_world()
     self.populate()
+    for agent in self.agents:
+      agent.reset()
 
 
 

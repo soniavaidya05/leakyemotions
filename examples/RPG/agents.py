@@ -1,19 +1,13 @@
 from examples.RPG.entities import Wall, EmptyObject
-from examples.trucks.agents import Memory
+from examples.cleanup.agents import color_map
 
 from ast import literal_eval as make_tuple
 from typing import Optional
-from numpy.typing import ArrayLike
 import torch
+import numpy as np
 
-from gem.utils import visual_field
-
-
-
-# TODO: 
-# make sure dead agent should change model to None
-# probably need to add die into particular circumstances in transition
-# touch base with Eric about adding in new pov code
+from agentarium.observation.visual_field import visual_field
+from agentarium.environments import GridworldEnv
 
 class Agent:
     def __init__(self, model, cfg):
@@ -26,13 +20,13 @@ class Agent:
         self.value = 0  # agents have no value
         self.health = cfg.agent.agent.health  # for the agents, this is how hungry they are
         self.location = None
-        self.action_type = "neural_network"
+        self.action_space = [0, 1, 2, 3]
         self.vision = cfg.agent.agent.vision
         
         # training-related features
         self.model = model  # agent model here. need to add a tad that tells the learning somewhere that it is DQN
-        self.episode_memory = Memory(cfg.agent.agent.memory_size)
-        self.num_memories = cfg.agent.agent.num_memories
+        # self.episode_memory = Memory(cfg.agent.agent.memory_size)
+        self.num_frames = cfg.agent.agent.num_memories
         self.init_rnn_state = None
         self.encounters = {
             'Gem': 0,
@@ -42,37 +36,54 @@ class Agent:
             'Wall': 0
         }
 
-    def init_replay(self,  
-                    state_shape: Optional[ArrayLike] = None
-                    ) -> None:
-        '''
-        Fill in blank images for the LSTM. Requires the state size to be fully defined.
+    def init_replay(self, env: GridworldEnv) -> None:
+        """Fill in blank images for the LSTM."""
 
-        Parameters:
+        state = np.zeros_like(self.pov(env))
+        action = 0  # Action outside the action space
+        reward = 0.0
+        done = 0.0
+        for _ in range(self.num_frames):
+            self.model.memory.add(state, action, reward, done)
+    
+    def add_memory(self, state: np.ndarray, action: int, reward: float, done: bool) -> None:
+        """Add an experience to the memory."""
+        self.model.memory.add(state, action, reward, float(done))
+    
 
-            state_shape: (Optional) a tuple or list of C x H x W of the state size.
-            If it is not specified, the state size will be specified with the agent's vision.
-        '''
-        priority = torch.tensor(0.1)
-        num_frames = self.model.num_frames
+    def add_final_memory(self, env: GridworldEnv) -> None:
+        state = self.current_state(env)
+        self.model.memory.add(state, 0, 0.0, float(True))
 
-        if state_shape is not None:
-            state = torch.zeros(1, num_frames, *state_shape).float()
+
+    def current_state(self, env: GridworldEnv) -> np.ndarray:
+        state = self.pov(env)
+        prev_states = self.model.memory.current_state(stacked_frames=self.num_frames-1)
+        current_state = np.vstack((prev_states, state))
+        return current_state
+
+
+    def pov(self, env: GridworldEnv) -> np.ndarray:
+        """
+        Defines the agent's observation function
+        """
+
+        # If the environment is a full MDP, get the whole world image
+        if env.full_mdp:
+            image = visual_field(
+                env.world, color_map, channels=env.channels
+            )
+        # Otherwise, use the agent observation function
         else:
-            C = len(self.appearance)
-            H = W = self.vision * 2 + 1
-            state = torch.zeros(1, num_frames, C, H, W).float()
+            image = visual_field(
+                env.world, color_map, self.location, self.vision, env.channels
+            )
 
+        current_state = image.flatten()
+
+        return current_state
         
-        action = torch.tensor(4.0) # Action outside the action space
-        reward = torch.tensor(0.0)
-        done = torch.tensor(0.0)
 
-        # Priority, (state, action, reward, nextstate, done)
-        exp = (priority, (state, action, reward, state, done))
-
-        self.episode_memory.append(exp)
-        
     def movement(self,
                  action: int
                  ) -> tuple:
@@ -94,51 +105,20 @@ class Agent:
             new_location = (self.location[0], self.location[1] + 1, self.location[2])
         return new_location
     
-    def pov(self,
-            env) -> torch.Tensor:
-        '''
-        Defines the agent's observation function
-        '''
-        # Get the previous state
-        previous_state = self.episode_memory.get_last_memory('states')
 
-        # Get the frames from the previous state
-        current_state = previous_state.clone()
-
-        current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
-        # import matplotlib.pyplot as plt
-        # import numpy as np
-        # plt.subplot(1, 2, 1)
-        # plt.imshow(previous_state[:, -1, :, :, :].squeeze().permute(1, 2, 0).numpy().astype(np.uint8))
-        # plt.subplot(1, 2, 2)
-        # plt.imshow(current_state[:, -2, :, :, :].squeeze().permute(1, 2, 0).numpy().astype(np.uint8))
-        # plt.show()
-
-        # If the environment is a full MDP, get the whole world image
-        if env.full_mdp:
-            image = visual_field(env.world, color_map, channels=self.cfg.model.iqn.parameters.state_size[0])
-        # Otherwise, use the agent observation function
-        else:
-            image = visual_field(env.world, color_map, self.location, self.vision, channels=self.cfg.model.iqn.parameters.state_size[0])
-
-        # Update the latest state to the observation
-        state_now = torch.tensor(image).unsqueeze(0)
-        current_state[:, -1, :, :, :] = state_now
-
-        return current_state
-    
     def transition(self,
-                   env) -> tuple:
+                   env: GridworldEnv) -> tuple:
         '''
         Changes the world based on the action taken.
         '''
 
         # Get current state
         state = self.pov(env)
+        model_input = torch.from_numpy(self.current_state(env)).view(1, -1)
         reward = 0
 
         # Take action based on current state
-        action = self.model.take_action(state)
+        action = self.model.take_action(model_input)
 
         # Attempt the transition 
         attempted_location = self.movement(action)
@@ -157,9 +137,8 @@ class Agent:
 
         return state, action, reward, next_state, False
         
-    def reset(self) -> None:
-        self.episode_memory.clear()
-        self.init_replay()
+    def reset(self, env: GridworldEnv) -> None:
+        self.init_replay(env)
         self.encounters = {
             'Gem': 0,
             'Coin': 0,
@@ -167,71 +146,6 @@ class Agent:
             'Bone': 0,
             'Wall': 0
         }
-
-# ----------------------------------------------------- #
-# region: Memory class                                  #
-
-class Memory:
-    '''
-    Memory for the agent class
-    '''
-
-    def __init__(self, memory_size: int):
-        self.priorities = []
-        self.states = []
-        self.actions = []
-        self.rewards = []
-        self.nextstates = []
-        self.dones = []
-
-    def clear(self):
-        del self.priorities[:]
-        del self.actions[:]
-        del self.states[:]
-        del self.nextstates[:]
-        del self.rewards[:]
-        del self.dones[:]
-
-    def append(self, exp: tuple):
-        '''
-        Add an experience to the agent's memory.
-        
-        Parameters:
-            exp: The tuple to add 
-        '''
-        # Unpack
-        priority, exp1 = exp
-        state, action, reward, nextstate, done = exp1
-        # Add to replay
-        self.priorities.append(priority)
-        self.states.append(state)
-        self.actions.append(action)
-        self.rewards.append(reward)
-        self.nextstates.append(nextstate)
-        self.dones.append(done)
-
-    def get_last_memory(self, attr: Optional[str] = None):
-        '''
-        Get the latest memory from the replay.
-
-        Parameters:
-            attr: (Optional) the attribute to get.
-            If not specified, it returns all elements
-        '''
-        if attr is None:
-            return (
-                self.priorities[-1], 
-                self.states[-1], 
-                self.actions[-1], 
-                self.rewards[-1], 
-                self.nextstates[-1], 
-                self.dones[-1]
-            )
-        else:
-            return getattr(self, attr)[-1]
-
-# endregion
-# ----------------------------------------------------- #
 
 def color_map(channels: int) -> dict:
     '''

@@ -1,133 +1,90 @@
-import torch
-from typing import Optional, Sequence
-
 import numpy as np
 
-from examples.trucks.agents import Memory
-from gem.models.ann import ANN
-from gem.primitives import Object, GridworldEnv, Location, Vector
-from gem.utils import visual_field, visual_field_multilayer, one_hot_encode
-from gem.models.grid_cells import positional_embedding
+from agentarium.location import Location, Vector
+from agentarium.agents import Agent
+from agentarium.entities import Entity
+from agentarium.environments import GridworldEnv
+from agentarium.observation import observation, embedding
+from examples.cleanup.entities import EmptyEntity
 
-# ------------------- #
-# region: Agent class #
-# ------------------- #
+# --------------------------- #
+# region: Cleanup agent class #
+# --------------------------- #
+
+"""The agent for treasurehunt, a simple example for the purpose of a tutorial."""
 
 
-class Agent(Object):
-    """Cleanup agent."""
+class CleanupObservation(observation.ObservationSpec):
+    """Custom observation function for the Cleanup agent class."""
+    def __init__(
+        self,
+        entity_list: list[str],
+        vision_radius: int | None = None,
+        embedding_size: int = 3
+    ):
+        
+        super().__init__(entity_list, vision_radius)
+        self.embedding_size = embedding_size
 
-    def __init__(self, cfg, appearance, model):
+    def observe(
+        self,
+        env: GridworldEnv,
+        location: tuple | Location | None = None
+    ):
+        
+        visual_field = super().observe(env, location).flatten()
+        pos_code = embedding.positional_embedding(
+            location, env, 
+            self.embedding_size, 
+            self.embedding_size)
+        
+        return np.concatenate((visual_field, pos_code))
 
-        super().__init__(appearance)
 
-        self.cfg = cfg
-        self.vision = cfg.agent.agent.vision
-        self.num_frames = cfg.agent.agent.num_frames
-        self.direction = 2  # 90 degree rotation: default at 180 degrees (facing down)
-        self.action_space = [0, 1, 2, 3, 4, 5, 6]
-        self.has_transitions = True
-        self.sprite = f"{self.cfg.root}/examples/cleanup/assets/hero.png"
+class CleanupAgent(Agent):
+    """
+    A treasurehunt agent that uses the iqn model.
+    """
 
-        # training-related features
-        self.action_type = "neural_network"
-        self.model = model
-        # self.episode_memory = Memory(cfg.agent.agent.memory_size)
-        # self.num_memories = cfg.agent.agent.memory_size
-        # self.init_rnn_state = None
+    def __init__(self, observation_spec: CleanupObservation, model):
+        action_space = [0, 1, 2, 3]  # the agent can move up, down, left, or right
+        super().__init__(observation_spec, model, action_space)
 
-        self.rotation = cfg.agent.agent.rotation
+        self.direction = 2 # 90 degree rotation: default at 180 degrees (facing down)
+        self.sprite = (
+            "./assets/hero.png"
+        )
 
-        # logging features
-        self.outcome_record = {"harvest": 0, "zap": 0, "get_zapped": 0, "clean": 0}
-
-    def sprite_loc(self) -> None:
-        """Determine the agent's sprite based on the location."""
-        sprite_directions = [
-            f"{self.cfg.root}/examples/cleanup/assets/hero-back.png",  # up
-            f"{self.cfg.root}/examples/cleanup/assets/hero-right.png",  # right
-            f"{self.cfg.root}/examples/cleanup/assets/hero.png",  # down
-            f"{self.cfg.root}/examples/cleanup/assets/hero-left.png",  # left
-        ]
-        self.sprite = sprite_directions[self.direction]
-
-    def init_replay(self, env: GridworldEnv) -> None:
-        """Fill in blank images for the LSTM."""
-
-        state = np.zeros_like(self.current_state(env))
-        action = float(len(self.action_space)+1)  # Action outside the action space
+    def reset(self) -> None:
+        """Resets the agent by fill in blank images for the memory buffer."""
+        state = np.zeros_like(np.prod(self.model.input_size))
+        action = 0
         reward = 0.0
-        done = 0.0
-        for _ in range(self.num_frames):
-            self.model.memory.add(state, action, reward, done)
+        done = False
+        for i in range(self.model.num_frames):
+            self.add_memory(state, action, reward, done)
 
-    def act(self, action: int, rotate=False) -> tuple[int, ...]:
-        """Act on the environment.
 
-        Params:
-            action: (int) An integer indicating the action to take.
+    def pov(self, env: GridworldEnv) -> np.ndarray:
+        """Returns the state observed by the agent, from the flattened visual field + positional code."""
+        image = self.observation_spec.observe(env, self.location)
+        # flatten the image to get the state
+        return image.reshape(1, -1)
 
-        Return:
-            tuple[int, ...] A location tuple indicating the updated
-            location of the agent.
-        """
 
-        # Default location
-        next_location = self.location
+    def get_action(self, state: np.ndarray) -> int:
+        """Gets the action from the model, using the stacked states."""
+        prev_states = self.model.memory.current_state(
+            stacked_frames=self.model.num_frames - 1
+        )
+        stacked_states = np.vstack((prev_states, state))
 
-        if self.rotation:
+        model_input = stacked_states.reshape(1, -1)
+        action = self.model.take_action(model_input)
+        return action
+    
 
-            if action == 0:  # NOOP
-                pass
-            if action == 1:  # FORWARD
-                forward_vector = Vector(1, 0, direction=self.direction)
-                cur_location = Location(*self.location)
-                next_location = (cur_location + forward_vector).to_tuple()
-            if action == 2:  # BACK
-                backward_vector = Vector(-1, 0, direction=self.direction)
-                cur_location = Location(*self.location)
-                next_location = (cur_location + backward_vector).to_tuple()
-            if action == 3:  # TURN CLOCKWISE
-                # Add 90 degrees; modulo 4 to ensure range of [0, 1, 2, 3]
-                self.direction = (self.direction + 1) % 4
-            if action == 4:  # TURN COUNTERCLOCKWISE
-                self.direction = (self.direction - 1) % 4
-
-            self.sprite_loc()
-
-        else:
-            if action == 0:  # UP
-                self.sprite = f"{self.cfg.root}/examples/RPG/assets/hero-back.png"
-                next_location = (
-                    self.location[0] - 1,
-                    self.location[1],
-                    self.location[2],
-                )
-            if action == 1:  # DOWN
-                self.sprite = f"{self.cfg.root}/examples/RPG/assets/hero.png"
-                next_location = (
-                    self.location[0] + 1,
-                    self.location[1],
-                    self.location[2],
-                )
-            if action == 2:  # LEFT
-                self.sprite = f"{self.cfg.root}/examples/RPG/assets/hero-left.png"
-                next_location = (
-                    self.location[0],
-                    self.location[1] - 1,
-                    self.location[2],
-                )
-            if action == 3:  # RIGHT
-                self.sprite = f"{self.cfg.root}/examples/RPG/assets/hero-right.png"
-                next_location = (
-                    self.location[0],
-                    self.location[1] + 1,
-                    self.location[2],
-                )
-
-        return next_location
-
-    def spawn_beam(self, env: GridworldEnv, action):
+    def spawn_beam(self, env: GridworldEnv, action: int):
         """Generate a beam extending cfg.agent.agent.beam_radius pixels
         out in front of the agent."""
 
@@ -145,15 +102,15 @@ class Agent(Object):
         beam_locs = (
             [
                 (tile_above + (forward_vector * i))
-                for i in range(1, self.cfg.agent.agent.beam_radius + 1)
+                for i in range(1, env.cfg.agent.agent.beam_radius + 1)
             ]
             + [
                 (tile_above + (right_vector) + (forward_vector * i))
-                for i in range(self.cfg.agent.agent.beam_radius)
+                for i in range(env.cfg.agent.agent.beam_radius)
             ]
             + [
                 (tile_above + (left_vector) + (forward_vector * i))
-                for i in range(self.cfg.agent.agent.beam_radius)
+                for i in range(env.cfg.agent.agent.beam_radius)
             ]
         )
 
@@ -162,215 +119,98 @@ class Agent(Object):
 
         # Exclude any locations that have walls...
         placeable_locs = [
-            loc for loc in valid_locs if not env.world[loc.to_tuple()].kind == "Wall"
+            loc for loc in valid_locs if not str(env.observe(loc.to_tuple())) == "Wall"
         ]
 
         # Then, place beams in all of the remaining valid locations.
         for loc in placeable_locs:
-            if action == 5:
+            if action == 4:
                 env.remove(loc.to_tuple())
                 env.add(
-                    loc.to_tuple(), CleanBeam(self.cfg, env.appearances["CleanBeam"])
+                    loc.to_tuple(), CleanBeam()
                 )
-            elif action == 6:
+            elif action == 5:
                 env.remove(loc.to_tuple())
-                env.add(loc.to_tuple(), ZapBeam(self.cfg, env.appearances["ZapBeam"]))
+                env.add(loc.to_tuple(), ZapBeam())
 
-    def pov(self, env: GridworldEnv) -> np.ndarray:
-        """
-        Defines the agent's observation function
-        """
+    def act(self, env: GridworldEnv, action: int) -> float:
+        """Act on the environment, returning the reward."""
 
-        # If the environment is a full MDP, get the whole world image
-        if env.full_mdp:
-            image = visual_field_multilayer(
-                env.world, env.color_map, channels=env.channels
-            )
-        # Otherwise, use the agent observation function
-        else:
-            image = visual_field_multilayer(
-                env.world, env.color_map, self.location, self.vision, env.channels
-            )
+        # Attempt to move
+        new_location = self.location
+        if action == 0:  # UP
+            self.direction = 0
+            self.sprite = './assets/hero-back.png'
+            new_location = (self.location[0] - 1, self.location[1], self.location[2])
+        if action == 1:  # DOWN
+            self.direction = 2
+            self.sprite = './assets/hero.png'
+            new_location = (self.location[0] + 1, self.location[1], self.location[2])
+        if action == 2:  # LEFT
+            self.direction = 3
+            self.sprite = './assets/hero-left.png'
+            new_location = (self.location[0], self.location[1] - 1, self.location[2])
+        if action == 3:  # RIGHT
+            self.direction = 1
+            self.sprite = './assets/hero-right.png'
+            new_location = (self.location[0], self.location[1] + 1, self.location[2])
 
-        current_state = image.flatten()
+        # Attempt to spawn beam
+        self.spawn_beam(env, action)
 
-        return current_state
-    
-    def embed_loc(self, env: GridworldEnv) -> np.ndarray:
-        return positional_embedding(self.location, env, 3, 3)
-    
-    def current_state(self, env: GridworldEnv) -> np.ndarray:
-        pov = self.pov(env)
-        pos = self.embed_loc(env)
-        state = np.concatenate((pov, pos))
-        prev_states = self.model.memory.current_state(stacked_frames=self.num_frames-1)
-        current_state = np.vstack((prev_states, state))
-    
-        return current_state
-    
-    def add_memory(self, state: np.ndarray, action: int, reward: float, done: bool) -> None:
-        """Add an experience to the memory."""
-        self.model.memory.add(state, action, reward, done)
+        # get reward obtained from object at new_location
+        target_object = env.observe(new_location)
+        reward = target_object.value
+        env.game_score += reward
 
-    def transition(self, env: GridworldEnv, state, action):
-        """Changes the world based on action taken."""
-        reward = 0
+        # try moving to new_location
+        env.move(self, new_location)
 
-        # Attempt the transition
-        attempted_location = self.act(action)
+        return reward
 
-        # Generate beams, if necessary
-        if action in [5, 6]:
-            self.spawn_beam(env, action)
-
-        # Get the candidate reward objects
-        reward_locations = [
-            (attempted_location[0], attempted_location[1], i)
-            for i in range(env.world.shape[2])
-        ]
-        reward_objects = [env.observe(loc) for loc in reward_locations]
-
-        # Complete the transition
-        env.move(self, attempted_location)
-
-        # Get the interaction reward
-        for obj in reward_objects:
-            reward += obj.value
-
-        # Get the next state
-        location_code = positional_embedding(self.location, env, 3, 3)
-        direction = one_hot_encode(self.direction, 4)
-        # next_state = np.concatenate(
-        #     [self.pov(env).flatten(), location_code, direction]
-        # ).reshape(1, -1)
-        next_state = self.pov_stack(env)
-
-        return reward, next_state, False
-
-    def reset(self) -> None:
-        self.model.memory.clear()
-        # self.init_replay()
+    def is_done(self, env: GridworldEnv) -> bool:
+        """Returns whether this Agent is done."""
+        return env.turn >= env.max_turns
 
 
-# ------------------- #
-# endregion           #
-# ------------------- #
+# --------------------------- #
+# endregion                   #
+# --------------------------- #
 
-# ------------------- #
-# region: Beams       #
-# ------------------- #
+# --------------------------- #
+# region: Beams               #
+# --------------------------- #
 
 
-class Beam(Object):
+class Beam(Entity):
     """Generic beam class for agent beams."""
 
-    def __init__(self, cfg, appearance):
-        super().__init__(appearance)
-        self.cfg = cfg
-        self.sprite = f"{cfg.root}/examples/cleanup/assets/beam.png"
+    def __init__(self):
+        super().__init__()
+        self.sprite = f"./assets/beam.png"
         self.turn_counter = 0
+
 
     def transition(self, env: GridworldEnv):
         # Beams persist for one full turn, then disappear.
         if self.turn_counter >= 1:
-            env.spawn(self.location)
+            env.add(self.location, EmptyEntity())
         else:
             self.turn_counter += 1
 
 
 class CleanBeam(Beam):
-    def __init__(self, cfg, appearance):
-        super().__init__(cfg, appearance)
+    def __init__(self):
+        super().__init__()
 
 
 class ZapBeam(Beam):
-    def __init__(self, cfg, appearance):
-        super().__init__(cfg, appearance)
-        self.sprite = f"{cfg.root}/examples/cleanup/assets/zap.png"
+    def __init__(self):
+        super().__init__()
+        self.sprite = f"./assets/zap.png"
         self.value = -1
 
 
-# ------------------- #
-# endregion           #
-# ------------------- #
-
-"""
--------------------
-old functions below
--------------------
-"""
-
-
-def pov_old(self, env) -> torch.Tensor:
-    """
-    Defines the agent's observation function
-    """
-    # Get the previous state
-    previous_state = self.episode_memory.get_last_memory("states")
-
-    # Get the frames from the previous state
-    current_state = previous_state.clone()
-
-    current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
-
-    # If the environment is a full MDP, get the whole world image
-    if env.full_mdp:
-        image = visual_field_multilayer(env.world, env.color_map, channels=env.channels)
-    # Otherwise, use the agent observation function
-    else:
-        image = visual_field_multilayer(
-            env.world, env.color_map, self.location, self.vision, env.channels
-        )
-
-    # Update the latest state to the observation
-    state_now = torch.tensor(image).unsqueeze(0)
-    current_state[:, -1, :, :, :] = state_now
-
-    return current_state
-
-
-def init_replay(self) -> None:
-    """Fill in blank images for the LSTM."""
-
-    priority = torch.tensor(0.1)
-    num_frames = self.model.num_frames
-    if self.cfg.env.full_mdp:
-        state = torch.zeros(1, num_frames, *self.model.state_size).float()
-    else:
-        # Number of one-hot code channels
-        C = len(self.appearance)
-        H = W = self.vision * 2 + 1
-        state = torch.zeros(1, num_frames, C, H, W).float()
-
-    action = torch.tensor(7.0)  # Action outside the action space
-    reward = torch.tensor(0.0)
-    done = torch.tensor(0.0)
-    exp = (priority, (state, action, reward, state, done))
-    self.episode_memory.append(exp)
-
-def pov_stack(self, env: GridworldEnv) -> torch.Tensor:
-    """
-    Defines the agent's observation function
-    """
-    # Get the previous state
-    previous_state = self.episode_memory.get_last_memory("states")
-
-    # Get the frames from the previous state
-    current_state = previous_state.clone()
-
-    current_state[:, 0:-1, :, :, :] = previous_state[:, 1:, :, :, :]
-
-    # If the environment is a full MDP, get the whole world image
-    if env.full_mdp:
-        image = visual_field_multilayer(env.world, env.color_map, channels=env.channels)
-    # Otherwise, use the agent observation function
-    else:
-        image = visual_field_multilayer(
-            env.world, env.color_map, self.location, self.vision, env.channels
-        )
-
-    # Update the latest state to the observation
-    state_now = torch.tensor(image).unsqueeze(0)
-    current_state[:, -1, :, :, :] = state_now
-
-    return current_state
+# --------------------------- #
+# endregion                   #
+# --------------------------- #

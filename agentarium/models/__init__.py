@@ -1,0 +1,1 @@
+from agentarium.models.base_model import AgentariumModel

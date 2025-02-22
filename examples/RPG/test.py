@@ -10,26 +10,23 @@ import time
 
 from IPython.display import clear_output
 from matplotlib import pyplot as plt
-from typing import Union, Sequence
+from typing import Union
 from datetime import datetime
 
-# Import gem-specific packages
-from gem.utils import (
-    visual_field, 
+# Import agentarium-specific packages
+from agentarium.utils import ( 
     visual_field_sprite,
-    animate,
     random_seed, 
     set_seed, 
     fig2img, 
     nearest_2_power, 
     minmax,
 )
-from gem.models.buffer import GameReplayBuffer as Buffer
-from gem.models.transformer import VisionTransformer as ViT
+from agentarium.buffers import GameReplayBuffer as Buffer
+from agentarium.models.transformer import VisionTransformer as ViT
 
 # Import RPG-specific packages
 from examples.RPG.env import RPG
-from examples.RPG.agents import color_map
 from examples.RPG.utils import (
     load_config,
     create_agents,
@@ -37,7 +34,7 @@ from examples.RPG.utils import (
     create_models,
     Cfg
 )
-from examples.trucks.utils import GameVars
+from agentarium.logging_utils import GameLogger
 
 # --------------- #
 # endregion       #
@@ -104,7 +101,7 @@ def eval_model(*flags,
     # Create a list to add frames to
     if 'frames' in flags:
         game_objects['frames'] = []
-    scores = GameVars(max_epochs=n_games)
+    scores = GameLogger(max_epochs=n_games)
 
     # ----------------- #
     # region: Game loop #
