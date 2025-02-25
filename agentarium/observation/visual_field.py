@@ -135,8 +135,6 @@ def visual_field_ascii(
     # Create an array of equivalent shape to the world map
     new = np.empty_like(env.world, dtype=np.str_)
 
-    # TODO: instead, "stack" the layers and if there are multiple objects on top, only return the top one.
-    # TODO: empty entities should be a period or an underscore
     # Iterate through the world and assign the appearance of the object at that location
     for index, _ in np.ndenumerate(env.world[:, :, 0]):
         H, W = index
