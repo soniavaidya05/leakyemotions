@@ -8,7 +8,7 @@ from agentarium.observation.observation import ObservationSpec
 
 class Agent(Entity):
     """
-    An abstract class for agents, a special type of entities. Note that this is a subclass of Entity.
+    An abstract class for agents, a special type of entities. Note that this is a subclass of :py:class:`Entity`.
 
     Attributes:
         - :attr:`observation_spec` - The observation specification to use for this agent.
@@ -16,16 +16,16 @@ class Agent(Entity):
         - :attr:`action_space` - The range of actions that the agent is able to take, represented by a list of integers.
 
             .. warning::
-                Currently, each element in :code:`action_space` should be the index of that element.
+                Currently, each element in :attr:`action_space` should be the index of that element.
                 In other words, it should be a list of neighbouring integers in increasing order starting at 0.
 
-                For example, if the agent has 4 possible actions, it should have :code:`action_space = [0, 1, 2, 3]`.
+                For example, if the agent has 4 possible actions, it should have :attr:`action_space = [0, 1, 2, 3]`.
 
     Attributes that override parent (Entity)'s default values:
         - :attr:`has_transitions` - Defaults to True instead of False.
     """
 
-    observation: ObservationSpec
+    observation_spec: ObservationSpec
     model: AgentariumModel
     action_space: list[int]
 
