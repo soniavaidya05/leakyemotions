@@ -8,14 +8,18 @@ TODO: Some introduction paragraph that gives an overview about Agentarium.
 
 tutorials/how_to
 tutorials/configuration_files
+tutorials/model_wrapping
 ```
 
 ```{toctree}
 :hidden:
 :caption: Reference
 
-reference/primitives
+reference/agents
+reference/entities
+reference/environments
 reference/models
+reference/observation
 reference/config
 reference/location
 ```
