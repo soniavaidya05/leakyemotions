@@ -5,7 +5,7 @@ import numpy as np
 from agentarium.entities import Entity
 from agentarium.environments import GridworldEnv
 from agentarium.models import AgentariumModel
-from agentarium.observation.observation import ObservationSpec
+from agentarium.observation.observation_spec import ObservationSpec
 
 
 class Agent(Entity):

@@ -229,7 +229,7 @@ class TreasurehuntAgent(Agent):
             "./assets/hero.png"
         )
 ```
-We will use `ObservationSpec` for `TreasurehuntAgent`'s observation, and `PyTorchIQN` for `TreasurehuntAgent`'s model.
+We will use `OneHotObservationSpec` for `TreasurehuntAgent`'s observation, and `PyTorchIQN` for `TreasurehuntAgent`'s model.
 We do not create them in this file (they will be passed into `TreasurehuntAgent`'s constructor externally), 
 but we will use the functionality that they provide by accessing the attributes of this class.
 
@@ -322,7 +322,7 @@ import torch
 
 # agentarium imports
 from agentarium.models.pytorch import PyTorchIQN
-from agentarium.observation.observation import ObservationSpec
+from agentarium.observation.observation_spec import OneHotObservationSpec
 from agentarium.utils.visualization import (animate, image_from_array,
                                             visual_field_sprite)
 # imports from our example
@@ -358,7 +358,7 @@ def setup() -> Treasurehunt:
     agent_num = 2
     agents = []
     for _ in range(agent_num):
-        observation_spec = ObservationSpec(ENTITY_LIST, vision_radius=agent_vision_radius)
+        observation_spec = OneHotObservationSpec(ENTITY_LIST, vision_radius=agent_vision_radius)
 
         model = PyTorchIQN(
             # the agent can see r blocks on each side, so the size of the observation is (2r+1) * (2r+1)
