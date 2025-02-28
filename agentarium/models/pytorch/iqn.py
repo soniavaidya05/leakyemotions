@@ -40,7 +40,7 @@ import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
 
 # Import agentarium-specific packages
-from agentarium.models.layers import NoisyLinear
+from agentarium.models.pytorch.layers import NoisyLinear
 from agentarium.models.pytorch.pytorch_base import DoublePyTorchModel
 from agentarium.buffers import ClaasyReplayBuffer as Buffer
 
