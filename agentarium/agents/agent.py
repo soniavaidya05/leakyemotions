@@ -1,10 +1,12 @@
 import abc
+
 import numpy as np
 
 from agentarium.entities import Entity
 from agentarium.environments import GridworldEnv
 from agentarium.models import AgentariumModel
 from agentarium.observation.observation import ObservationSpec
+
 
 class Agent(Entity):
     """
@@ -29,7 +31,13 @@ class Agent(Entity):
     model: AgentariumModel
     action_space: list[int]
 
-    def __init__(self, observation_spec: ObservationSpec, model: AgentariumModel, action_space: list[int], location=None):
+    def __init__(
+        self,
+        observation_spec: ObservationSpec,
+        model: AgentariumModel,
+        action_space: list[int],
+        location=None,
+    ):
         # initializations based on parameters
         self.observation_spec = observation_spec
         self.model = model
