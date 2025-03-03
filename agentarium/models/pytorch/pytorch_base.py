@@ -28,7 +28,7 @@ class PyTorchModel(nn.Module, AgentariumModel):
         layer_size: int,
         epsilon: float,
         device: str | torch.device,
-        seed: int
+        seed: int | None = None
         ):
 
         super().__init__()
@@ -37,6 +37,8 @@ class PyTorchModel(nn.Module, AgentariumModel):
         self.layer_size = layer_size
         self.epsilon = epsilon
         self.device = device
+        if seed == None:
+            seed = torch.random.seed()
         self.seed = torch.manual_seed(seed)
         self.optimizer: torch.optim.Adam = None
 

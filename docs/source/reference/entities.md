@@ -1,3 +1,6 @@
+# Entities
+
+```{eval-rst}
 .. automodule:: agentarium.entities
 
 .. toctree::
@@ -5,3 +8,4 @@
     
     entities/entity
     entities/basic_entities
+```

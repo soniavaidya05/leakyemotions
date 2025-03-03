@@ -1,3 +1,6 @@
+# Observations
+
+```{eval-rst}
 .. automodule:: agentarium.observation
 
 .. toctree::
@@ -6,3 +9,4 @@
     observation/observation_spec
     observation/visual_field
     observation/embedding
+```
