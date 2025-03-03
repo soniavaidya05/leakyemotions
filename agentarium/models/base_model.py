@@ -1,4 +1,6 @@
+import jax
 import numpy as np
+import torch
 from abc import abstractmethod
 from typing import Sequence
 
@@ -37,7 +39,7 @@ class AgentariumModel:
     """
     pass
 
-  def train_step(self) -> float | Sequence[float]:
+  def train_step(self) -> float | Sequence[float] | torch.Tensor | jax.Array:
     """Train the model.
     
     Return:

@@ -257,12 +257,11 @@ class iRainbowModel(DoublePyTorchModel):
         return f"iRainbowModel(input_size={np.array(self.input_size).prod() * self.num_frames},action_space={self.action_space})"
 
 
-    def take_action(self, state, eval=False) -> int:
-        """Returns actions for given state as per current policy. Acting only every 4 frames!
+    def take_action(self, state: np.ndarray) -> int:
+        """Returns actions for given state as per current policy.
 
         Params
         ======
-            frame: to adjust epsilon
             state (array_like): current state
 
         """
