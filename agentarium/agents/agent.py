@@ -126,10 +126,10 @@ class Agent(Entity):
         Processes a full transition step for the agent.
 
         This function does the following:
-        - Get the current state from the environment through :func:`pov()`
-        - Get the action based on the current state through :func:`get_action()`
-        - Changes the environment based on the action and obtains the reward through :func:`act()`
-        - Determines if the agent is done through :func:`is_done()`
+        - Get the current state from the environment through :meth:`pov()`
+        - Get the action based on the current state through :meth:`get_action()`
+        - Changes the environment based on the action and obtains the reward through :meth:`act()`
+        - Determines if the agent is done through :meth:`is_done()`
 
         Args:
             env (GridworldEnv): the environment that this agent is acting in.
