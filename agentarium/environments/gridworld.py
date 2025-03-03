@@ -1,7 +1,9 @@
-from agentarium.location import Location
-from agentarium.entities.entity import Entity
-import numpy as np
 import copy
+
+import numpy as np
+
+from agentarium.entities.entity import Entity
+from agentarium.location import Location
 
 
 class GridworldEnv:
@@ -56,8 +58,8 @@ class GridworldEnv:
         Adds an entity to the world at a location, replacing any existing entity at that location.
 
         Args:
-            target_location (tuple[int, ...]): the location of the entity.
-            entity (Entity): the entity to be added.
+        - target_location (tuple[int, ...]): the location of the entity.
+        - entity (Entity): the entity to be added.
         """
         entity.location = target_location
         self.world[target_location] = entity
@@ -67,10 +69,10 @@ class GridworldEnv:
         Remove the entity at a location.
 
         Args:
-            target_location (tuple[int, ...]): the location of the entity.
+        - target_location (tuple[int, ...]): the location of the entity.
 
         Returns:
-            Entity: the entity previously at the given location.
+        - Entity: the entity previously at the given location.
         """
         entity = self.world[target_location]
         self.world[target_location] = self.default_entity
@@ -82,11 +84,11 @@ class GridworldEnv:
         Move an entity to a new location.
 
         Args:
-            entity (Entity): entity to be moved.
-            new_location (tuple[int, ...]): location to move the entity to.
+        - entity (Entity): entity to be moved.
+        - new_location (tuple[int, ...]): location to move the entity to.
 
         Returns:
-            bool: True if move was successful (i.e. the entity currently at new_location is passable), False otherwise.
+        - bool: True if move was successful (i.e. the entity currently at new_location is passable), False otherwise.
         """
         if self.world[new_location].passable:
             self.remove(new_location)
@@ -104,10 +106,10 @@ class GridworldEnv:
         Observes the entity at a location.
 
         Args:
-            target_location (tuple[int, ...]): the location to observe.
+        - target_location (tuple[int, ...]): the location to observe.
 
         Returns:
-            Entity: the entity at the observed location.
+        - Entity: the entity at the observed location.
         """
         return self.world[target_location]
 
@@ -137,10 +139,10 @@ class GridworldEnv:
         Check if the given index is in the world.
 
         Args:
-            index (tuple[int, ...]): A tuple of coordinates or a Location object.
+        - index (tuple[int, ...]): A tuple of coordinates or a Location object.
 
         Returns:
-            bool: Whether the index is in env.world.
+        - bool: Whether the index is in env.world.
         """
         # Cast to tuple if it is a location
         if isinstance(index, Location):
@@ -166,18 +168,18 @@ class GridworldEnv:
         Given the kind of an entity, return a list of entities in a world that are the same kind.
 
         Args:
-            world (np.array): the world of a particular GridworldEnv.
-            kind (str): the class string (or string representation) of the query entity.
+        - world (np.array): the world of a particular GridworldEnv.
+        - kind (str): the class string (or string representation) of the query entity.
 
         Returns:
-            list[Entity]: a list of all entities in the world that have the same kind.
+        - list[Entity]: a list of all entities in the world that have the same kind.
         """
         entities = []
         for _, x in np.ndenumerate(self.world):
             if x.kind == kind:
                 entities.append(x)
         return entities
-    
+
     # ---------------------------- #
     # endregion: utility functions #
     # ---------------------------- #

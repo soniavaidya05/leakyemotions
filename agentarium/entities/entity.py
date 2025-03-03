@@ -4,6 +4,7 @@ from typing import Optional
 #        Abstract class for environment objects         #
 # ----------------------------------------------------- #
 
+
 class Entity:
     r"""
     Base element class. Defines the non-optional initialization parameters for all entities.
@@ -43,6 +44,6 @@ class Entity:
         By default, this function does nothing.
 
         Args:
-            env (GridWorldEnv): the environment to enact transition to.
+        - env (GridWorldEnv): the environment to enact transition to.
         """
         pass  # Entities do not have a transition function by default
