@@ -7,16 +7,15 @@ from agentarium.location import Location
 
 
 class GridworldEnv:
-    r"""
-    Basic gridworld environment class with functions for getting and manipulating the locations of entities.
+    """Basic gridworld environment class with functions for getting and manipulating the locations of entities.
 
     Attributes:
-        - :attr:`height` - The height of the gridworld.
-        - :attr:`width` - The width of the gridworld.
-        - :attr:`layers` - The number of layers that the gridworld has.
-        - :attr:`default_entity` - An entity that the gridworld is filled with at creation by default.
-        - :attr:`world` - A representation of the gridworld as a Numpy array of Entities, with dimensions height x width x layers.
-        - :attr:`turn` - The number of turns taken by the environment.
+        height: The height of the gridworld.
+        width: The width of the gridworld.
+        layers: The number of layers that the gridworld has.
+        default_entity: An entity that the gridworld is filled with at creation by default.
+        world: A representation of the gridworld as a Numpy array of Entities, with dimensions height x width x layers.
+        turn: The number of turns taken by the environment.
     """
 
     height: int
@@ -36,11 +35,11 @@ class GridworldEnv:
         self.turn = 0
 
     def create_world(self) -> None:
-        """
-        Assigns self.world a new gridworld of size self.height x self.width x self.layers filled with copies of self.default_entity.
+        """Assigns self.world a new gridworld of size self.height x self.width x self.layers filled with copies of self.default_entity.
+
         Also sets self.turn to 0.
 
-        This function is used in self.__init__(), and may be useful for resetting environments.
+        This function is used in :func:`self.__init__()`, and may be useful for resetting environments.
         """
 
         self.world = np.full((self.height, self.width, self.layers), Entity())
@@ -54,8 +53,7 @@ class GridworldEnv:
         self.turn = 0
 
     def add(self, target_location: tuple[int, ...], entity: Entity) -> None:
-        """
-        Adds an entity to the world at a location, replacing any existing entity at that location.
+        """Adds an entity to the world at a location, replacing any existing entity at that location.
 
         Args:
             target_location (tuple[int, ...]): the location of the entity.
@@ -65,8 +63,7 @@ class GridworldEnv:
         self.world[target_location] = entity
 
     def remove(self, target_location: tuple[int, ...]) -> Entity:
-        """
-        Remove the entity at a location.
+        """Remove the entity at a location.
 
         Args:
             target_location (tuple[int, ...]): the location of the entity.
@@ -80,8 +77,7 @@ class GridworldEnv:
         return entity
 
     def move(self, entity: Entity, new_location: tuple[int, ...]) -> bool:
-        """
-        Move an entity to a new location.
+        """Move an entity to a new location.
 
         Args:
             entity (Entity): entity to be moved.
@@ -102,8 +98,7 @@ class GridworldEnv:
             return False
 
     def observe(self, target_location: tuple[int, ...]) -> Entity:
-        """
-        Observes the entity at a location.
+        """Observes the entity at a location.
 
         Args:
             target_location (tuple[int, ...]): the location to observe.
@@ -114,8 +109,7 @@ class GridworldEnv:
         return self.world[target_location]
 
     def take_turn(self) -> None:
-        """
-        Performs a full step in the environment.
+        """Performs a full step in the environment.
 
         This function iterates through the environment and performs transition() for each entity,
         then transitions each agent.
@@ -135,8 +129,7 @@ class GridworldEnv:
     # --------------------------- #
 
     def valid_location(self, index: tuple[int, ...]) -> bool:
-        """
-        Check if the given index is in the world.
+        """Check if the given index is in the world.
 
         Args:
             index (tuple[int, ...]): A tuple of coordinates or a Location object.
@@ -164,8 +157,7 @@ class GridworldEnv:
         return True
 
     def get_entities_of_kind(self, kind: str) -> list[Entity]:
-        """
-        Given the kind of an entity, return a list of entities in a world that are the same kind.
+        """Given the kind of an entity, return a list of entities in a world that are the same kind.
 
         Args:
             world (np.array): the world of a particular GridworldEnv.

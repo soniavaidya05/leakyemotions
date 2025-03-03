@@ -9,13 +9,14 @@ from agentarium.observation.observation_spec import ObservationSpec
 
 
 class Agent(Entity):
-    """
-    An abstract class for agents, a special type of entities. Note that this is a subclass of :py:class:`Entity`.
+    """An abstract class for agents, a special type of entities.
+
+    Note that this is a subclass of :py:class:`agentarium.entities.Entity`.
 
     Attributes:
-        - :attr:`observation_spec` - The observation specification to use for this agent.
-        - :attr:`model` - The model that this agent uses.
-        - :attr:`action_space` - The range of actions that the agent is able to take, represented by a list of integers.
+        observation_spec: The observation specification to use for this agent.
+        model: The model that this agent uses.
+        action_space: The range of actions that the agent is able to take, represented by a list of integers.
 
             .. warning::
                 Currently, each element in :attr:`action_space` should be the index of that element.
@@ -51,15 +52,12 @@ class Agent(Entity):
 
     @abc.abstractmethod
     def reset(self) -> None:
-        """
-        Reset the agent (and its memory).
-        """
+        """Reset the agent (and its memory)."""
         pass
 
     @abc.abstractmethod
     def pov(self, env: GridworldEnv) -> np.ndarray:
-        """
-        Defines the agent's observation function.
+        """Defines the agent's observation function.
 
         Args:
             env (GridworldEnv): the environment that this agent is observing.
@@ -71,8 +69,7 @@ class Agent(Entity):
 
     @abc.abstractmethod
     def get_action(self, state: np.ndarray) -> int:
-        """
-        Gets the action to take based on the current state from the agent's model.
+        """Gets the action to take based on the current state from the agent's model.
 
         Args:
             state (torch.Tensor): the current state observed by the agent.
@@ -122,8 +119,7 @@ class Agent(Entity):
         self.model.memory.add(state, action, reward, done)
 
     def transition(self, env: GridworldEnv) -> None:
-        """
-        Processes a full transition step for the agent.
+        """Processes a full transition step for the agent.
 
         This function does the following:
         - Get the current state from the environment through :meth:`pov()`

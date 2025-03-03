@@ -19,19 +19,3 @@
 .. automethod:: agentarium.agents.Agent.add_memory
 .. automethod:: agentarium.agents.Agent.transition
 ```
-
-## Attributes
-```{eval-rst}
-        
-.. autoattribute:: agentarium.agents.Agent.observation_spec
-
-    The observation specification to use for this agent.
-    
-.. autoattribute:: agentarium.agents.Agent.model
-
-    The model that this agent uses.
-    
-.. autoattribute:: agentarium.agents.Agent.action_space
-
-    The set of actions that the agent is able to take.
-```
