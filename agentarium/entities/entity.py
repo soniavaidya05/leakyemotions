@@ -44,6 +44,6 @@ class Entity:
         By default, this function does nothing.
 
         Args:
-        - env (GridWorldEnv): the environment to enact transition to.
+            env (GridWorldEnv): the environment to enact transition to.
         """
         pass  # Entities do not have a transition function by default

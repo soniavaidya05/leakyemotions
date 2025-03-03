@@ -62,10 +62,10 @@ class Agent(Entity):
         Defines the agent's observation function.
 
         Args:
-        - env (GridworldEnv): the environment that this agent is observing.
+            env (GridworldEnv): the environment that this agent is observing.
 
         Returns:
-        - torch.Tensor: the observed state.
+            torch.Tensor: the observed state.
         """
         pass
 
@@ -75,10 +75,10 @@ class Agent(Entity):
         Gets the action to take based on the current state from the agent's model.
 
         Args:
-        - state (torch.Tensor): the current state observed by the agent.
+            state (torch.Tensor): the current state observed by the agent.
 
         Returns:
-        - int: the action chosen by the agent's model given the state.
+            int: the action chosen by the agent's model given the state.
         """
         pass
 
@@ -87,10 +87,10 @@ class Agent(Entity):
         """Act on the environment.
 
         Args:
-        - action: an element from this agent's action space indicating the action to take.
+            action: an element from this agent's action space indicating the action to take.
 
         Returns:
-        - float: the reward associated with the action taken.
+            float: the reward associated with the action taken.
         """
         pass
 
@@ -101,10 +101,10 @@ class Agent(Entity):
         This might be based on the experiment's maximum number of turns from the agent's cfg file.
 
         Args:
-        - env (GridworldEnv): the environment that the agent is in.
+            env (GridworldEnv): the environment that the agent is in.
 
         Returns:
-        - bool: whether the agent is done acting. False by default.
+            bool: whether the agent is done acting. False by default.
         """
         pass
 
@@ -114,10 +114,10 @@ class Agent(Entity):
         """Add an experience to the memory.
 
         Args:
-        - state (np.ndarray): the state to be added.
-        - action (int): the action taken by the agent.
-        - reward (float): the reward received by the agent.
-        - done (bool): whether the episode terminated after this experience.
+            state (np.ndarray): the state to be added.
+            action (int): the action taken by the agent.
+            reward (float): the reward received by the agent.
+            done (bool): whether the episode terminated after this experience.
         """
         self.model.memory.add(state, action, reward, done)
 
@@ -132,7 +132,7 @@ class Agent(Entity):
         - Determines if the agent is done through :meth:`is_done()`
 
         Args:
-        - env (GridworldEnv): the environment that this agent is acting in.
+            env (GridworldEnv): the environment that this agent is acting in.
         """
         state = self.pov(env)
         action = self.get_action(state)
