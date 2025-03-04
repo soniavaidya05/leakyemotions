@@ -1,6 +1,6 @@
 """Here is a list of provided basic entities that will likely be needed in most gridworld environments.
 
-Note that all of these entities do not override the default :meth:`Entity.transition()`, which does nothing.
+Note that all of these entities do not override the default :meth:`.Entity.transition()`, which does nothing.
 """
 
 from agentarium.entities.entity import Entity
