@@ -99,7 +99,7 @@ class OneHotObservationSpec(ObservationSpec):
     def generate_map(self, entity_list: list[str]) -> dict[str, list[float]]:
         """Generate a default entity map by automatically creating one-hot encodings for the entitity kinds in :code:`entity_list`.
 
-        The :py:class:`EmptyEntity` kind will receive an all-zero appearance.
+        The :py:class:`.EmptyEntity` kind will receive an all-zero appearance.
 
         This method is used when initializing the :py:class:`OneHotObservationSpec` object.
         Overrides :py:meth:`ObservationSpec.generate_map`.
@@ -125,9 +125,9 @@ class OneHotObservationSpec(ObservationSpec):
         env: GridworldEnv,
         location: tuple | None = None,
     ) -> np.ndarray:
-        """Observes the environment using :py:func:`visual_field`.
+        """Observes the environment using :py:func:`.visual_field()`.
 
-        Overrides :py:meth:`ObservationSpec.observe`.
+        Overrides :py:meth:`ObservationSpec.observe()`.
 
         Args:
             env: The environment to observe.
@@ -164,7 +164,7 @@ class AsciiObservationSpec(ObservationSpec):
         """Generate a default entity map by automatically creating ascii character representations
         for the entity kinds in :code:`entity_list` through the following process:
 
-        1. if the entity kind is "EmptyEntity", it will be represented by "."
+        1. if the entity kind is "EmptyEntity" (see :class:`.EmptyEntity`), it will be represented by "."
         2. all other entities are represented by the first character in their kind that is not already used.
         3. if the above procedure fails, the entity will be represented by an ascii character that has not been used,
            starting from the character "0" (48) and going up to "~" (126).
@@ -207,9 +207,9 @@ class AsciiObservationSpec(ObservationSpec):
         env: GridworldEnv,
         location: tuple | None = None,
     ) -> np.ndarray:
-        """Observes the environment using :py:func:`visual_field_ascii`.
+        """Observes the environment using :py:func:`.visual_field_ascii()`.
 
-        Overrides :py:meth:`ObservationSpec.observe`.
+        Overrides :py:meth:`ObservationSpec.observe()`.
 
         Args:
             env: The environment to observe.
