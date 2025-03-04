@@ -20,10 +20,20 @@ release = "0.1.0"
 
 extensions = [
     "myst_nb",
-    "sphinx.ext.autodoc",
+    "autodoc2",
+    # "sphinx.ext.autodoc",
     "sphinx.ext.imgmath",
     "sphinx.ext.napoleon",
 ]
+
+autodoc2_packages = [
+    {
+        "path": "../../agentarium",
+        "auto_mode": False,
+    },
+]
+autodoc2_module_summary = False
+
 
 templates_path = ["_templates"]
 exclude_patterns = []
