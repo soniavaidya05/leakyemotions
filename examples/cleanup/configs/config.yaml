@@ -46,5 +46,5 @@ agent:
       num_frames: 5
       embeddings: 3
 
-root: '~/Documents/GitHub/agentarium'
+root: '~/Documents/GitHub/sorrel'
 log: False

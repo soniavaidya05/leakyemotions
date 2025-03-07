@@ -13,8 +13,8 @@ from matplotlib import pyplot as plt
 from typing import Union
 from datetime import datetime
 
-# Import agentarium-specific packages
-from agentarium.utils import ( 
+# Import sorrel-specific packages
+from sorrel.utils import ( 
     visual_field_sprite,
     random_seed, 
     set_seed, 
@@ -22,8 +22,8 @@ from agentarium.utils import (
     nearest_2_power, 
     minmax,
 )
-from agentarium.buffers import GameReplayBuffer as Buffer
-from agentarium.models.transformer import VisionTransformer as ViT
+from sorrel.buffers import GameReplayBuffer as Buffer
+from sorrel.models.transformer import VisionTransformer as ViT
 
 # Import RPG-specific packages
 from examples.RPG.env import RPG
@@ -34,7 +34,7 @@ from examples.RPG.utils import (
     create_models,
     Cfg
 )
-from agentarium.logging_utils import GameLogger
+from sorrel.logging_utils import GameLogger
 
 # --------------- #
 # endregion       #

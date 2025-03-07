@@ -35,14 +35,14 @@ Let's get started!
 
 ## The Entities
 In ``entities.py``, we will create the 3 entities that we require: `EmptyEntity`, `Wall`, and `Gem`. 
-All the custom entities will extend the base `Entity` class provided by Agentarium; see {class}`agentarium.entities.Entity` 
+All the custom entities will extend the base `Entity` class provided by Sorrel; see {class}`sorrel.entities.Entity` 
 for its attributes (including their default values) and methods.
 
 We begin by making the necessary imports:
 ```python
 import numpy as np
 
-from agentarium.entities import Entity
+from sorrel.entities import Entity
 ```
 
 Then, we create the classes `Wall`, `Sand`, and `Gem`, with custom constructors that overwrite default parent attribute values and include sprites used for animation later on. 
@@ -111,8 +111,8 @@ class EmptyEntity(Entity):
 
 ## The Environment
 In ``env.py``, we will create the environment of our experiment: `Treasurehunt`. 
-It will extend the base `GridworldEnv` class provided by Agentarium; 
-see {class}`agentarium.environments.GridworldEnv` for its attributes and methods.
+It will extend the base `GridworldEnv` class provided by Sorrel; 
+see {class}`sorrel.environments.GridworldEnv` for its attributes and methods.
 
 We write the import statements:
 ```python
@@ -120,7 +120,7 @@ We write the import statements:
 import numpy as np
 
 # Import primitive types
-from agentarium.environments import GridworldEnv
+from sorrel.environments import GridworldEnv
 # Import experiment specific classes
 from examples.treasurehunt.entities import Wall, Sand, Gem, EmptyEntity
 ```
@@ -189,7 +189,7 @@ We delegate the task of actually filling in the entities and constructing `self.
 
 We override the parent's `reset()` method with our slightly modified version, 
 since we already keep track of the agents that need to be reset (unlike in `GridworldEnv`) and have an additional attribute that needs resetting. 
-(See {func}`agentarium.environments.GridworldEnv.reset` and {func}`agentarium.environments.GridworldEnv.create_world` for details.)
+(See {func}`sorrel.environments.GridworldEnv.reset` and {func}`sorrel.environments.GridworldEnv.create_world` for details.)
 ```python
     def reset(self):
         """Reset the environment and all its agents."""
@@ -203,15 +203,15 @@ since we already keep track of the agents that need to be reset (unlike in `Grid
 
 ## The Agent
 In ``agents.py``, we will create the agent for our experiment: `TreasurehuntAgent`. 
-It will extend the base `Agent` class provided by Agentarium; 
-see {class}`agentarium.agents.Agent` for its attributes and methods. 
+It will extend the base `Agent` class provided by Sorrel; 
+see {class}`sorrel.agents.Agent` for its attributes and methods. 
 
 We make our imports:
 ````python
 import numpy as np
 
-from agentarium.agents import Agent
-from agentarium.environments import GridworldEnv
+from sorrel.agents import Agent
+from sorrel.environments import GridworldEnv
 ````
 
 We make our custom constructor:
@@ -237,7 +237,7 @@ but we will use the functionality that they provide by accessing the attributes 
 Note that unlike the other base classes we've worked on top of so far, `Agent` is an abstract class, and every custom agent that extends it must implement the methods 
 `reset()`, `pov()`, `get_action()`, `act()`, and `is_done()`. Let's go through them one by one. 
 
-To implement {func}`agentarium.agents.Agent.reset`, we add a number of all zero SARD's to the agent's model's memory that is equal to the number of frames that it can access.
+To implement {func}`sorrel.agents.Agent.reset`, we add a number of all zero SARD's to the agent's model's memory that is equal to the number of frames that it can access.
 The "zero state" is obtained by getting the shape of the state observed by this agent through `self.model.input_size`, 
 and then creating an all zeros array with the same shape.
 ```python
@@ -251,7 +251,7 @@ and then creating an all zeros array with the same shape.
             self.add_memory(state, action, reward, done)
 ```
 
-To implement {func}`agentarium.agents.Agent.pov`, we get the observed image (in Channels x Height x Width) 
+To implement {func}`sorrel.agents.Agent.pov`, we get the observed image (in Channels x Height x Width) 
 using the provided `observe()` function from the Observation class, and then returning the flattened image. 
 ```python
     def pov(self, env: GridworldEnv) -> np.ndarray:
@@ -261,7 +261,7 @@ using the provided `observe()` function from the Observation class, and then ret
         return image.reshape(1, -1)
 ```
 
-To implement {func}`agentarium.agents.Agent.get_action`, we stack the current state with the previous states in the model's memory buffer, 
+To implement {func}`sorrel.agents.Agent.get_action`, we stack the current state with the previous states in the model's memory buffer, 
 and pass the stacked frames (as a horizontal vector) into the model to obtain the action chosen. 
 ```python
     def get_action(self, state: np.ndarray) -> int:
@@ -276,7 +276,7 @@ and pass the stacked frames (as a horizontal vector) into the model to obtain th
         return action
 ```
 
-To implement {func}`agentarium.agents.Agent.act`, we calculate the new location based on the action taken, 
+To implement {func}`sorrel.agents.Agent.act`, we calculate the new location based on the action taken, 
 record the reward obtained based on the entity at the new location, then try to move the agent to the new location using the provided {func}`GridworldEnv.move()`. 
 ```python
     def act(self, env: GridworldEnv, action: int) -> float:
@@ -303,7 +303,7 @@ record the reward obtained based on the entity at the new location, then try to 
         return reward
 ```
 
-Finally, we implement {func}`agentarium.agents.Agent.is_done` by checking if the current turn (tracked by default in {attr}`GridworldEnv.turn`) 
+Finally, we implement {func}`sorrel.agents.Agent.is_done` by checking if the current turn (tracked by default in {attr}`GridworldEnv.turn`) 
 exceeds the maximum number of turns. 
 ```python
     def is_done(self, env: GridworldEnv) -> bool:
@@ -320,10 +320,10 @@ First, we make our imports as usual:
 # general imports
 import torch
 
-# agentarium imports
-from agentarium.models.pytorch import PyTorchIQN
-from agentarium.observation.observation_spec import OneHotObservationSpec
-from agentarium.utils.visualization import (animate, image_from_array,
+# sorrel imports
+from sorrel.models.pytorch import PyTorchIQN
+from sorrel.observation.observation_spec import OneHotObservationSpec
+from sorrel.utils.visualization import (animate, image_from_array,
                                             visual_field_sprite)
 # imports from our example
 from examples.treasurehunt.agents import TreasurehuntAgent
@@ -390,7 +390,7 @@ def setup() -> Treasurehunt:
 Then, we will run the experiment. Most of the work here is done by calling {func}`GridworldEnv.take_turn()`, 
 which transitions every entity in the environment, then every agent, then increments the turn count by one. 
 In addition to printing information about each recording period on the terminal, 
-we also use functions from {mod}`agentarium.utils.visualization` to record states as images and animate them into a gif.
+we also use functions from {mod}`sorrel.utils.visualization` to record states as images and animate them into a gif.
 ```python
 def run(env: Treasurehunt):
     """Run the experiment."""

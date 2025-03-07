@@ -6,8 +6,8 @@ from typing import Optional
 import torch
 import numpy as np
 
-from agentarium.observation.visual_field import visual_field
-from agentarium.environments import GridworldEnv
+from sorrel.observation.visual_field import visual_field
+from sorrel.environments import GridworldEnv
 
 class Agent:
     def __init__(self, model, cfg):

@@ -2,8 +2,8 @@
 
 import numpy as np
 
-from agentarium.entities import Entity
-from agentarium.environments import GridworldEnv
+from sorrel.entities import Entity
+from sorrel.environments import GridworldEnv
 
 class Wall(Entity):
     """An entity that represents a wall in the treasurehunt environment."""

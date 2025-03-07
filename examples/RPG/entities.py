@@ -1,4 +1,4 @@
-from agentarium.entities import Entity
+from sorrel.entities import Entity
 import random
 
 # ----------------------------------------------------- #

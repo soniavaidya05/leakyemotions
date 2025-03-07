@@ -57,7 +57,7 @@ agent:
     model:
     appearance:
 
-root: '~/Documents/GitHub/agentarium'
+root: '~/Documents/GitHub/sorrel'
 log:
 ```
 

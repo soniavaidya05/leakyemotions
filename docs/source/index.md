@@ -1,4 +1,4 @@
-# Agentarium Documentation
+# Sorrel Documentation
 
 Agentarium is a Python API for developing multi-agent reinforcement learning (MARL) environments and agent-based models (ABMs). This framework is intended to function as a flexible platform for computational social scientists to model emergent phenomena among large groups of learning agents. 
 
