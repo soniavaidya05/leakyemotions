@@ -5,6 +5,7 @@ import numpy as np
 from agentarium.entities import Entity
 from agentarium.environments import GridworldEnv
 from agentarium.models import AgentariumModel
+from agentarium.action.action_spec import ActionSpec
 from agentarium.observation.observation_spec import ObservationSpec
 
 
@@ -14,6 +15,7 @@ class Agent(Entity):
 
     Attributes:
         - :attr:`observation_spec` - The observation specification to use for this agent.
+        - :attr:`action_spec` - The action specification to use for this agent.
         - :attr:`model` - The model that this agent uses.
         - :attr:`action_space` - The range of actions that the agent is able to take, represented by a list of integers.
 
@@ -28,20 +30,20 @@ class Agent(Entity):
     """
 
     observation_spec: ObservationSpec
+    action_spec: ActionSpec
     model: AgentariumModel
-    action_space: list[int]
 
     def __init__(
         self,
         observation_spec: ObservationSpec,
+        action_spec: ActionSpec,
         model: AgentariumModel,
-        action_space: list[int],
         location=None,
     ):
         # initializations based on parameters
         self.observation_spec = observation_spec
+        self.action_spec = action_spec
         self.model = model
-        self.action_space = action_space
         self.location = location
 
         super().__init__()

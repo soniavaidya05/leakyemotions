@@ -46,7 +46,7 @@ def visual_field(
     # Iterate through the world and assign the appearance of the object at that location
     for index, x in np.ndenumerate(env.world):
         # Return visualization image
-        new[:, index] = entity_map[x.kind]
+        new[:, *index] = entity_map[x.kind]
     # sum the one-hot code over the layers
     new = np.sum(new, axis=-1)
 

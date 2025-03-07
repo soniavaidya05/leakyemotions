@@ -97,7 +97,7 @@ class OneHotObservationSpec(ObservationSpec):
     vision_radius: int | None
 
     def __init__(self, entity_list: list[str], vision_radius: int | None = None):
-        super.__init__(entity_list, vision_radius)
+        super().__init__(entity_list, vision_radius)
 
     def generate_map(self, entity_list: list[str]) -> dict[str, list[float]]:
         r"""
@@ -164,7 +164,7 @@ class AsciiObservationSpec(ObservationSpec):
     vision_radius: int | None
 
     def __init__(self, entity_list: list[str], vision_radius: int | None = None):
-        super.__init__(entity_list, vision_radius)
+        super().__init__(entity_list, vision_radius)
 
     def generate_map(self, entity_list: list[str]) -> dict[str, str]:
         r"""
