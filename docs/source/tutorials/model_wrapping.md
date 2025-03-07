@@ -24,7 +24,7 @@ The [AgentariumModel](#agentarium.models.base_model.AgentariumModel) is an abstr
 
 At a minimum, this method is called whenever an agent takes an action in the environment using the [Agent.transition()](#agentarium.agents.Agent.transition) function. It can additionally be called when a model completes a training step using the [train_step()](#agentarium.models.base_model.AgentariumModel.train_step) function (described below). The base class takes a single input, a state (generated from an environment when an agent makes an observation using {py:obj}`agentarium.observation.observation_spec.ObservationSpec.observe()`) and yields an output `int` that corresponds to the action taken.
 
-Many models have an exploration parameter :math:`\varepsilon` that dictate the chance of taking a random action. The base model has a convenience function [set_epsilon()](#agentarium.models.base_model.AgentariumModel.set_epsilon) to allow this value to be updated across time:
+Many models have an exploration parameter $\varepsilon$ that dictate the chance of taking a random action. The base model has a convenience function [set_epsilon()](#agentarium.models.base_model.AgentariumModel.set_epsilon) to allow this value to be updated across time:
 
 ```python
   def set_epsilon(self, new_epsilon: float) -> None:
@@ -71,7 +71,7 @@ By default, [AgentariumModel](#agentarium.models.base_model.AgentariumModel) has
 - Sample minibatches from the model (e.g., for model training)
 - Get the current state (including 'stacked' frames if the model's input includes more than one frame at a time)
 
-Experiences in the model are stored using a :math:`(S, A, R, D)` format using the function `self.memory.add()`:
+Experiences in the model are stored using a $(S, A, R, D)$ format using the function `self.memory.add()`:
 
 ```python
     def add(self, obs, action, reward, done):
@@ -122,7 +122,7 @@ To sample the replay buffer, the function `self.memory.sample()` is used:
         return states, actions, rewards, next_states, dones, valid
 ```
 
-This function returns a batch of size `batch_size` in the format :math:`(S, A, R, S', D)`.
+This function returns a batch of size `batch_size` in the format $(S, A, R, S', D)$.
 
 ```{eval-rst}
 .. note::

@@ -26,6 +26,24 @@ extensions = [
     "sphinx.ext.napoleon",
 ]
 
+# extensions for math support and other qol in markdown files
+# see https://myst-parser.readthedocs.io/en/latest/syntax/optional.html
+myst_enable_extensions = [
+    "amsmath",
+    "attrs_inline",
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "fieldlist",
+    "html_admonition",
+    "html_image",
+    "replacements",
+    "smartquotes",
+    "strikethrough",
+    "substitution",
+    "tasklist",
+]
+
 autodoc2_packages = [
     {
         "path": "../../agentarium",
