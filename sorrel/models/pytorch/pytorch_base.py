@@ -5,9 +5,9 @@ import torch.nn as nn
 import numpy as np
 
 from typing import Sequence
-from agentarium.models import AgentariumModel
+from sorrel.models import SorrelModel
 
-class PyTorchModel(nn.Module, AgentariumModel):  
+class PyTorchModel(nn.Module, SorrelModel):  
     '''
     Generic abstract PyTorch model.
 

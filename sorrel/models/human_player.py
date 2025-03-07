@@ -1,11 +1,11 @@
 import numpy as np
 from typing import Sequence
 from IPython.display import clear_output
-from agentarium.models import AgentariumModel
-from agentarium.buffers import ClaasyReplayBuffer
-from agentarium.utils.visualization import plot
+from sorrel.models import SorrelModel
+from sorrel.buffers import ClaasyReplayBuffer
+from sorrel.utils.visualization import plot
 
-class HumanPlayer(AgentariumModel):
+class HumanPlayer(SorrelModel):
   """
   Model subclass for a human player
   """

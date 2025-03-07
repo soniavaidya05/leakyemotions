@@ -10,12 +10,12 @@ import jax
 import jax.numpy as jnp
 from flax.training.train_state import TrainState
 
-# Agentarium imports
-from agentarium.buffers import ClaasyReplayBuffer
-from agentarium.models import AgentariumModel
-from agentarium.models.jax.jax_base import IQNetwork, compute_quantile_td_target_from_state, quantile_bellman_residual_loss
+# Sorrel imports
+from sorrel.buffers import ClaasyReplayBuffer
+from sorrel.models import SorrelModel
+from sorrel.models.jax.jax_base import IQNetwork, compute_quantile_td_target_from_state, quantile_bellman_residual_loss
 
-class IQNAgent(AgentariumModel):
+class IQNAgent(SorrelModel):
     """
     doubleDQN: An implementation of the Double Deep Q-Network (DDQN) algorithm.
 

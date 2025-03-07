@@ -10,8 +10,8 @@ import torch.optim as optim
 from typing import Sequence
 from matplotlib import pyplot as plt
 
-from agentarium.buffers import ReplayBuffer
-from agentarium.models.pytorch.pytorch_base import PyTorchModel
+from sorrel.buffers import ReplayBuffer
+from sorrel.models.pytorch.pytorch_base import PyTorchModel
 
 # --------------- #
 # endregion       #

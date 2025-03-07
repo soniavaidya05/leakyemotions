@@ -1,7 +1,7 @@
 # Primitives
 
 ```{eval-rst}
-.. automodule:: agentarium.primitives
+.. automodule:: sorrel.primitives
 ```
 
 ```{eval-rst}

@@ -1,8 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from sorrel.environments import GridworldEnv
+from sorrel.location import Location
 
-def positional_embedding(location, env, num_res_x, num_res_y):
+def positional_embedding(
+        location: tuple | Location, 
+        env: GridworldEnv, 
+        num_res_x: int, 
+        num_res_y: int):
+    """
+    Get the embedding value for a location within an environment.
+
+    Args:
+        location: A 
+
+    """
+
     # Initialize embedding list for the given coordinate (x, y)
     x = location[0]
     y = location[1]

@@ -2,11 +2,11 @@ import abc
 
 import numpy as np
 
-from agentarium.entities import Entity
-from agentarium.environments import GridworldEnv
-from agentarium.models import AgentariumModel
-from agentarium.action.action_spec import ActionSpec
-from agentarium.observation.observation_spec import ObservationSpec
+from sorrel.entities import Entity
+from sorrel.environments import GridworldEnv
+from sorrel.models import SorrelModel
+from sorrel.action.action_spec import ActionSpec
+from sorrel.observation.observation_spec import ObservationSpec
 
 
 class Agent(Entity):
@@ -31,13 +31,13 @@ class Agent(Entity):
 
     observation_spec: ObservationSpec
     action_spec: ActionSpec
-    model: AgentariumModel
+    model: SorrelModel
 
     def __init__(
         self,
         observation_spec: ObservationSpec,
         action_spec: ActionSpec,
-        model: AgentariumModel,
+        model: SorrelModel,
         location=None,
     ):
         # initializations based on parameters

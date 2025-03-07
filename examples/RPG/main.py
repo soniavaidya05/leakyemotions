@@ -7,7 +7,7 @@ from datetime import datetime
 # ------------------------ #
 # region: path nonsense    #
 # Determine appropriate paths for imports and storage
-root = os.path.abspath("~/Documents/GitHub/agentarium")  # Change the wd as needed.
+root = os.path.abspath("~/Documents/GitHub/sorrel")  # Change the wd as needed.
 
 # Make sure the transformers directory is in PYTHONPATH
 if root not in sys.path:
@@ -17,8 +17,8 @@ if root not in sys.path:
 
 import random
 
-from agentarium.utils.logging import GameLogger
-from agentarium.entities import Entity
+from sorrel.utils.logging import GameLogger
+from sorrel.entities import Entity
 from examples.RPG.agents import Agent
 from examples.RPG.env import RPG
 from examples.RPG.utils import (create_agents, create_entities, create_models,

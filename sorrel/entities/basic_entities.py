@@ -1,4 +1,4 @@
-from agentarium.entities.entity import Entity
+from sorrel.entities.entity import Entity
 
 class Wall(Entity):
     """A basic entity that represents a wall."""

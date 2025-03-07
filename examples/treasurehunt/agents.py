@@ -2,9 +2,9 @@
 
 import numpy as np
 
-from agentarium.action.action_spec import ActionSpec
-from agentarium.agents import Agent
-from agentarium.environments import GridworldEnv
+from sorrel.action.action_spec import ActionSpec
+from sorrel.agents import Agent
+from sorrel.environments import GridworldEnv
 
 
 class TreasurehuntAgent(Agent):

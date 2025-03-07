@@ -2,11 +2,11 @@ import numpy as np
 from abc import abstractmethod
 from typing import Sequence
 
-from agentarium.buffers import ClaasyReplayBuffer
+from sorrel.buffers import ClaasyReplayBuffer
 
-class AgentariumModel:
+class SorrelModel:
   """
-  Generic model class for Agentarium. All models should wrap around this implementation.
+  Generic model class for Sorrel. All models should wrap around this implementation.
   """
 
   def __init__(

@@ -11,8 +11,8 @@ from PIL.PngImagePlugin import PngImageFile
 from matplotlib import pyplot as plt
 from typing import Sequence, Optional
 
-# Import agentarium-specific packages
-from agentarium.environments import GridworldEnv
+# Import sorrel-specific packages
+from sorrel.environments import GridworldEnv
 
 # --------------- #
 # endregion       #

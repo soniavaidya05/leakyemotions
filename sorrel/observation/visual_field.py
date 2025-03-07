@@ -2,8 +2,8 @@
 import numpy as np
 
 # Import gem packages
-from agentarium.environments import GridworldEnv
-from agentarium.utils.helpers import shift
+from sorrel.environments import GridworldEnv
+from sorrel.utils.helpers import shift
 
 
 def visual_field(

@@ -1,12 +1,12 @@
 import numpy as np
 
-from agentarium.action.action_spec import ActionSpec
-from agentarium.agents import Agent
-from agentarium.entities import Entity
-from agentarium.environments import GridworldEnv
-from agentarium.location import Location, Vector
-from agentarium.models import AgentariumModel
-from agentarium.observation import embedding, observation_spec
+from sorrel.action.action_spec import ActionSpec
+from sorrel.agents import Agent
+from sorrel.entities import Entity
+from sorrel.environments import GridworldEnv
+from sorrel.location import Location, Vector
+from sorrel.models import SorrelModel
+from sorrel.observation import embedding, observation_spec
 from examples.cleanup.entities import EmptyEntity
 
 # --------------------------- #
@@ -44,7 +44,7 @@ class CleanupAgent(Agent):
     A treasurehunt agent that uses the iqn model.
     """
 
-    def __init__(self, observation_spec: CleanupObservation, model: AgentariumModel):
+    def __init__(self, observation_spec: CleanupObservation, model: SorrelModel):
         action_spec = ActionSpec(["up", "down", "left", "right", "clean", "zap"])
         super().__init__(observation_spec, action_spec=action_spec, model=model)
 

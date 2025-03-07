@@ -1,6 +1,6 @@
-# Agentarium Documentation
+# Sorrel Documentation
 
-TODO: Some introduction paragraph that gives an overview about Agentarium.
+TODO: Some introduction paragraph that gives an overview about Sorrel.
 
 ```{toctree}
 :hidden:

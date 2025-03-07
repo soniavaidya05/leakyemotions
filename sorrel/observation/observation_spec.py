@@ -2,14 +2,14 @@ import abc
 
 import numpy as np
 
-from agentarium.environments import GridworldEnv
-from agentarium.observation.visual_field import visual_field
-from agentarium.utils.helpers import one_hot_encode
+from sorrel.environments import GridworldEnv
+from sorrel.observation.visual_field import visual_field
+from sorrel.utils.helpers import one_hot_encode
 
 
 class ObservationSpec:
     r"""
-    An abstract class of an object that contains the observation specifications for Agentarium agents.
+    An abstract class of an object that contains the observation specifications for Sorrel agents.
 
     Attributes:
         - :attr:`entity_map` - A mapping of the kinds of entities in the environment to their appearances.
@@ -86,7 +86,7 @@ class ObservationSpec:
 
 class OneHotObservationSpec(ObservationSpec):
     """
-    A subclass of :py:class:`ObservationSpec` for Agentarium agents whose observations take the form of one-hot encodings.
+    A subclass of :py:class:`ObservationSpec` for Sorrel agents whose observations take the form of one-hot encodings.
 
     Attributes:
         - :attr:`entity_map` - A mapping of the kinds of entities in the environment to their appearances.
@@ -153,7 +153,7 @@ class OneHotObservationSpec(ObservationSpec):
 
 class AsciiObservationSpec(ObservationSpec):
     """
-    A subclass of :py:class:`ObservationSpec` for Agentarium agents whose observations take the form of ascii representations.
+    A subclass of :py:class:`ObservationSpec` for Sorrel agents whose observations take the form of ascii representations.
 
     Attributes:
         - :attr:`entity_map` - A mapping of the kinds of entities in the environment to their appearances (a single ascii character each).

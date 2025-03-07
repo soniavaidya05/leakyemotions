@@ -1,5 +1,5 @@
-from agentarium.location import Location
-from agentarium.entities.entity import Entity
+from sorrel.location import Location
+from sorrel.entities.entity import Entity
 import numpy as np
 import copy
 

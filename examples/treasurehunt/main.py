@@ -1,10 +1,10 @@
 # general imports
 import torch
 
-# agentarium imports
-from agentarium.models.pytorch import PyTorchIQN
-from agentarium.observation.observation_spec import OneHotObservationSpec
-from agentarium.utils.visualization import (animate, image_from_array,
+# sorrel imports
+from sorrel.models.pytorch import PyTorchIQN
+from sorrel.observation.observation_spec import OneHotObservationSpec
+from sorrel.utils.visualization import (animate, image_from_array,
                                             visual_field_sprite)
 # imports from our example
 from examples.treasurehunt.agents import TreasurehuntAgent

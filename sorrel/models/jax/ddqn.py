@@ -11,12 +11,12 @@ import jax
 import jax.numpy as jnp
 from flax.training.train_state import TrainState
 
-# Agentarium imports
-from agentarium.buffers import ClaasyReplayBuffer
-from agentarium.models import AgentariumModel
-from agentarium.models.jax.jax_base import QNetwork
+# Sorrel imports
+from sorrel.buffers import ClaasyReplayBuffer
+from sorrel.models import SorrelModel
+from sorrel.models.jax.jax_base import QNetwork
 
-class DoubleDQNAgent(AgentariumModel):
+class DoubleDQNAgent(SorrelModel):
     """
     doubleDQN: An implementation of the Double Deep Q-Network (DDQN) algorithm.
 

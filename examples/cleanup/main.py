@@ -7,12 +7,12 @@ from datetime import datetime
 
 import torch
 
-from agentarium.config import Cfg, load_config
-from agentarium.entities import Entity
-# agentarium imports
-from agentarium.models.pytorch import PyTorchIQN
-from agentarium.observation.observation_spec import ObservationSpec
-from agentarium.utils.visualization import (animate, image_from_array,
+from sorrel.config import Cfg, load_config
+from sorrel.entities import Entity
+# sorrel imports
+from sorrel.models.pytorch import PyTorchIQN
+from sorrel.observation.observation_spec import ObservationSpec
+from sorrel.utils.visualization import (animate, image_from_array,
                                             visual_field_sprite)
 from examples.cleanup.agents import CleanupAgent, CleanupObservation
 from examples.cleanup.env import Cleanup
