@@ -1,9 +1,11 @@
 # general imports
+import numpy as np
 import torch
 
 # sorrel imports
 from sorrel.models.pytorch import PyTorchIQN
 from sorrel.observation.observation_spec import OneHotObservationSpec
+from sorrel.action.action_spec import ActionSpec
 from sorrel.utils.visualization import (animate, image_from_array,
                                             visual_field_sprite)
 # imports from our example
@@ -34,15 +36,15 @@ def setup() -> Treasurehunt:
         observation_spec = OneHotObservationSpec(
             ENTITY_LIST, vision_radius=agent_vision_radius
         )
+        observation_spec.override_input_size(
+            np.array(observation_spec.input_size).reshape(1, -1)
+        )
+        action_spec = ActionSpec(["up", "down", "left", "right"])
 
         model = PyTorchIQN(
             # the agent can see r blocks on each side, so the size of the observation is (2r+1) * (2r+1)
-            input_size=(
-                len(ENTITY_LIST),
-                2 * agent_vision_radius + 1,
-                2 * agent_vision_radius + 1,
-            ),
-            action_space=4,
+            input_size=observation_spec.input_size,
+            action_space=action_spec.n_actions,
             layer_size=250,
             epsilon=0.7,
             device="cpu",
@@ -59,7 +61,11 @@ def setup() -> Treasurehunt:
             N=12,
         )
 
-        agents.append(TreasurehuntAgent(observation_spec, model))
+        agents.append(TreasurehuntAgent(
+            observation_spec=observation_spec, 
+            action_spec=action_spec, 
+            model=model
+        ))
 
     # make the environment
     env = Treasurehunt(

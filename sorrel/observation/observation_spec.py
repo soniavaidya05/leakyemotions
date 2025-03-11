@@ -1,9 +1,10 @@
-from abc import abstractmethod
-
 import numpy as np
 
+from abc import abstractmethod
+from typing import Sequence
+
 from sorrel.environments import GridworldEnv
-from sorrel.observation.visual_field import visual_field
+from sorrel.observation.visual_field import visual_field, visual_field_ascii
 from sorrel.utils.helpers import one_hot_encode
 
 
@@ -13,13 +14,17 @@ class ObservationSpec:
 
     Attributes:
         - :attr:`entity_map` - A mapping of the kinds of entities in the environment to their appearances.
-        - :attr:`vision_radius` - The radius of the agent's vision. If None, the agent can see the entire environment.
+        - :attr:`vision_radius` - The radius of the agent's vision. If None, the agent can see the entire environment (`full_view = True`).
+        - :attr:`full_view` - A boolean that determines whether the agent can see the entire environment.
+        - :attr:`input_size` - An int or sequence of ints that indicates the size of the observation.
     """
 
     entity_map: dict[str,]
     vision_radius: int | None
+    full_view: bool
+    input_size: int | Sequence[int]
 
-    def __init__(self, entity_list: list[str], vision_radius: int | None = None):
+    def __init__(self, entity_list: list[str], vision_radius: int | None = None, env_dims: Sequence[int] | None = None):
         r"""
         Initialize the :py:class:`ObservationSpec` object.
         This function uses generate_map() to create an entity map for the ObservationSpec based on entity_list.
@@ -30,8 +35,11 @@ class ObservationSpec:
         """
         if not isinstance(vision_radius, int):
             self.vision_radius = None
+            assert isinstance(env_dims, Sequence), "If vision_radius is None, env_dims must be provided."
+            self.full_view = True
         else:
             self.vision_radius = vision_radius
+            self.full_view = False
         self.entity_map = self.generate_map(entity_list)
 
     @abstractmethod
@@ -60,9 +68,8 @@ class ObservationSpec:
         Basic environment observation function.
 
         Args:
-            env: (GridworldEnv): The environment to observe.
-            location: (Optional, tuple) - The location of the observer.
-            If None, returns the full environment.
+            env (GridworldEnv): The environment to observe.
+            location (Optional, tuple): The location of the observer. If None, returns the full environment.
 
         Returns:
             np.ndarray: The observation.
@@ -83,6 +90,16 @@ class ObservationSpec:
         """
         self.entity_map = entity_map
 
+    def override_input_size(self, input_size: int | Sequence[int]) -> None:
+        r"""
+        Override the input size with a provided custom one. Can be useful if the output of the observe() 
+        function is changed from the default (i.e., by flattening the output).
+
+        Args:
+            input_size (int | Sequence[int]): The new input size to use.
+        """
+        self.input_size = input_size
+
 
 class OneHotObservationSpec(ObservationSpec):
     """
@@ -96,8 +113,20 @@ class OneHotObservationSpec(ObservationSpec):
     entity_map: dict[str, list[float]]
     vision_radius: int | None
 
-    def __init__(self, entity_list: list[str], vision_radius: int | None = None):
-        super().__init__(entity_list, vision_radius)
+    def __init__(self, entity_list: list[str], vision_radius: int | None = None, env_dims: Sequence[int] | None = None):
+        super().__init__(entity_list, vision_radius, env_dims)
+        # By default, input_size is (channels, x, y)
+        if self.full_view:
+            self.input_size = (
+                len(entity_list),
+                *env_dims
+            )
+        else:
+            self.input_size = (
+                len(entity_list),
+                (2 * vision_radius + 1),
+                (2 * vision_radius + 1)
+            )
 
     def generate_map(self, entity_list: list[str]) -> dict[str, list[float]]:
         r"""
@@ -135,8 +164,7 @@ class OneHotObservationSpec(ObservationSpec):
 
         Args:
             env: (GridworldEnv): The environment to observe.
-            location: (Optional, tuple) - The location of the observer.
-            If blank, returns the full environment.
+            location (Optional, tuple): The location of the observer. If blank, returns the full environment.
 
         Returns:
             np.ndarray: The one-hot coded observation, in the shape of `(number of channels, 2 * vision + 1, 2 * vision + 1)`.
@@ -163,8 +191,15 @@ class AsciiObservationSpec(ObservationSpec):
     entity_map: dict[str, str]
     vision_radius: int | None
 
-    def __init__(self, entity_list: list[str], vision_radius: int | None = None):
-        super().__init__(entity_list, vision_radius)
+    def __init__(self, entity_list: list[str], vision_radius: int | None = None, env_dims: Sequence[int] | None = None):
+        super().__init__(entity_list, vision_radius, env_dims)
+        if self.full_view:
+            self.input_size = env_dims
+        else:
+            self.input_size = (
+                (2 * vision_radius + 1),
+                (2 * vision_radius + 1)
+            )
 
     def generate_map(self, entity_list: list[str]) -> dict[str, str]:
         r"""
@@ -222,15 +257,14 @@ class AsciiObservationSpec(ObservationSpec):
 
         Args:
             env: (GridworldEnv): The environment to observe.
-            location: (Optional, tuple) - The location of the observer.
-            If blank, returns the full environment.
+            location (Optional, tuple): The location of the observer. If blank, returns the full environment.
 
         Returns:
             np.ndarray: The ascii-coded observation, in the shape of `(2 * vision + 1, 2 * vision + 1)`.
             If :attr:`vision_radius` is `None` or the :code:`location` parameter is None,
             the shape will be `(env.width, env.layers)`.
         """
-        return visual_field(
+        return visual_field_ascii(
             env=env,
             entity_map=self.entity_map,
             vision=self.vision_radius,
