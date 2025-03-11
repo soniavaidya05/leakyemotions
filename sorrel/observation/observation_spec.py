@@ -1,4 +1,4 @@
-import abc
+from abc import abstractmethod
 
 import numpy as np
 
@@ -34,7 +34,7 @@ class ObservationSpec:
             self.vision_radius = vision_radius
         self.entity_map = self.generate_map(entity_list)
 
-    @abc.abstractmethod
+    @abstractmethod
     def generate_map(self, entity_list: list[str]) -> dict[str,]:
         r"""
         Given a list of entity kinds, return a dictionary of appearance values
@@ -50,7 +50,7 @@ class ObservationSpec:
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def observe(
         self,
         env: GridworldEnv,

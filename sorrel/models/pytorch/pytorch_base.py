@@ -1,9 +1,9 @@
 import os
-import abc
 import torch
 import torch.nn as nn
 import numpy as np
 
+from abc import abstractmethod
 from typing import Sequence
 from sorrel.models import SorrelModel
 
@@ -49,14 +49,14 @@ class PyTorchModel(nn.Module, SorrelModel):
     # by all models of the ANN subclass. #
     # ---------------------------------- #
 
-    @abc.abstractmethod
+    @abstractmethod
     def train_step(self) -> torch.Tensor:
         '''
         Update value parameters.
         '''
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def take_action(self, state) -> int:
         '''
         Take an action based on the model.

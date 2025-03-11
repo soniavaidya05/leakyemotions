@@ -1,4 +1,4 @@
-import abc
+from abc import abstractmethod
 
 import numpy as np
 
@@ -51,14 +51,14 @@ class Agent(Entity):
         # overriding parent default attributes
         self.has_transitions = True
 
-    @abc.abstractmethod
+    @abstractmethod
     def reset(self) -> None:
         """
         Reset the agent (and its memory).
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def pov(self, env: GridworldEnv) -> np.ndarray:
         """
         Defines the agent's observation function.
@@ -71,7 +71,7 @@ class Agent(Entity):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_action(self, state: np.ndarray) -> int:
         """
         Gets the action to take based on the current state from the agent's model.
@@ -84,7 +84,7 @@ class Agent(Entity):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def act(self, env: GridworldEnv, action: int) -> float:
         """Act on the environment.
 
@@ -96,7 +96,7 @@ class Agent(Entity):
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def is_done(self, env: GridworldEnv) -> bool:
         """Determines if the agent is done acting given the environment.
 
