@@ -42,7 +42,7 @@ from torch.nn.utils import clip_grad_norm_
 # Import sorrel-specific packages
 from sorrel.models.layers import NoisyLinear
 from sorrel.models.pytorch.pytorch_base import DoublePyTorchModel
-from sorrel.buffers import ClaasyReplayBuffer as Buffer
+from sorrel.buffers import Buffer
 
 # ------------------------ #
 # endregion                #

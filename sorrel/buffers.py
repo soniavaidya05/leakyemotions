@@ -15,7 +15,7 @@ from typing import Sequence
 # --------------- #
     
 
-class ClaasyReplayBuffer:
+class Buffer:
 
     def __init__(self, capacity: int, obs_shape: Sequence[int]):
         self.capacity = capacity

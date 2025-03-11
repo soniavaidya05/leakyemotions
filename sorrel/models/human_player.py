@@ -2,7 +2,7 @@ import numpy as np
 from typing import Sequence
 from IPython.display import clear_output
 from sorrel.models import SorrelModel
-from sorrel.buffers import ClaasyReplayBuffer
+from sorrel.buffers import Buffer
 from sorrel.utils.visualization import plot
 
 class HumanPlayer(SorrelModel):
@@ -20,7 +20,7 @@ class HumanPlayer(SorrelModel):
     self.action_space = np.arange(action_space)
     self.input_size = input_size
     # TODO: add way to review/revisit previous memories using buffer?
-    self.memory = ClaasyReplayBuffer(
+    self.memory = Buffer(
       capacity=memory_size, obs_shape=input_size
     )
     self.num_frames = memory_size

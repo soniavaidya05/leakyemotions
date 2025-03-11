@@ -11,7 +11,7 @@ import jax.numpy as jnp
 from flax.training.train_state import TrainState
 
 # Sorrel imports
-from sorrel.buffers import ClaasyReplayBuffer
+from sorrel.buffers import Buffer
 from sorrel.models import SorrelModel
 from sorrel.models.jax.jax_base import IQNetwork, compute_quantile_td_target_from_state, quantile_bellman_residual_loss
 
@@ -87,7 +87,7 @@ class IQNAgent(SorrelModel):
         # Initialize RNG key for the model
         self.rng_key = jax.random.PRNGKey(seed)
 
-        self.memory = ClaasyReplayBuffer(capacity=memory_size, obs_shape=(input_size, ))
+        self.memory = Buffer(capacity=memory_size, obs_shape=(input_size, ))
 
         # Initialize models with dummy data
         dummy_input = jnp.zeros((1, input_size))  # Should be part of the constructor

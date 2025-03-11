@@ -2,7 +2,7 @@ import numpy as np
 from abc import abstractmethod
 from typing import Sequence
 
-from sorrel.buffers import ClaasyReplayBuffer
+from sorrel.buffers import Buffer
 
 class SorrelModel:
   """
@@ -20,7 +20,7 @@ class SorrelModel:
     self.input_size = input_size
     self.action_space = action_space
     _obs_for_input = input_size if isinstance(input_size, Sequence) else (input_size, )
-    self.memory = ClaasyReplayBuffer(capacity=memory_size, obs_shape=_obs_for_input)
+    self.memory = Buffer(capacity=memory_size, obs_shape=_obs_for_input)
     self.epsilon = epsilon
 
   
