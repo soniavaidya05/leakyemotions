@@ -25,7 +25,9 @@ class NoisyLinear(nn.Linear):
             bias: Whether to include a bias term.
         """
         super().__init__(in_features, out_features, bias=bias)
-        self.sigma_weight = nn.Parameter(torch.full((out_features, in_features), sigma_init))
+        self.sigma_weight = nn.Parameter(
+            torch.full((out_features, in_features), sigma_init)
+        )
         # Non-trainable tensor for this module
         self.register_buffer("epsilon_weight", torch.zeros(out_features, in_features))
         if bias:
