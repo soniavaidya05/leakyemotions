@@ -1,7 +1,7 @@
 # Entities
 
 ```{eval-rst}
-.. automodule:: agentarium.entities
+.. automodule:: sorrel.entities
 
 .. toctree::
     :maxdepth: 1

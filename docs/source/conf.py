@@ -46,7 +46,7 @@ myst_enable_extensions = [
 
 autodoc2_packages = [
     {
-        "path": "../../agentarium",
+        "path": "../../sorrel",
         "auto_mode": False,
     },
 ]

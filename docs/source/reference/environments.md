@@ -1,7 +1,7 @@
 # Environments
 
 ```{eval-rst}
-.. automodule:: agentarium.environments
+.. automodule:: sorrel.environments
 
 .. toctree::
     :maxdepth: 1

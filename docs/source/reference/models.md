@@ -1,7 +1,7 @@
 # Models
 
 ```{eval-rst}
-.. automodule:: agentarium.models
+.. automodule:: sorrel.models
 
 .. toctree::
     :maxdepth: 1

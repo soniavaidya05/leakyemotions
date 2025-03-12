@@ -1,10 +1,10 @@
 # Entity
 
 ```{eval-rst}
-.. autoclass:: agentarium.entities.Entity
+.. autoclass:: sorrel.entities.Entity
 ```
 
 ## Methods
 ```{eval-rst}
-.. automethod:: agentarium.entities.Entity.transition
+.. automethod:: sorrel.entities.Entity.transition
 ```

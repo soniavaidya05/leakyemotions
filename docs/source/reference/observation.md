@@ -1,7 +1,7 @@
 # Observations
 
 ```{eval-rst}
-.. automodule:: agentarium.observation
+.. automodule:: sorrel.observation
 
 .. toctree::
     :maxdepth: 1
