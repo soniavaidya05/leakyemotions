@@ -11,7 +11,18 @@ from sorrel.buffers import ClaasyReplayBuffer
 class SorrelModel:
     """
     Generic model class for Sorrel. All models should wrap around this implementation.
+
+    Attributes:
+        input_size: The size of the input.
+        action_space: The number of actions available.
+        memory: The replay buffer for the model.
+        epsilon: The epsilon value for the model.
     """
+
+    input_size: int | Sequence[int]
+    action_space: int
+    memory: ClaasyReplayBuffer
+    epsilon: float
 
     def __init__(
         self,
@@ -34,11 +45,11 @@ class SorrelModel:
         """Take an action based on the observed input.
         Must be implemented by all subclasses of the model.
 
-        Params:
-          state: (np.ndarray) The observed input.
+        Args:
+            state: The observed input.
 
         Return:
-          int: The action chosen.
+            The action chosen.
         """
         pass
 
@@ -46,7 +57,7 @@ class SorrelModel:
         """Train the model.
 
         Return:
-          float | Sequence[float]: The loss value.
+            The loss value.
         """
         return 0.0
 
