@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath(os.path.join("..", "..")))
 
 project = "sorrel"
 copyright = "2024, Yibing Ju, Rebekah Gelpi"
-author = "Yibing Ju, Rebekah Gelpi, Shon Verch, Ethan Jackson"
+author = "Yibing Ju, Rebekah Gelpi, Ethan Jackson, Shon Verch, Yikai Tang, Claas Voelcker, Wil Cunningham"
 release = "0.1.0"
 
 # -- General configuration ---------------------------------------------------

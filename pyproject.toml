@@ -4,11 +4,16 @@ name = "sorrel"
 version = "0.1.0"
 description = "A flexible framework for developing reinforcement learning algorithms."
 license = "MIT"
-authors = [
+maintainers = [
     {name = "Yibing Ju", email = "bing.ju@mail.utoronto.ca"}, 
     {name = "Rebekah Gelpi", email = "rebekah.gelpi@mail.utoronto.ca"},
-    {name = "Shon Verch", email = "verchshon@gmail.com"},
+]
+contributors = [
     {name = "Ethan Jackson", email = "jackson.ethan.c@gmail.com"},
+    {name = "Shon Verch", email = "verchshon@gmail.com"},
+    {name = "Yikai Tang"},
+    {name = "Claas Voelcker", email = "claas@voelcker.net"},
+    {name = "Wil Cunningham"}
 ]
 
 [tool.poetry]

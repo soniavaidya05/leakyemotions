@@ -1,7 +1,7 @@
 <img style="width: 75px" src="https://github.com/social-ai-uoft/gem/blob/main/media/gem-pendant.png" />
 
 TODO: change the badges?
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/social-ai-uoft/gem/main.svg)](https://results.pre-commit.ci/latest/github/social-ai-uoft/gem/main) ![pytest status](https://github.com/social-ai-uoft/gem/workflows/PyTest/badge.svg)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/social-ai-uoft/sorrel/main.svg)](https://results.pre-commit.ci/latest/github/social-ai-uoft/sorrel/main) ![pytest status](https://github.com/social-ai-uoft/sorrel/workflows/PyTest/badge.svg)
 
 # Sorrel
 
@@ -71,10 +71,6 @@ in the folder containing the ``pyproject.toml`` file.
 If cannot run your script from terminal due to errors like ```module 'sorrel' not found```, check if your virtual environment is activated. 
 If it is, and you are still getting the same error, try running ```poetry run python your_script.py```.
 
-### Examples
-
-TODO
-
 ### Workflow Tools
 We use a number of tools to simplify the development workflow for contributors. Among these tools include code 
 formatters (such as [black](https://github.com/python/black)) to report style errors and (try to) 
@@ -132,13 +128,9 @@ scratch. It is generally good practice to do so anyway but may take slightly lon
 TODO: Insert paper citation here
 
 ## Maintainers
+Sorrel is currently maintained by Yibing Ju (aka [@bing-j](https://github.com/galacticglum)) and [Rebekah Gelpi](http://individual.utoronto.ca/rgelpi/) (aka [@rgelpi](https://github.com/galacticglum)).
 
-TODO: update the list of people here
-Sorrel is currently maintained by Yibing Ju (aka [@bing-j](https://github.com/galacticglum)), [Rebekah Gelpi](http://individual.utoronto.ca/rgelpi/) (aka [@rgelpi](https://github.com/galacticglum)), and [Wil Cunningham](https://www.psych.utoronto.ca/people/directories/all-faculty/william-cunningham) (aka [@wacunn](https://github.com/wacunn)).
-
-Sorrel is currently maintained by [Shon Verch](https://github.com/galacticglum) (aka @galacticglum), [Wil Cunningham](https://www.psych.utoronto.ca/people/directories/all-faculty/william-cunningham) (aka [@wacunn](https://github.com/wacunn)), [Paul Stillman](https://www.paulstillman.com/) (aka [@paulstillman](https://github.com/paulstillman)), and [Ethan Jackson](https://github.com/ethancjackson) (aka @ethancjackson).
-
-**Important Note: We do not do technical support, nor consulting** and don't answer personal questions per email. If you have any questions, concerns, or suggestions, please post them on the [GitHub issues page](https://github.com/social-ai-uoft/gem/issues) or the [GitHub discussion page](https://github.com/social-ai-uoft/gem/discussions).
+**Important Note: We do not do technical support, nor consulting** and don't answer personal questions per email. If you have any questions, concerns, or suggestions, please post them on the [GitHub issues page](https://github.com/social-ai-uoft/sorrel/issues) or the [GitHub discussion page](https://github.com/social-ai-uoft/sorrel/discussions).
 
 ## Contributing
 
