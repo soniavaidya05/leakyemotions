@@ -1,10 +1,13 @@
 """The agent for treasurehunt, a simple example for the purpose of a tutorial."""
 
+# begin imports
 import numpy as np
 
 from sorrel.action.action_spec import ActionSpec
 from sorrel.agents import Agent
 from sorrel.environments import GridworldEnv
+
+# end imports
 
 
 class TreasurehuntAgent(Agent):

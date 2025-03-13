@@ -1,21 +1,25 @@
+# begin imports
 # general imports
 import torch
 
+# imports from our example
+from examples.treasurehunt.agents import TreasurehuntAgent
+from examples.treasurehunt.env import Treasurehunt
 # sorrel imports
 from sorrel.models.pytorch import PyTorchIQN
 from sorrel.observation.observation_spec import OneHotObservationSpec
 from sorrel.utils.visualization import (animate, image_from_array,
-                                            visual_field_sprite)
-# imports from our example
-from examples.treasurehunt.agents import TreasurehuntAgent
-from examples.treasurehunt.env import Treasurehunt
+                                        visual_field_sprite)
 
-# experiment parameters
+# end imports
+
+# begin parameters
 EPOCHS = 500
 MAX_TURNS = 100
 EPSILON_DECAY = 0.0001
 ENTITY_LIST = ["EmptyEntity", "Wall", "Sand", "Gem", "TreasurehuntAgent"]
 RECORD_PERIOD = 50  # how many epochs in each data recording period
+# end parameters
 
 
 def setup() -> Treasurehunt:
@@ -111,6 +115,8 @@ def run(env: Treasurehunt):
             agent.model.epsilon = max(new_epsilon, 0.01)
 
 
+# begin main
 if __name__ == "__main__":
     env = setup()
     run(env)
+# end main
