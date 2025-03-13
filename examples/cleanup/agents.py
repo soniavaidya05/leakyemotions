@@ -13,7 +13,7 @@ from examples.cleanup.entities import EmptyEntity
 # region: Cleanup agent class #
 # --------------------------- #
 
-"""The agent for treasurehunt, a simple example for the purpose of a tutorial."""
+"""The agent and observation class for Cleanup."""
 
 
 class CleanupObservation(observation_spec.OneHotObservationSpec):
@@ -28,6 +28,21 @@ class CleanupObservation(observation_spec.OneHotObservationSpec):
 
         super().__init__(entity_list, vision_radius)
         self.embedding_size = embedding_size
+        if self.full_view:
+            self.input_size = (1,
+                (len(entity_list) * 21 * 31) + # Environment size;
+                # Cleanup uses a fixed environment size of 21 * 31
+                (4 * self.embedding_size) # Embedding size
+                )
+        else:
+            self.input_size = (1,
+                (
+                    len(entity_list) * 
+                    (2 * self.vision_radius + 1) *
+                    (2 * self.vision_radius + 1)
+                ) +
+                (4 * self.embedding_size) # Embedding size
+            )
 
     def observe(self, env: GridworldEnv, location: tuple | Location | None = None):
 
@@ -44,8 +59,7 @@ class CleanupAgent(Agent):
     A treasurehunt agent that uses the iqn model.
     """
 
-    def __init__(self, observation_spec: CleanupObservation, model: SorrelModel):
-        action_spec = ActionSpec(["up", "down", "left", "right", "clean", "zap"])
+    def __init__(self, observation_spec: CleanupObservation, action_spec: ActionSpec, model: SorrelModel):
         super().__init__(observation_spec, action_spec=action_spec, model=model)
 
         self.direction = 2  # 90 degree rotation: default at 180 degrees (facing down)

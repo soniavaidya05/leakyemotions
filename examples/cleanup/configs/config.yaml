@@ -20,7 +20,6 @@ model:
   iqn:
     type: iRainbowModel
     parameters:
-      action_space: 6
       layer_size: 250
       n_step: 3
       BATCH_SIZE: 64

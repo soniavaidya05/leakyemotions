@@ -3,7 +3,6 @@
 # begin imports
 import numpy as np
 
-from sorrel.action.action_spec import ActionSpec
 from sorrel.agents import Agent
 from sorrel.environments import GridworldEnv
 
@@ -15,10 +14,8 @@ class TreasurehuntAgent(Agent):
     A treasurehunt agent that uses the iqn model.
     """
 
-    def __init__(self, observation_spec, model):
-        action_spec = ActionSpec(["up", "down", "left", "right"])
+    def __init__(self, observation_spec, action_spec, model):
         super().__init__(observation_spec, action_spec, model)
-
         self.sprite = "./assets/hero.png"
 
     def reset(self) -> None:

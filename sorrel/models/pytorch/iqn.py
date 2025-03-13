@@ -39,7 +39,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
 
-from sorrel.buffers import ClaasyReplayBuffer as Buffer
+from sorrel.buffers import Buffer
 # Import sorrel-specific packages
 from sorrel.models.layers import NoisyLinear
 from sorrel.models.pytorch.pytorch_base import DoublePyTorchModel

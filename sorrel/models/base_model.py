@@ -5,7 +5,7 @@ import jax
 import numpy as np
 import torch
 
-from sorrel.buffers import ClaasyReplayBuffer
+from sorrel.buffers import Buffer
 
 
 class SorrelModel:
@@ -21,7 +21,7 @@ class SorrelModel:
 
     input_size: int | Sequence[int]
     action_space: int
-    memory: ClaasyReplayBuffer
+    memory: Buffer
     epsilon: float
 
     def __init__(
@@ -37,7 +37,7 @@ class SorrelModel:
         _obs_for_input = (
             input_size if isinstance(input_size, Sequence) else (input_size,)
         )
-        self.memory = ClaasyReplayBuffer(capacity=memory_size, obs_shape=_obs_for_input)
+        self.memory = Buffer(capacity=memory_size, obs_shape=_obs_for_input)
         self.epsilon = epsilon
 
     @abstractmethod
