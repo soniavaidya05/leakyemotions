@@ -1,7 +1,6 @@
 <img style="width: 75px" src="https://github.com/social-ai-uoft/gem/blob/main/media/gem-pendant.png" />
 
-TODO: change the badges?
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/social-ai-uoft/sorrel/main.svg)](https://results.pre-commit.ci/latest/github/social-ai-uoft/sorrel/main) ![pytest status](https://github.com/social-ai-uoft/sorrel/workflows/PyTest/badge.svg)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/social-ai-uoft/sorrel/main.svg)](https://results.pre-commit.ci/latest/github/social-ai-uoft/sorrel/main)
 
 # Sorrel
 
@@ -16,13 +15,16 @@ Our hope is that Sorrel will foster new research ideas, applications, and tools 
 believe Sorrel will accelerate the rate of progress of the RL research space, as well as allow us to experiment 
 with our own solutions to both novel and long-standing RL problems.
 
-[!NOTE]
-Sorrel is extremely experimental and subject to change!
+> [!NOTE]
+> Sorrel is extremely experimental and subject to change!
 
 ## Development
 
-**NOTE**: We recommend you follow these instructions in a fresh conda/virtual environment to keep packages isolated 
-from other environments and/or Python versions. Python 3.11+ is required. To create a [virtual environment](https://docs.python.org/3/library/venv.html), 
+> [!IMPORTANT]
+> We recommend you follow these instructions in a fresh conda/virtual environment to keep packages isolated
+> from other environments and/or Python versions. Python 3.11+ is required.
+
+To create a [virtual environment](https://docs.python.org/3/library/venv.html),
 navigate to your project directory in the terminal and run:
 ```
 python -m venv ./venv
@@ -42,11 +44,11 @@ to deactivate the virtual environment, simply run ```deactivate``` in the termin
 Sorrel uses the [poetry](https://python-poetry.org/) package manager to manage its dependencies. Start by 
 running ```poetry --version``` in your terminal to make sure you have poetry installed.
 
-[!WARNING]
-If you do not have poetry, use ```pipx install poetry``` (not pip) to make sure you do not have poetry installed in the 
-same environment that Sorrel is using. 
-See the [poetry](https://python-poetry.org/) documentation for more information and 
-installation instructions.
+> [!IMPORTANT]
+> If you do not have poetry, use ```pipx install poetry``` (not pip) to make sure you do not have poetry installed in the 
+> same environment that Sorrel is using. 
+> See the [poetry](https://python-poetry.org/) documentation for more information and 
+> installation instructions.
 
 With poetry available, to install Sorrel as an user, run the following command:
 ```
@@ -67,9 +69,9 @@ poetry install --with dev,extras
 ```
 in the folder containing the ``pyproject.toml`` file.
 
-[!NOTE]
-If cannot run your script from terminal due to errors like ```module 'sorrel' not found```, check if your virtual environment is activated. 
-If it is, and you are still getting the same error, try running ```poetry run python your_script.py```.
+> [!NOTE]
+> If cannot run your script from terminal due to errors like ```module 'sorrel' not found```, check if your virtual environment is activated. 
+> If it is, and you are still getting the same error, try running ```poetry run python your_script.py```.
 
 ### Workflow Tools
 We use a number of tools to simplify the development workflow for contributors. Among these tools include code 
@@ -95,8 +97,10 @@ Afterward, the Git hooks will be run automatically at every new commit.
 
 You may also run these hooks manually with ```pre-commit run --all-files```. If needed, you can skip the hooks (not 
 recommended) with ```git commit --no-verify -m <commit message>```.
-**Note:** you may have to run ```pre-commit run --all-files``` manually a couple of times to make it pass when you commit, 
-as each formatting tool will first format the code and fail the first time but should pass the second time.
+
+> [!NOTE]
+> You may have to run ```pre-commit run --all-files``` manually a couple of times to make it pass when you commit,
+> as each formatting tool will first format the code and fail the first time but should pass the second time.
 
 ### Writing documentation
 
@@ -119,9 +123,10 @@ make html
 
 Then, view the updated documentations by opening ``.\docs\build\html\index.html`` with the browser of your choice.
 
-**Note:** if the changes you made were not reflected across all the pages, you may have to run ```.\make clean``` 
-(on Windows) or ```make clean``` (on other systems) before the above command to ensure the documentation is built from 
-scratch. It is generally good practice to do so anyway but may take slightly longer.
+> [!NOTE]
+> If the changes you made were not reflected across all the pages, you may have to run ```.\make clean```
+> (on Windows) or ```make clean``` (on other systems) before the above command to ensure the documentation is built from
+> scratch. It is generally good practice to do so anyway but may take slightly longer.
 
 ## Citing the project
 
