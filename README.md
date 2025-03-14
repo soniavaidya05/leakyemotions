@@ -128,7 +128,7 @@ scratch. It is generally good practice to do so anyway but may take slightly lon
 TODO: Insert paper citation here
 
 ## Maintainers
-Sorrel is currently maintained by Yibing Ju (aka [@bing-j](https://github.com/galacticglum)) and [Rebekah Gelpi](http://individual.utoronto.ca/rgelpi/) (aka [@rgelpi](https://github.com/galacticglum)).
+Sorrel is currently maintained by Yibing Ju (aka [@bing-j](https://github.com/galacticglum)) and [Rebekah Gelpi](https://rgelpi.github.io) (aka [@rgelpi](https://github.com/galacticglum)).
 
 **Important Note: We do not do technical support, nor consulting** and don't answer personal questions per email. If you have any questions, concerns, or suggestions, please post them on the [GitHub issues page](https://github.com/social-ai-uoft/sorrel/issues) or the [GitHub discussion page](https://github.com/social-ai-uoft/sorrel/discussions).
 
