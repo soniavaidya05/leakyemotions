@@ -1,4 +1,4 @@
-import random
+import numpy as np
 
 from sorrel.entities import Entity
 from sorrel.environments import GridworldEnv
@@ -39,7 +39,7 @@ class River(Entity):
 
   def transition(self, env: GridworldEnv):
     # Add pollution with a random probability
-    if random.random() < env.pollution_spawn_chance:
+    if np.random.random() < env.pollution_spawn_chance:
       env.add(self.location, Pollution())
 
 class Pollution(Entity):
@@ -69,7 +69,7 @@ class AppleTree(Entity):
     # If the pollution threshold has not been reached...
     if not env.pollution > env.pollution_threshold:
       # Add apples with a random probability
-      if random.random() < env.apple_spawn_chance:
+      if np.random.random() < env.apple_spawn_chance:
         env.add(self.location, Apple())
 
 class Apple(Entity):
