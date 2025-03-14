@@ -33,16 +33,16 @@ iRainbowModel (contains two IQN networks; one for local and one for target)
 import random
 from typing import Sequence
 
-import torch
 import numpy as np
+import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
 
+from sorrel.buffers import Buffer
 # Import sorrel-specific packages
 from sorrel.models.layers import NoisyLinear
 from sorrel.models.pytorch.pytorch_base import DoublePyTorchModel
-from sorrel.buffers import Buffer
 
 # ------------------------ #
 # endregion                #
@@ -63,7 +63,7 @@ class IQN(nn.Module):
         device: str | torch.device = "cpu",
     ) -> None:
 
-        super(IQN, self).__init__()
+        super().__init__()
         self.seed = torch.manual_seed(seed)
         self.input_shape = np.array(input_size)
         self.state_dim = len(self.input_shape)
@@ -88,7 +88,6 @@ class IQN(nn.Module):
         self.advantage: torch.Tensor = NoisyLinear(layer_size, action_space)
         self.value: torch.Tensor = NoisyLinear(layer_size, 1)
 
-
     def calc_cos(self, batch_size, n_tau=8) -> tuple[torch.Tensor]:
         """
         Calculating the cosinus values depending on the number of tau samples
@@ -101,8 +100,9 @@ class IQN(nn.Module):
         assert cos.shape == (batch_size, n_tau, self.n_cos), "cos shape is incorrect"
         return cos, taus
 
-    
-    def forward(self, input: torch.Tensor, num_tau=8) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, input: torch.Tensor, num_tau=8
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Quantile Calculation depending on the number of tau
 
@@ -120,7 +120,7 @@ class IQN(nn.Module):
         # batch_size, timesteps, C, H, W = input.size()
         # c_out = input.view(batch_size * timesteps, C, H, W)
         # r_in = c_out.view(batch_size, -1)
-        
+
         batch_size = input.size()[0]
         r_in = input.view(batch_size, -1)
 
@@ -154,7 +154,6 @@ class IQN(nn.Module):
         out = value + advantage - advantage.mean(dim=1, keepdim=True)
 
         return out.view(batch_size, num_tau, self.action_space), taus
-
 
     def get_qvalues(self, inputs):
         quantiles, _ = self.forward(inputs, self.n_quantiles)
@@ -208,9 +207,7 @@ class iRainbowModel(DoublePyTorchModel):
         """
 
         # Initialize base ANN parameters
-        super().__init__(
-            input_size, action_space, layer_size, epsilon, device, seed
-        )
+        super().__init__(input_size, action_space, layer_size, epsilon, device, seed)
 
         # iRainbow-specific parameters
         self.num_frames = num_frames
@@ -248,21 +245,17 @@ class iRainbowModel(DoublePyTorchModel):
 
         # Memory buffer
         self.memory = Buffer(
-            capacity=memory_size,
-            obs_shape=(np.array(self.input_size).prod(),)
+            capacity=memory_size, obs_shape=(np.array(self.input_size).prod(),)
         )
-
 
     def __str__(self):
         return f"iRainbowModel(input_size={np.array(self.input_size).prod() * self.num_frames},action_space={self.action_space})"
 
-
-    def take_action(self, state, eval=False) -> int:
-        """Returns actions for given state as per current policy. Acting only every 4 frames!
+    def take_action(self, state: np.ndarray) -> int:
+        """Returns actions for given state as per current policy.
 
         Params
         ======
-            frame: to adjust epsilon
             state (array_like): current state
 
         """
@@ -282,7 +275,6 @@ class iRainbowModel(DoublePyTorchModel):
             action = random.choices(np.arange(self.action_space), k=1)
             return action[0]
 
-
     def train_step(self) -> torch.Tensor:
         """Update value parameters using given batch of experience tuples.
         Note that the training loop CANNOT be named `train()` or training()`
@@ -298,7 +290,9 @@ class iRainbowModel(DoublePyTorchModel):
 
         if len(self.memory) > self.BATCH_SIZE:
 
-            states, actions, rewards, next_states, dones, valid = self.memory.sample(batch_size=self.BATCH_SIZE, stacked_frames=self.num_frames)
+            states, actions, rewards, next_states, dones, valid = self.memory.sample(
+                batch_size=self.BATCH_SIZE, stacked_frames=self.num_frames
+            )
 
             # Get max predicted Q values (for next states) from target model
             Q_targets_next, _ = self.qnetwork_target(next_states, self.N)
@@ -332,7 +326,9 @@ class iRainbowModel(DoublePyTorchModel):
             # Zero out loss on invalid actions (when you clip past the end of an episode)
             huber_l = huber_l * valid.unsqueeze(-1)
 
-            quantil_l: torch.Tensor = abs(taus - (td_error.detach() < 0).float()) * huber_l / 1.0
+            quantil_l: torch.Tensor = (
+                abs(taus - (td_error.detach() < 0).float()) * huber_l / 1.0
+            )
 
             loss: torch.Tensor = quantil_l.sum(dim=1).mean(
                 dim=1
@@ -348,7 +344,6 @@ class iRainbowModel(DoublePyTorchModel):
             self.soft_update()
 
         return loss
-
 
     def soft_update(self) -> None:
         """Soft update model parameters.
@@ -366,7 +361,6 @@ class iRainbowModel(DoublePyTorchModel):
                 self.TAU * local_param.data + (1.0 - self.TAU) * target_param.data
             )
 
-
     def start_epoch_action(self, **kwargs) -> None:
         """
         Model actions before agent takes an action.
@@ -376,7 +370,6 @@ class iRainbowModel(DoublePyTorchModel):
         """
         if kwargs["epoch"] % self.sync_freq == 0:
             self.qnetwork_target.load_state_dict(self.qnetwork_local.state_dict())
-
 
     def end_epoch_action(self, **kwargs) -> None:
         """

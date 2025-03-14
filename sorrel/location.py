@@ -18,7 +18,7 @@ class Location(tuple):
     def __init__(self, *coords):
         """Initialize the Location object's attibutes for calculations.
 
-        Parameters:
+        Args:
             *coords: An unpacked tuple of coordinates. Supports up to three (x, y, z).
         """
         self.dims = len(coords)
@@ -32,7 +32,7 @@ class Location(tuple):
     def __new__(cls, *coords):
         """Instantiate a new Location object.
 
-        Parameters:
+        Args:
             *coords: An unpacked tuple of coordinates. Supports up to three (x, y, z).
         """
         return super().__new__(cls, coords)
@@ -53,7 +53,7 @@ class Location(tuple):
     def __add__(self, other: tuple | Vector) -> Location:
         """Add a coordinate or a vector to this location.
 
-        Params:
+        Args:
             other (tuple | Vector): A set of coordinates (can be a Location object) or a vector.
 
         Return:
@@ -81,7 +81,7 @@ class Location(tuple):
     def __mul__(self, other: int) -> Location:
         """Multiply a location by an integer amount (scalar multiplication).
 
-        Params:
+        Args:
             other (int): The scalar to multiply by.
 
         Returns:
@@ -98,7 +98,7 @@ class Location(tuple):
     def __eq__(self, other: tuple | Vector) -> bool:
         """Compare self with another coordinate or a vector.
 
-        Params:
+        Args:
             other (tuple | Vector): A set of coordinates (can be a Location object) or a vector.
 
         Returns:
@@ -139,12 +139,12 @@ class Vector:
     A class that represents vectors. Handy for calculations involving beams and more.
 
     Attributes:
-        - :attr:`forward`: The number of steps forward.
-        - :attr:`right`: The number of steps right.
-        - :attr:`backward`: (Optional) The number of steps backward. Since negative vectors are supported, this can be carried by the forward value.
-        - :attr:`left`: (Optional) The number of steps left. Since negative vectors are supported, this can be carried by the right value.
-        - :attr:`layer`: (Optional) The number of layers up (positive) or down (negative).
-        - :attr:`direction`: (Optional) A compass direction. 0 = NORTH, 1 = EAST, 2 = SOUTH, 3 = WEST.
+        forward: The number of steps forward.
+        right: The number of steps right.
+        backward: (Optional) The number of steps backward. Since negative vectors are supported, this can be carried by the forward value.
+        left: (Optional) The number of steps left. Since negative vectors are supported, this can be carried by the right value.
+        layer: (Optional) The number of layers up (positive) or down (negative).
+        direction: (Optional) A compass direction. 0 = NORTH, 1 = EAST, 2 = SOUTH, 3 = WEST.
     """
 
     forward: int
@@ -166,7 +166,7 @@ class Vector:
         """
         Initialize a vector object.
 
-        Parameters:
+        Args:
             forward: (int) The number of steps forward.
             right: (int) The number of steps right.
             backward: (int, Optional) The number of steps backward. Since negative vectors are supported, this can be carried by the forward value. Defaults to 0.

@@ -13,22 +13,22 @@ def visual_field(
     location: tuple | None = None,
     fill_entity_kind: str = "Wall",
 ) -> np.ndarray:
-    """
-    Visualize the world.
+    """Visualize the world.
 
-    Parameters:
-        env (GridworldEnv): The environment to visualize.
-        entity_map (dict[str, list[float]]): The mapping
-        between objects and visual appearance.
-        vision (Optional, int): The agent's visual field
-        radius. If None, the entire environment. Defaults to None.
-        location: (Optional, tuple): The location to centre
-        the visual field on. If None, the entire environment. Defaults to None.
-        fill_entity_kind (Optional, str): if the agent's vision is out of bounds,
-        fill the space with appearances of this entity. Defaults to "Wall".
+    See :py:meth:`.OneHotObservationSpec.observe()` for an example of how this function is used.
+
+    Args:
+        env: The environment to visualize.
+        entity_map: The mapping between objects and visual appearance.
+        vision: The agent's visual field radius.
+            If None, the entire environment. Defaults to None.
+        location: The location to center the visual field on.
+            If None, the entire environment. Defaults to None.
+        fill_entity_kind: if the agent's vision is out of bounds,
+            fill the space with appearances of this entity. Defaults to "Wall".
 
     Returns:
-        np.ndarray: An array with dtype float64 of shape
+        An array with dtype float64 of shape
         `(number of channels, 2 * vision + 1, 2 * vision + 1)`.
         Or if vision is None:
         `(number of channels, env.width, env.layers)`.
@@ -108,25 +108,27 @@ def visual_field_ascii(
     location: tuple | None = None,
     fill_entity_kind: str = "Wall",
 ) -> np.ndarray:
-    """
-    Visualize the world with ascii appearances.
+    """Visualize the world with ascii appearances.
+
     If the world has multiple layers,
     and there are multiple non-empty entities on different layers at the same horizontal coordinate,
     only the top (i.e. highest layer) non-empty entity at that coordinate will be visualized.
 
-    Parameters:
-        env (GridworldEnv): The environment to visualize.
-        entity_map (dict[str, str]): The mapping
+    See :py:meth:`.AsciiObservationSpec.observe()` for an example of how this function is used.
+
+    Args:
+        env: The environment to visualize.
+        entity_map: The mapping
         between objects and visual appearance, where the visual appearance must be a character.
-        vision (Optional, int): The agent's visual field
-        radius. If None, the entire environment. Defaults to None.
-        location: (Optional, tuple): The location to centre
-        the visual field on. If None, the entire environment. Defaults to None.
-        fill_entity_kind (Optional, str): if the agent's vision is out of bounds,
-        fill the space with appearances of this entity. Defaults to "Wall".
+        vision: The agent's visual field radius.
+            If None, the entire environment. Defaults to None.
+        location: The location to center the visual field on.
+            If None, the entire environment. Defaults to None.
+        fill_entity_kind: if the agent's vision is out of bounds,
+            fill the space with appearances of this entity. Defaults to "Wall".
 
     Returns:
-        np.ndarray: An array of strings of shape
+        An array of strings of shape
         `(2 * vision + 1, 2 * vision + 1)`.
         Or if vision is None:
         `(env.height, env.width)`.

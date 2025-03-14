@@ -76,8 +76,7 @@ def init_log(cfg: Cfg) -> None:
 def parse_args(
     command_line: bool = True, args: Optional[Sequence[str]] = None
 ) -> argparse.Namespace:
-    """
-    Helper function for preparsing the arguments.
+    """Helper function for preparsing the arguments.
 
     Args:
         command_line (bool): whether arguments are passed in through the command line. Defaults to True.
@@ -105,8 +104,7 @@ def parse_args(
 
 
 def load_config(args: argparse.Namespace) -> Cfg:
-    """
-    Load the parsed arguments into the Cfg class.
+    """Load the parsed arguments into the Cfg class.
 
     Parameters:
         args (argparse.Namespace): the parsed arguments, where args.config must contain the path to the config file.
