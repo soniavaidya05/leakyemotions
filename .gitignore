@@ -140,7 +140,6 @@ output/
 logs/
 gem/.DS_Store
 examples/RTP/data/
-*.txt
 examples/trucks/runs/
 examples/trucks/notebooks/runs/
 examples/trucks/models/checkpoints/
