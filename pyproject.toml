@@ -55,6 +55,11 @@ optional = true
 [tool.poetry.group.extras.dependencies]
 tensorboard = "^2.18.0"
 
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
