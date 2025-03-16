@@ -57,7 +57,8 @@ tensorboard = "^2.18.0"
 
 [tool.pytest.ini_options]
 pythonpath = [
-  "."
+  "sorrel",
+  "examples"
 ]
 
 [build-system]
