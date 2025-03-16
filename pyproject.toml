@@ -24,6 +24,7 @@ python = "^3.11.0"
 matplotlib = "^3.6.1"
 numpy = "^1.23.4"
 pyyaml = "^6.0.2"
+pytest = "^8.3.5"
 
 torch = "^2.5.1"
 jax = "^0.4.35"
