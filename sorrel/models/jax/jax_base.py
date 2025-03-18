@@ -77,11 +77,11 @@ class IQNetwork(nn.Module):
     flatten_obs: bool = True
 
     activation_func: Callable[[jnp.array], jnp.array] = nn.relu
-    obs_emb_layers: list = field(default_factory=list)
-    pi_emb_layers: list = field(default_factory=list)
-    shared_layers: list = field(default_factory=list)
-    value_head: list = field(default_factory=list)
-    advantage_head: list = field(default_factory=list)
+    obs_emb_layers: list = lambda: [256, 256]
+    pi_emb_layers: list = lambda: [32, 32]
+    shared_layers: list = lambda: [256]
+    value_head: list = lambda: [256]
+    advantage_head: list = lambda: [256]
 
     def cos_emb(self, bs, num_taus, key):
         # set up equal space frequencies
@@ -143,9 +143,9 @@ class QNetwork(nn.Module):
     flatten_obs: bool = True
 
     activation_func: Callable[[jnp.array], jnp.array] = nn.relu
-    emb_layers: list = field(default_factory=list)
-    value_head: list = field(default_factory=list)
-    advantage_head: list = field(default_factory=list)
+    emb_layers: list = lambda: [256, 256]
+    value_head: list = lambda: [256]
+    advantage_head: list = lambda: [256]
 
     @nn.compact
     def __call__(self, x, noisy=False):
