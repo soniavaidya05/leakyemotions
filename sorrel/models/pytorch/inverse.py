@@ -123,7 +123,7 @@ class MLPBCModel(PyTorchModel):
         # BC model parameters
         n_channels: int,
         frames: int,
-        memory: ReplayBuffer,
+        memory: Buffer,
         LR: float
         ):
 
@@ -267,7 +267,7 @@ class WorldModel(PyTorchModel):
         # BC model parameters
         n_channels: int,
         frames: int,
-        memory: ReplayBuffer,
+        memory: Buffer,
         LR: float
     ):
         
