@@ -10,7 +10,7 @@ import torch.optim as optim
 from typing import Sequence
 from matplotlib import pyplot as plt
 
-from sorrel.buffers import ReplayBuffer
+from sorrel.buffers import Buffer
 from sorrel.models.pytorch.pytorch_base import PyTorchModel
 
 # --------------- #

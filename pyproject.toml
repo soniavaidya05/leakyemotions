@@ -60,6 +60,10 @@ pythonpath = [
   "sorrel",
   "examples"
 ]
+addopts = [
+  "--doctest-modules", 
+  "--import-mode=importlib"
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
