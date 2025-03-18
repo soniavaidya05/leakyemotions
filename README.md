@@ -1,4 +1,4 @@
-<img style="width: 75px" src="https://github.com/social-ai-uoft/gem/blob/main/media/gem-pendant.png" />
+<img style="width: 100px" src="https://github.com/social-ai-uoft/gem/blob/main/media/sorrel-icon.png" />
 
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/social-ai-uoft/sorrel/main.svg)](https://results.pre-commit.ci/latest/github/social-ai-uoft/sorrel/main)
 
