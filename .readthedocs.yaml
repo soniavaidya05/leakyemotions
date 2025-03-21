@@ -14,7 +14,7 @@ build:
     post_create_environment:
       # Install poetry
       # https://python-poetry.org/docs/#installing-manually
-      - python -m pip install poetry
+      - python -m pip install --no-cache-dir poetry
     post_install:
       # Install only dependencies including dev
       # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
