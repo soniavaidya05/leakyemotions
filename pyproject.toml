@@ -22,7 +22,7 @@ packages = [{ include = "sorrel" }, { include = "examples" }]
 [tool.poetry.dependencies]
 python = "^3.11.0"
 matplotlib = "^3.6.1"
-numpy = "^1.23.4"
+numpy = "^1.26.4"
 pyyaml = "^6.0.2"
 pytest = "^8.3.5"
 
