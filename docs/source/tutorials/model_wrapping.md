@@ -41,7 +41,7 @@ Some models require additional updates or changes outside of model training (e.g
 
 ### Using the replay buffer
 
-By default, [SorrelModel](#sorrel.models.base_model.SorrelModel) has a replay buffer `Sorrel.buffers.ClaasyReplayBuffer` that can store up to `memory_size` states. This buffer can allow the model to:
+By default, [SorrelModel](#sorrel.models.base_model.SorrelModel) has a replay buffer `Sorrel.buffers.Buffer` that can store up to `memory_size` states. This buffer can allow the model to:
 - Add states to the model's replay buffer
 - Sample minibatches from the model (e.g., for model training)
 - Get the current state (including 'stacked' frames if the model's input includes more than one frame at a time)
@@ -49,13 +49,13 @@ By default, [SorrelModel](#sorrel.models.base_model.SorrelModel) has a replay bu
 Experiences in the model are stored using a $(S, A, R, D)$ format using the function `self.memory.add()`:
 
 ```{literalinclude} /../../sorrel/buffers.py
-:pyobject: ClaasyReplayBuffer.add
+:pyobject: Buffer.add
 ```
 
 To sample the replay buffer, the function `self.memory.sample()` is used:
 
 ```{literalinclude} /../../sorrel/buffers.py
-:pyobject: ClaasyReplayBuffer.sample
+:pyobject: Buffer.sample
 ```
 
 This function returns a batch of size `batch_size` in the format $(S, A, R, S', D)$.
