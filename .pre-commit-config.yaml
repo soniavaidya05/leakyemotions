@@ -8,16 +8,12 @@ repos:
     rev: 5.13.2
     hooks:
       - id: isort
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0
+  - repo: https://github.com/PyCQA/docformatter
+    rev: v1.7.5
     hooks:
-      - id: pydocstyle
-        exclude: ^(tests/)
-        args:
-          - --source
-          - --explain
-          - --convention=google
-        additional_dependencies: ["toml"]
+      - id: docformatter
+        additional_dependencies: [tomli]
+        args: ["--in-place", "--config", "./pyproject.toml", "--black"]
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.19.0
     hooks:

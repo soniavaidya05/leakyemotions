@@ -1,3 +1,6 @@
+"""The Cfg class, and helper functions to load configs from a YAML file to a Cfg
+object."""
+
 # --------------- #
 # region: Imports #
 # --------------- #
@@ -19,10 +22,10 @@ import yaml
 
 
 class Cfg:
-    """
-    Configuration class for parsing the YAML configuration file.
+    """Configuration class for parsing the YAML configuration file.
 
-    Nested config parameters are parsed as nested Cfg objects.
+    Nested config parameters are parsed as nested Cfg objects. The list of supported
+    config arguments are included below.
     """
 
     experiment: Self
@@ -55,6 +58,7 @@ class Cfg:
                 setattr(self, key, Cfg(val) if isinstance(val, dict) else val)
 
     def to_dict(self):
+        """Returns a dictionary representation of the class."""
         return self.__dict__
 
 
