@@ -12,8 +12,7 @@ from sorrel.action.action_spec import ActionSpec
 # sorrel imports
 from sorrel.models.pytorch import PyTorchIQN
 from sorrel.observation.observation_spec import OneHotObservationSpec
-from sorrel.utils.visualization import (animate, image_from_array,
-                                        visual_field_sprite)
+from sorrel.utils.visualization import animate, image_from_array, render_sprite
 
 # end imports
 
@@ -93,7 +92,7 @@ def run(env: Treasurehunt):
 
         while not env.turn >= env.max_turns:
             if epoch % RECORD_PERIOD == 0:
-                full_sprite = visual_field_sprite(env)
+                full_sprite = render_sprite(env)
                 imgs.append(image_from_array(full_sprite))
 
             env.take_turn()

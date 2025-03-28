@@ -14,8 +14,7 @@ from sorrel.action.action_spec import ActionSpec
 from sorrel.config import Cfg, load_config
 from sorrel.entities import Entity
 from sorrel.models.pytorch import PyTorchIQN
-from sorrel.utils.visualization import (animate, image_from_array,
-                                        visual_field_sprite)
+from sorrel.utils.visualization import animate, image_from_array, render_sprite
 
 # endregion                #
 # ------------------------ #
@@ -85,7 +84,7 @@ def run(env: Cleanup, **kwargs):
 
         while not env.turn >= env.max_turns:
             if epoch % RECORD_PERIOD == 0:
-                full_sprite = visual_field_sprite(env)
+                full_sprite = render_sprite(env)
                 imgs.append(image_from_array(full_sprite))
 
             env.take_turn()

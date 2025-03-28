@@ -24,14 +24,13 @@ from sorrel.environments import GridworldEnv
 # --------------------------- #
 
 
-def visual_field_sprite(
+def render_sprite(
     env: GridworldEnv,
     location: Optional[Sequence] = None,
     vision: Optional[int] = None,
     tile_size: Sequence[int] = [16, 16],
 ) -> list[np.ndarray]:
-    """
-    Create an agent visual field of size (2k + 1, 2k + 1) tiles
+    """Create an agent visual field of size (2k + 1, 2k + 1) tiles.
 
     Parameters:
         location: (Sequence, Optional) defines the location to centre the visualization on \n
@@ -167,7 +166,8 @@ def fig2img(fig) -> Image:
         fig: If in fig, axis format, then fig. If in plt format, then plt.
 
     Returns:
-        img: An image file in PIL format."""
+        img: An image file in PIL format.
+    """
     import io
 
     buf = io.BytesIO()
@@ -182,8 +182,7 @@ def animate(
     filename: str | os.PathLike,
     folder: str | os.PathLike,
 ) -> None:
-    """
-    Take an array of frames and assemble them into a GIF with the given path.
+    """Take an array of frames and assemble them into a GIF with the given path.
 
     Parameters:
         frames: the array of frames \n
