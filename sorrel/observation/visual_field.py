@@ -30,7 +30,7 @@ def visual_field(
     Returns:
         An array with dtype float64 of shape
         `(number of channels, 2 * vision + 1, 2 * vision + 1)`.
-        Or if vision is None:
+        Or if vision or location is None:
         `(number of channels, env.width, env.layers)`.
         Here, the number channels is determined based on the one-hot entity map provided.
     """
@@ -51,7 +51,7 @@ def visual_field(
     new = np.sum(new, axis=-1)
 
     # If no location, return the full visual field
-    if location is None:
+    if location is None or vision is None:
         return new.astype(np.float64)
 
     # Otherwise...
@@ -130,7 +130,7 @@ def visual_field_ascii(
     Returns:
         An array of strings of shape
         `(2 * vision + 1, 2 * vision + 1)`.
-        Or if vision is None:
+        Or if vision or location is None:
         `(env.height, env.width)`.
     """
 
@@ -151,7 +151,7 @@ def visual_field_ascii(
                 new[H, W] = entity_map[env.world[H, W, L].kind]
 
     # If no location, return the full visual field
-    if location is None:
+    if location is None or vision is None:
         return new.astype(np.str_)
 
     # Otherwise...
