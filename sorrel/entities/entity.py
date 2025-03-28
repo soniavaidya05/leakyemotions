@@ -6,7 +6,8 @@ from typing import Optional
 
 
 class Entity:
-    """Base element class. Defines the non-optional initialization parameters for all entities.
+    """Base element class. Defines the non-optional initialization parameters for all
+    entities.
 
     Attributes:
         location: The location of the object. It may take on the value of None when the Entity is first initialized.
@@ -16,14 +17,14 @@ class Entity:
         kind: The class string of the object.
     """
 
-    location: Optional[tuple[int, ...]]
+    _location: Optional[tuple[int, ...]]
     value: float
     passable: bool
     has_transitions: bool
     kind: str
 
     def __init__(self):
-        self.location = None
+        self._location = None
         self.value = 0  # By default, entities provide no reward to agents
         self.passable = (
             False  # Whether the object can be traversed by an agent (default: False)
@@ -36,6 +37,22 @@ class Entity:
 
     def __repr__(self):
         return f"{self.__class__.__name__}(value={self.value})"
+
+    @property
+    def location(self) -> tuple[int, ...]:
+        """Returns the location of the object.
+
+        If location is none (i.e. not set after the entity is first initialized), raises
+        an error.
+        """
+        if self._location is None:
+            raise AttributeError(f"{self.kind} location is None.")
+        return self._location
+
+    @location.setter
+    def location(self, value: tuple[int, ...]):
+        """Sets the location of the object."""
+        self._location = value
 
     def transition(self, env):
         """Change the environment in some way.

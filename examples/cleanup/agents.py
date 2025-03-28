@@ -155,29 +155,29 @@ class CleanupAgent(Agent):
     def act(self, env: GridworldEnv, action: int) -> float:
 
         # Translate the model output to an action string
-        action = self.action_spec.get_readable_action(action)
+        action_name = self.action_spec.get_readable_action(action)
 
         # Attempt to move
         new_location = self.location
-        if action == "up":
+        if action_name == "up":
             self.direction = 0
             self.sprite = Path(__file__).parent / "./assets/hero-back.png"
             new_location = (self.location[0] - 1, self.location[1], self.location[2])
-        if action == "down":
+        if action_name == "down":
             self.direction = 2
             self.sprite = Path(__file__).parent / "./assets/hero.png"
             new_location = (self.location[0] + 1, self.location[1], self.location[2])
-        if action == "left":
+        if action_name == "left":
             self.direction = 3
             self.sprite = Path(__file__).parent / "./assets/hero-left.png"
             new_location = (self.location[0], self.location[1] - 1, self.location[2])
-        if action == "right":
+        if action_name == "right":
             self.direction = 1
             self.sprite = Path(__file__).parent / "./assets/hero-right.png"
             new_location = (self.location[0], self.location[1] + 1, self.location[2])
 
         # Attempt to spawn beam
-        self.spawn_beam(env, action)
+        self.spawn_beam(env, action_name)
 
         # get reward obtained from object at new_location
         target_object = env.observe(new_location)

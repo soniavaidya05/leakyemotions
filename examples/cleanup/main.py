@@ -56,7 +56,9 @@ def setup(cfg: Cfg, **kwargs) -> Cleanup:
         )
 
         if "load_weights" in kwargs:
-            model.load(file_path=kwargs.get("load_weights"))
+            path = kwargs.get("load_weights")
+            if isinstance(path, str | os.PathLike):
+                model.load(file_path=path)
 
         agents.append(
             CleanupAgent(
