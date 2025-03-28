@@ -28,14 +28,16 @@ def render_sprite(
     env: GridworldEnv,
     location: Optional[Sequence] = None,
     vision: Optional[int] = None,
-    tile_size: Sequence[int] = [16, 16],
+    tile_size: list[int] | np.ndarray = [16, 16],
 ) -> list[np.ndarray]:
-    """Create an agent visual field of size (2k + 1, 2k + 1) tiles.
+    """Render a sprite of (2k + 1, 2k + 1) tiles centered at location, where k=vision.
 
-    Parameters:
-        location: (Sequence, Optional) defines the location to centre the visualization on \n
-        vision: (int, Optional) defines the size of the visualization of (2v + 1, 2v + 1) pixels \n
-        tile_size: (Sequence[int]) defines the size of the sprites. Default: 16 x 16.
+    If vision or location is None, render the entire world.
+
+    Args:
+        location: defines the location to centre the visualization on. Defaults to None.
+        vision: defines the size of the visualization of (2v + 1, 2v + 1) pixels. Defaults to None.
+        tile_size: defines the size of the sprites. Default: 16 x 16.
 
     Returns:
         A list of np.ndarrays of C x H x W, determined either by the world size or the vision size.
