@@ -2,11 +2,12 @@
 # region: Imports #
 # --------------- #
 
+import random
 # Import base packages
-from typing import Sequence
+from typing import Any, Sequence
+
 import numpy as np
 import torch
-import random
 
 # --------------- #
 # endregion       #
@@ -16,18 +17,16 @@ import random
 # region: Helper functions    #
 # --------------------------- #
 
+
 def set_seed(seed: int) -> None:
-    """
-    Sets a seed for replication.
-    """
+    """Sets a seed for replication."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
 
 
 def random_seed() -> int:
-    """
-    Generates a random seed
+    """Generates a random seed.
 
     Returns:
         The value of the seed generated
@@ -39,9 +38,10 @@ def random_seed() -> int:
     return seed
 
 
-def shift(array: Sequence, shift: Sequence, cval=np.nan) -> np.ndarray:
-    """
-    Returns copy of array shifted by offset, with fill using constant.
+def shift(
+    array: np.ndarray, shift: Sequence | np.ndarray, cval: Any = np.nan
+) -> np.ndarray:
+    """Returns copy of array shifted by offset, with fill using constant.
 
     Parameters:
         array: The array to shift. \n
@@ -73,10 +73,10 @@ def shift(array: Sequence, shift: Sequence, cval=np.nan) -> np.ndarray:
 
 
 def nearest_2_power(n: int) -> int:
-    """
-    Computes the next power of 2. Useful for programmatically
-    shifting batch and buffer sizes to computationally efficient
-    values.
+    """Computes the next power of 2.
+
+    Useful for programmatically shifting batch and buffer sizes to computationally
+    efficient values.
     """
 
     # Bit shift counter
@@ -98,10 +98,8 @@ def nearest_2_power(n: int) -> int:
 
 
 def minmax(n: int, minimum: int, maximum: int) -> int:
-    """
-    Clips an input to a number between the minimum
-    and maximum values passed into the function.
-    """
+    """Clips an input to a number between the minimum and maximum values passed into the
+    function."""
     if n < minimum:
         return minimum
     elif n > maximum:
@@ -118,6 +116,7 @@ def one_hot_encode(value, num_classes) -> np.ndarray:
     one_hot[value] = 1
 
     return one_hot
+
 
 # --------------------------- #
 # endregion                   #

@@ -9,8 +9,8 @@ from sorrel.utils.helpers import one_hot_encode
 
 
 class ObservationSpec:
-    r"""
-    An abstract class of an object that contains the observation specifications for Sorrel agents.
+    r"""An abstract class of an object that contains the observation specifications for
+    Sorrel agents.
 
     Attributes:
         entity_map: A mapping of the kinds of entities in the environment to their appearances.
@@ -30,9 +30,9 @@ class ObservationSpec:
         vision_radius: int | None = None,
         env_dims: Sequence[int] | None = None,
     ):
-        r"""
-        Initialize the :py:class:`ObservationSpec` object.
-        This function uses generate_map() to create an entity map for the ObservationSpec based on entity_list.
+        r"""Initialize the :py:class:`ObservationSpec` object. This function uses
+        generate_map() to create an entity map for the ObservationSpec based on
+        entity_list.
 
         Args:
             entity_list: A list of the kinds of entities that appear in the environment.
@@ -51,7 +51,8 @@ class ObservationSpec:
 
     @abstractmethod
     def generate_map(self, entity_list: list[str]) -> dict[str,]:
-        """Given a list of entity kinds, return a dictionary of appearance values for the agent's observation function.
+        """Given a list of entity kinds, return a dictionary of appearance values for
+        the agent's observation function.
 
         This method is used when initializing the :py:class:`ObservationSpec` object.
 
@@ -87,7 +88,8 @@ class ObservationSpec:
         pass
 
     def override_entity_map(self, entity_map: dict[str,]) -> None:
-        """Override the automatically generated entity map from generate_map() with a provided custom one.
+        """Override the automatically generated entity map from generate_map() with a
+        provided custom one.
 
         Can be useful if multiple classes should have the same appearance.
 
@@ -97,9 +99,9 @@ class ObservationSpec:
         self.entity_map = entity_map
 
     def override_input_size(self, input_size: int | Sequence[int]) -> None:
-        r"""
-        Override the input size with a provided custom one. Can be useful if the output of the observe()
-        function is changed from the default (i.e., by flattening the output).
+        r"""Override the input size with a provided custom one. Can be useful if the
+        output of the observe() function is changed from the default (i.e., by
+        flattening the output).
 
         Args:
             input_size (int | Sequence[int]): The new input size to use.
@@ -108,15 +110,15 @@ class ObservationSpec:
 
 
 class OneHotObservationSpec(ObservationSpec):
-    """
-    A subclass of :py:class:`ObservationSpec` for Sorrel agents whose observations take the form of one-hot encodings.
+    """A subclass of :py:class:`ObservationSpec` for Sorrel agents whose observations
+    take the form of one-hot encodings.
 
     Attributes:
         entity_map: A mapping of the kinds of entities in the environment to their appearances.
         vision_radius: The radius of the agent's vision. If None, the agent can see the entire environment.
     """
 
-    entity_map: dict[str, list[float]]
+    entity_map: dict[str, np.ndarray]
     vision_radius: int | None
 
     def __init__(
@@ -136,8 +138,9 @@ class OneHotObservationSpec(ObservationSpec):
                 (2 * vision_radius + 1),
             )
 
-    def generate_map(self, entity_list: list[str]) -> dict[str, list[float]]:
-        """Generate a default entity map by automatically creating one-hot encodings for the entitity kinds in :code:`entity_list`.
+    def generate_map(self, entity_list: list[str]) -> dict[str, np.ndarray]:
+        """Generate a default entity map by automatically creating one-hot encodings for
+        the entitity kinds in :code:`entity_list`.
 
         The :py:class:`.EmptyEntity` kind will receive an all-zero appearance.
 
@@ -151,7 +154,7 @@ class OneHotObservationSpec(ObservationSpec):
             A dictionary object matching each entity to
             an appearance.
         """
-        entity_map: dict[str, list[float]] = {}
+        entity_map: dict[str, np.ndarray] = {}
         num_classes = len(entity_list)
         for i, x in enumerate(entity_list):
             if x == "EmptyEntity":
@@ -187,8 +190,8 @@ class OneHotObservationSpec(ObservationSpec):
 
 
 class AsciiObservationSpec(ObservationSpec):
-    """
-    A subclass of :py:class:`ObservationSpec` for Sorrel agents whose observations take the form of ascii representations.
+    """A subclass of :py:class:`ObservationSpec` for Sorrel agents whose observations
+    take the form of ascii representations.
 
     Attributes:
         entity_map: A mapping of the kinds of entities in the environment to their appearances (a single ascii character each).
@@ -211,8 +214,9 @@ class AsciiObservationSpec(ObservationSpec):
             self.input_size = ((2 * vision_radius + 1), (2 * vision_radius + 1))
 
     def generate_map(self, entity_list: list[str]) -> dict[str, str]:
-        """Generate a default entity map by automatically creating ascii character representations
-        for the entity kinds in :code:`entity_list` through the following process:
+        """Generate a default entity map by automatically creating ascii character
+        representations for the entity kinds in :code:`entity_list` through the
+        following process:
 
         1. if the entity kind is "EmptyEntity" (see :class:`.EmptyEntity`), it will be represented by "."
         2. all other entities are represented by the first character in their kind that is not already used.
