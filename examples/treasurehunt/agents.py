@@ -12,9 +12,7 @@ from sorrel.environments import GridworldEnv
 
 
 class TreasurehuntAgent(Agent):
-    """
-    A treasurehunt agent that uses the iqn model.
-    """
+    """A treasurehunt agent that uses the iqn model."""
 
     def __init__(self, observation_spec, action_spec, model):
         super().__init__(observation_spec, action_spec, model)
@@ -50,16 +48,16 @@ class TreasurehuntAgent(Agent):
         """Act on the environment, returning the reward."""
 
         # Translate the model output to an action string
-        action = self.action_spec.get_readable_action(action)
+        action_name = self.action_spec.get_readable_action(action)
 
         new_location = self.location
-        if action == "up":
+        if action_name == "up":
             new_location = (self.location[0] - 1, self.location[1], self.location[2])
-        if action == "down":
+        if action_name == "down":
             new_location = (self.location[0] + 1, self.location[1], self.location[2])
-        if action == "left":
+        if action_name == "left":
             new_location = (self.location[0], self.location[1] - 1, self.location[2])
-        if action == "right":
+        if action_name == "right":
             new_location = (self.location[0], self.location[1] + 1, self.location[2])
 
         # get reward obtained from object at new_location

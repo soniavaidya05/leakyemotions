@@ -59,9 +59,7 @@ class CleanupObservation(observation_spec.OneHotObservationSpec):
 
 
 class CleanupAgent(Agent):
-    """
-    A treasurehunt agent that uses the iqn model.
-    """
+    """A treasurehunt agent that uses the iqn model."""
 
     def __init__(
         self,
@@ -84,7 +82,8 @@ class CleanupAgent(Agent):
             self.add_memory(state, action, reward, done)
 
     def pov(self, env: GridworldEnv) -> np.ndarray:
-        """Returns the state observed by the agent, from the flattened visual field + positional code."""
+        """Returns the state observed by the agent, from the flattened visual field +
+        positional code."""
         image = self.observation_spec.observe(env, self.location)
         # flatten the image to get the state
         return image.reshape(1, -1)
@@ -104,8 +103,8 @@ class CleanupAgent(Agent):
         return model_output
 
     def spawn_beam(self, env: GridworldEnv, action: str):
-        """Generate a beam extending cfg.agent.agent.beam_radius pixels
-        out in front of the agent."""
+        """Generate a beam extending cfg.agent.agent.beam_radius pixels out in front of
+        the agent."""
 
         # Get the tiles above and adjacent to the agent.
         up_vector = Vector(0, 0, layer=1, direction=self.direction)
@@ -154,29 +153,29 @@ class CleanupAgent(Agent):
         """Act on the environment, returning the reward."""
 
         # Translate the model output to an action string
-        action = self.action_spec.get_readable_action(action)
+        action_name = self.action_spec.get_readable_action(action)
 
         # Attempt to move
         new_location = self.location
-        if action == "up":
+        if action_name == "up":
             self.direction = 0
             self.sprite = Path(__file__).parent / "./assets/hero-back.png"
             new_location = (self.location[0] - 1, self.location[1], self.location[2])
-        if action == "down":
+        if action_name == "down":
             self.direction = 2
             self.sprite = Path(__file__).parent / "./assets/hero.png"
             new_location = (self.location[0] + 1, self.location[1], self.location[2])
-        if action == "left":
+        if action_name == "left":
             self.direction = 3
             self.sprite = Path(__file__).parent / "./assets/hero-left.png"
             new_location = (self.location[0], self.location[1] - 1, self.location[2])
-        if action == "right":
+        if action_name == "right":
             self.direction = 1
             self.sprite = Path(__file__).parent / "./assets/hero-right.png"
             new_location = (self.location[0], self.location[1] + 1, self.location[2])
 
         # Attempt to spawn beam
-        self.spawn_beam(env, action)
+        self.spawn_beam(env, action_name)
 
         # get reward obtained from object at new_location
         target_object = env.observe(new_location)
