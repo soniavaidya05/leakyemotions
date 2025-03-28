@@ -10,8 +10,7 @@ from sorrel.models import SorrelModel
 
 
 class PyTorchModel(nn.Module, SorrelModel):
-    """
-    Generic abstract PyTorch model.
+    """Generic abstract PyTorch model.
 
     Parameters:
         input_size: (Sequence[int]) The dimensions of the input state, not including batch or timesteps. \n
@@ -20,7 +19,6 @@ class PyTorchModel(nn.Module, SorrelModel):
         epsilon: (float) The rate of epsilon-greedy actions.
         device: (Union[str, torch.device]) The device to perform computations on.
         seed: (int) Random seed
-
     """
 
     def __init__(
@@ -55,37 +53,29 @@ class PyTorchModel(nn.Module, SorrelModel):
 
     @abstractmethod
     def train_step(self) -> torch.Tensor:
-        """
-        Update value parameters.
-        """
+        """Update value parameters."""
         pass
 
     @abstractmethod
     def take_action(self, state) -> int:
-        """
-        Take an action based on the model.
+        """Take an action based on the model."""
+        pass
+
+    def start_epoch_action(self, **kwargs):
+        """Actions for the model to perform before it interacts with the environment
+        during the turn.
+
+        Not every model will need to do anything before this, but this function should
+        be implemented to match the common gem main interface.
         """
         pass
 
-    def start_epoch_action(self):
-        """
-        Actions for the model to perform before it interacts
-        with the environment during the turn.
+    def end_epoch_action(self, **kwargs):
+        """Actions for the model to perform after it interacts with the environment
+        during the turn.
 
-        Not every model will need to do anything before this,
-        but this function should be implemented to match the
-        common gem main interface.
-        """
-        pass
-
-    def end_epoch_action(self):
-        """
-        Actions for the model to perform after it interacts
-        with the environment during the turn.
-
-        Not every model will need to do anything after this,
-        but this function should be implemented to match the
-        common gem main interface.
+        Not every model will need to do anything after this, but this function should be
+        implemented to match the common gem main interface.
         """
         pass
 
@@ -98,8 +88,7 @@ class PyTorchModel(nn.Module, SorrelModel):
     # ---------------------------------- #
 
     def save(self, file_path: str | os.PathLike) -> None:
-        """
-        Save the model weights and parameters in the specified location.
+        """Save the model weights and parameters in the specified location.
 
         Parameters:
             file_path: The full path to the model, including file extension.
@@ -113,8 +102,7 @@ class PyTorchModel(nn.Module, SorrelModel):
         )
 
     def load(self, file_path: str | os.PathLike) -> None:
-        """
-        Load the model weights and parameters from the specified location.
+        """Load the model weights and parameters from the specified location.
 
         Parameters:
             file_path: The full path to the model, including file extension.
@@ -130,8 +118,8 @@ class PyTorchModel(nn.Module, SorrelModel):
 
 
 class DoublePyTorchModel(PyTorchModel):
-    """
-    Generic abstract neural network model class with helper functions common across all models
+    """Generic abstract neural network model class with helper functions common across
+    all models.
 
     Parameters:
         input_size: (Sequence[int]) The dimensions of the input state, not including batch or timesteps. \n
@@ -141,7 +129,6 @@ class DoublePyTorchModel(PyTorchModel):
         device: (Union[str, torch.device]) The device to perform computations on.
         seed: (int) Random seed
         local_model (nn.Module)
-
     """
 
     def __init__(
@@ -158,8 +145,7 @@ class DoublePyTorchModel(PyTorchModel):
         self.models: dict[str, nn.Module] = {"local": None, "target": None}
 
     def save(self, file_path: str | os.PathLike) -> None:
-        """
-        Save the model weights and parameters in the specified location.
+        """Save the model weights and parameters in the specified location.
 
         Parameters:
             file_path: The full path to the model, including file extension.
@@ -174,8 +160,7 @@ class DoublePyTorchModel(PyTorchModel):
         )
 
     def load(self, file_path: str | os.PathLike) -> None:
-        """
-        Load the model weights and parameters from the specified location.
+        """Load the model weights and parameters from the specified location.
 
         Parameters:
             file_path: The full path to the model, including file extension.

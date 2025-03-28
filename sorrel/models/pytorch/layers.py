@@ -43,7 +43,7 @@ class NoisyLinear(nn.Linear):
         self.weight.data.uniform_(-std, std)
         self.bias.data.uniform_(-std, std)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         """Sample random noise in the sigma weight and bias buffers."""
         self.epsilon_weight.normal_()
         bias = self.bias
@@ -51,4 +51,6 @@ class NoisyLinear(nn.Linear):
             self.epsilon_bias.normal_()
             with torch.no_grad():
                 bias += self.sigma_bias * self.epsilon_bias
-        return F.linear(x, self.weight + self.sigma_weight * self.epsilon_weight, bias)
+        return F.linear(
+            input, self.weight + self.sigma_weight * self.epsilon_weight, bias
+        )
