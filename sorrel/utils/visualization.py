@@ -9,7 +9,7 @@ from typing import Optional, Sequence
 # Import base packages
 import numpy as np
 from matplotlib import pyplot as plt
-from PIL import Image
+from PIL import Image as img  # this is the module
 from PIL.PngImagePlugin import PngImageFile
 
 # Import sorrel-specific packages
@@ -90,14 +90,14 @@ def render_sprite(
                 if i < 0 or j < 0 or i >= world.shape[0] or j >= world.shape[1]:
                     # Tile is out of bounds, use wall_app
                     tile_image = (
-                        Image.open(os.path.expanduser(wall_sprite))
+                        img.open(os.path.expanduser(wall_sprite))
                         .resize(tile_size)
                         .convert("RGBA")
                     )
                 else:
                     tile_appearance = world[i, j, z].sprite
                     tile_image = (
-                        Image.open(os.path.expanduser(tile_appearance))
+                        img.open(os.path.expanduser(tile_appearance))
                         .resize(tile_size)
                         .convert("RGBA")
                     )
@@ -147,19 +147,19 @@ def plot(image: np.ndarray | list[np.ndarray]) -> None:
         plt.show()
 
 
-def image_from_array(image: np.ndarray | list[np.ndarray]) -> Image:
+def image_from_array(image: np.ndarray | list[np.ndarray]) -> img.Image:
     """Create a PIL image from an single-layer image or list of layers."""
     if isinstance(image, np.ndarray):
-        output = Image.fromarray(image, mode="RGBA")
+        output = img.fromarray(image, mode="RGBA")
     else:
-        output = Image.fromarray(image[0], mode="RGBA")
+        output = img.fromarray(image[0], mode="RGBA")
         for layer in image[1:]:
-            next_layer = Image.fromarray(layer, mode="RGBA")
+            next_layer = img.fromarray(layer, mode="RGBA")
             output.paste(next_layer, (0, 0), mask=next_layer)
     return output
 
 
-def fig2img(fig) -> Image:
+def fig2img(fig) -> img.Image:
     """Convert a Matplotlib figure to a PIL Image.
 
     NOTE: DO NOT use this with plt.show(), as it will not work and will return a blank image.
@@ -175,8 +175,8 @@ def fig2img(fig) -> Image:
     buf = io.BytesIO()
     fig.savefig(buf)
     buf.seek(0)
-    img = Image.open(buf)
-    return img
+    image = img.open(buf)
+    return image
 
 
 def animate(
