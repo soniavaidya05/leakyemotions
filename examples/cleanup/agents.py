@@ -52,7 +52,7 @@ class CleanupObservation(observation_spec.OneHotObservationSpec):
 
         visual_field = super().observe(env, location).flatten()
         pos_code = embedding.positional_embedding(
-            location, env, self.embedding_size, self.embedding_size
+            location, env, (self.embedding_size, self.embedding_size)
         )
 
         return np.concatenate((visual_field, pos_code))
@@ -60,7 +60,7 @@ class CleanupObservation(observation_spec.OneHotObservationSpec):
 
 class CleanupAgent(Agent):
     """
-    A treasurehunt agent that uses the iqn model.
+    A Cleanup agent that uses the IQN model.
     """
 
     def __init__(
@@ -75,7 +75,6 @@ class CleanupAgent(Agent):
         self.sprite = Path(__file__).parent / "./assets/hero.png"
 
     def reset(self) -> None:
-        """Resets the agent by fill in blank images for the memory buffer."""
         state = np.zeros_like(np.prod(self.model.input_size))
         action = 0
         reward = 0.0
@@ -84,13 +83,11 @@ class CleanupAgent(Agent):
             self.add_memory(state, action, reward, done)
 
     def pov(self, env: GridworldEnv) -> np.ndarray:
-        """Returns the state observed by the agent, from the flattened visual field + positional code."""
         image = self.observation_spec.observe(env, self.location)
         # flatten the image to get the state
         return image.reshape(1, -1)
 
     def get_action(self, state: np.ndarray) -> int:
-        """Gets the action from the model, using the stacked states."""
         prev_states = self.model.memory.current_state(
             stacked_frames=self.model.num_frames - 1
         )
@@ -103,9 +100,14 @@ class CleanupAgent(Agent):
 
         return model_output
 
-    def spawn_beam(self, env: GridworldEnv, action: str):
+    def spawn_beam(self, env: GridworldEnv, action: str) -> None:
         """Generate a beam extending cfg.agent.agent.beam_radius pixels
-        out in front of the agent."""
+        out in front of the agent.
+        
+        Args:
+            env: The environment to spawn the beam in.
+            action: The action to take.
+        """
 
         # Get the tiles above and adjacent to the agent.
         up_vector = Vector(0, 0, layer=1, direction=self.direction)
@@ -151,7 +153,6 @@ class CleanupAgent(Agent):
                 env.add(loc.to_tuple(), ZapBeam())
 
     def act(self, env: GridworldEnv, action: int) -> float:
-        """Act on the environment, returning the reward."""
 
         # Translate the model output to an action string
         action = self.action_spec.get_readable_action(action)
@@ -189,7 +190,6 @@ class CleanupAgent(Agent):
         return reward
 
     def is_done(self, env: GridworldEnv) -> bool:
-        """Returns whether this Agent is done."""
         return env.turn >= env.max_turns
 
 
