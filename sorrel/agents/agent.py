@@ -85,6 +85,7 @@ class Agent(Entity):
         """Act on the environment.
 
         Args:
+            env: The environment in which the agent is acting.
             action: an element from this agent's action space indicating the action to take.
 
         Returns:
