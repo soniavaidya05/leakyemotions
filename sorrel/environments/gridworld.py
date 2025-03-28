@@ -7,7 +7,8 @@ from sorrel.location import Location
 
 
 class GridworldEnv:
-    """Basic gridworld environment class with functions for getting and manipulating the locations of entities.
+    """Basic gridworld environment class with functions for getting and manipulating the
+    locations of entities.
 
     Attributes:
         height: The height of the gridworld.
@@ -35,11 +36,13 @@ class GridworldEnv:
         self.turn = 0
 
     def create_world(self) -> None:
-        """Assigns self.world a new gridworld of size self.height x self.width x self.layers filled with copies of self.default_entity.
+        """Assigns self.world a new gridworld of size self.height x self.width x
+        self.layers filled with deep copies of self.default_entity.
 
         Also sets self.turn to 0.
 
-        This function is used in :func:`self.__init__()`, and may be useful for resetting environments.
+        This function is used in :func:`self.__init__()`, and may be useful for
+        resetting environments.
         """
 
         self.world = np.full((self.height, self.width, self.layers), Entity())
@@ -53,7 +56,8 @@ class GridworldEnv:
         self.turn = 0
 
     def add(self, target_location: tuple[int, ...], entity: Entity) -> None:
-        """Adds an entity to the world at a location, replacing any existing entity at that location.
+        """Adds an entity to the world at a location, replacing any existing entity at
+        that location.
 
         Args:
             target_location (tuple[int, ...]): the location of the entity.
@@ -65,6 +69,8 @@ class GridworldEnv:
     def remove(self, target_location: tuple[int, ...]) -> Entity:
         """Remove the entity at a location.
 
+        The target location will then be filled with a deep copy of self.default_entity.
+
         Args:
             target_location (tuple[int, ...]): the location of the entity.
 
@@ -72,12 +78,16 @@ class GridworldEnv:
             Entity: the entity previously at the given location.
         """
         entity = self.world[target_location]
-        self.world[target_location] = self.default_entity
-        self.world[target_location].location = target_location
+        fill_entity = copy.deepcopy(self.default_entity)
+        fill_entity.location = target_location
+        self.world[target_location] = fill_entity
         return entity
 
     def move(self, entity: Entity, new_location: tuple[int, ...]) -> bool:
         """Move an entity to a new location.
+
+        The entity at the new location will be removed.
+        The old location of the entity will be filled with a deep copy of self.default_entity.
 
         Args:
             entity (Entity): entity to be moved.
@@ -88,11 +98,16 @@ class GridworldEnv:
         """
         if self.world[new_location].passable:
             self.remove(new_location)
+
+            # Move the entity from the old location to the new location
             previous_location = entity.location
             entity.location = new_location
             self.world[new_location] = entity
-            self.world[previous_location] = self.default_entity
-            self.world[previous_location].location = previous_location
+
+            # Fill the old location with a deep copy of the default_entity
+            fill_entity = copy.deepcopy(self.default_entity)
+            fill_entity.location = previous_location
+            self.world[previous_location] = fill_entity
             return True
         else:
             return False
@@ -111,8 +126,8 @@ class GridworldEnv:
     def take_turn(self) -> None:
         """Performs a full step in the environment.
 
-        This function iterates through the environment and performs transition() for each entity,
-        then transitions each agent.
+        This function iterates through the environment and performs transition() for
+        each entity, then transitions each agent.
         """
         self.turn += 1
         agents = []
@@ -157,7 +172,8 @@ class GridworldEnv:
         return True
 
     def get_entities_of_kind(self, kind: str) -> list[Entity]:
-        """Given the kind of an entity, return a list of entities in a world that are the same kind.
+        """Given the kind of an entity, return a list of entities in a world that are
+        the same kind.
 
         Args:
             world (np.array): the world of a particular GridworldEnv.
