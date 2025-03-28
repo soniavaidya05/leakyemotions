@@ -283,6 +283,10 @@ class Vector:
                     Location(0, 1),
                     Location(1, 0),
                 )
+            case _:
+                raise ValueError(
+                    f"Invalid vector direction: expected int between 0 and 3 (inclusive), got {self.direction}."
+                )
 
         return (
             (forward * self.forward)
