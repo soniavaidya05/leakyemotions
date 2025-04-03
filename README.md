@@ -82,10 +82,6 @@ automatically format your code wherever possible, along with testing frameworks 
 We have included a [pre-commit](https://pre-commit.com/) configuration to automatically run all CI tasks whenever you 
 attempt to commit to the Sorrel repository. 
 
-> [!WARNING]
-> We highly recommend you use pre-commit as pull requests will NOT be
-> merged unless you pass ALL CI checks (including the pre-commit CI check).
-
 To set up pre-commit, start by confirming that it's installed by running:
 ```
 pre-commit --version

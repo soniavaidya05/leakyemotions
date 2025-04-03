@@ -30,7 +30,7 @@ iRainbowModel (contains two IQN networks; one for local and one for target)
 
 # Import base packages
 import random
-from typing import Sequence
+from typing import Any, Sequence
 
 import numpy as np
 import torch
@@ -87,7 +87,7 @@ class IQN(nn.Module):
         self.advantage: torch.Tensor = NoisyLinear(layer_size, action_space)
         self.value: torch.Tensor = NoisyLinear(layer_size, 1)
 
-    def calc_cos(self, batch_size, n_tau=8) -> tuple[torch.Tensor]:
+    def calc_cos(self, batch_size, n_tau=8) -> tuple[torch.Tensor, torch.Tensor]:
         """Calculating the cosinus values depending on the number of tau samples."""
         taus = (
             torch.rand(batch_size, n_tau).unsqueeze(-1).to(self.device)
@@ -239,7 +239,7 @@ class iRainbowModel(DoublePyTorchModel):
     def __str__(self):
         return f"iRainbowModel(input_size={np.array(self.input_size).prod() * self.num_frames},action_space={self.action_space})"
 
-    def take_action(self, state: np.ndarray[np.float64]) -> int:
+    def take_action(self, state: np.ndarray[Any, np.dtype[np.float64]]) -> int:
         """Returns actions for given state as per current policy.
 
         Params ======     state (array_like): current state
