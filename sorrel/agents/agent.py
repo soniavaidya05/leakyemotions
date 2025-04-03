@@ -5,7 +5,7 @@ import numpy as np
 from sorrel.action.action_spec import ActionSpec
 from sorrel.entities import Entity
 from sorrel.environments import GridworldEnv
-from sorrel.models import SorrelModel
+from sorrel.models import BaseModel
 from sorrel.observation.observation_spec import ObservationSpec
 
 
@@ -31,13 +31,13 @@ class Agent(Entity):
 
     observation_spec: ObservationSpec
     action_spec: ActionSpec
-    model: SorrelModel
+    model: BaseModel
 
     def __init__(
         self,
         observation_spec: ObservationSpec,
         action_spec: ActionSpec,
-        model: SorrelModel,
+        model: BaseModel,
         location=None,
     ):
         # initializations based on parameters

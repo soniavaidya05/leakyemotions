@@ -8,7 +8,7 @@ from sorrel.agents import Agent
 from sorrel.entities import Entity
 from sorrel.environments import GridworldEnv
 from sorrel.location import Location, Vector
-from sorrel.models import SorrelModel
+from sorrel.models import BaseModel
 from sorrel.observation import embedding, observation_spec
 
 # --------------------------- #
@@ -68,7 +68,7 @@ class CleanupAgent(Agent):
         self,
         observation_spec: CleanupObservation,
         action_spec: ActionSpec,
-        model: SorrelModel,
+        model: BaseModel,
     ):
         super().__init__(observation_spec, action_spec=action_spec, model=model)
 

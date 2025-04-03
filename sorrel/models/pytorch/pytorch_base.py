@@ -6,10 +6,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from sorrel.models import SorrelModel
+from sorrel.models import BaseModel
 
 
-class PyTorchModel(nn.Module, SorrelModel):
+class PyTorchModel(nn.Module, BaseModel):
     """Generic abstract PyTorch model.
 
     Parameters:

@@ -8,9 +8,9 @@ import torch
 from sorrel.buffers import Buffer
 
 
-class SorrelModel:
-    """
-    Generic model class for Sorrel. All models should wrap around this implementation.
+class BaseModel:
+    """Generic model class for Sorrel. All models should wrap around this
+    implementation.
 
     Attributes:
         input_size: The size of the input.
@@ -42,8 +42,8 @@ class SorrelModel:
 
     @abstractmethod
     def take_action(self, state: np.ndarray) -> int:
-        """Take an action based on the observed input.
-        Must be implemented by all subclasses of the model.
+        """Take an action based on the observed input. Must be implemented by all
+        subclasses of the model.
 
         Args:
             state: The observed input.
@@ -62,9 +62,7 @@ class SorrelModel:
         return 0.0
 
     def set_epsilon(self, new_epsilon: float) -> None:
-        """
-        Replaces the current model epsilon with the provided value.
-        """
+        """Replaces the current model epsilon with the provided value."""
         self.epsilon = new_epsilon
 
     def start_epoch_action(self, **kwargs):

@@ -9,11 +9,11 @@ from flax.training.train_state import TrainState
 
 # Sorrel imports
 from sorrel.buffers import Buffer
-from sorrel.models import SorrelModel
+from sorrel.models import BaseModel
 from sorrel.models.jax.jax_base import QNetwork
 
 
-class DoubleDQNAgent(SorrelModel):
+class DoubleDQNAgent(BaseModel):
     """
     doubleDQN: An implementation of the Double Deep Q-Network (DDQN) algorithm.
 

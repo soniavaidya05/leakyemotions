@@ -2,20 +2,19 @@
 import jax
 import jax.numpy as jnp
 import jax.random
-
 # Optimization library specific to JAX
 import optax
-
-import jax
-import jax.numpy as jnp
 from flax.training.train_state import TrainState
 
 # Sorrel imports
 from sorrel.buffers import Buffer
-from sorrel.models import SorrelModel
-from sorrel.models.jax.jax_base import IQNetwork, compute_quantile_td_target_from_state, quantile_bellman_residual_loss
+from sorrel.models import BaseModel
+from sorrel.models.jax.jax_base import (IQNetwork,
+                                        compute_quantile_td_target_from_state,
+                                        quantile_bellman_residual_loss)
 
-class IQNAgent(SorrelModel):
+
+class IQNAgent(BaseModel):
     """
     doubleDQN: An implementation of the Double Deep Q-Network (DDQN) algorithm.
 
@@ -69,7 +68,7 @@ class IQNAgent(SorrelModel):
         beta=0.4,
         beta_increment=0.0006,
         memory_size=5000,
-        seed=0
+        seed=0,
     ):
         self.input_size = input_size
         self.action_space = action_space
@@ -87,7 +86,7 @@ class IQNAgent(SorrelModel):
         # Initialize RNG key for the model
         self.rng_key = jax.random.PRNGKey(seed)
 
-        self.memory = Buffer(capacity=memory_size, obs_shape=(input_size, ))
+        self.memory = Buffer(capacity=memory_size, obs_shape=(input_size,))
 
         # Initialize models with dummy data
         dummy_input = jnp.zeros((1, input_size))  # Should be part of the constructor
@@ -97,7 +96,7 @@ class IQNAgent(SorrelModel):
             jax.random.PRNGKey(seed), dummy_input, self.rng_key
         )["params"]
         self.target_model_params = self.target_model.init(
-            jax.random.PRNGKey(seed+1), dummy_input, self.rng_key
+            jax.random.PRNGKey(seed + 1), dummy_input, self.rng_key
         )["params"]
 
         # Initialize the optimizer with the parameters of the local model
@@ -114,10 +113,9 @@ class IQNAgent(SorrelModel):
             tx=optax.set_to_zero,
         )
 
-
     def take_action(self, state, epsilon):
-        """
-        Selects an action based on the current state, using an epsilon-greedy strategy.
+        """Selects an action based on the current state, using an epsilon-greedy
+        strategy.
 
         This method decides between exploration and exploitation using the epsilon value.
         With probability epsilon, it chooses a random action (exploration),
@@ -133,7 +131,7 @@ class IQNAgent(SorrelModel):
         In JAX, you typically use `jax.random.split` to get a new subkey.
         - Validate that the state is correctly reshaped and can be processed by the model during exploitation.
         - Confirm that the action space defined by `action_space` aligns with the environment's action space.
-        - Check that the `jax.random.uniform` and `jax.random.randint` functions are used correctly to 
+        - Check that the `jax.random.uniform` and `jax.random.randint` functions are used correctly to
           generate random numbers and actions.
 
         Potential Improvements:
@@ -166,15 +164,15 @@ class IQNAgent(SorrelModel):
                 action = jnp.argmax(jnp.mean(q_values, axis=-1), axis=-1)[0]
 
             return action, rng_key
-        
+
         action, self.rng_key = jax.jit(action_fn, static_argnums=(3))(
-            state, self.train_state, self.rng_key, self.action_space, epsilon)
+            state, self.train_state, self.rng_key, self.action_space, epsilon
+        )
         return action
 
-
     def train_step(self, batch_size, soft_update=True):
-        """
-        Perform a training step, with control over batch size, discount factor, and update type of the target model.
+        """Perform a training step, with control over batch size, discount factor, and
+        update type of the target model.
 
         Parameters:
         - batch_size: Determines the number of samples to be used in each training step. A larger batch size
@@ -199,7 +197,17 @@ class IQNAgent(SorrelModel):
         batch = self.memory.sample(batch_size)
         states, actions, rewards, next_states, dones, valid = batch
 
-        def update_fn(states, actions, rewards, next_states, dones, valid, model: TrainState, target_model: TrainState, keys):
+        def update_fn(
+            states,
+            actions,
+            rewards,
+            next_states,
+            dones,
+            valid,
+            model: TrainState,
+            target_model: TrainState,
+            keys,
+        ):
             next_key, key = jax.random.split(keys)
             dones = dones.reshape(-1, 1)
             rewards = rewards.reshape(-1, 1)
@@ -210,7 +218,6 @@ class IQNAgent(SorrelModel):
                 )
                 loss, loss_dict = quantile_bellman_residual_loss(
                     states, quantile_target, model, valid, self.rng_key
-
                 )
 
                 return loss
@@ -229,16 +236,24 @@ class IQNAgent(SorrelModel):
             )
 
             return loss, next_key, model, target_model
-        
-        loss, self.rng_key, self.train_state, self.target_train_state = jax.jit(jax.vmap(update_fn, in_axes=(
-            0, 0, 0, 0, 0, 0, None, None, None)))(
-            states, actions, rewards, next_states, dones, valid, self.train_state, self.target_train_state, self.rng_key)
+
+        loss, self.rng_key, self.train_state, self.target_train_state = jax.jit(
+            jax.vmap(update_fn, in_axes=(0, 0, 0, 0, 0, 0, None, None, None))
+        )(
+            states,
+            actions,
+            rewards,
+            next_states,
+            dones,
+            valid,
+            self.train_state,
+            self.target_train_state,
+            self.rng_key,
+        )
         return loss
 
-
     def hard_update(self):
-        """
-        Perform a hard update on the target model parameters.
+        """Perform a hard update on the target model parameters.
 
         This function directly copies the parameters from the local model to the
         target model. Unlike a soft update, which gradually blends the parameters
@@ -263,4 +278,3 @@ class IQNAgent(SorrelModel):
             lambda l: l,
             self.local_model_params,
         )
-
