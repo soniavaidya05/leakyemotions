@@ -1,5 +1,4 @@
-"""
-Implicit Quantile Network Implementation.
+"""Implicit Quantile Network Implementation.
 
 The IQN learns an estimate of the entire distribution of possible rewards (Q-values) for taking
 some action.
@@ -89,9 +88,7 @@ class IQN(nn.Module):
         self.value: torch.Tensor = NoisyLinear(layer_size, 1)
 
     def calc_cos(self, batch_size, n_tau=8) -> tuple[torch.Tensor]:
-        """
-        Calculating the cosinus values depending on the number of tau samples
-        """
+        """Calculating the cosinus values depending on the number of tau samples."""
         taus = (
             torch.rand(batch_size, n_tau).unsqueeze(-1).to(self.device)
         )  # (batch_size, n_tau, 1)  .to(self.device)
@@ -103,8 +100,7 @@ class IQN(nn.Module):
     def forward(
         self, input: torch.Tensor, num_tau=8
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Quantile Calculation depending on the number of tau
+        """Quantile Calculation depending on the number of tau.
 
         Return:
         quantiles [ shape of (batch_size, num_tau, action_space)]
@@ -185,25 +181,17 @@ class iRainbowModel(DoublePyTorchModel):
         GAMMA: float,
         N: int,
     ):
-        """
-        Initialize an iRainbow model.
+        """Initialize an iRainbow model.
 
-        Params
-        ======
-            input_size (ArrayLike): The dimension of each state. \n
-            action_space (int): The number of possible actions. \n
-            layer_size (int): The size of the hidden layer. \n
-            epsilon (float): Epsilon-greedy action value. \n
-            device (str | torch.device): Device used for the compute. \n
-            seed (int): Random seed value for replication. \n
-            num_frames (int): Number of timesteps for the state input. \n
-            BATCH_SIZE (int): The zize of the training batch. \n
-            memory_size (int): The size of the replay memory. \n
-            GAMMA (float): Discount factor \n
-            LR (float): Learning rate \n
-            TAU (float): Network weight soft update rate \n
-            N (int): Number of quantiles
-
+        Params ======     input_size (ArrayLike): The dimension of each state. \n
+        action_space (int): The number of possible actions. \n     layer_size (int): The
+        size of the hidden layer. \n     epsilon (float): Epsilon-greedy action value.
+        \n     device (str | torch.device): Device used for the compute. \n     seed
+        (int): Random seed value for replication. \n     num_frames (int): Number of
+        timesteps for the state input. \n     BATCH_SIZE (int): The zize of the training
+        batch. \n     memory_size (int): The size of the replay memory. \n     GAMMA
+        (float): Discount factor \n     LR (float): Learning rate \n     TAU (float):
+        Network weight soft update rate \n     N (int): Number of quantiles
         """
 
         # Initialize base ANN parameters
@@ -251,13 +239,10 @@ class iRainbowModel(DoublePyTorchModel):
     def __str__(self):
         return f"iRainbowModel(input_size={np.array(self.input_size).prod() * self.num_frames},action_space={self.action_space})"
 
-    def take_action(self, state: np.ndarray) -> int:
+    def take_action(self, state: np.ndarray[np.float64]) -> int:
         """Returns actions for given state as per current policy.
 
-        Params
-        ======
-            state (array_like): current state
-
+        Params ======     state (array_like): current state
         """
         # Epsilon-greedy action selection
         if random.random() > self.epsilon:
@@ -276,14 +261,12 @@ class iRainbowModel(DoublePyTorchModel):
             return action[0]
 
     def train_step(self) -> torch.Tensor:
-        """Update value parameters using given batch of experience tuples.
-        Note that the training loop CANNOT be named `train()` or training()`
-        as this conflicts with `nn.Module` superclass functions.
+        """Update value parameters using given batch of experience tuples. Note that the
+        training loop CANNOT be named `train()` or training()` as this conflicts with
+        `nn.Module` superclass functions.
 
-        Params
-        ======
-            experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s', done) tuples \n
-            gamma (float): discount factor
+        Params ======     experiences (Tuple[torch.Tensor]): tuple of (s, a, r, s',
+        done) tuples \n     gamma (float): discount factor
         """
         loss = torch.tensor(0.0)
         self.optimizer.zero_grad()
@@ -347,6 +330,7 @@ class iRainbowModel(DoublePyTorchModel):
 
     def soft_update(self) -> None:
         """Soft update model parameters.
+
         θ_target = τ*θ_local + (1 - τ)*θ_target
         Params
         ======
@@ -362,8 +346,7 @@ class iRainbowModel(DoublePyTorchModel):
             )
 
     def start_epoch_action(self, **kwargs) -> None:
-        """
-        Model actions before agent takes an action.
+        """Model actions before agent takes an action.
 
         Parameters:
             **kwargs: All local variables are passed into the model
@@ -372,8 +355,7 @@ class iRainbowModel(DoublePyTorchModel):
             self.qnetwork_target.load_state_dict(self.qnetwork_local.state_dict())
 
     def end_epoch_action(self, **kwargs) -> None:
-        """
-        Model actions computed after each agent takes an action.
+        """Model actions computed after each agent takes an action.
 
         Parameters:
             **kwargs: All local variables are passed into the model
@@ -388,9 +370,7 @@ class iRainbowModel(DoublePyTorchModel):
 
 
 def calculate_huber_loss(td_errors, k=1.0) -> torch.Tensor:
-    """
-    Calculate huber loss element-wisely depending on kappa k.
-    """
+    """Calculate huber loss element-wisely depending on kappa k."""
     loss = torch.where(
         td_errors.abs() <= k, 0.5 * td_errors.pow(2), k * (td_errors.abs() - 0.5 * k)
     )
