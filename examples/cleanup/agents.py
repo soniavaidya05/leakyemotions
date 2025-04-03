@@ -24,11 +24,12 @@ class CleanupObservation(observation_spec.OneHotObservationSpec):
     def __init__(
         self,
         entity_list: list[str],
+        full_view: bool = False,
         vision_radius: int | None = None,
         embedding_size: int = 3,
     ):
 
-        super().__init__(entity_list, vision_radius)
+        super().__init__(entity_list, full_view, vision_radius)
         self.embedding_size = embedding_size
         if self.full_view:
             self.input_size = (
@@ -49,7 +50,9 @@ class CleanupObservation(observation_spec.OneHotObservationSpec):
             )
 
     def observe(self, env: GridworldEnv, location: tuple | Location | None = None):
-
+        """Location must be provided for this observation."""
+        if location is None:
+            raise ValueError("Location must not be None for CleanupObservation.")
         visual_field = super().observe(env, location).flatten()
         pos_code = embedding.positional_embedding(
             location, env, (self.embedding_size, self.embedding_size)
@@ -59,9 +62,7 @@ class CleanupObservation(observation_spec.OneHotObservationSpec):
 
 
 class CleanupAgent(Agent):
-    """
-    A Cleanup agent that uses the IQN model.
-    """
+    """A Cleanup agent that uses the IQN model."""
 
     def __init__(
         self,
@@ -101,9 +102,9 @@ class CleanupAgent(Agent):
         return model_output
 
     def spawn_beam(self, env: GridworldEnv, action: str) -> None:
-        """Generate a beam extending cfg.agent.agent.beam_radius pixels
-        out in front of the agent.
-        
+        """Generate a beam extending cfg.agent.agent.beam_radius pixels out in front of
+        the agent.
+
         Args:
             env: The environment to spawn the beam in.
             action: The action to take.

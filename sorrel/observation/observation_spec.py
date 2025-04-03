@@ -14,19 +14,20 @@ class ObservationSpec:
 
     Attributes:
         entity_map: A mapping of the kinds of entities in the environment to their appearances.
-        vision_radius: The radius of the agent's vision. If None, the agent can see the entire environment.
+        vision_radius: The radius of the agent's vision if full_view is False, 0 if full_view is True.
         full_view: A boolean that determines whether the agent can see the entire environment.
         input_size: An int or sequence of ints that indicates the size of the observation.
     """
 
     entity_map: dict[str,]
-    vision_radius: int | None
+    vision_radius: int
     full_view: bool
-    input_size: int | Sequence[int]
+    input_size: Sequence[int]
 
     def __init__(
         self,
         entity_list: list[str],
+        full_view: bool,
         vision_radius: int | None = None,
         env_dims: Sequence[int] | None = None,
     ):
@@ -36,17 +37,16 @@ class ObservationSpec:
 
         Args:
             entity_list: A list of the kinds of entities that appear in the environment.
-            vision_radius: The radius of the agent's vision. Defaults to None.
+            full_view: Whether the agent can see the entire environment.
+            vision_radius: The radius of the agent's vision. Must be provided if full_view is False.
+            env_dims: The dimensions of the environment. Must be provided if full_view is True.
         """
-        if not isinstance(vision_radius, int):
-            self.vision_radius = None
-            assert isinstance(
-                env_dims, Sequence
-            ), "If vision_radius is None, env_dims must be provided."
-            self.full_view = True
-        else:
-            self.vision_radius = vision_radius
-            self.full_view = False
+        if full_view and not isinstance(env_dims, Sequence):
+            raise TypeError("env_dims must be provided when full_view is true.")
+        elif not full_view and not isinstance(vision_radius, int):
+            raise TypeError("vision_radius must be provided when full_view is false.")
+        self.full_view = full_view
+        self.vision_radius = vision_radius if vision_radius else 0
         self.entity_map = self.generate_map(entity_list)
 
     @abstractmethod
@@ -75,15 +75,11 @@ class ObservationSpec:
 
         Args:
             env: The environment to observe.
-            location: The location of the observer.
-            If None, returns the full environment.
+            location: The location of the observer. Must be provided if full_view is False.
+            If full_view is True, this parameter is ignored.
 
         Returns:
             The observation.
-
-        Notes:
-            If :attr:`vision_radius` is also `None`,
-            this function will also return the full environment.
         """
         pass
 
@@ -98,13 +94,13 @@ class ObservationSpec:
         """
         self.entity_map = entity_map
 
-    def override_input_size(self, input_size: int | Sequence[int]) -> None:
+    def override_input_size(self, input_size: Sequence[int]) -> None:
         r"""Override the input size with a provided custom one. Can be useful if the
         output of the observe() function is changed from the default (i.e., by
         flattening the output).
 
         Args:
-            input_size (int | Sequence[int]): The new input size to use.
+            input_size: The new input size to use.
         """
         self.input_size = input_size
 
@@ -115,27 +111,32 @@ class OneHotObservationSpec(ObservationSpec):
 
     Attributes:
         entity_map: A mapping of the kinds of entities in the environment to their appearances.
-        vision_radius: The radius of the agent's vision. If None, the agent can see the entire environment.
+        vision_radius: The radius of the agent's vision if full_view is False, 0 if full_view is True.
+        full_view: A boolean that determines whether the agent can see the entire environment.
+        input_size: An int or sequence of ints that indicates the size of the observation.
     """
 
     entity_map: dict[str, np.ndarray]
-    vision_radius: int | None
+    vision_radius: int
+    full_view: bool
+    input_size: Sequence[int]
 
     def __init__(
         self,
         entity_list: list[str],
+        full_view: bool,
         vision_radius: int | None = None,
         env_dims: Sequence[int] | None = None,
     ):
-        super().__init__(entity_list, vision_radius, env_dims)
+        super().__init__(entity_list, full_view, vision_radius, env_dims)
         # By default, input_size is (channels, x, y)
         if self.full_view:
             self.input_size = (len(entity_list), *env_dims)
         else:
             self.input_size = (
                 len(entity_list),
-                (2 * vision_radius + 1),
-                (2 * vision_radius + 1),
+                (2 * self.vision_radius + 1),
+                (2 * self.vision_radius + 1),
             )
 
     def generate_map(self, entity_list: list[str]) -> dict[str, np.ndarray]:
@@ -174,17 +175,23 @@ class OneHotObservationSpec(ObservationSpec):
 
         Args:
             env: The environment to observe.
-            location: The location of the observer. If blank, returns the full environment.
+            location: The location of the observer. Must be provided if full_view is False.
+            If full_view is True, this parameter is ignored.
 
         Returns:
             The one-hot coded observation, in the shape of `(number of channels, 2 * vision + 1, 2 * vision + 1)`.
-            If :attr:`vision_radius` is `None` or the :code:`location` parameter is None,
-            the shape will be `(number of channels, env.width, env.layers)`.
+            If :attr:`full_view` is True, the shape will be `(number of channels, env.width, env.layers)`.
         """
+        if not self.full_view and not location:
+            raise TypeError(
+                "location not provided when full_view is false. Please provide the location of the observer."
+            )
+        if self.full_view:
+            location = None
         return visual_field(
             env=env,
             entity_map=self.entity_map,
-            vision=self.vision_radius,
+            vision=self.vision_radius if not self.full_view else None,
             location=location,
         )
 
@@ -194,20 +201,25 @@ class AsciiObservationSpec(ObservationSpec):
     take the form of ascii representations.
 
     Attributes:
-        entity_map: A mapping of the kinds of entities in the environment to their appearances (a single ascii character each).
-        vision_radius: The radius of the agent's vision. If None, the agent can see the entire environment.
+        entity_map: A mapping of the kinds of entities in the environment to their appearances.
+        vision_radius: The radius of the agent's vision if full_view is False, 0 if full_view is True.
+        full_view: A boolean that determines whether the agent can see the entire environment.
+        input_size: An int or sequence of ints that indicates the size of the observation.
     """
 
-    entity_map: dict[str, str]
-    vision_radius: int | None
+    entity_map: dict[str, np.ndarray]
+    vision_radius: int
+    full_view: bool
+    input_size: Sequence[int]
 
     def __init__(
         self,
         entity_list: list[str],
+        full_view: bool,
         vision_radius: int | None = None,
         env_dims: Sequence[int] | None = None,
     ):
-        super().__init__(entity_list, vision_radius, env_dims)
+        super().__init__(entity_list, full_view, vision_radius, env_dims)
         if self.full_view:
             self.input_size = env_dims
         else:
@@ -267,17 +279,22 @@ class AsciiObservationSpec(ObservationSpec):
 
         Args:
             env: The environment to observe.
-            location: The location of the observer.
-            If blank, returns the full environment.
+            location: The location of the observer. Must be provided if full_view is False.
+            If full_view is True, this parameter is ignored.
 
         Returns:
             The ascii-coded observation, in the shape of `(2 * vision + 1, 2 * vision + 1)`.
-            If :attr:`vision_radius` is `None` or the :code:`location` parameter is None,
-            the shape will be `(env.width, env.layers)`.
+            If :attr:`full_view` is True, the shape will be `(env.width, env.layers)`.
         """
+        if not self.full_view and not location:
+            raise TypeError(
+                "location not provided when full_view is false. Please provide the location of the observer."
+            )
+        if self.full_view:
+            location = None
         return visual_field_ascii(
             env=env,
             entity_map=self.entity_map,
-            vision=self.vision_radius,
+            vision=self.vision_radius if not self.full_view else None,
             location=location,
         )

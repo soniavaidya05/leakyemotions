@@ -44,7 +44,7 @@ class Agent(Entity):
         self.observation_spec = observation_spec
         self.action_spec = action_spec
         self.model = model
-        self.location = location
+        self._location = location
 
         super().__init__()
 

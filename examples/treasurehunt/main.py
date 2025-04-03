@@ -39,10 +39,10 @@ def setup() -> Treasurehunt:
     agents = []
     for _ in range(agent_num):
         observation_spec = OneHotObservationSpec(
-            ENTITY_LIST, vision_radius=agent_vision_radius
+            ENTITY_LIST, full_view=False, vision_radius=agent_vision_radius
         )
         observation_spec.override_input_size(
-            np.array(observation_spec.input_size).reshape(1, -1)
+            np.array(observation_spec.input_size).reshape(1, -1).tolist()
         )
         action_spec = ActionSpec(["up", "down", "left", "right"])
 
