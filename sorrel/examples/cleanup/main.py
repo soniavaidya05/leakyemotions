@@ -7,12 +7,12 @@ from pathlib import Path
 
 import torch
 
-from examples.cleanup.agents import CleanupAgent, CleanupObservation
-from examples.cleanup.env import Cleanup
 # sorrel imports
 from sorrel.action.action_spec import ActionSpec
 from sorrel.config import Cfg, load_config
 from sorrel.entities import Entity
+from sorrel.examples.cleanup.agents import CleanupAgent, CleanupObservation
+from sorrel.examples.cleanup.env import Cleanup
 from sorrel.models.pytorch import PyTorchIQN
 from sorrel.utils.visualization import animate, image_from_array, render_sprite
 

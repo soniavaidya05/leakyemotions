@@ -2,11 +2,11 @@ from pathlib import Path
 
 import numpy as np
 
-from examples.cleanup.entities import EmptyEntity
 from sorrel.action.action_spec import ActionSpec
 from sorrel.agents import Agent
 from sorrel.entities import Entity
 from sorrel.environments import GridworldEnv
+from sorrel.examples.cleanup.entities import EmptyEntity
 from sorrel.location import Location, Vector
 from sorrel.models import BaseModel
 from sorrel.observation import embedding, observation_spec

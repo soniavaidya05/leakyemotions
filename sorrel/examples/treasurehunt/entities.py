@@ -50,9 +50,8 @@ class EmptyEntity(Entity):
         self.sprite = Path(__file__).parent / "./assets/empty.png"
 
     def transition(self, env: GridworldEnv):
-        """
-        EmptySpaces can randomly spawn into Gems based on the item spawn probabilities dictated in the environmnet.
-        """
+        """EmptySpaces can randomly spawn into Gems based on the item spawn
+        probabilities dictated in the environmnet."""
         if (  # NOTE: If the spawn prob is too high, the environment gets overrun
             np.random.random() < env.spawn_prob
         ):

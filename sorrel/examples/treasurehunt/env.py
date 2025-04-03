@@ -4,18 +4,16 @@
 # Import base packages
 import numpy as np
 
-# Import experiment specific classes
-from examples.treasurehunt.entities import EmptyEntity, Gem, Sand, Wall
 # Import primitive types
 from sorrel.environments import GridworldEnv
+# Import experiment specific classes
+from sorrel.examples.treasurehunt.entities import EmptyEntity, Gem, Sand, Wall
 
 # end imports
 
 
 class Treasurehunt(GridworldEnv):
-    """
-    Treasurehunt environment.
-    """
+    """Treasurehunt environment."""
 
     def __init__(self, height, width, gem_value, spawn_prob, max_turns, agents):
         layers = 2
@@ -31,9 +29,11 @@ class Treasurehunt(GridworldEnv):
         self.populate()
 
     def populate(self):
-        """
-        Populate the treasurehunt world by creating walls, then randomly spawning the agents.
-        Note that every space is already filled with EmptyEntity as part of super().__init__().
+        """Populate the treasurehunt world by creating walls, then randomly spawning the
+        agents.
+
+        Note that every space is already filled with EmptyEntity as part of
+        super().__init__().
         """
         valid_spawn_locations = []
 

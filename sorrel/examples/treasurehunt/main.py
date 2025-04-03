@@ -5,10 +5,10 @@ from pathlib import Path
 import numpy as np
 import torch
 
-# imports from our example
-from examples.treasurehunt.agents import TreasurehuntAgent
-from examples.treasurehunt.env import Treasurehunt
 from sorrel.action.action_spec import ActionSpec
+# imports from our example
+from sorrel.examples.treasurehunt.agents import TreasurehuntAgent
+from sorrel.examples.treasurehunt.env import Treasurehunt
 # sorrel imports
 from sorrel.models.pytorch import PyTorchIQN
 from sorrel.observation.observation_spec import OneHotObservationSpec

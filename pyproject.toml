@@ -57,8 +57,7 @@ tensorboard = "^2.18.0"
 
 [tool.pytest.ini_options]
 pythonpath = [
-  "sorrel",
-  "examples"
+  "sorrel"
 ]
 addopts = [
   "--doctest-modules", 
