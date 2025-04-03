@@ -2,19 +2,16 @@
 import jax
 import jax.numpy as jnp
 import jax.random
-from flax import linen as nn
-
 # Optimization library specific to JAX
 import optax
-
-import jax
-import jax.numpy as jnp
+from flax import linen as nn
 from flax.training.train_state import TrainState
 
 # Sorrel imports
 from sorrel.buffers import Buffer
 from sorrel.models import SorrelModel
 from sorrel.models.jax.jax_base import QNetwork
+
 
 class DoubleDQNAgent(SorrelModel):
     """
@@ -70,7 +67,7 @@ class DoubleDQNAgent(SorrelModel):
         beta=0.4,
         beta_increment=0.0006,
         memory_size=5000,
-        seed=0
+        seed=0,
     ):
         self.input_size = input_size
         self.action_space = action_space
@@ -88,7 +85,7 @@ class DoubleDQNAgent(SorrelModel):
         # Initialize RNG key for the model
         self.rng_key = jax.random.PRNGKey(seed)
 
-        self.memory = Buffer(capacity=memory_size, obs_shape=(input_size, ))
+        self.memory = Buffer(capacity=memory_size, obs_shape=(input_size,))
 
         # Initialize models with dummy data
         dummy_input = jnp.zeros((1, input_size))  # Should be part of the constructor
@@ -98,7 +95,7 @@ class DoubleDQNAgent(SorrelModel):
             jax.random.PRNGKey(seed), dummy_input
         )["params"]
         self.target_model_params = self.target_model.init(
-            jax.random.PRNGKey(seed+1), dummy_input
+            jax.random.PRNGKey(seed + 1), dummy_input
         )["params"]
 
         # Initialize the optimizer with the parameters of the local model
@@ -115,10 +112,9 @@ class DoubleDQNAgent(SorrelModel):
             tx=optax.set_to_zero,
         )
 
-
     def take_action(self, state, epsilon):
-        """
-        Selects an action based on the current state, using an epsilon-greedy strategy.
+        """Selects an action based on the current state, using an epsilon-greedy
+        strategy.
 
         This method decides between exploration and exploitation using the epsilon value.
         With probability epsilon, it chooses a random action (exploration),
@@ -134,7 +130,7 @@ class DoubleDQNAgent(SorrelModel):
         In JAX, you typically use `jax.random.split` to get a new subkey.
         - Validate that the state is correctly reshaped and can be processed by the model during exploitation.
         - Confirm that the action space defined by `action_space` aligns with the environment's action space.
-        - Check that the `jax.random.uniform` and `jax.random.randint` functions are used correctly to 
+        - Check that the `jax.random.uniform` and `jax.random.randint` functions are used correctly to
           generate random numbers and actions.
 
         Potential Improvements:
@@ -162,11 +158,12 @@ class DoubleDQNAgent(SorrelModel):
             )
         else:
             # Exploitation: choose the best action based on model prediction
-            q_values = self.train_state.apply_fn(self.train_state.params, state, rng_key_taus)
+            q_values = self.train_state.apply_fn(
+                self.train_state.params, state, rng_key_taus
+            )
             action = jnp.argmax(jnp.mean(q_values, axis=-1), axis=-1)[0]
 
         return action
-
 
     def compute_td_errors(self, params, states, actions, rewards, next_states, dones):
         q_values = self.train_state.apply_fn(params, states)
@@ -177,10 +174,9 @@ class DoubleDQNAgent(SorrelModel):
         predicted_q_values = jnp.sum(q_values * actions_one_hot, axis=1)
         return jnp.abs(predicted_q_values - target_q_values)
 
-
     def train_step(self, batch_size, soft_update=True):
-        """
-        Perform a training step, with control over batch size, discount factor, and update type of the target model.
+        """Perform a training step, with control over batch size, discount factor, and
+        update type of the target model.
 
         Parameters:
         - batch_size: Determines the number of samples to be used in each training step. A larger batch size
@@ -203,7 +199,7 @@ class DoubleDQNAgent(SorrelModel):
         """
 
         batch = self.memory.sample(batch_size)
-        states, actions, rewards, next_states, dones = batch
+        states, actions, rewards, next_states, dones, _ = batch
         dones = dones.reshape(-1, 1)
         rewards = rewards.reshape(-1, 1)
 
@@ -211,9 +207,7 @@ class DoubleDQNAgent(SorrelModel):
             q_values = self.local_model.apply({"params": params}, states)
             next_q_values = self.target_model.apply({"params": params}, next_states)
             max_next_q_values = jnp.max(next_q_values, axis=1)
-            target_q_values = rewards + (
-                self.gamma * max_next_q_values * (1 - dones)
-            )
+            target_q_values = rewards + (self.gamma * max_next_q_values * (1 - dones))
             actions_one_hot = jax.nn.one_hot(actions, self.action_space)
             predicted_q_values = jnp.sum(q_values * actions_one_hot, axis=1)
             loss = jnp.mean((predicted_q_values - target_q_values) ** 2)
@@ -224,9 +218,7 @@ class DoubleDQNAgent(SorrelModel):
         updates, self.optimizer_state = self.optimizer.update(
             gradients, self.optimizer_state
         )
-        self.local_model_params = optax.apply_updates(
-            self.local_model_params, updates
-        )
+        self.local_model_params = optax.apply_updates(self.local_model_params, updates)
 
         # Soft update
 
@@ -239,10 +231,8 @@ class DoubleDQNAgent(SorrelModel):
 
         return loss
 
-
     def hard_update(self):
-        """
-        Perform a hard update on the target model parameters.
+        """Perform a hard update on the target model parameters.
 
         This function directly copies the parameters from the local model to the
         target model. Unlike a soft update, which gradually blends the parameters
