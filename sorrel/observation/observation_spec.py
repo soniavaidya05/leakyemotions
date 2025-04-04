@@ -223,7 +223,10 @@ class AsciiObservationSpec(ObservationSpec):
         if self.full_view:
             self.input_size = env_dims
         else:
-            self.input_size = ((2 * vision_radius + 1), (2 * vision_radius + 1))
+            self.input_size = (
+                (2 * self.vision_radius + 1),
+                (2 * self.vision_radius + 1),
+            )
 
     def generate_map(self, entity_list: list[str]) -> dict[str, str]:
         """Generate a default entity map by automatically creating ascii character
