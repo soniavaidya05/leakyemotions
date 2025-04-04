@@ -1,13 +1,11 @@
 # JAX Imports for automatic differentiation and numerical operations
-from typing import Callable
+from dataclasses import field
+from typing import Callable, Dict, Tuple
+
 import jax
 import jax.numpy as jnp
 import jax.random
 from flax import linen as nn
-
-from typing import Dict, Tuple
-import jax
-import jax.numpy as jnp
 from flax.training.train_state import TrainState
 
 
@@ -21,7 +19,9 @@ def compute_quantile_td_target_from_state(
 ):
     key1, key2 = jax.random.split(key)
     value = critic.apply_fn(critic.params, state, key1)
-    action_value = jnp.argmax(critic.apply_fn(critic.params, state, key2).mean(-1), -1, keepdims=True)
+    action_value = jnp.argmax(
+        critic.apply_fn(critic.params, state, key2).mean(-1), -1, keepdims=True
+    )
     value = jnp.take_along_axis(value, action_value, axis=-1)
     td_target = reward + gamma * value * (1 - dones)
     return td_target
@@ -32,10 +32,10 @@ def quantile_loss(pred, target, taus, mask):
 
     huber_loss = (
         # L2 loss when absolute error <= 1
-        0.5 * jnp.int8((jnp.abs(signed_loss) <= 1)) * signed_loss**2
+        0.5 * jnp.int8(jnp.abs(signed_loss) <= 1) * signed_loss**2
         +
         # L1 loss when absolute error > 1
-        jnp.int8((jnp.abs(signed_loss) > 1)) * (jnp.abs(signed_loss) - 0.5)
+        jnp.int8(jnp.abs(signed_loss) > 1) * (jnp.abs(signed_loss) - 0.5)
     )
 
     quantile_errors = jnp.abs(taus - jnp.int8(signed_loss < 0))
@@ -55,9 +55,7 @@ def quantile_bellman_residual_loss(
 ) -> Tuple[jax.Array, Dict]:
     q, taus = critic.apply_fn(critic.params, state, key)
 
-    critic_loss = quantile_loss(
-        q, quantile_target, taus, mask
-    )
+    critic_loss = quantile_loss(q, quantile_target, taus, mask)
     return (
         critic_loss,
         {  # type: ignore
@@ -76,27 +74,26 @@ class IQNetwork(nn.Module):
     flatten_obs: bool = True
 
     activation_func: Callable[[jnp.array], jnp.array] = nn.relu
-    obs_emb_layers: list[int] = lambda: [256, 256]
-    pi_emb_layers: list[int] = lambda: [32, 32]
-    shared_layers: list[int] = lambda: [256]
-    value_head: list[int] = lambda: [256]
-    advantage_head: list[int] = lambda: [256]
+    obs_emb_layers: list[int] = field(default_factory=lambda: [256, 256])
+    pi_emb_layers: list[int] = field(default_factory=lambda: [32, 32])
+    shared_layers: list[int] = field(default_factory=lambda: [256])
+    value_head: list[int] = field(default_factory=lambda: [256])
+    advantage_head: list[int] = field(default_factory=lambda: [256])
 
     def cos_emb(self, bs, num_taus, key):
         # set up equal space frequencies
-        pis = jnp.arange(0, 1, 1./num_taus)
+        pis = jnp.arange(0, 1, 1.0 / num_taus)
 
         # sample random taus
         taus = jax.random.uniform(key, (bs, num_taus), minval=0, maxval=1)
 
         return jnp.cos(jnp.pi * taus * pis)
 
-
     @nn.compact
     def __call__(self, x, rng_key=None, noisy=False):
         if self.flatten:
             x = x.reshape((x.shape[0], -1))
-        
+
         # compute obs embeddings
         for layer in self.obs_emb_layers:
             x = nn.Dense(layer)(x)
@@ -107,7 +104,7 @@ class IQNetwork(nn.Module):
         for layer in self.pi_emb_layers:
             cos_emb = nn.Dense(layer)(cos_emb)
             cos_emb = self.activation_func(cos_emb)
-        
+
         # combine multiplicatively
         x = x[:, None, :] * cos_emb[:, :, None]
 
@@ -142,15 +139,15 @@ class QNetwork(nn.Module):
     flatten_obs: bool = True
 
     activation_func: Callable[[jnp.array], jnp.array] = nn.relu
-    emb_layers: list = lambda: [256, 256]
-    value_head: list = lambda: [256]
-    advantage_head: list = lambda: [256]
+    emb_layers: list[int] = field(default_factory=lambda: [256, 256])
+    value_head: list[int] = field(default_factory=lambda: [256])
+    advantage_head: list[int] = field(default_factory=lambda: [256])
 
     @nn.compact
     def __call__(self, x, noisy=False):
         if self.flatten:
             x = x.reshape((x.shape[0], -1))
-        
+
         # compute obs embeddings
         for layer in self.emb_layers:
             x = nn.Dense(layer)(x)
