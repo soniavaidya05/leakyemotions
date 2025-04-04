@@ -73,7 +73,7 @@ class IQNetwork(nn.Module):
 
     flatten_obs: bool = True
 
-    activation_func: Callable[[jnp.array], jnp.array] = nn.relu
+    activation_func: Callable[[jax.Array], jax.Array] = nn.relu
     obs_emb_layers: list[int] = field(default_factory=lambda: [256, 256])
     pi_emb_layers: list[int] = field(default_factory=lambda: [32, 32])
     shared_layers: list[int] = field(default_factory=lambda: [256])
