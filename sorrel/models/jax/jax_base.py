@@ -138,7 +138,7 @@ class QNetwork(nn.Module):
 
     flatten_obs: bool = True
 
-    activation_func: Callable[[jnp.array], jnp.array] = nn.relu
+    activation_func: Callable[[jax.Array], jax.Array] = nn.relu
     emb_layers: list[int] = field(default_factory=lambda: [256, 256])
     value_head: list[int] = field(default_factory=lambda: [256])
     advantage_head: list[int] = field(default_factory=lambda: [256])
