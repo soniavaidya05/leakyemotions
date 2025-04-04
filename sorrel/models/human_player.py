@@ -33,8 +33,8 @@ class HumanPlayer(BaseModel):
             clear_output(wait=True)
             plot(state)
 
-        done = False
-        while not done:
+        action = None
+        while not isinstance(action, int):
             action_ = input("Select Action: ")
             if action_ in ["w", "a", "s", "d"]:
                 if action_ == "w":
@@ -50,8 +50,5 @@ class HumanPlayer(BaseModel):
             else:
                 print("Please try again. Possible actions are below.")
                 print(self.action_space)
-            if action is not None:
-                if action in self.action_space:
-                    done = True
 
         return action
