@@ -9,7 +9,6 @@ from typing import Dict, Tuple
 import jax
 import jax.numpy as jnp
 from flax.training.train_state import TrainState
-from dataclasses import field
 
 
 def compute_quantile_td_target_from_state(
@@ -77,11 +76,11 @@ class IQNetwork(nn.Module):
     flatten_obs: bool = True
 
     activation_func: Callable[[jnp.array], jnp.array] = nn.relu
-    obs_emb_layers: list = lambda: [256, 256]
-    pi_emb_layers: list = lambda: [32, 32]
-    shared_layers: list = lambda: [256]
-    value_head: list = lambda: [256]
-    advantage_head: list = lambda: [256]
+    obs_emb_layers: list[int] = lambda: [256, 256]
+    pi_emb_layers: list[int] = lambda: [32, 32]
+    shared_layers: list[int] = lambda: [256]
+    value_head: list[int] = lambda: [256]
+    advantage_head: list[int] = lambda: [256]
 
     def cos_emb(self, bs, num_taus, key):
         # set up equal space frequencies
