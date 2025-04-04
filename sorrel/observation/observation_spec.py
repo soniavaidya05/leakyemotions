@@ -131,6 +131,7 @@ class OneHotObservationSpec(ObservationSpec):
         super().__init__(entity_list, full_view, vision_radius, env_dims)
         # By default, input_size is (channels, x, y)
         if self.full_view:
+            assert isinstance(env_dims, Sequence)  # safeguarded in super().__init__()
             self.input_size = (len(entity_list), *env_dims)
         else:
             self.input_size = (
@@ -221,6 +222,7 @@ class AsciiObservationSpec(ObservationSpec):
     ):
         super().__init__(entity_list, full_view, vision_radius, env_dims)
         if self.full_view:
+            assert isinstance(env_dims, Sequence)  # safeguarded in super().__init__()
             self.input_size = env_dims
         else:
             self.input_size = (
