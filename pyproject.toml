@@ -17,7 +17,7 @@ contributors = [
 ]
 
 [tool.poetry]
-packages = [{ include = "sorrel" }, { include = "examples" }]
+packages = [{ include = "sorrel" }]
 
 [tool.poetry.dependencies]
 python = "^3.11.0"
