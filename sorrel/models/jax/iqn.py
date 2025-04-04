@@ -85,8 +85,12 @@ class IQNAgent(BaseModel):
         self.epsilon = epsilon
         self.batch_size = batch_size
 
-        self.local_model = IQNetwork(action_space=action_space, num_quantiles=num_quantiles)
-        self.target_model = IQNetwork(action_space=action_space, num_quantiles=num_quantiles)
+        self.local_model = IQNetwork(
+            action_space=action_space, num_quantiles=num_quantiles
+        )
+        self.target_model = IQNetwork(
+            action_space=action_space, num_quantiles=num_quantiles
+        )
 
         # Initialize RNG key for the model
         self.rng_key = jax.random.PRNGKey(seed)
