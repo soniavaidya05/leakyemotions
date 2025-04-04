@@ -70,6 +70,7 @@ class DoubleDQNAgent(BaseModel):
         seed=0,
         epsilon=0.9,
         batch_size=64,
+        num_quantiles=12,
     ):
         self.input_size = input_size
         self.action_space = action_space
@@ -83,8 +84,8 @@ class DoubleDQNAgent(BaseModel):
         self.epsilon = epsilon
         self.batch_size = batch_size
 
-        self.local_model = QNetwork(action_space=action_space)
-        self.target_model = QNetwork(action_space=action_space)
+        self.local_model = QNetwork(action_space=action_space, num_quantiles=num_quantiles)
+        self.target_model = QNetwork(action_space=action_space, num_quantiles=num_quantiles)
 
         # Initialize RNG key for the model
         self.rng_key = jax.random.PRNGKey(seed)
