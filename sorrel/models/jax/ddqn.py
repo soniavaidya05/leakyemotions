@@ -68,6 +68,8 @@ class DoubleDQNAgent(BaseModel):
         beta_increment=0.0006,
         memory_size=5000,
         seed=0,
+        epsilon=0.9,
+        batch_size=64,
     ):
         self.input_size = input_size
         self.action_space = action_space
@@ -78,6 +80,8 @@ class DoubleDQNAgent(BaseModel):
         self.beta = beta
         self.beta_increment = beta_increment
         self.memory_size = memory_size
+        self.epsilon = epsilon
+        self.batch_size = batch_size
 
         self.local_model = QNetwork(action_space=action_space)
         self.target_model = QNetwork(action_space=action_space)
@@ -112,7 +116,7 @@ class DoubleDQNAgent(BaseModel):
             tx=optax.set_to_zero,
         )
 
-    def take_action(self, state, epsilon):
+    def take_action(self, state):
         """Selects an action based on the current state, using an epsilon-greedy
         strategy.
 
@@ -150,18 +154,18 @@ class DoubleDQNAgent(BaseModel):
         # Generate a random number using JAX's random number generator
         random_number = jax.random.uniform(rng_key_action, shape=())
 
-        if random_number < epsilon:
+        if random_number < self.epsilon:
             # Exploration: choose a random action
             self.rng_key, rng_key_random = jax.random.split(self.rng_key)
             action = jax.random.randint(
                 rng_key_random, shape=(), minval=0, maxval=self.action_space
-            )
+            ).item()
         else:
             # Exploitation: choose the best action based on model prediction
             q_values = self.train_state.apply_fn(
                 self.train_state.params, state, rng_key_taus
             )
-            action = jnp.argmax(jnp.mean(q_values, axis=-1), axis=-1)[0]
+            action = jnp.argmax(jnp.mean(q_values, axis=-1), axis=-1).item()
 
         return action
 
@@ -174,7 +178,7 @@ class DoubleDQNAgent(BaseModel):
         predicted_q_values = jnp.sum(q_values * actions_one_hot, axis=1)
         return jnp.abs(predicted_q_values - target_q_values)
 
-    def train_step(self, batch_size, soft_update=True):
+    def train_step(self):
         """Perform a training step, with control over batch size, discount factor, and
         update type of the target model.
 
@@ -198,7 +202,7 @@ class DoubleDQNAgent(BaseModel):
         but might cause instability in training dynamics.
         """
 
-        batch = self.memory.sample(batch_size)
+        batch = self.memory.sample(self.batch_size)
         states, actions, rewards, next_states, dones, _ = batch
         dones = dones.reshape(-1, 1)
         rewards = rewards.reshape(-1, 1)
