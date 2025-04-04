@@ -1,21 +1,24 @@
 from __future__ import annotations
 
-# --------------- #
-# region: Imports #
-# --------------- #
+from typing import Sequence
 
 # Standard Python library imports for data structures and randomness
 import numpy as np
 import torch
 
-from typing import Sequence
+# --------------- #
+# region: Imports #
+# --------------- #
+
+
 
 # --------------- #
 # endregion       #
 # --------------- #
-    
+
 
 class Buffer:
+    """Buffer class for recording and storing agent actions."""
 
     def __init__(self, capacity: int, obs_shape: Sequence[int]):
         self.capacity = capacity
@@ -26,10 +29,9 @@ class Buffer:
         self.dones = np.zeros(capacity, dtype=np.float32)
         self.idx = 0
         self.size = 0
-    
+
     def add(self, obs, action, reward, done):
-        """
-        Add an experience to the replay buffer.
+        """Add an experience to the replay buffer.
 
         Args:
             obs (np.ndarray): The observation/state.
@@ -45,31 +47,34 @@ class Buffer:
         self.size = min(self.size + 1, self.capacity)
 
     def sample(self, batch_size: int, stacked_frames: int = 1):
-        """
-        Sample a batch of experiences from the replay buffer.
+        """Sample a batch of experiences from the replay buffer.
 
         Args:
             batch_size (int): The number of experiences to sample.
             stacked_frames (int): The number of frames to stack together.
-        
+
         Returns:
-            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]: 
-                A tuple containing the states, actions, rewards, next states, dones, and 
+            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+                A tuple containing the states, actions, rewards, next states, dones, and
                 invalid (meaning stacked frmaes cross episode boundary).
         """
-        indices = np.random.choice(max(1, self.size - stacked_frames - 1),  batch_size, replace=False)
+        indices = np.random.choice(
+            max(1, self.size - stacked_frames - 1), batch_size, replace=False
+        )
         indices = indices[:, np.newaxis]
-        indices = (indices + np.arange(stacked_frames))
+        indices = indices + np.arange(stacked_frames)
 
         states = torch.from_numpy(self.buffer[indices]).view(batch_size, -1)
         next_states = torch.from_numpy(self.buffer[indices + 1]).view(batch_size, -1)
         actions = torch.from_numpy(self.actions[indices[:, -1]]).view(batch_size, -1)
-        rewards  = torch.from_numpy(self.rewards[indices[:, -1]]).view(batch_size, -1)
+        rewards = torch.from_numpy(self.rewards[indices[:, -1]]).view(batch_size, -1)
         dones = torch.from_numpy(self.dones[indices[:, -1]]).view(batch_size, -1)
-        valid = torch.from_numpy(1. - np.any(self.dones[indices[:, :-1]], axis=-1)).view(batch_size, -1)
+        valid = torch.from_numpy(
+            1.0 - np.any(self.dones[indices[:, :-1]], axis=-1)
+        ).view(batch_size, -1)
 
         return states, actions, rewards, next_states, dones, valid
-    
+
     def clear(self):
         """Zero out the arrays."""
         self.buffer = np.zeros((self.capacity, *self.obs_shape), dtype=np.float32)
@@ -80,19 +85,31 @@ class Buffer:
         self.size = 0
 
     def getidx(self):
+        """Get the current index.
+
+        Returns:
+            int: The current index
+        """
         return self.idx
-    
+
     def current_state(self, stacked_frames=1):
+        """Get the current state.
+
+        Args:
+            stacked_frames (int=1): How many frames to stack.
+        """
         if self.idx < stacked_frames:
             diff = self.idx - stacked_frames
-            return np.concatenate((self.buffer[diff%len(self):], self.buffer[:self.idx]))
-        return self.buffer[self.idx-stacked_frames:self.idx]
-    
+            return np.concatenate(
+                (self.buffer[diff % len(self) :], self.buffer[: self.idx])
+            )
+        return self.buffer[self.idx - stacked_frames : self.idx]
+
     def __repr__(self):
         return f"Buffer(capacity={self.capacity}, obs_shape={self.obs_shape})"
-    
+
     def __str__(self):
         return repr(self)
-    
+
     def __len__(self):
         return self.capacity
