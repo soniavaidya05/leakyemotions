@@ -84,8 +84,8 @@ class IQN(nn.Module):
         self.ff_1 = NoisyLinear(layer_size, layer_size)
         self.cos_layer_out = layer_size
 
-        self.advantage: torch.Tensor = NoisyLinear(layer_size, action_space)
-        self.value: torch.Tensor = NoisyLinear(layer_size, 1)
+        self.advantage = NoisyLinear(layer_size, action_space)
+        self.value = NoisyLinear(layer_size, 1)
 
     def calc_cos(self, batch_size, n_tau=8) -> tuple[torch.Tensor, torch.Tensor]:
         """Calculating the cosinus values depending on the number of tau samples."""
