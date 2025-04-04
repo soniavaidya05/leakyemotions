@@ -132,15 +132,10 @@ Then, view the updated documentations by opening ``.\docs\build\html\index.html`
 TODO: Insert paper citation here
 
 ## Maintainers
-Sorrel is currently maintained by Yibing Ju (aka [@bing-j](https://github.com/galacticglum)) and [Rebekah Gelpi](https://rgelpi.github.io) (aka [@rgelpi](https://github.com/galacticglum)).
+Sorrel is currently maintained by Yibing Ju (aka [@bing-j](https://github.com/bing-j)) and [Rebekah Gelpi](https://rgelpi.github.io) (aka [@rgelpi](https://github.com/galacticglum)).
 
 > [!NOTE]
 > **We do not do technical support, nor consulting** and don't answer personal questions per email. If you have any questions, concerns, or suggestions, please post them on the [GitHub issues page](https://github.com/social-ai-uoft/sorrel/issues) or the [GitHub discussion page](https://github.com/social-ai-uoft/sorrel/discussions).
 
-## Contributing
-
-Sorrel is open source and is developed by a community of researchers, developers, and students. We welcome contributions from all levels of the community. To get started, please read the [contributing guide](CONTRIBUTING.md).
-
 ## Acknowledgments
-
-TODO: Insert acknowledgements here
+We would like to thank the other authors: Ethan Jackson, Yikai Tang, Shon Verch, Claas Voecker, and Wiliam Cunningham.
