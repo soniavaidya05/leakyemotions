@@ -207,7 +207,7 @@ class AsciiObservationSpec(ObservationSpec):
         input_size: An int or sequence of ints that indicates the size of the observation.
     """
 
-    entity_map: dict[str, np.ndarray]
+    entity_map: dict[str, str]
     vision_radius: int
     full_view: bool
     input_size: Sequence[int]
