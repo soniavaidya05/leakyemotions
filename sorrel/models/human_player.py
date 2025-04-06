@@ -19,7 +19,7 @@ class HumanPlayer(BaseModel):
         show: bool = True,
     ):
         self.name = ""
-        self.action_space = np.arange(action_space)
+        self.action_list = np.arange(action_space)
         self.input_size = input_size
         # TODO: add way to review/revisit previous memories using buffer?
         self.memory = Buffer(capacity=memory_size, obs_shape=input_size)
@@ -45,10 +45,10 @@ class HumanPlayer(BaseModel):
                     action = 2
                 elif action_ == "d":
                     action = 3
-            elif action_ in [str(act) for act in self.action_space]:
+            elif action_ in [str(act) for act in self.action_list]:
                 action = int(action_)
             else:
                 print("Please try again. Possible actions are below.")
-                print(self.action_space)
+                print(self.action_list)
 
         return action
