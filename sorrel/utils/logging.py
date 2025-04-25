@@ -7,7 +7,7 @@ import os
 import torch
 
 from IPython.display import clear_output
-from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard.writer import SummaryWriter
 from typing import Mapping
 
 class Logger:
