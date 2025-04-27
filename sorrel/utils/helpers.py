@@ -105,7 +105,7 @@ def nearest_2_power(n: int) -> int:
     return 1 << bit_shifts
 
 
-def minmax(n: int, minimum: int, maximum: int) -> int:
+def clip(n: int, minimum: int, maximum: int) -> int:
     r"""Clips an input to a number between the minimum 
     and maximum values passed into the function.
     

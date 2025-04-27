@@ -137,7 +137,10 @@ def render_sprite(
 
 
 def plot(image: np.ndarray | list[np.ndarray]) -> None:
-    """Plot helper function that takes an image or list of layers."""
+    r"""Plot helper function that takes an image or list of layers and plots it in Matplotlib.
+    
+    Args:
+        image: A numpy array or list of numpy arrays with the image layer(s)."""
     if isinstance(image, np.ndarray):
         plt.imshow(image)
         plt.show()
@@ -148,7 +151,13 @@ def plot(image: np.ndarray | list[np.ndarray]) -> None:
 
 
 def image_from_array(image: np.ndarray | list[np.ndarray]) -> img.Image:
-    """Create a PIL image from an single-layer image or list of layers."""
+    r"""Create a PIL image from an single-layer image or list of layers.
+    
+    Args:
+        image: A numpy array or list of numpy arrays with the image layer(s).
+        
+    Returns:
+        Image: A PIL image version of the image."""
     if isinstance(image, np.ndarray):
         output = img.fromarray(image, mode="RGBA")
     else:
@@ -159,10 +168,10 @@ def image_from_array(image: np.ndarray | list[np.ndarray]) -> img.Image:
     return output
 
 
-def fig2img(fig) -> img.Image:
-    """Convert a Matplotlib figure to a PIL Image.
+def image_from_figure(fig) -> img.Image:
+    r"""Convert a Matplotlib figure to a PIL Image.
 
-    NOTE: DO NOT use this with plt.show(), as it will not work and will return a blank image.
+    .. note:: DO NOT use this with plt.show(), as it will not work and will return a blank image.
 
     Parameters:
         fig: If in fig, axis format, then fig. If in plt format, then plt.

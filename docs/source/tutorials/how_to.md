@@ -125,7 +125,7 @@ Note that unlike the other base classes we've worked on top of so far, `Agent` i
 `reset()`, `pov()`, `get_action()`, `act()`, and `is_done()`. Let's go through them one by one. 
 
 To implement {func}`sorrel.agents.Agent.reset`, we add a number of all zero SARD's to the agent's model's memory that is equal to the number of frames that it can access.
-The "zero state" is obtained by getting the shape of the state observed by this agent through [self.model.input_size](#sorrel.models.base_model.SorrelModel.input_size), 
+The "zero state" is obtained by getting the shape of the state observed by this agent through [self.model.input_size](#sorrel.models.base_model.BaseModel.input_size), 
 and then creating an all zeros array with the same shape.
 ```{literalinclude} /../../sorrel/examples/treasurehunt/agents.py
 :pyobject: TreasurehuntAgent.reset
@@ -138,7 +138,7 @@ using the provided [OneHotObservationSpec.observe()](#sorrel.observation.observa
 ```
 
 To implement {func}`sorrel.agents.Agent.get_action`, we stack the current state with the previous states in the model's memory buffer, 
-and pass the stacked frames (as a horizontal vector) into the model to obtain the action chosen. (See [SorrelModel.take_action](#sorrel.models.base_model.SorrelModel.take_action))
+and pass the stacked frames (as a horizontal vector) into the model to obtain the action chosen. (See [BaseModel.take_action](#sorrel.models.base_model.BaseModel.take_action))
 ```{literalinclude} /../../sorrel/examples/treasurehunt/agents.py
 :pyobject: TreasurehuntAgent.get_action
 ```
