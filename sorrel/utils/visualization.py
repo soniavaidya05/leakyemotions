@@ -137,10 +137,12 @@ def render_sprite(
 
 
 def plot(image: np.ndarray | list[np.ndarray]) -> None:
-    r"""Plot helper function that takes an image or list of layers and plots it in Matplotlib.
-    
+    r"""Plot helper function that takes an image or list of layers and plots it in
+    Matplotlib.
+
     Args:
-        image: A numpy array or list of numpy arrays with the image layer(s)."""
+        image: A numpy array or list of numpy arrays with the image layer(s).
+    """
     if isinstance(image, np.ndarray):
         plt.imshow(image)
         plt.show()
@@ -152,12 +154,13 @@ def plot(image: np.ndarray | list[np.ndarray]) -> None:
 
 def image_from_array(image: np.ndarray | list[np.ndarray]) -> img.Image:
     r"""Create a PIL image from an single-layer image or list of layers.
-    
+
     Args:
         image: A numpy array or list of numpy arrays with the image layer(s).
-        
+
     Returns:
-        Image: A PIL image version of the image."""
+        Image: A PIL image version of the image.
+    """
     if isinstance(image, np.ndarray):
         output = img.fromarray(image, mode="RGBA")
     else:
@@ -203,7 +206,7 @@ def animate(
     if not os.path.exists(folder):
         print(f"Directory {folder} does not exist; creating directory.")
     Path(folder).mkdir(parents=True, exist_ok=True)
-    path = os.path.join(folder, filename + ".gif")
+    path = os.path.join(folder, filename, ".gif")
 
     frames[0].save(
         os.path.expanduser(path),
