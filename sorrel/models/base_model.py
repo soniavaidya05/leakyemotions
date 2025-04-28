@@ -53,7 +53,7 @@ class BaseModel:
         """
         pass
 
-    def train_step(self) -> float | Sequence[float] | torch.Tensor | jax.Array:
+    def train_step(self) -> float | torch.Tensor | jax.Array:
         """Train the model.
 
         Return:

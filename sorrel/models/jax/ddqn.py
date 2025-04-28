@@ -183,7 +183,7 @@ class DoubleDQNAgent(BaseModel):
         predicted_q_values = jnp.sum(q_values * actions_one_hot, axis=1)
         return jnp.abs(predicted_q_values - target_q_values)
 
-    def train_step(self):
+    def train_step(self) -> jax.Array:
         """Perform a training step, with control over batch size, discount factor, and
         update type of the target model.
 

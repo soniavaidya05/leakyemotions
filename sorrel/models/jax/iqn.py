@@ -179,7 +179,7 @@ class IQNAgent(BaseModel):
         )
         return action
 
-    def train_step(self):
+    def train_step(self) -> jax.Array:
         """Perform a training step, with control over batch size, discount factor, and
         update type of the target model.
 
