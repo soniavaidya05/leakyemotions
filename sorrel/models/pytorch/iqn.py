@@ -239,15 +239,15 @@ class iRainbowModel(DoublePyTorchModel):
     def __str__(self):
         return f"iRainbowModel(input_size={np.array(self.input_size).prod() * self.num_frames},action_space={self.action_space})"
 
-    def take_action(self, state: np.ndarray[Any, np.dtype[np.float64]]) -> int:
+    def take_action(self, state: torch.Tensor) -> int:
         """Returns actions for given state as per current policy.
 
         Params ======     state (array_like): current state
         """
         # Epsilon-greedy action selection
         if random.random() > self.epsilon:
-            state = np.array(state)
-            state = torch.from_numpy(state).float().to(self.device)
+            # state = np.array(state)
+            state = state.float().to(self.device)
 
             self.qnetwork_local.eval()
             with torch.no_grad():

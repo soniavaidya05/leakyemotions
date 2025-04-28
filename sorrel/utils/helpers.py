@@ -19,11 +19,12 @@ import torch
 
 
 def set_seed(seed: int) -> None:
-    r"""Sets a seed for replication. Sets the seed for :meth:`random.seed()`, 
+    r"""Sets a seed for replication. Sets the seed for :meth:`random.seed()`,
     :meth:`numpy.random.seed()`, and :meth:`torch.manual_seed()`.
-    
+
     Args:
-        seed: An int setting the seed."""
+        seed: An int setting the seed.
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -46,7 +47,7 @@ def shift(
     array: np.ndarray, shift: Sequence | np.ndarray, cval: Any = np.nan
 ) -> np.ndarray:
     r"""Returns copy of array shifted by offset, with fill using constant.
-    
+
     Args:
         array: The array to shift.
         shift: A sequence of dimensions equivalent to the array passed into the function.
@@ -106,9 +107,9 @@ def nearest_2_power(n: int) -> int:
 
 
 def clip(n: int, minimum: int, maximum: int) -> int:
-    r"""Clips an input to a number between the minimum 
-    and maximum values passed into the function.
-    
+    r"""Clips an input to a number between the minimum and maximum values passed into the
+    function.
+
     Args:
         n: The number.
         minimum: The minimum number.
@@ -126,17 +127,18 @@ def clip(n: int, minimum: int, maximum: int) -> int:
 
 
 def one_hot_encode(value: int, num_classes: int) -> np.ndarray:
-    r"""
-    Create a numpy array of shape (num_classes, ) that encodes 
-    the position of `value` as a one-hot vector.
+    r"""Create a numpy array of shape (num_classes, ) that encodes the position of
+    `value` as a one-hot vector.
 
     Args:
         value: The position to one-hot encode.
         num_classes: The length of the one-hot vector.
-    
+
     .. note:: `value` cannot be larger than `num_classes - 1` without leading to an index error.
     """
-    assert value <= (num_classes - 1), f"The maximum value of `value` is {num_classes - 1}."
+    assert value <= (
+        num_classes - 1
+    ), f"The maximum value of `value` is {num_classes - 1}."
 
     # Create a zero array of length num_classes
     one_hot = np.zeros(num_classes)

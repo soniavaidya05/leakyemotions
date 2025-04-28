@@ -113,15 +113,16 @@ class IQNetwork(nn.Module):
             x = nn.Dense(layer)(x)
             x = self.activation_func(x)
 
+        value, advantage = 1 * x, 1 * x
         # compute value head
         for layer in self.value_head:
-            value = nn.Dense(layer)(x)
+            value = nn.Dense(layer)(value)
             value = self.activation_func(value)
         value = nn.Dense(1)(value)
 
         # compute advantage head
         for layer in self.advantage_head:
-            advantage = nn.Dense(layer)(x)
+            advantage = nn.Dense(layer)(advantage)
             advantage = self.activation_func(advantage)
         advantage = nn.Dense(self.action_space)(advantage)
 
@@ -153,15 +154,17 @@ class QNetwork(nn.Module):
             x = nn.Dense(layer)(x)
             x = self.activation_func(x)
 
+        value, advantage = 1 * x, 1 * x
+
         # compute value head
         for layer in self.value_head:
-            value = nn.Dense(layer)(x)
+            value = nn.Dense(layer)(value)
             value = self.activation_func(value)
         value = nn.Dense(1)(value)
 
         # compute advantage head
         for layer in self.advantage_head:
-            advantage = nn.Dense(layer)(x)
+            advantage = nn.Dense(layer)(advantage)
             advantage = self.activation_func(advantage)
         advantage = nn.Dense(self.action_space)(advantage)
 

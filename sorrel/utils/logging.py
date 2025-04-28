@@ -4,15 +4,16 @@
 
 import csv
 import os
-import torch
+from typing import Mapping
 
+import torch
 from IPython.display import clear_output
 from torch.utils.tensorboard.writer import SummaryWriter
-from typing import Mapping
+
 
 class Logger:
     """Abstract class for logging.
-    
+
     Attributes:
         max_epochs: The number of epochs.
         losses: A list of the loss values for each epoch.
@@ -23,13 +24,13 @@ class Logger:
 
     max_epochs: int
     losses: list[float | torch.Tensor]
-    rewards: list[ float | torch.Tensor]
+    rewards: list[float | torch.Tensor]
     epsilons: list[float]
     additional_values: Mapping[str, list[int | float | torch.Tensor]]
 
     def __init__(self, max_epochs: int, *args: str):
         """Initialize a log.
-        
+
         Args:
             max_epochs (int): The length of the lists.
             *args: Additional optional values to be stored in a dictionary.
@@ -48,7 +49,7 @@ class Logger:
         loss: float | torch.Tensor,
         reward: float | torch.Tensor,
         epsilon: float = 0,
-        **kwargs
+        **kwargs,
     ) -> None:
         """Record a turn.
 
@@ -63,11 +64,13 @@ class Logger:
         self.losses.append(loss)
         self.rewards.append(reward)
         for key, value in kwargs.items():
-            assert key in self.additional_values.keys(), "Can only store existing values."
+            assert (
+                key in self.additional_values.keys()
+            ), "Can only store existing values."
             self.additional_values[key].append(value)
-    
+
     def to_csv(self, file_path: str | os.PathLike) -> None:
-        """Write the logged data to a CSV file. 
+        """Write the logged data to a CSV file.
 
         Args:
             file_path: The path to the file to write the data to.
@@ -77,23 +80,20 @@ class Logger:
             "losses": self.losses,
             "rewards": self.rewards,
             "epsilons": self.epsilons,
-            **self.additional_values
+            **self.additional_values,
         }
 
-
-        with open(file_path, 'a') as f:
+        with open(file_path, "a") as f:
             writer = csv.writer(f)
             if os.stat(file_path).st_size == 0:
                 writer.writerow(list(records.keys()))
             for epoch in range(len(self.losses)):
-                writer.writerow(
-                    [value[epoch] for value in records.values()]
-                )            
-        
+                writer.writerow([value[epoch] for value in records.values()])
+
 
 class ConsoleLogger(Logger):
     """Logs elements to the console.
-    
+
     Attributes:
         max_epochs: The number of epochs.
         losses: A list of the loss values for each epoch.
@@ -102,7 +102,7 @@ class ConsoleLogger(Logger):
         additional_values: A dictionary of optional values to be stored.
     """
 
-    def record_turn(self, epoch, loss, reward, epsilon = 0, **kwargs):
+    def record_turn(self, epoch, loss, reward, epsilon=0, **kwargs):
         # Print beginning of the frame
         if epoch == 0:
             print(f"╔══════════════╦═════════════╦══════════════╗")
@@ -112,9 +112,7 @@ class ConsoleLogger(Logger):
         print(
             f"║ Epoch: {str(epoch).rjust(5)} ║ Loss: {str(loss).rjust(5)} ║ Reward: {str(reward).rjust(4)} ║"
         )
-        print(
-            f"╚══════════════╩═════════════╩══════════════╝", end="\r"
-        )
+        print(f"╚══════════════╩═════════════╩══════════════╝", end="\r")
         if epoch == self.max_epochs - 1:
             print(f"╚══════════════╩═════════════╩══════════════╝")
         super().record_turn(epoch, loss, reward, epsilon, **kwargs)
@@ -122,7 +120,7 @@ class ConsoleLogger(Logger):
 
 class JupyterLogger(Logger):
     """Logs elements to a Jupyter notebook.
-    
+
     Attributes:
         max_epochs: The number of epochs.
         losses: A list of the loss values for each epoch.
@@ -131,11 +129,11 @@ class JupyterLogger(Logger):
         additional_values: A dictionary of optional values to be stored.
     """
 
-    def record_turn(self, epoch, loss, reward, epsilon = 0, **kwargs):
+    def record_turn(self, epoch, loss, reward, epsilon=0, **kwargs):
         clear_output(wait=True)
         print(f"╔══════════════╦═════════════╦══════════════╗")
         print(
-            f'║ Epoch: {str(epoch).rjust(5)} ║ Loss: {str(loss).rjust(5)} ║ Reward: {str(reward).rjust(4)} ║'
+            f"║ Epoch: {str(epoch).rjust(5)} ║ Loss: {str(loss).rjust(5)} ║ Reward: {str(reward).rjust(4)} ║"
         )
         print(f"╚══════════════╩═════════════╩══════════════╝")
         super().record_turn(epoch, loss, reward, epsilon, **kwargs)
@@ -143,7 +141,7 @@ class JupyterLogger(Logger):
 
 class TensorboardLogger(Logger):
     """Logs elements to a Tensorboard file.
-    
+
     Attributes:
         max_epochs: The number of epochs.
         losses: A list of the loss values for each epoch.
@@ -151,33 +149,28 @@ class TensorboardLogger(Logger):
         epsilons: A list of the epsilon values for each epoch.
         additional_values: A dictionary of optional values to be stored.
     """
-    def __init__(
-        self,
-        max_epochs: int,
-        log_dir: str | os.PathLike,
-        *args
-    ):
+
+    def __init__(self, max_epochs: int, log_dir: str | os.PathLike, *args):
         """Initialize a Tensorboard log.
-        
+
         Args:
             max_epochs (int): The length of the lists.
-            log_dir (str | PathLike): Where the 
+            log_dir (str | PathLike): Where the
             *args: Additional optional values to be stored in a dictionary.
         """
         super().__init__(max_epochs=max_epochs, *args)
         if not os.path.exists(log_dir):
             os.mkdir(log_dir)
-        self.writer = SummaryWriter(
-            log_dir=log_dir
-        )
+        self.writer = SummaryWriter(log_dir=log_dir)
 
-    def record_turn(self, epoch, loss, reward, epsilon = 0, **kwargs):
-        self.writer.add_scalar('loss', loss, epoch)
-        self.writer.add_scalar('score', reward, epoch)
-        self.writer.add_scalar('epsilon', epsilon, epoch)
+    def record_turn(self, epoch, loss, reward, epsilon=0, **kwargs):
+        self.writer.add_scalar("loss", loss, epoch)
+        self.writer.add_scalar("score", reward, epoch)
+        self.writer.add_scalar("epsilon", epsilon, epoch)
         for key, value in kwargs.items():
             self.writer.add_scalar(key, value, epoch)
-    
+
+
 # --------------------------- #
 # endregion                   #
 # --------------------------- #

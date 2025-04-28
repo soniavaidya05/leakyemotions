@@ -1,16 +1,14 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sorrel.environments import GridworldEnv
 from sorrel.location import Location
 
+
 def positional_embedding(
-        location: tuple | Location, 
-        env: GridworldEnv, 
-        scale: tuple[int, int]
-    ) -> np.ndarray:
-    """
-    Get the embedding value for a location within an environment.
+    location: tuple | Location, env: GridworldEnv, scale: tuple[int, int]
+) -> np.ndarray:
+    """Get the embedding value for a location within an environment.
 
     Args:
         location: (tuple | Location) The location to be embedded.
@@ -30,13 +28,17 @@ def positional_embedding(
 
     # Encoding for x dimension at different resolutions
     for i in range(scale[0]):
-        freq_x = 2 * np.pi * (2**i) / grid_size[0]  # Frequency increases with each scale
+        freq_x = (
+            2 * np.pi * (2**i) / grid_size[0]
+        )  # Frequency increases with each scale
         embedding.append(np.sin(freq_x * x))
         embedding.append(np.cos(freq_x * x))
 
     # Encoding for y dimension at different resolutions
     for j in range(scale[0]):
-        freq_y = 2 * np.pi * (2**j) / grid_size[1]  # Frequency increases with each scale
+        freq_y = (
+            2 * np.pi * (2**j) / grid_size[1]
+        )  # Frequency increases with each scale
         embedding.append(np.sin(freq_y * y))
         embedding.append(np.cos(freq_y * y))
 
@@ -44,11 +46,9 @@ def positional_embedding(
 
 
 def generate_positional_embedding(
-        grid_size: tuple[int, int],
-        scale: tuple[int, int]
-    ) -> np.ndarray:
-    """
-    Create an array of positional embeddings for all points on a grid.
+    grid_size: tuple[int, int], scale: tuple[int, int]
+) -> np.ndarray:
+    """Create an array of positional embeddings for all points on a grid.
 
     Args:
         grid_size: (tuple[int, int]) A tuple indicating the size of the X and Y axes of the grid.
@@ -87,12 +87,10 @@ def generate_positional_embedding(
 
 
 def recover_coordinates(
-        embedding: np.ndarray, 
-        grid_size: tuple[int, int], 
-        scale: tuple[int, int]
-    ) -> np.ndarray:
+    embedding: np.ndarray, grid_size: tuple[int, int], scale: tuple[int, int]
+) -> np.ndarray:
     """Recover coordinates by finding the closest matching embedding.
-    
+
     Args:
         embedding: The positional embedding of all locations in a grid.
         grid_size: (tuple[int, int]) A tuple indicating the size of the X and Y axes of the grid.
@@ -103,26 +101,31 @@ def recover_coordinates(
 
     .. warning:: This function expects all embeddings in the grid. If a single embedding or partial list is input, the function will fail.
     """
-    
+
     embedding = embedding.reshape(np.prod(grid_size), -1)
-    all_embeddings = generate_positional_embedding(grid_size, scale).reshape(np.prod(grid_size), -1)
-    grid_positions = np.array([(x, y) for x in range(grid_size[0]) for y in range(grid_size[1])]).reshape(np.prod(grid_size), -1)
+    all_embeddings = generate_positional_embedding(grid_size, scale).reshape(
+        np.prod(grid_size), -1
+    )
+    grid_positions = np.array(
+        [(x, y) for x in range(grid_size[0]) for y in range(grid_size[1])]
+    ).reshape(np.prod(grid_size), -1)
     recovered_coordinates = np.zeros((grid_size[0], grid_size[1], 2))
 
     for each_embedding, (x, y) in zip(embedding, grid_positions):
         distances = np.linalg.norm(all_embeddings - each_embedding, axis=1)
         recovered_idx = np.argmin(distances)
-        recovered_coordinates[x, y] = [recovered_idx // grid_size[0], recovered_idx % grid_size[1]]
+        recovered_coordinates[x, y] = [
+            recovered_idx // grid_size[0],
+            recovered_idx % grid_size[1],
+        ]
 
     return recovered_coordinates
 
 
 def test_embeddings(
-        grid_size: tuple[int, int] = (40, 40), 
-        scale: tuple[int, int] = (4, 4)
-    ) -> None:
-    """
-    Helper function to graph embeddings for a given embedding size/scale.
+    grid_size: tuple[int, int] = (40, 40), scale: tuple[int, int] = (4, 4)
+) -> None:
+    """Helper function to graph embeddings for a given embedding size/scale.
 
     Args:
         grid_size: (tuple[int, int]) A tuple indicating the size of the X and Y axes of the grid.
@@ -130,14 +133,10 @@ def test_embeddings(
     """
 
     # Generate positional embeddings for each grid square
-    positional_embeddings = generate_positional_embedding(
-        grid_size, scale
-    )
+    positional_embeddings = generate_positional_embedding(grid_size, scale)
 
     # Recover x, y coordinates from embeddings
-    recovered_coords = recover_coordinates(
-        positional_embeddings, grid_size, scale
-    )
+    recovered_coords = recover_coordinates(positional_embeddings, grid_size, scale)
 
     # Visualize recovered coordinates
     plt.figure(figsize=(6, 6))
