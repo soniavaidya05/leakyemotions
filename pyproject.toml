@@ -20,7 +20,7 @@ contributors = [
 packages = [{ include = "sorrel" }]
 
 [tool.poetry.dependencies]
-python = "^3.11.0"
+python = "^3.12.0"
 matplotlib = "^3.6.1"
 numpy = "^1.26.4"
 pyyaml = "^6.0.2"
