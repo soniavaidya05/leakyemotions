@@ -25,7 +25,7 @@ class Treasurehunt(GridworldEnv):
         self.agents = agents
         self.max_turns = max_turns
 
-        self.game_score = 0
+        self.game_score = 0.0
         self.populate()
 
     def populate(self):

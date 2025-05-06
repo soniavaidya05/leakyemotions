@@ -45,7 +45,7 @@ class Cleanup(GridworldEnv):
         self.pollution_spawn_chance = cfg.env.pollution_spawn_chance
         self.apple_spawn_chance = cfg.env.apple_spawn_chance
         self.turn = 0
-        self.game_score = 0
+        self.game_score = 0.0
         self.populate()
 
     def populate(self) -> None:

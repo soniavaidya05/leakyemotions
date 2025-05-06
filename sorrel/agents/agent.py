@@ -1,15 +1,16 @@
 from abc import abstractmethod
+from typing import Generic, TypeVar
 
 import numpy as np
 
 from sorrel.action.action_spec import ActionSpec
 from sorrel.entities import Entity
-from sorrel.environments import GridworldEnv
+from sorrel.environments import E
 from sorrel.models import BaseModel
 from sorrel.observation.observation_spec import ObservationSpec
 
 
-class Agent(Entity):
+class Agent(Entity, Generic[E]):
     """An abstract class for agents, a special type of entities.
 
     Note that this is a subclass of :py:class:`agentarium.entities.Entity`.
@@ -57,7 +58,7 @@ class Agent(Entity):
         pass
 
     @abstractmethod
-    def pov(self, env: GridworldEnv) -> np.ndarray:
+    def pov(self, env: E) -> np.ndarray:
         """Defines the agent's observation function.
 
         Args:
@@ -81,11 +82,11 @@ class Agent(Entity):
         pass
 
     @abstractmethod
-    def act(self, env: GridworldEnv, action: int) -> float:
+    def act(self, env: E, action: int) -> float:
         """Act on the environment.
 
         Args:
-            env: The environment in which the agent is acting.
+            env (GridworldEnv): The environment in which the agent is acting.
             action: an element from this agent's action space indicating the action to take.
 
         Returns:
@@ -94,7 +95,7 @@ class Agent(Entity):
         pass
 
     @abstractmethod
-    def is_done(self, env: GridworldEnv) -> bool:
+    def is_done(self, env: E) -> bool:
         """Determines if the agent is done acting given the environment.
 
         This might be based on the experiment's maximum number of turns from the agent's cfg file.
@@ -120,7 +121,7 @@ class Agent(Entity):
         """
         self.model.memory.add(state, action, reward, done)
 
-    def transition(self, env: GridworldEnv) -> None:
+    def transition(self, env: E) -> None:
         """Processes a full transition step for the agent.
 
         This function does the following:

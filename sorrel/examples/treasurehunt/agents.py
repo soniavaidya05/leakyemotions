@@ -6,12 +6,12 @@ from pathlib import Path
 import numpy as np
 
 from sorrel.agents import Agent
-from sorrel.environments import GridworldEnv
+from sorrel.examples.treasurehunt.env import Treasurehunt
 
 # end imports
 
 
-class TreasurehuntAgent(Agent):
+class TreasurehuntAgent(Agent[Treasurehunt]):
     """A treasurehunt agent that uses the iqn model."""
 
     def __init__(self, observation_spec, action_spec, model):
@@ -27,7 +27,7 @@ class TreasurehuntAgent(Agent):
         for i in range(self.model.num_frames):
             self.add_memory(state, action, reward, done)
 
-    def pov(self, env: GridworldEnv) -> np.ndarray:
+    def pov(self, env: Treasurehunt) -> np.ndarray:
         """Returns the state observed by the agent, from the flattened visual field."""
         image = self.observation_spec.observe(env, self.location)
         # flatten the image to get the state
@@ -44,7 +44,7 @@ class TreasurehuntAgent(Agent):
         action = self.model.take_action(model_input)
         return action
 
-    def act(self, env: GridworldEnv, action: int) -> float:
+    def act(self, env: Treasurehunt, action: int) -> float:
         """Act on the environment, returning the reward."""
 
         # Translate the model output to an action string
@@ -70,6 +70,6 @@ class TreasurehuntAgent(Agent):
 
         return reward
 
-    def is_done(self, env: GridworldEnv) -> bool:
+    def is_done(self, env: Treasurehunt) -> bool:
         """Returns whether this Agent is done."""
         return env.turn >= env.max_turns

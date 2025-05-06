@@ -7,6 +7,7 @@ from sorrel.agents import Agent
 from sorrel.entities import Entity
 from sorrel.environments import GridworldEnv
 from sorrel.examples.cleanup.entities import EmptyEntity
+from sorrel.examples.cleanup.env import Cleanup
 from sorrel.location import Location, Vector
 from sorrel.models import BaseModel
 from sorrel.observation import embedding, observation_spec
@@ -60,7 +61,7 @@ class CleanupObservation(observation_spec.OneHotObservationSpec):
         return np.concatenate((visual_field, pos_code))
 
 
-class CleanupAgent(Agent):
+class CleanupAgent(Agent[Cleanup]):
     """A Cleanup agent that uses the IQN model."""
 
     def __init__(
@@ -82,7 +83,7 @@ class CleanupAgent(Agent):
         for i in range(self.model.num_frames):
             self.add_memory(state, action, reward, done)
 
-    def pov(self, env: GridworldEnv) -> np.ndarray:
+    def pov(self, env: Cleanup) -> np.ndarray:
         image = self.observation_spec.observe(env, self.location)
         # flatten the image to get the state
         return image.reshape(1, -1)
@@ -100,7 +101,7 @@ class CleanupAgent(Agent):
 
         return model_output
 
-    def spawn_beam(self, env: GridworldEnv, action: str) -> None:
+    def spawn_beam(self, env: Cleanup, action: str) -> None:
         """Generate a beam extending cfg.agent.agent.beam_radius pixels out in front of
         the agent.
 
@@ -152,7 +153,7 @@ class CleanupAgent(Agent):
                 env.remove(loc.to_tuple())
                 env.add(loc.to_tuple(), ZapBeam())
 
-    def act(self, env: GridworldEnv, action: int) -> float:
+    def act(self, env: Cleanup, action: int) -> float:
 
         # Translate the model output to an action string
         action_name = self.action_spec.get_readable_action(action)
@@ -189,7 +190,7 @@ class CleanupAgent(Agent):
 
         return reward
 
-    def is_done(self, env: GridworldEnv) -> bool:
+    def is_done(self, env: Cleanup) -> bool:
         return env.turn >= env.max_turns
 
 
