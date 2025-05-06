@@ -5,6 +5,10 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+# for configs
+from omegaconf import DictConfig, OmegaConf
+import hydra
+
 import torch
 
 # sorrel imports
@@ -35,7 +39,7 @@ RECORD_PERIOD = 50  # how many epochs in each data recording period
 EPSILON_DECAY = 0.0001
 
 
-def setup(cfg: Cfg, **kwargs) -> Cleanup:
+def setup(cfg, **kwargs) -> Cleanup:
     """Set up the environment and everything within it."""
 
     agents = []
@@ -43,7 +47,7 @@ def setup(cfg: Cfg, **kwargs) -> Cleanup:
     for _ in range(cfg.agent.agent.num):
 
         agent_vision_radius = cfg.agent.agent.obs.vision
-        observation_spec = CleanupObservation(ENTITY_LIST, agent_vision_radius)
+        observation_spec = CleanupObservation(entity_list=ENTITY_LIST, vision_radius=agent_vision_radius)
         action_spec = ActionSpec(["up", "down", "left", "right", "clean", "zap"])
 
         model = PyTorchIQN(
@@ -51,7 +55,7 @@ def setup(cfg: Cfg, **kwargs) -> Cleanup:
             action_space=action_spec.n_actions,
             seed=torch.random.seed(),
             num_frames=cfg.agent.agent.obs.num_frames,
-            **cfg.model.iqn.parameters.to_dict(),
+            **cfg.model.iqn.parameters,
         )
 
         if "load_weights" in kwargs:
@@ -120,24 +124,24 @@ def run(env: Cleanup, **kwargs):
             )
             agent.model.save(file_path=file_path)
 
-
-def main():
+@hydra.main(version_base=None, config_path="configs", config_name="config")
+def main(cfg: DictConfig):
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--config",
-        "-c",
-        type=str,
-        help="Path to configuration file",
-        default=Path(__file__).parent / "./configs/config.yaml",
-    )
+    # parser.add_argument(
+    #     "--config",
+    #     "-c",
+    #     type=str,
+    #     help="Path to configuration file",
+    #     default=Path(__file__).parent / "./configs/config.yaml",
+    # )
     parser.add_argument(
         "--load-weights", "-l", type=str, help="Path to pretrained model.", default=""
     )
     parser.add_argument("--verbose", "-v", action="count", default=0)
-    args = parser.parse_args()
-    cfg = load_config(args)
+    # args = parser.parse_args()
+    # cfg = load_config(args)
     env = setup(
         cfg,
         # load_weights=args.load_weights,
