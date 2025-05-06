@@ -97,14 +97,14 @@ def parse_args(
     parser.add_argument("--config", default="./config.yaml", help="path to config file")
     # By default, parse the arguments
     if command_line:
-        args = parser.parse_args()
+        arguments = parser.parse_args()
     # Otherwise, args can be passed in. Default value is specified for config.
     else:
         if args is None:
-            args = argparse.Namespace(config="./config.yaml")
+            arguments = argparse.Namespace(config="./config.yaml")
         else:
-            args, _ = parser.parse_known_args(args)
-    return args
+            arguments, _ = parser.parse_known_args(args)
+    return arguments
 
 
 def load_config(args: argparse.Namespace) -> Cfg:

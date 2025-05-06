@@ -41,7 +41,7 @@ class BaseModel:
         self.epsilon = epsilon
 
     @abstractmethod
-    def take_action(self, state: np.ndarray) -> int:
+    def take_action(self, state) -> int:
         """Take an action based on the observed input. Must be implemented by all
         subclasses of the model.
 
@@ -53,7 +53,7 @@ class BaseModel:
         """
         pass
 
-    def train_step(self) -> float | Sequence[float] | torch.Tensor | jax.Array:
+    def train_step(self) -> float | torch.Tensor | jax.Array:
         """Train the model.
 
         Return:

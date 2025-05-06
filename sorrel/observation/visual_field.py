@@ -8,7 +8,7 @@ from sorrel.utils.helpers import shift
 
 def visual_field(
     env: GridworldEnv,
-    entity_map: dict[str, list[float]],
+    entity_map: dict[str, np.ndarray],
     vision: int | None = None,
     location: tuple | None = None,
     fill_entity_kind: str = "Wall",

@@ -9,6 +9,9 @@ import torch.nn.functional as F
 class NoisyLinear(nn.Linear):
     """Noisy linear layer for independent Gaussian noise."""
 
+    epsilon_weight: torch.Tensor
+    epsilon_bias: torch.Tensor
+
     def __init__(
         self,
         in_features: int,

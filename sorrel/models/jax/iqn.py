@@ -69,6 +69,9 @@ class IQNAgent(BaseModel):
         beta_increment=0.0006,
         memory_size=5000,
         seed=0,
+        epsilon=0.9,
+        batch_size=64,
+        num_quantiles=12,
     ):
         self.input_size = input_size
         self.action_space = action_space
@@ -79,9 +82,15 @@ class IQNAgent(BaseModel):
         self.beta = beta
         self.beta_increment = beta_increment
         self.memory_size = memory_size
+        self.epsilon = epsilon
+        self.batch_size = batch_size
 
-        self.local_model = IQNetwork(action_space=action_space)
-        self.target_model = IQNetwork(action_space=action_space)
+        self.local_model = IQNetwork(
+            action_space=action_space, num_quantiles=num_quantiles
+        )
+        self.target_model = IQNetwork(
+            action_space=action_space, num_quantiles=num_quantiles
+        )
 
         # Initialize RNG key for the model
         self.rng_key = jax.random.PRNGKey(seed)
@@ -113,7 +122,7 @@ class IQNAgent(BaseModel):
             tx=optax.set_to_zero,
         )
 
-    def take_action(self, state, epsilon):
+    def take_action(self, state):
         """Selects an action based on the current state, using an epsilon-greedy
         strategy.
 
@@ -161,16 +170,16 @@ class IQNAgent(BaseModel):
             else:
                 # Exploitation: choose the best action based on model prediction
                 q_values = model.apply_fn(model.params, state, rng_key_taus)
-                action = jnp.argmax(jnp.mean(q_values, axis=-1), axis=-1)[0]
+                action = jnp.argmax(jnp.mean(q_values, axis=-1), axis=-1).item()
 
             return action, rng_key
 
         action, self.rng_key = jax.jit(action_fn, static_argnums=(3))(
-            state, self.train_state, self.rng_key, self.action_space, epsilon
+            state, self.train_state, self.rng_key, self.action_space, self.epsilon
         )
         return action
 
-    def train_step(self, batch_size, soft_update=True):
+    def train_step(self) -> jax.Array:
         """Perform a training step, with control over batch size, discount factor, and
         update type of the target model.
 
@@ -194,7 +203,7 @@ class IQNAgent(BaseModel):
         but might cause instability in training dynamics.
         """
 
-        batch = self.memory.sample(batch_size)
+        batch = self.memory.sample(self.batch_size)
         states, actions, rewards, next_states, dones, valid = batch
 
         def update_fn(

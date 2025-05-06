@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Sequence
+from typing import Generic, Sequence, TypeVar
 
 import numpy as np
 
@@ -7,8 +7,10 @@ from sorrel.environments import GridworldEnv
 from sorrel.observation.visual_field import visual_field, visual_field_ascii
 from sorrel.utils.helpers import one_hot_encode
 
+T = TypeVar("T", np.ndarray, str)
 
-class ObservationSpec:
+
+class ObservationSpec(Generic[T]):
     r"""An abstract class of an object that contains the observation specifications for
     Sorrel agents.
 
@@ -19,7 +21,7 @@ class ObservationSpec:
         input_size: An int or sequence of ints that indicates the size of the observation.
     """
 
-    entity_map: dict[str,]
+    entity_map: dict[str, T]
     vision_radius: int
     full_view: bool
     input_size: Sequence[int]
@@ -50,7 +52,7 @@ class ObservationSpec:
         self.entity_map = self.generate_map(entity_list)
 
     @abstractmethod
-    def generate_map(self, entity_list: list[str]) -> dict[str,]:
+    def generate_map(self, entity_list: list[str]) -> dict[str, T]:
         """Given a list of entity kinds, return a dictionary of appearance values for
         the agent's observation function.
 
@@ -83,7 +85,7 @@ class ObservationSpec:
         """
         pass
 
-    def override_entity_map(self, entity_map: dict[str,]) -> None:
+    def override_entity_map(self, entity_map: dict[str, T]) -> None:
         """Override the automatically generated entity map from generate_map() with a
         provided custom one.
 
@@ -105,7 +107,7 @@ class ObservationSpec:
         self.input_size = input_size
 
 
-class OneHotObservationSpec(ObservationSpec):
+class OneHotObservationSpec(ObservationSpec[np.ndarray]):
     """A subclass of :py:class:`ObservationSpec` for Sorrel agents whose observations
     take the form of one-hot encodings.
 
@@ -115,11 +117,6 @@ class OneHotObservationSpec(ObservationSpec):
         full_view: A boolean that determines whether the agent can see the entire environment.
         input_size: An int or sequence of ints that indicates the size of the observation.
     """
-
-    entity_map: dict[str, np.ndarray]
-    vision_radius: int
-    full_view: bool
-    input_size: Sequence[int]
 
     def __init__(
         self,
@@ -131,6 +128,7 @@ class OneHotObservationSpec(ObservationSpec):
         super().__init__(entity_list, full_view, vision_radius, env_dims)
         # By default, input_size is (channels, x, y)
         if self.full_view:
+            assert isinstance(env_dims, Sequence)  # safeguarded in super().__init__()
             self.input_size = (len(entity_list), *env_dims)
         else:
             self.input_size = (
@@ -196,7 +194,7 @@ class OneHotObservationSpec(ObservationSpec):
         )
 
 
-class AsciiObservationSpec(ObservationSpec):
+class AsciiObservationSpec(ObservationSpec[str]):
     """A subclass of :py:class:`ObservationSpec` for Sorrel agents whose observations
     take the form of ascii representations.
 
@@ -207,11 +205,6 @@ class AsciiObservationSpec(ObservationSpec):
         input_size: An int or sequence of ints that indicates the size of the observation.
     """
 
-    entity_map: dict[str, np.ndarray]
-    vision_radius: int
-    full_view: bool
-    input_size: Sequence[int]
-
     def __init__(
         self,
         entity_list: list[str],
@@ -221,9 +214,13 @@ class AsciiObservationSpec(ObservationSpec):
     ):
         super().__init__(entity_list, full_view, vision_radius, env_dims)
         if self.full_view:
+            assert isinstance(env_dims, Sequence)  # safeguarded in super().__init__()
             self.input_size = env_dims
         else:
-            self.input_size = ((2 * vision_radius + 1), (2 * vision_radius + 1))
+            self.input_size = (
+                (2 * self.vision_radius + 1),
+                (2 * self.vision_radius + 1),
+            )
 
     def generate_map(self, entity_list: list[str]) -> dict[str, str]:
         """Generate a default entity map by automatically creating ascii character

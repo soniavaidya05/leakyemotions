@@ -14,7 +14,6 @@ from sorrel.observation import embedding, observation_spec
 # --------------------------- #
 # region: Cleanup agent class #
 # --------------------------- #
-
 """The agent and observation class for Cleanup."""
 
 

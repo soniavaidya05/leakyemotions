@@ -20,13 +20,13 @@ contributors = [
 packages = [{ include = "sorrel" }]
 
 [tool.poetry.dependencies]
-python = "^3.11.0"
+python = "^3.12.0"
 matplotlib = "^3.6.1"
 numpy = "^1.26.4"
 pyyaml = "^6.0.2"
 pytest = "^8.3.5"
 
-torch = "^2.5.1"
+torch = "^2.6.0"
 jax = "^0.4.35"
 flax = "^0.10.1"
 
@@ -36,6 +36,8 @@ dill = "^0.3.9"
 ipython = "^8.29.0"
 # used in utils.py
 pillow = "^11.0.0"
+# used in logging.py
+tensorboard = "^2.18.0"
 
 [tool.poetry.group.dev]
 optional = true
@@ -48,12 +50,6 @@ sphinx = "^8.1.3"
 sphinx-rtd-theme = "^3.0.2"
 myst-nb = "^1.1.2"
 sphinx-autodoc2 = "^0.5.0"
-
-[tool.poetry.group.extras]
-optional = true
-
-[tool.poetry.group.extras.dependencies]
-tensorboard = "^2.18.0"
 
 [tool.pytest.ini_options]
 pythonpath = [

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 # ----------------------------------------------------- #
@@ -22,6 +23,7 @@ class Entity:
     passable: bool
     has_transitions: bool
     kind: str
+    sprite: Path
 
     def __init__(self):
         self._location = None

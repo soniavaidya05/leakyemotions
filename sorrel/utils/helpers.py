@@ -19,14 +19,19 @@ import torch
 
 
 def set_seed(seed: int) -> None:
-    """Sets a seed for replication."""
+    r"""Sets a seed for replication. Sets the seed for :meth:`random.seed()`,
+    :meth:`numpy.random.seed()`, and :meth:`torch.manual_seed()`.
+
+    Args:
+        seed: An int setting the seed.
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
 
 
 def random_seed() -> int:
-    """Generates a random seed.
+    r"""Generates a random seed.
 
     Returns:
         The value of the seed generated
@@ -41,17 +46,15 @@ def random_seed() -> int:
 def shift(
     array: np.ndarray, shift: Sequence | np.ndarray, cval: Any = np.nan
 ) -> np.ndarray:
-    """Returns copy of array shifted by offset, with fill using constant.
+    r"""Returns copy of array shifted by offset, with fill using constant.
 
-    Parameters:
-        array: The array to shift. \n
-        shift: A sequence of dimensions equivalent to the array passed
-        into the function. \n
-        cval: The value to replace any new elements introduced into the
-        offset array. By default, replaces them with nan's.
+    Args:
+        array: The array to shift.
+        shift: A sequence of dimensions equivalent to the array passed into the function.
+        cval: The value to replace any new elements introduced into the offset array. By default, replaces them with nan's.
 
-    Return:
-        np.ndarray: The shifted array
+    Returns:
+        np.ndarray: The shifted array.
     """
     offset = np.atleast_1d(shift)
     assert len(offset) == array.ndim
@@ -73,10 +76,16 @@ def shift(
 
 
 def nearest_2_power(n: int) -> int:
-    """Computes the next power of 2.
+    r"""Computes the next power of 2.
 
     Useful for programmatically shifting batch and buffer sizes to computationally
     efficient values.
+
+    Args:
+        n: The number.
+
+    Returns:
+        int: The nearest power of two equal to or larger than n.
     """
 
     # Bit shift counter
@@ -97,9 +106,18 @@ def nearest_2_power(n: int) -> int:
     return 1 << bit_shifts
 
 
-def minmax(n: int, minimum: int, maximum: int) -> int:
-    """Clips an input to a number between the minimum and maximum values passed into the
-    function."""
+def clip(n: int, minimum: int, maximum: int) -> int:
+    r"""Clips an input to a number between the minimum and maximum values passed into the
+    function.
+
+    Args:
+        n: The number.
+        minimum: The minimum number.
+        maximum: The maximum number.
+
+    Returns:
+        int: The clipped value of n.
+    """
     if n < minimum:
         return minimum
     elif n > maximum:
@@ -108,7 +126,20 @@ def minmax(n: int, minimum: int, maximum: int) -> int:
         return n
 
 
-def one_hot_encode(value, num_classes) -> np.ndarray:
+def one_hot_encode(value: int, num_classes: int) -> np.ndarray:
+    r"""Create a numpy array of shape (num_classes, ) that encodes the position of
+    `value` as a one-hot vector.
+
+    Args:
+        value: The position to one-hot encode.
+        num_classes: The length of the one-hot vector.
+
+    .. note:: `value` cannot be larger than `num_classes - 1` without leading to an index error.
+    """
+    assert value <= (
+        num_classes - 1
+    ), f"The maximum value of `value` is {num_classes - 1}."
+
     # Create a zero array of length num_classes
     one_hot = np.zeros(num_classes)
 

@@ -40,7 +40,7 @@ class PyTorchModel(nn.Module, BaseModel):
         if seed == None:
             seed = torch.random.seed()
         self.seed = torch.manual_seed(seed)
-        self.optimizer: torch.optim.Adam = None
+        self.optimizer: torch.optim.Adam = torch.optim.Adam(params=self.parameters())
 
     def __str__(self):
         return f"{self.__class__.__name__}(in_size={np.array(self.input_size).prod()},out_size={self.action_space})"
@@ -142,7 +142,10 @@ class DoublePyTorchModel(PyTorchModel):
     ):
         super().__init__(input_size, action_space, layer_size, epsilon, device, seed)
 
-        self.models: dict[str, nn.Module] = {"local": None, "target": None}
+        self.models: dict[str, nn.Module] = {
+            "local": nn.Module(),
+            "target": nn.Module(),
+        }
 
     def save(self, file_path: str | os.PathLike) -> None:
         """Save the model weights and parameters in the specified location.
