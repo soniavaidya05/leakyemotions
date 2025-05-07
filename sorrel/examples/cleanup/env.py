@@ -24,7 +24,7 @@ class Cleanup(GridworldEnv):
 
     def __init__(
         self,
-        cfg: Cfg,
+        cfg,
         agents: list[CleanupAgent],
     ):
         self.cfg = cfg

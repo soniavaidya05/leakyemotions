@@ -137,6 +137,7 @@ dmypy.json
 
 # Output files
 output/
+outputs/
 logs/
 gem/.DS_Store
 sorrel/examples/cleanup/data/
