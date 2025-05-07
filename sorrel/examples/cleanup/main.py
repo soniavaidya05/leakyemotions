@@ -82,7 +82,6 @@ def run(env: Cleanup, **kwargs):
     total_score = 0
     total_loss = 0
     for epoch in range(cfg.experiment.epochs + 1):
-        print(f"Epoch: {epoch}")
         # Reset the environment at the start of each epoch
         env.reset()
         for agent in env.agents:
