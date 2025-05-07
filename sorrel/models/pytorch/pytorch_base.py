@@ -40,7 +40,6 @@ class PyTorchModel(nn.Module, BaseModel):
         if seed == None:
             seed = torch.random.seed()
         self.seed = torch.manual_seed(seed)
-        self.optimizer: torch.optim.Adam = torch.optim.Adam(params=self.parameters())
 
     def __str__(self):
         return f"{self.__class__.__name__}(in_size={np.array(self.input_size).prod()},out_size={self.action_space})"
@@ -90,19 +89,33 @@ class PyTorchModel(nn.Module, BaseModel):
     def save(self, file_path: str | os.PathLike) -> None:
         """Save the model weights and parameters in the specified location.
 
+        If the model has an optimizer attribute, it will be saved as well.
+
         Parameters:
             file_path: The full path to the model, including file extension.
         """
-        torch.save(
-            {
-                "model": self.state_dict(),
-                "optimizer": self.optimizer.state_dict(),
-            },
-            file_path,
-        )
+        if hasattr(self, "optimizer") and isinstance(
+            self.optimizer, torch.optim.Optimizer
+        ):
+            torch.save(
+                {
+                    "model": self.state_dict(),
+                    "optimizer": self.optimizer.state_dict(),
+                },
+                file_path,
+            )
+        else:
+            torch.save(
+                {
+                    "model": self.state_dict(),
+                },
+                file_path,
+            )
 
     def load(self, file_path: str | os.PathLike) -> None:
         """Load the model weights and parameters from the specified location.
+
+        If the model has an optimizer attribute, it will be loaded as well.
 
         Parameters:
             file_path: The full path to the model, including file extension.
@@ -110,7 +123,10 @@ class PyTorchModel(nn.Module, BaseModel):
         checkpoint = torch.load(file_path)
 
         self.load_state_dict(checkpoint["model"])
-        self.optimizer.load_state_dict(checkpoint["target"])
+        if hasattr(self, "optimizer") and isinstance(
+            self.optimizer, torch.optim.Optimizer
+        ):
+            self.optimizer.load_state_dict(checkpoint["target"])
 
     # ---------------------------------- #
     # endregion: Helper functions        #
@@ -150,20 +166,35 @@ class DoublePyTorchModel(PyTorchModel):
     def save(self, file_path: str | os.PathLike) -> None:
         """Save the model weights and parameters in the specified location.
 
+        If the model has an optimizer attribute, it will be saved as well.
+
         Parameters:
             file_path: The full path to the model, including file extension.
         """
-        torch.save(
-            {
-                "local": self.models["local"].state_dict(),
-                "target": self.models["target"].state_dict(),
-                "optim": self.optimizer.state_dict(),
-            },
-            file_path,
-        )
+        if hasattr(self, "optimizer") and isinstance(
+            self.optimizer, torch.optim.Optimizer
+        ):
+            torch.save(
+                {
+                    "local": self.models["local"].state_dict(),
+                    "target": self.models["target"].state_dict(),
+                    "optim": self.optimizer.state_dict(),
+                },
+                file_path,
+            )
+        else:
+            torch.save(
+                {
+                    "local": self.models["local"].state_dict(),
+                    "target": self.models["target"].state_dict(),
+                },
+                file_path,
+            )
 
     def load(self, file_path: str | os.PathLike) -> None:
         """Load the model weights and parameters from the specified location.
+
+        If the model has an optimizer attribute, it will be loaded as well.
 
         Parameters:
             file_path: The full path to the model, including file extension.
@@ -172,4 +203,7 @@ class DoublePyTorchModel(PyTorchModel):
 
         self.models["local"].load_state_dict(checkpoint["local"])
         self.models["target"].load_state_dict(checkpoint["target"])
-        self.optimizer.load_state_dict(checkpoint["optim"])
+        if hasattr(self, "optimizer") and isinstance(
+            self.optimizer, torch.optim.Optimizer
+        ):
+            self.optimizer.load_state_dict(checkpoint["optim"])

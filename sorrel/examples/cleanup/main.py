@@ -5,11 +5,10 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+import hydra
+import torch
 # for configs
 from omegaconf import DictConfig, OmegaConf
-import hydra
-
-import torch
 
 # sorrel imports
 from sorrel.action.action_spec import ActionSpec
@@ -47,7 +46,9 @@ def setup(cfg, **kwargs) -> Cleanup:
     for _ in range(cfg.agent.agent.num):
 
         agent_vision_radius = cfg.agent.agent.obs.vision
-        observation_spec = CleanupObservation(entity_list=ENTITY_LIST, vision_radius=agent_vision_radius)
+        observation_spec = CleanupObservation(
+            entity_list=ENTITY_LIST, vision_radius=agent_vision_radius
+        )
         action_spec = ActionSpec(["up", "down", "left", "right", "clean", "zap"])
 
         model = PyTorchIQN(
@@ -75,12 +76,13 @@ def setup(cfg, **kwargs) -> Cleanup:
 
 def run(env: Cleanup, **kwargs):
     """Run the experiment."""
-    cfg: Cfg = env.cfg
+    cfg = env.cfg
 
     imgs = []
     total_score = 0
     total_loss = 0
     for epoch in range(cfg.experiment.epochs + 1):
+        print(f"Epoch: {epoch}")
         # Reset the environment at the start of each epoch
         env.reset()
         for agent in env.agents:
@@ -123,6 +125,7 @@ def run(env: Cleanup, **kwargs):
                 f'./checkpoints/{cfg.model.iqn.type}_{datetime.now().strftime("%Y%m%d-%H%m%s")}_{i}.pkl'
             )
             agent.model.save(file_path=file_path)
+
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def main(cfg: DictConfig):

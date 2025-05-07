@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import torch
 
 from sorrel.action.action_spec import ActionSpec
 from sorrel.agents import Agent
@@ -96,7 +97,7 @@ class CleanupAgent(Agent):
         # Flatten the model input
         model_input = stacked_states.reshape(1, -1)
         # Get the model output
-        model_output = self.model.take_action(model_input)
+        model_output = self.model.take_action(torch.from_numpy(model_input))
 
         return model_output
 

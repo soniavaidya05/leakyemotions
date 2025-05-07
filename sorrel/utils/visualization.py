@@ -193,7 +193,7 @@ def image_from_figure(fig) -> img.Image:
 
 def animate(
     frames: Sequence[PngImageFile],
-    filename: str | os.PathLike,
+    filename: str,
     folder: str | os.PathLike,
 ) -> None:
     """Take an array of frames and assemble them into a GIF with the given path.
@@ -206,7 +206,7 @@ def animate(
     if not os.path.exists(folder):
         print(f"Directory {folder} does not exist; creating directory.")
     Path(folder).mkdir(parents=True, exist_ok=True)
-    path = os.path.join(folder, filename, ".gif")
+    path = os.path.join(folder, filename + ".gif")
 
     frames[0].save(
         os.path.expanduser(path),
