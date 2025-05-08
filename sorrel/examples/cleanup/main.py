@@ -12,7 +12,6 @@ from omegaconf import DictConfig, OmegaConf
 
 # sorrel imports
 from sorrel.action.action_spec import ActionSpec
-from sorrel.config import Cfg, load_config
 from sorrel.entities import Entity
 from sorrel.examples.cleanup.agents import CleanupAgent, CleanupObservation
 from sorrel.examples.cleanup.env import Cleanup
@@ -82,6 +81,7 @@ def run(env: Cleanup, **kwargs):
     total_score = 0
     total_loss = 0
     for epoch in range(cfg.experiment.epochs + 1):
+        print(f"Epoch: {epoch}")
         # Reset the environment at the start of each epoch
         env.reset()
         for agent in env.agents:
