@@ -4,6 +4,7 @@
 from pathlib import Path
 
 import numpy as np
+import torch
 
 from sorrel.agents import Agent
 from sorrel.examples.treasurehunt.env import Treasurehunt
@@ -41,7 +42,7 @@ class TreasurehuntAgent(Agent[Treasurehunt]):
         stacked_states = np.vstack((prev_states, state))
 
         model_input = stacked_states.reshape(1, -1)
-        action = self.model.take_action(model_input)
+        action = self.model.take_action(torch.from_numpy(model_input))
         return action
 
     def act(self, env: Treasurehunt, action: int) -> float:
