@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Generic, Sequence, TypeVar
+from typing import Sequence
 
 import numpy as np
 
@@ -7,10 +7,8 @@ from sorrel.environments import GridworldEnv
 from sorrel.observation.visual_field import visual_field, visual_field_ascii
 from sorrel.utils.helpers import one_hot_encode
 
-T = TypeVar("T", np.ndarray, str)
 
-
-class ObservationSpec(Generic[T]):
+class ObservationSpec[T: (np.ndarray, str)]():
     r"""An abstract class of an object that contains the observation specifications for
     Sorrel agents.
 

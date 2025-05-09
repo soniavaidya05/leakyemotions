@@ -1,16 +1,15 @@
 from abc import abstractmethod
-from typing import Generic, TypeVar
 
 import numpy as np
 
 from sorrel.action.action_spec import ActionSpec
 from sorrel.entities import Entity
-from sorrel.environments import E
+from sorrel.environments import GridworldEnv
 from sorrel.models import BaseModel
 from sorrel.observation.observation_spec import ObservationSpec
 
 
-class Agent(Entity, Generic[E]):
+class Agent[E: GridworldEnv](Entity):
     """An abstract class for agents, a special type of entities.
 
     Note that this is a subclass of :py:class:`agentarium.entities.Entity`.
