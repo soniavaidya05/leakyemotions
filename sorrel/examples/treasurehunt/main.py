@@ -12,7 +12,8 @@ from sorrel.examples.treasurehunt.env import Treasurehunt
 # sorrel imports
 from sorrel.models.pytorch import PyTorchIQN
 from sorrel.observation.observation_spec import OneHotObservationSpec
-from sorrel.utils.visualization import animate, image_from_array, render_sprite
+from sorrel.utils.logging import ConsoleLogger
+from sorrel.utils.visualization import animate, image_from_array, render_sprite, ImageRenderer
 
 # end imports
 
@@ -54,16 +55,16 @@ def setup() -> Treasurehunt:
             epsilon=0.7,
             device="cpu",
             seed=torch.random.seed(),
-            num_frames=5,
+            n_frames=5,
             n_step=3,
             sync_freq=200,
             model_update_freq=4,
-            BATCH_SIZE=64,
+            batch_size=64,
             memory_size=1024,
             LR=0.00025,
             TAU=0.001,
             GAMMA=0.99,
-            N=12,
+            n_quantiles=12,
         )
 
         agents.append(
@@ -81,20 +82,20 @@ def setup() -> Treasurehunt:
 
 def run(env: Treasurehunt):
     """Run the experiment."""
-    imgs = []
-    total_score = 0
-    total_loss = 0
+    
+    logger = ConsoleLogger(EPOCHS)
+    renderer = ImageRenderer("treasurehunt", RECORD_PERIOD, MAX_TURNS)
+    
     for epoch in range(EPOCHS + 1):
+        total_loss = 0
         # Reset the environment at the start of each epoch
         env.reset()
         for agent in env.agents:
+            agent: TreasurehuntAgent
             agent.model.start_epoch_action(**locals())
 
         while not env.turn >= env.max_turns:
-            if epoch % RECORD_PERIOD == 0:
-                full_sprite = render_sprite(env)
-                imgs.append(image_from_array(full_sprite))
-
+            renderer.add_image(env, epoch)
             env.take_turn()
 
         # At the end of each epoch, train as long as the batch size is large enough.
@@ -103,17 +104,8 @@ def run(env: Treasurehunt):
                 loss = agent.model.train_step()
                 total_loss += loss
 
-        total_score += env.game_score
-
-        if epoch % RECORD_PERIOD == 0:
-            avg_score = total_score / RECORD_PERIOD
-            animate(
-                imgs, f"treasurehunt_epoch{epoch}", Path(__file__).parent / "./data/"
-            )
-            # reset the data
-            imgs = []
-            total_score = 0
-            total_loss = 0
+        logger.record_turn(epoch, total_loss, env.game_score, env.agents[0].model.epsilon)
+        renderer.save_gif(epoch, folder=Path(__file__).parent / "./data/")
 
         # update epsilon
         for agent in env.agents:

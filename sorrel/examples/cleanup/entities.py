@@ -94,13 +94,13 @@ class Apple(Entity):
         self.value = 1  # Reward for eating the apple
         self.sprite = Path(__file__).parent / "./assets/apple_grass.png"
 
-    def transition(self, env: GridworldEnv):
-        # Check the current tile on the agent layer for agents
-        agent_location = self.location[0], self.location[1], env.agent_layer
+    # def transition(self, env: GridworldEnv):
+    #     # Check the current tile on the agent layer for agents
+    #     agent_location = self.location[0], self.location[1], env.agent_layer
 
-        # If there is an agent on this tile, spawn an apple tree tile
-        if env.observe(agent_location).kind == "CleanupAgent":
-            env.add(self.location, AppleTree())
+    #     # If there is an agent on this tile, spawn an apple tree tile
+    #     if env.observe(agent_location).kind == "CleanupAgent":
+    #         env.add(self.location, AppleTree())
 
 
 # --------------------------------------------------- #

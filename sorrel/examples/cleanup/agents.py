@@ -1,13 +1,12 @@
 from pathlib import Path
 
 import numpy as np
-import torch
 
 from sorrel.action.action_spec import ActionSpec
 from sorrel.agents import Agent
 from sorrel.entities import Entity
 from sorrel.environments import GridworldEnv
-from sorrel.examples.cleanup.entities import EmptyEntity
+from sorrel.examples.cleanup.entities import EmptyEntity, Apple, AppleTree
 from sorrel.examples.cleanup.env import Cleanup
 from sorrel.location import Location, Vector
 from sorrel.models import BaseModel
@@ -76,13 +75,7 @@ class CleanupAgent(Agent[Cleanup]):
         self.direction = 2  # 90 degree rotation: default at 180 degrees (facing down)
         self.sprite = Path(__file__).parent / "./assets/hero.png"
 
-    def reset(self) -> None:
-        state = np.zeros_like(np.prod(self.model.input_size))
-        action = 0
-        reward = 0.0
-        done = False
-        for i in range(self.model.num_frames):
-            self.add_memory(state, action, reward, done)
+        self.encounters = {}
 
     def pov(self, env: Cleanup) -> np.ndarray:
         image = self.observation_spec.observe(env, self.location)
@@ -90,15 +83,17 @@ class CleanupAgent(Agent[Cleanup]):
         return image.reshape(1, -1)
 
     def get_action(self, state: np.ndarray) -> int:
-        prev_states = self.model.memory.current_state(
-            stacked_frames=self.model.num_frames - 1
-        )
+        prev_states = self.model.memory.current_state()
         stacked_states = np.vstack((prev_states, state))
 
         # Flatten the model input
         model_input = stacked_states.reshape(1, -1)
+        # print("Current state:", state.shape)
+        # print("Prev states:", prev_states.shape)
+        # print("Stacked states:", stacked_states.shape)
+        # print("Model input:", model_input.shape)
         # Get the model output
-        model_output = self.model.take_action(torch.from_numpy(model_input))
+        model_output = self.model.take_action(model_input)
 
         return model_output
 
@@ -182,8 +177,19 @@ class CleanupAgent(Agent[Cleanup]):
         self.spawn_beam(env, action_name)
 
         # get reward obtained from object at new_location
-        target_object = env.observe(new_location)
-        reward = target_object.value
+        target_objects = env.observe_all_layers(new_location)
+        target_locations = [(*new_location[:-1], i) for i, _ in enumerate(target_objects)]
+        reward = 0
+        for target_location, target_object in zip(target_locations, target_objects):
+            reward += target_object.value
+            if target_object.kind not in self.encounters.keys():
+                self.encounters[target_object.kind] = 0
+            self.encounters[target_object.kind] += 1
+
+            # Eat an apple tree.
+            if isinstance(target_object, Apple):
+                env.add(target_location, AppleTree())
+            
         env.game_score += reward
 
         # try moving to new_location

@@ -19,14 +19,14 @@ class TreasurehuntAgent(Agent[Treasurehunt]):
         super().__init__(observation_spec, action_spec, model)
         self.sprite = Path(__file__).parent / "./assets/hero.png"
 
-    def reset(self) -> None:
-        """Resets the agent by fill in blank images for the memory buffer."""
-        state = np.zeros_like(np.prod(self.model.input_size))
-        action = 0
-        reward = 0.0
-        done = False
-        for i in range(self.model.num_frames):
-            self.add_memory(state, action, reward, done)
+    # def reset(self) -> None:
+    #     """Resets the agent by fill in blank images for the memory buffer."""
+    #     state = np.zeros_like(np.prod(self.model.input_size))
+    #     action = 0
+    #     reward = 0.0
+    #     done = False
+    #     for i in range(self.model.num_frames):
+    #         self.add_memory(state, action, reward, done)
 
     def pov(self, env: Treasurehunt) -> np.ndarray:
         """Returns the state observed by the agent, from the flattened visual field."""
@@ -36,13 +36,11 @@ class TreasurehuntAgent(Agent[Treasurehunt]):
 
     def get_action(self, state: np.ndarray) -> int:
         """Gets the action from the model, using the stacked states."""
-        prev_states = self.model.memory.current_state(
-            stacked_frames=self.model.num_frames - 1
-        )
+        prev_states = self.model.memory.current_state()
         stacked_states = np.vstack((prev_states, state))
 
         model_input = stacked_states.reshape(1, -1)
-        action = self.model.take_action(torch.from_numpy(model_input))
+        action = self.model.take_action(model_input)
         return action
 
     def act(self, env: Treasurehunt, action: int) -> float:

@@ -23,7 +23,7 @@ class Cleanup(GridworldEnv):
     def __init__(
         self,
         cfg,
-        agents: list,
+        agents: list[Agent],
     ):
         self.cfg = cfg
         self.channels = (

@@ -42,8 +42,8 @@ class BaseModel:
 
     @abstractmethod
     def take_action(self, state) -> int:
-        """Take an action based on the observed input. Must be implemented by all
-        subclasses of the model.
+        """Take an action based on the observed input. Must be implemented 
+        by all subclasses of the model.
 
         Args:
             state: The observed input.
@@ -60,10 +60,20 @@ class BaseModel:
             The loss value.
         """
         return 0.0
+    
+    def reset(self):
+        """Reset any relevant model parameters or properties that will be
+        reset at the beginning of a new epoch. By default, nothing is reset.
+        """
+        pass
 
     def set_epsilon(self, new_epsilon: float) -> None:
         """Replaces the current model epsilon with the provided value."""
         self.epsilon = new_epsilon
+
+    def epsilon_decay(self, decay_rate: float) -> None:
+        """Uses the decay rate to determine the new epsilon value."""
+        self.epsilon *= (1 - decay_rate)
 
     def start_epoch_action(self, **kwargs):
         """Actions to perform before each epoch."""

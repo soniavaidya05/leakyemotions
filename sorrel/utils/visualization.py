@@ -218,6 +218,60 @@ def animate(
     )
 
 
+class ImageRenderer:
+    """Container for building images.
+
+    Attributes:
+        experiment_name (str): The name of the experiment.
+        record_period (int): How often to create an animation.
+        num_turns (int): The number of turns per game.
+        frames (list[PngImageFile]): The frames to animate.
+    """
+    def __init__(
+        self,
+        experiment_name: str,
+        record_period: int,
+        num_turns: int
+    ):
+        """Initialize an ImageRenderer.
+        
+        Args:
+            experiment_name (str): The name of the experiment.
+            record_period (int): How often to create an animation.
+            num_turns (int): The number of turns per game.
+            """
+        self.experiment_name = experiment_name
+        self.record_period = record_period
+        self.num_turns = num_turns
+        self.frames = []
+
+    def clear(self):
+        """Zero out the frames."""
+        del self.frames[:]
+
+    def add_image(self, env: GridworldEnv, epoch: int) -> None:
+        """Add an image to the frames.
+        
+        Args:
+            env (GridworldEnv): The environment.
+            epoch (int): The epoch.
+        """
+        if epoch % self.record_period == 0:
+            full_sprite = render_sprite(env)
+            self.frames.append(image_from_array(full_sprite))
+
+    def save_gif(self, epoch: int, folder: os.PathLike) -> None:
+        """Save a gif to disk.
+        
+        Args:
+            epoch (int): The epoch.
+            folder (os.PathLike): The destination folder."""
+        if epoch % self.record_period == 0:
+            animate(self.frames, f"{self.experiment_name}_epoch{epoch}", folder)
+            # Clear frames
+            self.clear()
+        
+
 # --------------------------- #
 # endregion: Visualizations   #
 # --------------------------- #

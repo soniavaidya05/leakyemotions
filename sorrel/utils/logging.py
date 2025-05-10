@@ -103,18 +103,19 @@ class ConsoleLogger(Logger):
     """
 
     def record_turn(self, epoch, loss, reward, epsilon=0, **kwargs):
+        loss = round(loss, 2)
         # Print beginning of the frame
         if epoch == 0:
-            print(f"╔══════════════╦═════════════╦══════════════╗")
+            print(f"╔══════════════╦══════════════╦══════════════╗")
         else:
-            print(f"╠══════════════╬═════════════╬══════════════╣")
+            print(f"╠══════════════╬══════════════╬══════════════╣")
         # Print turn
         print(
-            f"║ Epoch: {str(epoch).rjust(5)} ║ Loss: {str(loss).rjust(5)} ║ Reward: {str(reward).rjust(4)} ║"
+            f"║ Epoch: {str(epoch).rjust(5)} ║ Loss: {str(loss).rjust(6)} ║ Reward: {str(reward).rjust(4)} ║"
         )
-        print(f"╚══════════════╩═════════════╩══════════════╝", end="\r")
+        print(f"╚══════════════╩══════════════╩══════════════╝", end="\r")
         if epoch == self.max_epochs - 1:
-            print(f"╚══════════════╩═════════════╩══════════════╝")
+            print(f"╚══════════════╩══════════════╩══════════════╝")
         super().record_turn(epoch, loss, reward, epsilon, **kwargs)
 
 
@@ -130,12 +131,13 @@ class JupyterLogger(Logger):
     """
 
     def record_turn(self, epoch, loss, reward, epsilon=0, **kwargs):
+        loss = round(loss, 2)
         clear_output(wait=True)
-        print(f"╔══════════════╦═════════════╦══════════════╗")
+        print(f"╔══════════════╦══════════════╦══════════════╗")
         print(
-            f"║ Epoch: {str(epoch).rjust(5)} ║ Loss: {str(loss).rjust(5)} ║ Reward: {str(reward).rjust(4)} ║"
+            f"║ Epoch: {str(epoch).rjust(5)} ║ Loss: {str(loss).rjust(6)} ║ Reward: {str(reward).rjust(4)} ║"
         )
-        print(f"╚══════════════╩═════════════╩══════════════╝")
+        print(f"╚══════════════╩══════════════╩══════════════╝")
         super().record_turn(epoch, loss, reward, epsilon, **kwargs)
 
 
