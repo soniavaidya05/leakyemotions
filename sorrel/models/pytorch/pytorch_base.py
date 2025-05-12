@@ -51,7 +51,7 @@ class PyTorchModel(nn.Module, BaseModel):
     # ---------------------------------- #
 
     @abstractmethod
-    def train_step(self) -> torch.Tensor:
+    def train_step(self) -> np.ndarray:
         """Update value parameters."""
         pass
 

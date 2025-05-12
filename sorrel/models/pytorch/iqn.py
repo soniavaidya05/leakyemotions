@@ -34,6 +34,7 @@ import torch.optim as optim
 from torch.nn.utils import clip_grad_norm_
 
 from sorrel.buffers import Buffer
+
 # Import sorrel-specific packages
 from sorrel.models.pytorch.layers import NoisyLinear
 from sorrel.models.pytorch.pytorch_base import DoublePyTorchModel
@@ -45,6 +46,7 @@ from sorrel.models.pytorch.pytorch_base import DoublePyTorchModel
 # ------------------------ #
 # region: IQN              #
 # ------------------------ #
+
 
 class IQN(nn.Module):
     """The IQN Q-network."""
@@ -85,9 +87,11 @@ class IQN(nn.Module):
         self.advantage = NoisyLinear(layer_size, action_space)
         self.value = NoisyLinear(layer_size, 1)
 
-    def calc_cos(self, batch_size: int, n_tau: int = 8) -> tuple[torch.Tensor, torch.Tensor]:
+    def calc_cos(
+        self, batch_size: int, n_tau: int = 8
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Calculating the cosine values depending on the number of tau samples.
-        
+
         Args:
             batch_size (int): The batch size.
             n_tau (int): The number of tau samples.
@@ -110,7 +114,6 @@ class IQN(nn.Module):
 
         Returns:
             tuple: quantiles, torch.Tensor (size: (batch_size, n_tau, action_space)); taus, torch.Tensor (size) ((batch_size, n_tau, 1))
-            
         """
         # Add noise to the input
         eps = 0.01
@@ -162,6 +165,7 @@ class IQN(nn.Module):
         actions = quantiles.mean(dim=1)
         return actions
 
+
 # ------------------------ #
 # endregion                #
 # ------------------------ #
@@ -170,8 +174,9 @@ class IQN(nn.Module):
 # region: iRainbow         #
 # ------------------------ #
 
+
 class iRainbowModel(DoublePyTorchModel):
-    """A combination of IQN with Rainbow, which itself combines priority experience 
+    """A combination of IQN with Rainbow, which itself combines priority experience
     replay, dueling DDQN, distributional DQN, noisy DQN, and multi-step return."""
 
     def __init__(
@@ -204,12 +209,12 @@ class iRainbowModel(DoublePyTorchModel):
             epsilon (float): Epsilon-greedy action value.
             device (str | torch.device): Device used for the compute.
             seed (int): Random seed value for replication.
-            n_frames (int): Number of timesteps for the state input. 
+            n_frames (int): Number of timesteps for the state input.
             batch_size (int): The zize of the training batch.
             memory_size (int): The size of the replay memory.
-            GAMMA (float): Discount factor 
-            LR (float): Learning rate 
-            TAU (float): Network weight soft update rate 
+            GAMMA (float): Discount factor
+            LR (float): Learning rate
+            TAU (float): Network weight soft update rate
             n_quantiles (int): Number of quantiles
         """
 
@@ -252,9 +257,9 @@ class iRainbowModel(DoublePyTorchModel):
 
         # Memory buffer
         self.memory = Buffer(
-            capacity=memory_size, 
+            capacity=memory_size,
             obs_shape=(np.array(self.input_size).prod(),),
-            n_frames=n_frames
+            n_frames=n_frames,
         )
 
     def __str__(self):
@@ -263,12 +268,11 @@ class iRainbowModel(DoublePyTorchModel):
     def take_action(self, state: np.ndarray) -> int:
         """Returns actions for given state as per current policy.
 
-        Args: 
+        Args:
             state (np.ndarray): current state
-        
+
         Returns:
             int: The action to take.
-            
         """
         # Epsilon-greedy action selection
         if random.random() > self.epsilon:
@@ -276,7 +280,7 @@ class iRainbowModel(DoublePyTorchModel):
             state = state.float().to(self.device)
 
             self.qnetwork_local.eval()
-            with torch.no_grad():   
+            with torch.no_grad():
                 action_values = self.qnetwork_local.get_qvalues(state)  # .mean(0)
             self.qnetwork_local.train()
             action = np.argmax(action_values.cpu().data.numpy(), axis=1)
@@ -286,9 +290,9 @@ class iRainbowModel(DoublePyTorchModel):
             action = random.choices(np.arange(self.action_space), k=1)
             return action[0]
 
-    def train_step(self) -> float:
-        """Update value parameters using given batch of experience tuples. 
-        
+    def train_step(self) -> np.ndarray:
+        """Update value parameters using given batch of experience tuples.
+
         .. note:: The training loop CANNOT be named `train()` or `training()` as this conflicts with `nn.Module` superclass functions.
 
         Returns:
@@ -309,7 +313,8 @@ class iRainbowModel(DoublePyTorchModel):
             Q_targets_next: torch.Tensor = Q_targets_next.detach().cpu()
             action_indx = torch.argmax(Q_targets_next.mean(dim=1), dim=1, keepdim=True)
             Q_targets_next = Q_targets_next.gather(
-                2, action_indx.unsqueeze(-1).expand(self.batch_size, self.n_quantiles, 1)
+                2,
+                action_indx.unsqueeze(-1).expand(self.batch_size, self.n_quantiles, 1),
             ).transpose(1, 2)
 
             # Compute Q targets for current states
@@ -393,13 +398,15 @@ class iRainbowModel(DoublePyTorchModel):
             else:
                 kwargs["losses"] += kwargs["loss"]
 
+
 # ------------------------ #
 # endregion                #
 # ------------------------ #
 
+
 def calculate_huber_loss(td_errors: torch.Tensor, k: float = 1.0) -> torch.Tensor:
     """Calculate elementwise Huber loss.
-    
+
     Args:
         td_errors (torch.Tensor): The temporal difference errors.
         k (float): The kappa parameter.
