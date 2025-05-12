@@ -1,9 +1,8 @@
+import os
 from abc import abstractmethod
 from typing import Sequence
 
-import jax
 import numpy as np
-import torch
 
 from sorrel.buffers import Buffer
 
@@ -83,6 +82,18 @@ class BaseModel:
 
     def end_epoch_action(self, **kwargs):
         """Actions to perform after each epoch."""
+        pass
+
+    def save(self, file_path: str | os.PathLike) -> None:
+        """Save the model weights and parameters in the specified location.
+
+        If the model has an optimizer attribute, it will be saved as well.
+
+        .. note:: This is an abstract function. It must be implemented by a subclass in order to save a model.
+
+        Parameters:
+            file_path: The full path to the model, including file extension.
+        """
         pass
 
     @property

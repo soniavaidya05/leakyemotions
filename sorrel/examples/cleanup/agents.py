@@ -6,7 +6,7 @@ from sorrel.action.action_spec import ActionSpec
 from sorrel.agents import Agent
 from sorrel.entities import Entity
 from sorrel.environments import GridworldEnv
-from sorrel.examples.cleanup.entities import EmptyEntity, Apple, AppleTree
+from sorrel.examples.cleanup.entities import Apple, AppleTree, EmptyEntity
 from sorrel.examples.cleanup.env import Cleanup
 from sorrel.location import Location, Vector
 from sorrel.models import BaseModel
@@ -88,11 +88,7 @@ class CleanupAgent(Agent[Cleanup]):
 
         # Flatten the model input
         model_input = stacked_states.reshape(1, -1)
-        # print("Current state:", state.shape)
-        # print("Prev states:", prev_states.shape)
-        # print("Stacked states:", stacked_states.shape)
-        # print("Model input:", model_input.shape)
-        # Get the model output
+        # Get model output
         model_output = self.model.take_action(model_input)
 
         return model_output
@@ -178,7 +174,9 @@ class CleanupAgent(Agent[Cleanup]):
 
         # get reward obtained from object at new_location
         target_objects = env.observe_all_layers(new_location)
-        target_locations = [(*new_location[:-1], i) for i, _ in enumerate(target_objects)]
+        target_locations = [
+            (*new_location[:-1], i) for i, _ in enumerate(target_objects)
+        ]
         reward = 0
         for target_location, target_object in zip(target_locations, target_objects):
             reward += target_object.value
@@ -189,7 +187,7 @@ class CleanupAgent(Agent[Cleanup]):
             # Eat an apple tree.
             if isinstance(target_object, Apple):
                 env.add(target_location, AppleTree())
-            
+
         env.game_score += reward
 
         # try moving to new_location

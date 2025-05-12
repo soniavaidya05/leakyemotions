@@ -276,12 +276,12 @@ class iRainbowModel(DoublePyTorchModel):
         """
         # Epsilon-greedy action selection
         if random.random() > self.epsilon:
-            state = torch.from_numpy(state)
-            state = state.float().to(self.device)
+            torch_state = torch.from_numpy(state)
+            torch_state = torch_state.float().to(self.device)
 
             self.qnetwork_local.eval()
             with torch.no_grad():
-                action_values = self.qnetwork_local.get_qvalues(state)  # .mean(0)
+                action_values = self.qnetwork_local.get_qvalues(torch_state)  # .mean(0)
             self.qnetwork_local.train()
             action = np.argmax(action_values.cpu().data.numpy(), axis=1)
             return action[0]
@@ -392,7 +392,6 @@ class iRainbowModel(DoublePyTorchModel):
         """
         if kwargs["epoch"] > 200 and kwargs["epoch"] % self.model_update_freq == 0:
             kwargs["loss"] = self.train_step()
-            kwargs["loss"] = kwargs["loss"].detach()
             if "game_vars" in kwargs:
                 kwargs["game_vars"].losses.append(kwargs["loss"])
             else:

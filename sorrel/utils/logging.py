@@ -6,7 +6,7 @@ import csv
 import os
 from typing import Mapping
 
-import torch
+import numpy as np
 from IPython.display import clear_output
 from torch.utils.tensorboard.writer import SummaryWriter
 
@@ -23,10 +23,10 @@ class Logger:
     """
 
     max_epochs: int
-    losses: list[float | torch.Tensor]
-    rewards: list[float | torch.Tensor]
-    epsilons: list[float]
-    additional_values: Mapping[str, list[int | float | torch.Tensor]]
+    losses: list[float | np.ndarray]
+    rewards: list[float | np.ndarray]
+    epsilons: list[float | np.ndarray]
+    additional_values: Mapping[str, list[int | float | np.ndarray]]
 
     def __init__(self, max_epochs: int, *args: str):
         """Initialize a log.
@@ -46,8 +46,8 @@ class Logger:
     def record_turn(
         self,
         epoch: int,
-        loss: float | torch.Tensor,
-        reward: float | torch.Tensor,
+        loss: float | np.ndarray,
+        reward: float | np.ndarray,
         epsilon: float = 0,
         **kwargs,
     ) -> None:
@@ -103,7 +103,7 @@ class ConsoleLogger(Logger):
     """
 
     def record_turn(self, epoch, loss, reward, epsilon=0, **kwargs):
-        loss = round(loss, 2)
+        loss = np.round(loss, 2)
         # Print beginning of the frame
         if epoch == 0:
             print(f"╔══════════════╦══════════════╦══════════════╗")
@@ -131,7 +131,7 @@ class JupyterLogger(Logger):
     """
 
     def record_turn(self, epoch, loss, reward, epsilon=0, **kwargs):
-        loss = round(loss, 2)
+        loss = np.round(loss, 2)
         clear_output(wait=True)
         print(f"╔══════════════╦══════════════╦══════════════╗")
         print(

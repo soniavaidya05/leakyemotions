@@ -122,7 +122,7 @@ class GridworldEnv:
             Entity: the entity at the observed location.
         """
         return self.world[target_location]
-    
+
     def observe_all_layers(self, target_location: tuple[int, ...]) -> list[Entity]:
         """Observes entities on all layers at a target location.
 
@@ -134,9 +134,7 @@ class GridworldEnv:
         """
         entities = []
         for i in range(self.layers):
-            entities.append(
-                self.world[(*target_location[:-1], i)]
-            )
+            entities.append(self.world[(*target_location[:-1], i)])
         return entities
 
     def take_turn(self) -> None:

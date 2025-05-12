@@ -1,22 +1,14 @@
 from __future__ import annotations
 
-# --------------- #
-# region: Imports #
-# --------------- #
+from typing import Sequence
 
 import numpy as np
 import torch
 
-from typing import Sequence
-
-# --------------- #
-# endregion       #
-# --------------- #
-
 
 class Buffer:
     """Buffer class for recording and storing agent actions.
-    
+
     Attributes:
         capacity (int): The size of the replay buffer. Experiences are overwritten when the numnber of memories exceeds capacity.
         obs_shape (Sequence[int]): The shape of the observations. Used to structure the state buffer.
@@ -29,11 +21,7 @@ class Buffer:
         n_frames (int): The number of frames to stack when sampling or creating empty frames between games.
     """
 
-    def __init__(
-            self, 
-            capacity: int, 
-            obs_shape: Sequence[int],
-            n_frames: int = 1):
+    def __init__(self, capacity: int, obs_shape: Sequence[int], n_frames: int = 1):
         self.capacity = capacity
         self.obs_shape = obs_shape
         self.states = np.zeros((capacity, *obs_shape), dtype=np.float32)
@@ -61,8 +49,8 @@ class Buffer:
         self.size = min(self.size + 1, self.capacity)
 
     def add_empty(self):
-        """Advancing the id by `self.n_frames`, adding empty frames to the replay buffer.
-        """
+        """Advancing the id by `self.n_frames`, adding empty frames to the replay
+        buffer."""
         self.idx = (self.idx + self.n_frames) % self.capacity
 
     def sample(self, batch_size: int):
@@ -116,7 +104,7 @@ class Buffer:
         Returns:
             np.ndarray: An array with the last `self.n_frames` observations stacked together as the current state.
         """
-        
+
         if self.idx < (self.n_frames - 1):
             diff = self.idx - (self.n_frames - 1)
             return np.concatenate(

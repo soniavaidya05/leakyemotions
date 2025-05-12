@@ -7,6 +7,7 @@ from pathlib import Path
 
 import hydra
 import torch
+
 # for configs
 from omegaconf import DictConfig, OmegaConf
 
@@ -16,8 +17,13 @@ from sorrel.entities import Entity
 from sorrel.examples.cleanup.agents import CleanupAgent, CleanupObservation
 from sorrel.examples.cleanup.env import Cleanup
 from sorrel.models.pytorch import PyTorchIQN
-from sorrel.utils.visualization import animate, image_from_array, render_sprite, ImageRenderer
 from sorrel.utils.logging import ConsoleLogger
+from sorrel.utils.visualization import (
+    ImageRenderer,
+    animate,
+    image_from_array,
+    render_sprite,
+)
 
 # endregion                #
 # ------------------------ #
@@ -78,9 +84,7 @@ def run(env: Cleanup, **kwargs):
 
     logger = ConsoleLogger(cfg.experiment.epochs)
     renderer = ImageRenderer(
-        cfg.experiment.name, 
-        cfg.experiment.record_period, 
-        cfg.experiment.max_turns
+        cfg.experiment.name, cfg.experiment.record_period, cfg.experiment.max_turns
     )
 
     for epoch in range(cfg.experiment.epochs + 1):
@@ -106,7 +110,7 @@ def run(env: Cleanup, **kwargs):
         epsilon = env.agents[0].model.epsilon
         logger.record_turn(epoch, total_loss, env.game_score, epsilon)
 
-        # Save a gif when 
+        # Save a gif when
         renderer.save_gif(epoch, folder=Path(__file__).parent / "./data/")
 
         # update epsilon
@@ -130,8 +134,11 @@ def main(cfg: DictConfig):
         "--load-weights", "-w", type=str, help="Path to pretrained model.", default=None
     )
     parser.add_argument(
-        "--logger", "-l", help="Logger type", default="console",
-        choices=["console", "tensorboard"]
+        "--logger",
+        "-l",
+        help="Logger type",
+        default="console",
+        choices=["console", "tensorboard"],
     )
     parser.add_argument("--verbose", "-v", action="count", default=0)
     args = parser.parse_args()

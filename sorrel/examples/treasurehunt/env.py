@@ -6,6 +6,7 @@ import numpy as np
 
 # Import primitive types
 from sorrel.environments import GridworldEnv
+
 # Import experiment specific classes
 from sorrel.examples.treasurehunt.entities import EmptyEntity, Gem, Sand, Wall
 

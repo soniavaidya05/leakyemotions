@@ -9,8 +9,15 @@ import numpy as np
 from sorrel.agents import Agent
 from sorrel.entities import Entity
 from sorrel.environments import GridworldEnv
-from sorrel.examples.cleanup.entities import (Apple, AppleTree, EmptyEntity,
-                                              Pollution, River, Sand, Wall)
+from sorrel.examples.cleanup.entities import (
+    Apple,
+    AppleTree,
+    EmptyEntity,
+    Pollution,
+    River,
+    Sand,
+    Wall,
+)
 
 # --------------------------------- #
 # endregion: Imports                #
@@ -23,7 +30,7 @@ class Cleanup(GridworldEnv):
     def __init__(
         self,
         cfg,
-        agents: list[Agent],
+        agents,
     ):
         self.cfg = cfg
         self.channels = (

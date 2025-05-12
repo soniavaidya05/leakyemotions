@@ -6,14 +6,21 @@ import numpy as np
 import torch
 
 from sorrel.action.action_spec import ActionSpec
+
 # imports from our example
 from sorrel.examples.treasurehunt.agents import TreasurehuntAgent
 from sorrel.examples.treasurehunt.env import Treasurehunt
+
 # sorrel imports
 from sorrel.models.pytorch import PyTorchIQN
 from sorrel.observation.observation_spec import OneHotObservationSpec
 from sorrel.utils.logging import ConsoleLogger
-from sorrel.utils.visualization import animate, image_from_array, render_sprite, ImageRenderer
+from sorrel.utils.visualization import (
+    ImageRenderer,
+    animate,
+    image_from_array,
+    render_sprite,
+)
 
 # end imports
 
@@ -82,10 +89,10 @@ def setup() -> Treasurehunt:
 
 def run(env: Treasurehunt):
     """Run the experiment."""
-    
+
     logger = ConsoleLogger(EPOCHS)
     renderer = ImageRenderer("treasurehunt", RECORD_PERIOD, MAX_TURNS)
-    
+
     for epoch in range(EPOCHS + 1):
         total_loss = 0
         # Reset the environment at the start of each epoch
@@ -104,7 +111,9 @@ def run(env: Treasurehunt):
                 loss = agent.model.train_step()
                 total_loss += loss
 
-        logger.record_turn(epoch, total_loss, env.game_score, env.agents[0].model.epsilon)
+        logger.record_turn(
+            epoch, total_loss, env.game_score, env.agents[0].model.epsilon
+        )
         renderer.save_gif(epoch, folder=Path(__file__).parent / "./data/")
 
         # update epsilon
