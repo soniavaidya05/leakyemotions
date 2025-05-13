@@ -9,7 +9,7 @@ from sorrel.models import BaseModel
 from sorrel.observation.observation_spec import ObservationSpec
 
 
-class Agent[E: GridworldEnv](Entity):
+class Agent[E: GridworldEnv](Entity[E]):
     """An abstract class for agents, a special type of entities.
 
     Note that this is a subclass of :py:class:`agentarium.entities.Entity`.
@@ -136,4 +136,6 @@ class Agent[E: GridworldEnv](Entity):
         action = self.get_action(state)
         reward = self.act(env, action)
         done = self.is_done(env)
+
+        env.total_reward += reward
         self.add_memory(state, action, reward, done)

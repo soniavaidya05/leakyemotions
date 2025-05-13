@@ -1,12 +1,14 @@
 from pathlib import Path
 from typing import Optional
 
+from sorrel.environments import GridworldEnv
+
 # ----------------------------------------------------- #
 #        Abstract class for environment objects         #
 # ----------------------------------------------------- #
 
 
-class Entity:
+class Entity[E: GridworldEnv]:
     """Base element class. Defines the non-optional initialization parameters for all
     entities.
 
@@ -56,7 +58,7 @@ class Entity:
         """Sets the location of the object."""
         self._location = value
 
-    def transition(self, env):
+    def transition(self, env: E):
         """Change the environment in some way.
 
         By default, this function does nothing.

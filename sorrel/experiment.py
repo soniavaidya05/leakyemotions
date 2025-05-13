@@ -6,7 +6,10 @@ from omegaconf import DictConfig, OmegaConf
 from sorrel.agents import Agent
 from sorrel.environments import GridworldEnv
 from sorrel.utils.logging import ConsoleLogger, Logger
-from sorrel.utils.visualization import animate, image_from_array, render_sprite
+
+# TODO: change animate to animate_gif
+from sorrel.utils.visualization import animate as animate_gif
+from sorrel.utils.visualization import image_from_array, render_sprite
 
 
 class Experiment[E: GridworldEnv]:
@@ -17,8 +20,9 @@ class Experiment[E: GridworldEnv]:
 
     def __init__(self, env: E, config: DictConfig | dict | list) -> None:
 
-        env.create_world()
-        self.env = self.populate_environment(env)
+        self.env = env
+        self.env.create_world()
+        self.populate_environment()
         if isinstance(config, DictConfig):
             self.config = config
         elif isinstance(config, dict):
@@ -27,22 +31,20 @@ class Experiment[E: GridworldEnv]:
             # note that if config is a list, we assume it is a dotlist
             self.config = OmegaConf.from_dotlist(config)
 
-        self.agents = self.setup_agents()
+        self.setup_agents()
 
     @abstractmethod
-    @staticmethod
-    def setup_agents(self) -> list[Agent]:
+    def setup_agents(self) -> None:
         pass
 
     @abstractmethod
-    @staticmethod
-    def populate_environment(self, env: E) -> E:
+    def populate_environment(self) -> None:
         pass
 
     def reset(self) -> None:
         """Reset the experiment, including the environment and the agents."""
         self.env.create_world()
-        self.env = self.populate_environment(self.env)
+        self.populate_environment()
         for agent in self.agents:
             agent.reset()
 
@@ -80,9 +82,9 @@ class Experiment[E: GridworldEnv]:
 
             # generate the gif if animate is true
             if animate and epoch % self.config.experiment.record_period == 0:
-                animate(
+                animate_gif(
                     imgs,
-                    f"{self.env.__name__}_epoch{epoch}",
+                    f"{self.env.__class__.__name__}_epoch{epoch}",
                     Path(__file__).parent / "./data/",
                 )
                 imgs = []
@@ -96,11 +98,13 @@ class Experiment[E: GridworldEnv]:
             if logging:
                 if not logger:
                     logger = ConsoleLogger(self.config.experiment.epochs)
-                # TODO: implement env game_score
                 logger.record_turn(
-                    epoch, total_loss, self.env.game_score, self.agents[0].model.epsilon
+                    epoch,
+                    total_loss,
+                    self.env.total_reward,
+                    self.agents[0].model.epsilon,
                 )
 
             # update epsilon
             for agent in self.agents:
-                agent.model.epsilon_decay(self.config.experiment.epsilon_decay)
+                agent.model.epsilon_decay(self.config.model.epsilon_decay)

@@ -7,11 +7,12 @@ import numpy as np
 
 from sorrel.entities import Entity
 from sorrel.environments import GridworldEnv
+from sorrel.examples.treasurehunt.env import Treasurehunt
 
 # end imports
 
 
-class Wall(Entity):
+class Wall(Entity[Treasurehunt]):
     """An entity that represents a wall in the treasurehunt environment."""
 
     def __init__(self):
@@ -20,7 +21,7 @@ class Wall(Entity):
         self.sprite = Path(__file__).parent / "./assets/wall.png"
 
 
-class Sand(Entity):
+class Sand(Entity[Treasurehunt]):
     """An entity that represents a block of sand in the treasurehunt environment."""
 
     def __init__(self):
@@ -30,7 +31,7 @@ class Sand(Entity):
         self.sprite = Path(__file__).parent / "./assets/sand.png"
 
 
-class Gem(Entity):
+class Gem(Entity[Treasurehunt]):
     """An entity that represents a gem in the treasurehunt environment."""
 
     def __init__(self, gem_value):
@@ -40,7 +41,7 @@ class Gem(Entity):
         self.sprite = Path(__file__).parent / "./assets/gem.png"
 
 
-class EmptyEntity(Entity):
+class EmptyEntity(Entity[Treasurehunt]):
     """An entity that represents an empty space in the treasurehunt environment."""
 
     def __init__(self):
@@ -49,7 +50,7 @@ class EmptyEntity(Entity):
         self.has_transitions = True  # EmptyEntity can transition into Gems
         self.sprite = Path(__file__).parent / "./assets/empty.png"
 
-    def transition(self, env: GridworldEnv):
+    def transition(self, env: Treasurehunt):
         """EmptySpaces can randomly spawn into Gems based on the item spawn
         probabilities dictated in the environmnet."""
         if (  # NOTE: If the spawn prob is too high, the environment gets overrun

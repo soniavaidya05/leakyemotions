@@ -17,6 +17,7 @@ class GridworldEnv:
         default_entity: An entity that the gridworld is filled with at creation by default.
         world: A representation of the gridworld as a Numpy array of Entities, with dimensions height x width x layers.
         turn: The number of turns taken by the environment.
+        total_reward: The total reward accumulated by all agents in the environment.
     """
 
     height: int
@@ -26,6 +27,7 @@ class GridworldEnv:
 
     world: np.ndarray
     turn: int
+    total_reward: float
 
     def __init__(self, height: int, width: int, layers: int, default_entity: Entity):
         self.height = height
@@ -34,12 +36,13 @@ class GridworldEnv:
         self.default_entity = default_entity
         self.create_world()
         self.turn = 0
+        self.total_reward = 0.0
 
     def create_world(self) -> None:
         """Assigns self.world a new gridworld of size self.height x self.width x
         self.layers filled with deep copies of self.default_entity.
 
-        Also sets self.turn to 0.
+        Also sets self.turn and self.total_reward to 0.
 
         This function is used in :func:`self.__init__()`, and may be useful for
         resetting environments.
@@ -54,6 +57,7 @@ class GridworldEnv:
             self.world[index].location = index
 
         self.turn = 0
+        self.total_reward = 0.0
 
     def add(self, target_location: tuple[int, ...], entity: Entity) -> None:
         """Adds an entity to the world at a location, replacing any existing entity at

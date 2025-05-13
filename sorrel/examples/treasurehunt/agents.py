@@ -4,7 +4,6 @@
 from pathlib import Path
 
 import numpy as np
-import torch
 
 from sorrel.agents import Agent
 from sorrel.examples.treasurehunt.env import Treasurehunt
@@ -62,7 +61,6 @@ class TreasurehuntAgent(Agent[Treasurehunt]):
         # get reward obtained from object at new_location
         target_object = env.observe(new_location)
         reward = target_object.value
-        env.game_score += reward
 
         # try moving to new_location
         env.move(self, new_location)
