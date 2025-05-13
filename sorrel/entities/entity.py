@@ -1,14 +1,12 @@
 from pathlib import Path
 from typing import Optional
 
-from sorrel.environments import GridworldEnv
-
 # ----------------------------------------------------- #
 #        Abstract class for environment objects         #
 # ----------------------------------------------------- #
 
 
-class Entity[E: GridworldEnv]:
+class Entity[E]:
     """Base element class. Defines the non-optional initialization parameters for all
     entities.
 

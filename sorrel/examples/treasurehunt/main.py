@@ -49,7 +49,7 @@ class TreasurehuntExperiment(Experiment[Treasurehunt]):
             observation_spec = OneHotObservationSpec(
                 ENTITY_LIST,
                 full_view=False,
-                vision_radius=self.config.agent.agent_vision_radius,
+                vision_radius=self.config.model.agent_vision_radius,
             )
             observation_spec.override_input_size(
                 np.array(observation_spec.input_size).reshape(1, -1).tolist()
@@ -129,11 +129,9 @@ if __name__ == "__main__":
             "max_turns": MAX_TURNS,
             "record_period": RECORD_PERIOD,
         },
-        "agent": {
-            "epsilon_decay": EPSILON_DECAY,
-        },
         "model": {
             "agent_vision_radius": 2,
+            "epsilon_decay": EPSILON_DECAY,
         },
     }
     world_height = 10
@@ -144,7 +142,7 @@ if __name__ == "__main__":
 
     # make the environment
     env = Treasurehunt(
-        world_height, world_width, EmptyEntity, gem_value, spawn_prob, MAX_TURNS
+        world_height, world_width, EmptyEntity(), gem_value, spawn_prob, MAX_TURNS
     )
     experiment = TreasurehuntExperiment(env, configs)
     experiment.run()

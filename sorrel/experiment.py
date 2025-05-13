@@ -20,9 +20,6 @@ class Experiment[E: GridworldEnv]:
 
     def __init__(self, env: E, config: DictConfig | dict | list) -> None:
 
-        self.env = env
-        self.env.create_world()
-        self.populate_environment()
         if isinstance(config, DictConfig):
             self.config = config
         elif isinstance(config, dict):
@@ -32,6 +29,10 @@ class Experiment[E: GridworldEnv]:
             self.config = OmegaConf.from_dotlist(config)
 
         self.setup_agents()
+
+        self.env = env
+        self.env.create_world()
+        self.populate_environment()
 
     @abstractmethod
     def setup_agents(self) -> None:
@@ -70,7 +71,7 @@ class Experiment[E: GridworldEnv]:
 
             # start epoch action for each agent model
             for agent in self.agents:
-                agent.model.start_epoch_action(**locals())
+                agent.model.start_epoch_action(epoch=epoch)
 
             # run the environment for the specified number of turns
             while not self.env.turn >= self.config.experiment.max_turns:
