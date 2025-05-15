@@ -49,6 +49,7 @@ class Experiment[E: GridworldEnv]:
         for agent in self.agents:
             agent.reset()
 
+    # TODO: ability to save/load?
     def run(
         self, animate: bool = True, logging: bool = True, logger: Logger | None = None
     ) -> None:

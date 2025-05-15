@@ -23,14 +23,14 @@ treasurehunt
 
 We will create a custom environment named `Treasurehunt`, custom entities `EmptyEntity`, `Wall`, `Sand`, and `Gem`, and a custom agent `TreasurehuntAgent`.
 The environment will have two layers: `TreasurehuntAgent` and `EmptyEntity` will be on the top layer, and `Sand` will be on the bottom layer.
-We will then write a `main.py` script that carries out the experiment, and render parts of the experiment as gifs.
+We will then write a `main.py` script that implements the custom experiment `TreasurehuntExperiment`, which will allow us to run and record the experiment.
 
 Let's get started!
 
 ## The Entities
 In ``entities.py``, we will create the 3 entities that we require: `EmptyEntity`, `Wall`, and `Gem`. 
 All the custom entities will extend the base `Entity` class provided by Sorrel; see {class}`sorrel.entities.Entity` 
-for its attributes (including their default values) and methods.
+for its attributes (including their default values) and methods. Note that the `Entity` class uses a Generic type; we will specify the type as `Treasurehunt` in our custom entities as that is the environment that our entities are compatible with.
 
 We begin by making the necessary imports:
 ```{literalinclude} /../../sorrel/examples/treasurehunt/entities.py
@@ -38,7 +38,7 @@ We begin by making the necessary imports:
 :end-before: end imports
 ```
 
-Then, we create the classes `Wall`, `Sand`, and `Gem`, with custom constructors that overwrite default parent attribute values and include sprites used for animation later on. 
+Then, we create the classes `Wall`, `Sand`, and `Gem`, with custom constructors that overwrite default parent attribute values and include sprites used for animation later on.
 These sprites should be placed in a ``./assets/`` folder. All of these entities do not transition.
 ```{literalinclude} /../../sorrel/examples/treasurehunt/entities.py
 :pyobject: Wall
@@ -71,37 +71,19 @@ We write the import statements:
 :end-before: end imports
 ```
 
-We create the constructor first. In addition to the attributes from `GridworldEnv`, we add the attributes `self.gem_value` 
-and `self.spawn_prob` as noted above. We also add the attributes `self.max_turns`, `self.agents`, and `self.game_score` 
-so that we can access these attributes of the environment at the experiment level later.
+We create the constructor. In addition to the attributes from `GridworldEnv`, we add the attributes `self.gem_value` 
+and `self.spawn_prob` as noted above. We also add the attributes `self.max_turns` so that it can be accessed by the agents to determine if they are Done after an action.
 ```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
-:lines: 15-19
-```
-```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
-:pyobject: Treasurehunt.__init__
+:start-after: begin treasurehunt
+:end-before: end treasurehunt
 ```
 
-We delegate the task of actually filling in the entities and constructing `self.world` to the method `populate()`:
-```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
-:pyobject: Treasurehunt.populate
-```
-
-```{eval-rst}
-.. note::
-   We had to work around :code:`np.random.choice` a little in order to use it. 
-   We have specifically avoided using `random.choices` because we would then need to seed np.random and random separately 
-   for reproducible results. It's generally a good idea to choose one random generator and only use that across the scope of your example.
-```
-
-We will also write a `reset()` method to reset the environment at the end of every game, using {func}`sorrel.environments.GridworldEnv.create_world`:
-```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
-:pyobject: Treasurehunt.reset
-```
+Note that the environment is very barebones. The task of actually filling in the entities and constructing the world is delegated to our custom experiment class, as we will see in a moment.
 
 ## The Agent
 In ``agents.py``, we will create the agent for our experiment: `TreasurehuntAgent`. 
 It will extend the base `Agent` class provided by Sorrel; 
-see {class}`sorrel.agents.Agent` for its attributes and methods. 
+see {class}`sorrel.agents.Agent` for its attributes and methods. Note that `Agent` is a generic subclass of `Entity` so just like with our custom entities, we need to specify the type of environment that the custom agent is compatible with when inheriting from `Agent`.
 
 We make our imports:
 ```{literalinclude} /../../sorrel/examples/treasurehunt/agents.py
@@ -111,10 +93,8 @@ We make our imports:
 
 We make our custom constructor:
 ```{literalinclude} /../../sorrel/examples/treasurehunt/agents.py
-:lines: 13-17
-```
-```{literalinclude} /../../sorrel/examples/treasurehunt/agents.py
-:pyobject: TreasurehuntAgent.__init__
+:start-after: begin treasurehunt agent
+:end-before: end constructor
 ```
 
 We will use {class}`sorrel.observation.obvservation_spec.OneHotObservationSpec` for `TreasurehuntAgent`'s observation, {class}`sorrel.action.action_spec.AcionSpec` for `TreasurehuntAgent`'s actions, and {class}`sorrel.models.pytorch.PyTorchIQN` for `TreasurehuntAgent`'s model.
@@ -124,9 +104,7 @@ but we will use the functionality that they provide by accessing the attributes 
 Note that unlike the other base classes we've worked on top of so far, `Agent` is an abstract class, and every custom agent that extends it must implement the methods 
 `reset()`, `pov()`, `get_action()`, `act()`, and `is_done()`. Let's go through them one by one. 
 
-To implement {func}`sorrel.agents.Agent.reset`, we add a number of all zero SARD's to the agent's model's memory that is equal to the number of frames that it can access.
-The "zero state" is obtained by getting the shape of the state observed by this agent through [self.model.input_size](#sorrel.models.base_model.BaseModel.input_size), 
-and then creating an all zeros array with the same shape.
+To implement {func}`sorrel.agents.Agent.reset`, we call the agent's model's reset function. This is [required of all sorrel models that inherit the base model class](#sorrel.models.BaseModel.reset), and here's the [specific implementation for the PytorchIQN model we will be using for this agent](#sorrel.models.pytorch.PyTorchIQN).
 ```{literalinclude} /../../sorrel/examples/treasurehunt/agents.py
 :pyobject: TreasurehuntAgent.reset
 ```
@@ -158,38 +136,50 @@ exceeds the maximum number of turns.
 Now, we are all done with our custom classes. Time to set up the actual experiment!
 
 ## The Experiment Script: `main.py`
+
 First, we make our imports as usual:
 ```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
 :start-after: begin imports
 :end-before: end imports
 ```
 
-Then, we will define our experiment parameters as global constants:
-```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
-:start-after: begin parameters
-:end-before: end parameters
-```
-These parameters, as well as the world configuration and model hyperparameters later, can be extracted from this script for faster and easier adjustments using configuration files. 
-Here is a [quick tutorial](./configuration_files.md).
+We will now write our custom experiment class by inheriting the {class}`sorrel.experiment.Experiment` class that has an already implemented [run()](#sorrel.experiment.Experiment.run) method which will run the experiment for us. Much like the custom entities and agents, we need to specify the environment this custom experiment is using when inheriting from the generic experiment.
 
-We will first create the observation specification, the models, the agents, and the environment. 
-The entities will not need to be created explicitly as they will be generated by the environment.
 ```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
-:pyobject: setup
+:begin-after: begin treasurehunt experiment
+:end-before: end constructor
 ```
 
-Then, we will run the experiment. Most of the work here is done by calling [GridworldEnv.take_turn()](#sorrel.environments.GridworldEnv.take_turn), 
-which transitions every entity in the environment, then every agent, then increments the turn count by one. 
-In addition to printing information about each recording period on the terminal, 
-we also use functions from {mod}`sorrel.utils.visualization` to record states as images and animate them into a gif.
+Note that the experiment takes in a `config` that can be accessed at `self.config` which stores the configurations used for this experiment. Certain config values are required when using the default methods: see [the documentation](#sorrel.experiment.Experiment) for more details.
+
+Like `Agent`, `Experiment` requires us to implement two abstract methods.
+
+The first is {func}`sorrel.experiment.Experiment.setup_agents`, where we create the agents used in this specific experiment and save them in the attribute `self.agents`:
+
 ```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
-:pyobject: run
+:pyobject: TreasurehuntExperiment.setup_agents
 ```
 
-Finally, write the main block:
+The second is {func}`sorrel.experiment.Experiment.populate_environment`, where we create all entities and populate `self.env` with the entities as well as the agents.
 ```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
-:start-after: begin main
+:pyobject: TreasurehuntExperiment.populate_environment
+```
+
+```{eval-rst}
+.. note::
+   We had to work around :code:`np.random.choice` a little in order to use it. 
+   We have specifically avoided using `random.choices` because we would then need to seed np.random and random separately 
+   for reproducible results. It's generally a good idea to choose one random generator and only use that across the scope of your example.
+```
+
+Lastly, we will run the experiment. 
+Most of the work is done by calling the [Experiment.run()](#sorrel.experiment.Experiment.run) method. 
+
+```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
+:begin-after: begin main
 :end-before: end main
 ```
+
+Here, we use a dictionary to store our configs for the experiment and pass in constants for the environment parameters. In general, we recommend using configuration files for a more clean and centralized approach: here's a [quick tutorial](./configuration_files.md).
 
 And we're done! You can run this script from command line, and see the animations in `treasurehunt\data`.

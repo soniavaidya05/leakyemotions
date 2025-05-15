@@ -11,6 +11,7 @@ from sorrel.examples.treasurehunt.env import Treasurehunt
 # end imports
 
 
+# begin treasurehunt agent
 class TreasurehuntAgent(Agent[Treasurehunt]):
     """A treasurehunt agent that uses the iqn model."""
 
@@ -18,14 +19,11 @@ class TreasurehuntAgent(Agent[Treasurehunt]):
         super().__init__(observation_spec, action_spec, model)
         self.sprite = Path(__file__).parent / "./assets/hero.png"
 
-    # def reset(self) -> None:
-    #     """Resets the agent by fill in blank images for the memory buffer."""
-    #     state = np.zeros_like(np.prod(self.model.input_size))
-    #     action = 0
-    #     reward = 0.0
-    #     done = False
-    #     for i in range(self.model.num_frames):
-    #         self.add_memory(state, action, reward, done)
+    # end constructor
+
+    def reset(self) -> None:
+        """Resets the agent by fill in blank images for the memory buffer."""
+        self.model.reset()
 
     def pov(self, env: Treasurehunt) -> np.ndarray:
         """Returns the state observed by the agent, from the flattened visual field."""

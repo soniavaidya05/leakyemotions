@@ -6,7 +6,6 @@ from pathlib import Path
 import numpy as np
 
 from sorrel.entities import Entity
-from sorrel.environments import GridworldEnv
 from sorrel.examples.treasurehunt.env import Treasurehunt
 
 # end imports

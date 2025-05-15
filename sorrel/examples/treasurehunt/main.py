@@ -1,7 +1,5 @@
 # begin imports
 # general imports
-from pathlib import Path
-
 import numpy as np
 import torch
 
@@ -16,48 +14,45 @@ from sorrel.experiment import Experiment
 # sorrel imports
 from sorrel.models.pytorch import PyTorchIQN
 from sorrel.observation.observation_spec import OneHotObservationSpec
-from sorrel.utils.logging import ConsoleLogger
-from sorrel.utils.visualization import (
-    ImageRenderer,
-    animate,
-    image_from_array,
-    render_sprite,
-)
 
 # end imports
 
-# begin parameters
-EPOCHS = 500
-MAX_TURNS = 100
-EPSILON_DECAY = 0.0001
-ENTITY_LIST = ["EmptyEntity", "Wall", "Sand", "Gem", "TreasurehuntAgent"]
-RECORD_PERIOD = 50  # how many epochs in each data recording period
-# end parameters
 
-
+# begin treasurehunt experiment
 class TreasurehuntExperiment(Experiment[Treasurehunt]):
     """The experiment for treasurehunt."""
 
     def __init__(self, env: Treasurehunt, config: dict) -> None:
         super().__init__(env, config)
 
+    # end constructor
+
     def setup_agents(self):
-        """Set up the agents."""
+        """Create the agents for this experiment and assign them to self.agents.
+
+        Requires self.config.model.agent_vision_radius to be defined.
+        """
         agent_num = 2
         agents = []
         for _ in range(agent_num):
+            # create the observation spec
+            entity_list = ["EmptyEntity", "Wall", "Sand", "Gem", "TreasurehuntAgent"]
             observation_spec = OneHotObservationSpec(
-                ENTITY_LIST,
+                entity_list,
                 full_view=False,
+                # note that here we require self.config to have the entry model.agent_vision_radius
+                # don't forget to pass it in as part of config when creating this experiment!
                 vision_radius=self.config.model.agent_vision_radius,
             )
             observation_spec.override_input_size(
                 np.array(observation_spec.input_size).reshape(1, -1).tolist()
             )
+
+            # create the action spec
             action_spec = ActionSpec(["up", "down", "left", "right"])
 
+            # create the model
             model = PyTorchIQN(
-                # the agent can see r blocks on each side, so the size of the observation is (2r+1) * (2r+1)
                 input_size=observation_spec.input_size,
                 action_space=action_spec.n_actions,
                 layer_size=250,
@@ -90,8 +85,9 @@ class TreasurehuntExperiment(Experiment[Treasurehunt]):
         """Populate the treasurehunt world by creating walls, then randomly spawning the
         agents.
 
-        Note that every space is already filled with EmptyEntity as part of
-        super().__init__().
+        Note that self.env.world is already created with the specified dimensions, and
+        every space is filled with EmptyEntity, as part of super().__init__() when this
+        experiment is constructed.
         """
         valid_spawn_locations = []
 
@@ -125,26 +121,28 @@ if __name__ == "__main__":
     # object configurations
     configs = {
         "experiment": {
-            "epochs": EPOCHS,
-            "max_turns": MAX_TURNS,
-            "record_period": RECORD_PERIOD,
+            "epochs": 500,
+            "max_turns": 100,
+            "record_period": 0.0001,
         },
         "model": {
             "agent_vision_radius": 2,
-            "epsilon_decay": EPSILON_DECAY,
+            "epsilon_decay": 50,
         },
     }
-    world_height = 10
-    world_width = 10
-    gem_value = 10
-    spawn_prob = 0.002
-    agent_vision_radius = 2
 
-    # make the environment
+    # construct the environment
     env = Treasurehunt(
-        world_height, world_width, EmptyEntity(), gem_value, spawn_prob, MAX_TURNS
+        height=10,
+        width=10,
+        default_entity=EmptyEntity(),
+        gem_value=10,
+        spawn_prob=0.02,
+        max_turns=100,
     )
+    # construct the experiment
     experiment = TreasurehuntExperiment(env, configs)
+    # run the experiment with default parameters
     experiment.run()
 
 # end main

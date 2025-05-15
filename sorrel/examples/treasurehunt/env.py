@@ -8,6 +8,7 @@ from sorrel.environments import GridworldEnv
 # end imports
 
 
+# begin treasurehunt
 class Treasurehunt(GridworldEnv):
     """Treasurehunt environment."""
 
@@ -18,3 +19,6 @@ class Treasurehunt(GridworldEnv):
         self.gem_value = gem_value
         self.spawn_prob = spawn_prob
         self.max_turns = max_turns
+
+
+# end treasurehunt
