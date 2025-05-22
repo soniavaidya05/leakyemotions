@@ -6,17 +6,20 @@ from omegaconf import DictConfig, OmegaConf
 from sorrel.agents import Agent
 from sorrel.environments import GridworldEnv
 from sorrel.utils.logging import ConsoleLogger, Logger
-
-# TODO: change animate to animate_gif
-from sorrel.utils.visualization import (
-    ImageRenderer,
-    animate_gif,
-    image_from_array,
-    render_sprite,
-)
+from sorrel.utils.visualization import ImageRenderer
 
 
 class Experiment[E: GridworldEnv]:
+    """An abstract wrapper class for running experiments with agents and environments.
+
+    Attributes:
+        env: The environment to run the experiment in.
+        config: The configurations for the experiment.
+
+            .. note::
+                Some default methods provided by this class, such as `run`, require certain config parameters to be defined.
+                These parameters are listed in the docstring of the method.
+    """
 
     env: E
     config: DictConfig
@@ -40,10 +43,18 @@ class Experiment[E: GridworldEnv]:
 
     @abstractmethod
     def setup_agents(self) -> None:
+        """This method should create a list of agents, and assign it to self.agents."""
         pass
 
     @abstractmethod
     def populate_environment(self) -> None:
+        """This method should populate self.env.world.
+
+        Note that self.env.world is already created with the specified dimensions, and
+        every space is filled with the default entity of the environment, as part of
+        self.env.create_world() when this experiment is constructed. One simply needs to
+        place the agents and any additional entitites in self.env.world.
+        """
         pass
 
     def reset(self) -> None:
@@ -59,10 +70,15 @@ class Experiment[E: GridworldEnv]:
     ) -> None:
         """Run the experiment.
 
-        If animate is true,
-        animates the experiment every record_period (determined by `self.config.experiment.record_period`).
+        Required config parameters:
+            - experiment.epochs: The number of epochs to run the experiment for.
+            - experiment.max_turns: The maximum number of turns each epoch.
+            - (Only if `animate` is true) experiment.record_period: The time interval at which to record the experiment.
 
-        If logging is true, logs the total loss and total rewards each epoch.
+        If `animate` is true,
+        animates the experiment every `self.config.experiment.record_period` epochs.
+
+        If `logging` is true, logs the total loss and total rewards each epoch.
 
         Args:
             animate: Whether to animate the experiment. Defaults to True.

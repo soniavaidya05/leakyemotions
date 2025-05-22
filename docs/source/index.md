@@ -25,6 +25,7 @@ reference/observation
 reference/config
 reference/location
 reference/utils
+reference/experiment
 ```
 
 ```{toctree}
