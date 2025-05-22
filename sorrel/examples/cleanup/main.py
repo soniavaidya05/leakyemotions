@@ -20,7 +20,7 @@ from sorrel.models.pytorch import PyTorchIQN
 from sorrel.utils.logging import ConsoleLogger
 from sorrel.utils.visualization import (
     ImageRenderer,
-    animate,
+    animate_gif,
     image_from_array,
     render_sprite,
 )

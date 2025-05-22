@@ -8,8 +8,12 @@ from sorrel.environments import GridworldEnv
 from sorrel.utils.logging import ConsoleLogger, Logger
 
 # TODO: change animate to animate_gif
-from sorrel.utils.visualization import animate as animate_gif
-from sorrel.utils.visualization import image_from_array, render_sprite
+from sorrel.utils.visualization import (
+    ImageRenderer,
+    animate_gif,
+    image_from_array,
+    render_sprite,
+)
 
 
 class Experiment[E: GridworldEnv]:
@@ -65,7 +69,13 @@ class Experiment[E: GridworldEnv]:
             logging: Whether to log the experiment. Defaults to True.
             logger: The logger to use. Defaults to a ConsoleLogger.
         """
-        imgs = []
+        renderer = None
+        if animate:
+            renderer = ImageRenderer(
+                experiment_name=self.env.__class__.__name__,
+                record_period=self.config.experiment.record_period,
+                num_turns=self.config.experiment.max_turns,
+            )
         for epoch in range(self.config.experiment.epochs + 1):
             # Reset the environment at the start of each epoch
             self.reset()
@@ -76,20 +86,14 @@ class Experiment[E: GridworldEnv]:
 
             # run the environment for the specified number of turns
             while not self.env.turn >= self.config.experiment.max_turns:
-                if animate and epoch % self.config.experiment.record_period == 0:
-                    full_sprite = render_sprite(self.env)
-                    imgs.append(image_from_array(full_sprite))
-
+                # renderer should never be None if animate is true; this is just written for pyright to not complain
+                if animate and renderer is not None:
+                    renderer.add_image(self.env, epoch)
                 self.env.take_turn()
 
             # generate the gif if animate is true
-            if animate and epoch % self.config.experiment.record_period == 0:
-                animate_gif(
-                    imgs,
-                    f"{self.env.__class__.__name__}_epoch{epoch}",
-                    Path(__file__).parent / "./data/",
-                )
-                imgs = []
+            if animate and renderer is not None:
+                renderer.save_gif(epoch, Path(__file__).parent / "./data/")
 
             # At the end of each epoch, train the agents.
             total_loss = 0

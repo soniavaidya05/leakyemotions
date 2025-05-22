@@ -191,7 +191,7 @@ def image_from_figure(fig) -> img.Image:
     return image
 
 
-def animate(
+def animate_gif(
     frames: Sequence[PngImageFile],
     filename: str,
     folder: str | os.PathLike,
@@ -264,7 +264,7 @@ class ImageRenderer:
             folder (os.PathLike): The destination folder.
         """
         if epoch % self.record_period == 0:
-            animate(self.frames, f"{self.experiment_name}_epoch{epoch}", folder)
+            animate_gif(self.frames, f"{self.experiment_name}_epoch{epoch}", folder)
             # Clear frames
             self.clear()
 
