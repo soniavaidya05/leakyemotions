@@ -123,11 +123,11 @@ if __name__ == "__main__":
         "experiment": {
             "epochs": 500,
             "max_turns": 100,
-            "record_period": 0.0001,
+            "record_period": 50,
         },
         "model": {
             "agent_vision_radius": 2,
-            "epsilon_decay": 50,
+            "epsilon_decay": 0.0001,
         },
     }
 
