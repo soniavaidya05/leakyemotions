@@ -111,7 +111,7 @@ class ConsoleLogger(Logger):
             print(f"╠══════════════╬══════════════╬══════════════╣")
         # Print turn
         print(
-            f"║ Epoch: {str(epoch).rjust(5)} ║ Loss: {str(loss).rjust(6)} ║ Reward: {str(reward).rjust(4)} ║"
+            f"║ Epoch:{str(epoch).rjust(6)} ║ Loss:{str(loss).rjust(7)} ║ Reward:{str(reward).rjust(5)} ║"
         )
         print(f"╚══════════════╩══════════════╩══════════════╝", end="\r")
         if epoch == self.max_epochs - 1:
@@ -135,7 +135,7 @@ class JupyterLogger(Logger):
         clear_output(wait=True)
         print(f"╔══════════════╦══════════════╦══════════════╗")
         print(
-            f"║ Epoch: {str(epoch).rjust(5)} ║ Loss: {str(loss).rjust(6)} ║ Reward: {str(reward).rjust(4)} ║"
+            f"║ Epoch:{str(epoch).rjust(6)} ║ Loss:{str(loss).rjust(7)} ║ Reward:{str(reward).rjust(5)} ║"
         )
         print(f"╚══════════════╩══════════════╩══════════════╝")
         super().record_turn(epoch, loss, reward, epsilon, **kwargs)
