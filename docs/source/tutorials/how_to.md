@@ -97,7 +97,7 @@ We make our custom constructor:
 :end-before: end constructor
 ```
 
-We will use {class}`sorrel.observation.obvservation_spec.OneHotObservationSpec` for `TreasurehuntAgent`'s observation, {class}`sorrel.action.action_spec.ActionSpec` for `TreasurehuntAgent`'s actions, and {class}`sorrel.models.pytorch.PyTorchIQN` for `TreasurehuntAgent`'s model.
+We will use {py:obj}`sorrel.observation.obvservation_spec.OneHotObservationSpec` for `TreasurehuntAgent`'s observation, {py:obj}`sorrel.action.action_spec.ActionSpec` for `TreasurehuntAgent`'s actions, and `sorrel.models.pytorch.PyTorchIQN` for `TreasurehuntAgent`'s model.
 We do not create them in this file (they will be passed into `TreasurehuntAgent`'s constructor externally), 
 but we will use the functionality that they provide by accessing the attributes of this class.
 

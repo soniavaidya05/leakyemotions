@@ -7,7 +7,7 @@ It is recommended that the constructors of your customized primitive classes use
 especially attributes that may need to be tweaked between different experiments.
 
 
-# Basic Usage Example
+## Basic Usage Example
 
 Suppose that you expect to tweak the number of apples in your environment frequently.
 You might create a config ``yaml`` file that contains the following lines:
