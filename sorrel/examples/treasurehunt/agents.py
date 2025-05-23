@@ -6,13 +6,13 @@ from pathlib import Path
 import numpy as np
 
 from sorrel.agents import Agent
-from sorrel.examples.treasurehunt.env import Treasurehunt
+from sorrel.examples.treasurehunt.world import TreasurehuntWorld
 
 # end imports
 
 
 # begin treasurehunt agent
-class TreasurehuntAgent(Agent[Treasurehunt]):
+class TreasurehuntAgent(Agent[TreasurehuntWorld]):
     """A treasurehunt agent that uses the iqn model."""
 
     def __init__(self, observation_spec, action_spec, model):
@@ -25,9 +25,9 @@ class TreasurehuntAgent(Agent[Treasurehunt]):
         """Resets the agent by fill in blank images for the memory buffer."""
         self.model.reset()
 
-    def pov(self, env: Treasurehunt) -> np.ndarray:
+    def pov(self, world: TreasurehuntWorld) -> np.ndarray:
         """Returns the state observed by the agent, from the flattened visual field."""
-        image = self.observation_spec.observe(env, self.location)
+        image = self.observation_spec.observe(world, self.location)
         # flatten the image to get the state
         return image.reshape(1, -1)
 
@@ -40,7 +40,7 @@ class TreasurehuntAgent(Agent[Treasurehunt]):
         action = self.model.take_action(model_input)
         return action
 
-    def act(self, env: Treasurehunt, action: int) -> float:
+    def act(self, world: TreasurehuntWorld, action: int) -> float:
         """Act on the environment, returning the reward."""
 
         # Translate the model output to an action string
@@ -57,14 +57,14 @@ class TreasurehuntAgent(Agent[Treasurehunt]):
             new_location = (self.location[0], self.location[1] + 1, self.location[2])
 
         # get reward obtained from object at new_location
-        target_object = env.observe(new_location)
+        target_object = world.observe(new_location)
         reward = target_object.value
 
         # try moving to new_location
-        env.move(self, new_location)
+        world.move(self, new_location)
 
         return reward
 
-    def is_done(self, env: Treasurehunt) -> bool:
+    def is_done(self, world: TreasurehuntWorld) -> bool:
         """Returns whether this Agent is done."""
-        return env.turn >= env.max_turns
+        return world.is_done

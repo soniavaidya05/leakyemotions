@@ -3,7 +3,7 @@ from typing import Sequence
 
 import numpy as np
 
-from sorrel.environments import GridworldEnv
+from sorrel.worlds import Gridworld
 from sorrel.observation.visual_field import visual_field, visual_field_ascii
 from sorrel.utils.helpers import one_hot_encode
 
@@ -13,7 +13,7 @@ class ObservationSpec[T: (np.ndarray, str)]():
     Sorrel agents.
 
     Attributes:
-        entity_map: A mapping of the kinds of entities in the environment to their appearances.
+        entity_map: A mapping of the kinds of entities in the world totheir appearances.
         vision_radius: The radius of the agent's vision if full_view is False, 0 if full_view is True.
         full_view: A boolean that determines whether the agent can see the entire environment.
         input_size: An int or sequence of ints that indicates the size of the observation.
@@ -68,13 +68,13 @@ class ObservationSpec[T: (np.ndarray, str)]():
     @abstractmethod
     def observe(
         self,
-        env: GridworldEnv,
+        world: Gridworld,
         location: tuple | None = None,
     ) -> np.ndarray:
         """Basic environment observation function.
 
         Args:
-            env: The environment to observe.
+            world: The world toobserve.
             location: The location of the observer. Must be provided if full_view is False.
             If full_view is True, this parameter is ignored.
 
@@ -110,7 +110,7 @@ class OneHotObservationSpec(ObservationSpec[np.ndarray]):
     take the form of one-hot encodings.
 
     Attributes:
-        entity_map: A mapping of the kinds of entities in the environment to their appearances.
+        entity_map: A mapping of the kinds of entities in the world totheir appearances.
         vision_radius: The radius of the agent's vision if full_view is False, 0 if full_view is True.
         full_view: A boolean that determines whether the agent can see the entire environment.
         input_size: An int or sequence of ints that indicates the size of the observation.
@@ -162,7 +162,7 @@ class OneHotObservationSpec(ObservationSpec[np.ndarray]):
 
     def observe(
         self,
-        env: GridworldEnv,
+        world: Gridworld,
         location: tuple | None = None,
     ) -> np.ndarray:
         """Observes the environment using :py:func:`.visual_field()`.
@@ -170,7 +170,7 @@ class OneHotObservationSpec(ObservationSpec[np.ndarray]):
         Overrides :py:meth:`ObservationSpec.observe()`.
 
         Args:
-            env: The environment to observe.
+            world: The world toobserve.
             location: The location of the observer. Must be provided if full_view is False.
             If full_view is True, this parameter is ignored.
 
@@ -185,7 +185,7 @@ class OneHotObservationSpec(ObservationSpec[np.ndarray]):
         if self.full_view:
             location = None
         return visual_field(
-            env=env,
+            world=world,
             entity_map=self.entity_map,
             vision=self.vision_radius if not self.full_view else None,
             location=location,
@@ -197,7 +197,7 @@ class AsciiObservationSpec(ObservationSpec[str]):
     take the form of ascii representations.
 
     Attributes:
-        entity_map: A mapping of the kinds of entities in the environment to their appearances.
+        entity_map: A mapping of the kinds of entities in the world totheir appearances.
         vision_radius: The radius of the agent's vision if full_view is False, 0 if full_view is True.
         full_view: A boolean that determines whether the agent can see the entire environment.
         input_size: An int or sequence of ints that indicates the size of the observation.
@@ -265,7 +265,7 @@ class AsciiObservationSpec(ObservationSpec[str]):
 
     def observe(
         self,
-        env: GridworldEnv,
+        world: Gridworld,
         location: tuple | None = None,
     ) -> np.ndarray:
         """Observes the environment using :py:func:`.visual_field_ascii()`.
@@ -273,7 +273,7 @@ class AsciiObservationSpec(ObservationSpec[str]):
         Overrides :py:meth:`ObservationSpec.observe()`.
 
         Args:
-            env: The environment to observe.
+            world: The world toobserve.
             location: The location of the observer. Must be provided if full_view is False.
             If full_view is True, this parameter is ignored.
 
@@ -288,7 +288,7 @@ class AsciiObservationSpec(ObservationSpec[str]):
         if self.full_view:
             location = None
         return visual_field_ascii(
-            env=env,
+            world=world,
             entity_map=self.entity_map,
             vision=self.vision_radius if not self.full_view else None,
             location=location,

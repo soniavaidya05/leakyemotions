@@ -1,18 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sorrel.environments import GridworldEnv
+from sorrel.worlds import Gridworld
 from sorrel.location import Location
 
 
 def positional_embedding(
-    location: tuple | Location, env: GridworldEnv, scale: tuple[int, int]
+    location: tuple | Location, world: Gridworld, scale: tuple[int, int]
 ) -> np.ndarray:
     """Get the embedding value for a location within an environment.
 
     Args:
         location: (tuple | Location) The location to be embedded.
-        env: (GridworldEnv) The gridworld environment within which embeddings should be computed.
+        world: (Gridworld) The gridworld environment within which embeddings should be computed.
         scale: (tuple[int, int]) The scale for encoding coordinates in the X and Y dimensions.
 
     Returns:
@@ -23,7 +23,7 @@ def positional_embedding(
 
     # Initialize embedding list for the given coordinate (x, y)
     x, y = location[0:2]
-    grid_size = env.world.shape[0:2]
+    grid_size = world.map.shape[0:2]
     embedding = []
 
     # Encoding for x dimension at different resolutions

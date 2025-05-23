@@ -23,7 +23,7 @@ env:
 
 And write the constructor like so:
 ```python
-class MyGridworldEnv(GridworldEnv):
+class MyGridworld(Gridworld):
 
     num_apples: int
     num_bananas: int
@@ -39,7 +39,7 @@ Finally, tell Hydra which config file to use in the main function where you run 
 
 @hydra.main(version_base=None, config_path="<path to configs folder>", config_name="<config file name>")
 def main(cfg: DictConfig):
-  env = MyGridworldEnv(config=cfg, num_bananas=2)
+  env = MyGridworld(config=cfg, num_bananas=2)
   # ...
 ```
 

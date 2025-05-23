@@ -1,49 +1,133 @@
-# --------------------------------- #
-# region: Imports                   #
-# --------------------------------- #
-
-# Import base packages
+# ------------------------ #
+# region: Imports          #
+# general imports
 import numpy as np
+import torch
 
-# Import sorrel-specific packages
-from sorrel.entities import Entity
-from sorrel.environments import GridworldEnv
+# sorrel imports
+from sorrel.action.action_spec import ActionSpec
+from sorrel.examples.cleanup.agents import CleanupAgent, CleanupObservation
+from sorrel.examples.cleanup.entities import (
+    Apple,
+    AppleTree,
+    EmptyEntity,
+    Pollution,
+    River,
+    Sand,
+    Wall,
+)
+from sorrel.examples.cleanup.world import CleanupWorld
+from sorrel.environment import Environment
+from sorrel.models.pytorch import PyTorchIQN
 
-# --------------------------------- #
-# endregion: Imports                #
-# --------------------------------- #
+# endregion                #
+# ------------------------ #
+
+# Experiment parameters
+ENTITY_LIST = [
+    "EmptyEntity",
+    "Wall",
+    "River",
+    "Pollution",
+    "AppleTree",
+    "Apple",
+    "CleanBeam",
+    "ZapBeam",
+    "CleanupAgent",
+]
 
 
-class Cleanup(GridworldEnv):
-    """Cleanup Environment."""
+class CleanupEnv(Environment[CleanupWorld]):
 
-    def __init__(self, cfg, default_entity: Entity):
-        self.cfg = cfg
-        self.channels = (
-            cfg.agent.agent.obs.channels
-        )  # default: # of entity classes + 1 (agent class) + 2 (beam types)
-        self.full_mdp = cfg.env.full_mdp
-        self.object_layer = 0
-        self.agent_layer = 1
-        self.beam_layer = 2
-        self.pollution = 0
-        super().__init__(cfg.env.height, cfg.env.width, cfg.env.layers, default_entity)
-        self.mode = cfg.env.mode
-        self.max_turns = cfg.experiment.max_turns
-        self.pollution_threshold = cfg.env.pollution_threshold
-        self.pollution_spawn_chance = cfg.env.pollution_spawn_chance
-        self.apple_spawn_chance = cfg.env.apple_spawn_chance
-        self.initial_apples = cfg.env.initial_apples
-        self.turn = 0
+    def setup_agents(self):
+        """Set up the agents."""
+        agents = []
+        for _ in range(self.config.agent.agent.num):
+            agent_vision_radius = self.config.agent.agent.obs.vision
+            observation_spec = CleanupObservation(
+                entity_list=ENTITY_LIST, vision_radius=agent_vision_radius
+            )
+            action_spec = ActionSpec(["up", "down", "left", "right", "clean", "zap"])
 
-    def measure_pollution(self) -> float:
-        pollution_tiles = 0
-        river_tiles = 0
-        for index, x in np.ndenumerate(self.world):
-            x: Entity
-            if x.kind == "Pollution":
-                pollution_tiles += 1
-                river_tiles += 1
-            elif x.kind == "River":
-                river_tiles += 1
-        return pollution_tiles / river_tiles
+            model = PyTorchIQN(
+                input_size=observation_spec.input_size,
+                action_space=action_spec.n_actions,
+                seed=torch.random.seed(),
+                n_frames=self.config.agent.agent.obs.n_frames,
+                **self.config.model.iqn.parameters,
+            )
+
+            # if "load_weights" in kwargs:
+            #     path = kwargs.get("load_weights")
+            #     if isinstance(path, str | os.PathLike):
+            #         model.load(file_path=path)
+
+            agents.append(
+                CleanupAgent(
+                    observation_spec=observation_spec,
+                    action_spec=action_spec,
+                    model=model,
+                )
+            )
+
+        self.agents = agents
+
+    def populate_environment(self):
+        spawn_points = []
+        apple_spawn_points = []
+
+        # First, create the walls
+        for index in np.ndindex(self.world.map.shape):
+            H, W, L = index
+
+            # If the index is the first or last, replace the location with a wall
+            if H in [0, self.world.height - 1] or W in [0, self.world.width - 1]:
+                self.world.add(index, Wall())
+            # Define river, orchard, and potential agent spawn points
+            elif L == 0:
+                if self.world.mode != "APPLE":
+                    # Top third = river (plus section that extends further down)
+                    if (H > 0 and H < (self.world.height // 3)) or (
+                        H < ((self.world.height // 3) * 2 - 1)
+                        and W in [self.world.width // 3, 1 + self.world.width // 3]
+                    ):
+                        self.world.add(index, River())
+                    # Bottom third = orchard
+                    elif H > (self.world.height - 1 - (self.world.height // 3)) and H < (
+                        self.world.height - 1
+                    ):
+                        self.world.add(index, AppleTree())
+                        apple_spawn_points.append(index)
+                    # Middle third = potential agent spawn points
+                    else:
+                        self.world.add(index, Sand())
+                        spawn_index = [index[0], index[1], self.world.agent_layer]
+                        spawn_points.append(spawn_index)
+                else:
+                    self.world.add(index, AppleTree())
+                    if ((H % 2) == 0) and ((W % 2) == 0):
+                        spawn_index = [index[0], index[1], self.world.agent_layer]
+                        spawn_points.append(spawn_index)
+                    else:
+                        apple_spawn_points.append(index)
+
+        # Place apples randomly based on the spawn points chosen
+        loc_index = np.random.choice(
+            len(apple_spawn_points), size=self.world.initial_apples, replace=False
+        )
+        locs = [apple_spawn_points[i] for i in loc_index]
+        for loc in locs:
+            loc = tuple(loc)
+            self.world.add(loc, Apple())
+
+        # Place agents randomly based on the spawn points chosen
+        loc_index = np.random.choice(
+            len(spawn_points), size=len(self.agents), replace=False
+        )
+        locs = [spawn_points[i] for i in loc_index]
+        for loc, agent in zip(locs, self.agents):
+            loc = tuple(loc)
+            self.world.add(loc, agent)
+
+
+

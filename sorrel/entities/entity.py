@@ -6,7 +6,7 @@ from typing import Optional
 # ----------------------------------------------------- #
 
 
-class Entity[E]:
+class Entity[W]:
     """Base element class. Defines the non-optional initialization parameters for all
     entities.
 
@@ -56,12 +56,12 @@ class Entity[E]:
         """Sets the location of the object."""
         self._location = value
 
-    def transition(self, env: E):
+    def transition(self, world: W):
         """Change the environment in some way.
 
         By default, this function does nothing.
 
         Args:
-            env (GridWorldEnv): the environment to enact transition to.
+            env (Gridworld): The world toenact transition to.
         """
         pass  # Entities do not have a transition function by default

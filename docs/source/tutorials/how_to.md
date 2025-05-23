@@ -62,8 +62,8 @@ Therefore, we expect them to be attributes of our custom `Treasurehunt` environm
 
 ## The Environment
 In ``env.py``, we will create the environment of our experiment: `Treasurehunt`. 
-It will extend the base `GridworldEnv` class provided by Sorrel; 
-see {py:obj}`sorrel.environments.GridworldEnv` for its attributes and methods.
+It will extend the base `Gridworld` class provided by Sorrel; 
+see {py:obj}`sorrel.worlds.Gridworld` for its attributes and methods.
 
 We write the import statements:
 ```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
@@ -71,7 +71,7 @@ We write the import statements:
 :end-before: end imports
 ```
 
-We create the constructor. In addition to the attributes from `GridworldEnv`, we add the attributes `self.gem_value` 
+We create the constructor. In addition to the attributes from `Gridworld`, we add the attributes `self.gem_value` 
 and `self.spawn_prob` as noted above. We also add the attributes `self.max_turns` so that it can be accessed by the agents to determine if they are Done after an action.
 ```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
 :start-after: begin treasurehunt
@@ -122,12 +122,12 @@ and pass the stacked frames (as a horizontal vector) into the model to obtain th
 ```
 
 To implement {func}`sorrel.agents.Agent.act`, we calculate the new location based on the action taken, 
-record the reward obtained based on the entity at the new location, then try to move the agent to the new location using the provided [GridworldEnv.move()](#sorrel.environments.GridworldEnv.move). 
+record the reward obtained based on the entity at the new location, then try to move the agent to the new location using the provided [Gridworld.move()](#sorrel.worlds.Gridworld.move). 
 ```{literalinclude} /../../sorrel/examples/treasurehunt/agents.py
 :pyobject: TreasurehuntAgent.act
 ```
 
-Finally, we implement {func}`sorrel.agents.Agent.is_done` by checking if the current turn (tracked by default in [GridworldEnv.turn](#sorrel.environments.GridworldEnv.turn)) 
+Finally, we implement {func}`sorrel.agents.Agent.is_done` by checking if the current turn (tracked by default in [Gridworld.turn](#sorrel.worlds.Gridworld.turn)) 
 exceeds the maximum number of turns. 
 ```{literalinclude} /../../sorrel/examples/treasurehunt/agents.py
 :pyobject: TreasurehuntAgent.is_done
@@ -143,24 +143,24 @@ First, we make our imports as usual:
 :end-before: end imports
 ```
 
-We will now write our custom experiment class by inheriting the {class}`sorrel.experiment.Experiment` class that has an already implemented [run()](#sorrel.experiment.Experiment.run) method which will run the experiment for us. Much like the custom entities and agents, we need to specify the environment this custom experiment is using when inheriting from the generic experiment.
+We will now write our custom experiment class by inheriting the {class}`sorrel.environment.Environment` class that has an already implemented [run()](#sorrel.environment.Environment.run) method which will run the experiment for us. Much like the custom entities and agents, we need to specify the environment this custom experiment is using when inheriting from the generic experiment.
 
 ```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
 :start-after: begin treasurehunt experiment
 :end-before: end constructor
 ```
 
-Note that the experiment takes in a `config` that can be accessed at `self.config` which stores the configurations used for this experiment. Certain config values are required when using the default methods: see [the documentation](#sorrel.experiment.Experiment) for more details.
+Note that the experiment takes in a `config` that can be accessed at `self.config` which stores the configurations used for this experiment. Certain config values are required when using the default methods: see [the documentation](#sorrel.environment.Environment) for more details.
 
 Like `Agent`, `Experiment` requires us to implement two abstract methods.
 
-The first is {func}`sorrel.experiment.Experiment.setup_agents`, where we create the agents used in this specific experiment and save them in the attribute `self.agents`:
+The first is {func}`sorrel.environment.Environment.setup_agents`, where we create the agents used in this specific experiment and save them in the attribute `self.agents`:
 
 ```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
 :pyobject: TreasurehuntExperiment.setup_agents
 ```
 
-The second is {func}`sorrel.experiment.Experiment.populate_environment`, where we create all entities and populate `self.env` with the entities as well as the agents.
+The second is {func}`sorrel.environment.Environment.populate_environment`, where we create all entities and populate `self.env` with the entities as well as the agents.
 ```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
 :pyobject: TreasurehuntExperiment.populate_environment
 ```
@@ -173,7 +173,7 @@ The second is {func}`sorrel.experiment.Experiment.populate_environment`, where w
 ```
 
 Lastly, we will run the experiment. 
-Most of the work is done by calling the [Experiment.run()](#sorrel.experiment.Experiment.run) method. 
+Most of the work is done by calling the [Experiment.run()](#sorrel.environment.Environment.run) method. 
 
 ```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
 :start-after: begin main
