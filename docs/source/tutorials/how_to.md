@@ -146,7 +146,7 @@ First, we make our imports as usual:
 We will now write our custom experiment class by inheriting the {class}`sorrel.experiment.Experiment` class that has an already implemented [run()](#sorrel.experiment.Experiment.run) method which will run the experiment for us. Much like the custom entities and agents, we need to specify the environment this custom experiment is using when inheriting from the generic experiment.
 
 ```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
-:begin-after: begin treasurehunt experiment
+:start-after: begin treasurehunt experiment
 :end-before: end constructor
 ```
 
@@ -176,7 +176,7 @@ Lastly, we will run the experiment.
 Most of the work is done by calling the [Experiment.run()](#sorrel.experiment.Experiment.run) method. 
 
 ```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
-:begin-after: begin main
+:start-after: begin main
 :end-before: end main
 ```
 
