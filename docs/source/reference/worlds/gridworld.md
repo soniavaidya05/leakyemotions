@@ -12,7 +12,6 @@
 .. automethod:: sorrel.worlds.Gridworld.remove
 .. automethod:: sorrel.worlds.Gridworld.move
 .. automethod:: sorrel.worlds.Gridworld.observe
-.. automethod:: sorrel.worlds.Gridworld.take_turn
 .. automethod:: sorrel.worlds.Gridworld.valid_location
 ```
 

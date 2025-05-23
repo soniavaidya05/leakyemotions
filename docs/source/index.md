@@ -19,12 +19,12 @@ tutorials/model_wrapping
 
 reference/agents
 reference/entities
-reference/environments
+reference/worlds
 reference/models
 reference/observation
 reference/location
 reference/utils
-reference/experiment
+reference/environment
 ```
 
 ```{toctree}

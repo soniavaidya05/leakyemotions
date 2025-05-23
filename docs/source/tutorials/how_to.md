@@ -1,6 +1,6 @@
 # How to Create a Custom Experiment
 
-We will explore how you can create your own custom experiment with a tutorial through a simple example, Treasurehunt. 
+We will explore how you can create your own custom experiment with a tutorial through a simple example, Treasure Hunt. 
 In this example, the evironment contains agents with full vision who can only move up, down, left or right, 
 as well as gems that have a random chance of spawning on empty spaces. 
 The agents' level of success will be measured by the game score, which is determined by how many gems that they pick up.
@@ -18,12 +18,13 @@ treasurehunt
 ├── agents.py
 ├── entities.py
 ├── env.py
-└── main.py
+├── main.py
+└── world.py
 ```
 
-We will create a custom environment named `Treasurehunt`, custom entities `EmptyEntity`, `Wall`, `Sand`, and `Gem`, and a custom agent `TreasurehuntAgent`.
-The environment will have two layers: `TreasurehuntAgent` and `EmptyEntity` will be on the top layer, and `Sand` will be on the bottom layer.
-We will then write a `main.py` script that implements the custom experiment `TreasurehuntExperiment`, which will allow us to run and record the experiment.
+We will create a custom environment named `TreasurehuntEnv`, including a world `TreasurehuntWorld`, custom entities `EmptyEntity`, `Wall`, `Sand`, and `Gem`, and a custom agent `TreasurehuntAgent`.
+The world will have two layers: `TreasurehuntAgent` and `EmptyEntity` will be on the top layer, and `Sand` will be on the bottom layer.
+We will then write a `env.py` script that implements the custom environment `TreasurehuntEnv`, which will allow us to run and record the experiment.
 
 Let's get started!
 
@@ -61,24 +62,24 @@ Therefore, we expect them to be attributes of our custom `Treasurehunt` environm
 ```
 
 ## The Environment
-In ``env.py``, we will create the environment of our experiment: `Treasurehunt`. 
+In ``world.py``, we will create the world for our environment: `TreasurehuntWorld`. 
 It will extend the base `Gridworld` class provided by Sorrel; 
 see {py:obj}`sorrel.worlds.Gridworld` for its attributes and methods.
 
 We write the import statements:
-```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
+```{literalinclude} /../../sorrel/examples/treasurehunt/world.py
 :start-after: begin imports
 :end-before: end imports
 ```
 
 We create the constructor. In addition to the attributes from `Gridworld`, we add the attributes `self.gem_value` 
 and `self.spawn_prob` as noted above. We also add the attributes `self.max_turns` so that it can be accessed by the agents to determine if they are Done after an action.
-```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
+```{literalinclude} /../../sorrel/examples/treasurehunt/world.py
 :start-after: begin treasurehunt
 :end-before: end treasurehunt
 ```
 
-Note that the environment is very barebones. The task of actually filling in the entities and constructing the world is delegated to our custom experiment class, as we will see in a moment.
+Note that the world is very barebones. The task of actually filling in the entities and constructing the world is delegated to our custom environment class, as we will see in a moment.
 
 ## The Agent
 In ``agents.py``, we will create the agent for our experiment: `TreasurehuntAgent`. 
@@ -133,36 +134,36 @@ exceeds the maximum number of turns.
 :pyobject: TreasurehuntAgent.is_done
 ```
 
-Now, we are all done with our custom classes. Time to set up the actual experiment!
+Now, we are all done with our custom classes. Time to set up the actual environment!
 
-## The Experiment Script: `main.py`
+## The Environment: `env.py`
 
 First, we make our imports as usual:
-```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
+```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
 :start-after: begin imports
 :end-before: end imports
 ```
 
-We will now write our custom experiment class by inheriting the {class}`sorrel.environment.Environment` class that has an already implemented [run()](#sorrel.environment.Environment.run) method which will run the experiment for us. Much like the custom entities and agents, we need to specify the environment this custom experiment is using when inheriting from the generic experiment.
+We will now write our custom environment class by inheriting the {class}`sorrel.environment.Environment` class that has an already implemented [run_experiment()](#sorrel.environment.Environment.run_experiment) method which will run the experiment for us. Much like the custom entities and agents, we need to specify the world this custom environment is using when inheriting from the generic environment.
 
-```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
-:start-after: begin treasurehunt experiment
+```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
+:start-after: begin treasurehunt environment
 :end-before: end constructor
 ```
 
-Note that the experiment takes in a `config` that can be accessed at `self.config` which stores the configurations used for this experiment. Certain config values are required when using the default methods: see [the documentation](#sorrel.environment.Environment) for more details.
+Note that the environment takes in a `config` that can be accessed at `self.config` which stores the configurations used for this experiment. Certain config values are required when using the default methods: see [the documentation](#sorrel.environment.Environment) for more details.
 
 Like `Agent`, `Experiment` requires us to implement two abstract methods.
 
-The first is {func}`sorrel.environment.Environment.setup_agents`, where we create the agents used in this specific experiment and save them in the attribute `self.agents`:
+The first is {func}`sorrel.environment.Environment.setup_agents`, where we create the agents used in this specific environment and save them in the attribute `self.agents`:
 
-```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
-:pyobject: TreasurehuntExperiment.setup_agents
+```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
+:pyobject: TreasurehuntEnv.setup_agents
 ```
 
 The second is {func}`sorrel.environment.Environment.populate_environment`, where we create all entities and populate `self.env` with the entities as well as the agents.
-```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
-:pyobject: TreasurehuntExperiment.populate_environment
+```{literalinclude} /../../sorrel/examples/treasurehunt/env.py
+:pyobject: TreasurehuntEnv.populate_environment
 ```
 
 ```{eval-rst}
@@ -172,8 +173,10 @@ The second is {func}`sorrel.environment.Environment.populate_environment`, where
    for reproducible results. It's generally a good idea to choose one random generator and only use that across the scope of your example.
 ```
 
+## The Experiment Script: `main.py`
+
 Lastly, we will run the experiment. 
-Most of the work is done by calling the [Experiment.run()](#sorrel.environment.Environment.run) method. 
+Most of the work is done by calling the [Experiment.run_experiment()](#sorrel.environment.Environment.run_experiment) method. 
 
 ```{literalinclude} /../../sorrel/examples/treasurehunt/main.py
 :start-after: begin main

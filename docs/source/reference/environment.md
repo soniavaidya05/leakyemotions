@@ -14,5 +14,6 @@
 ### Non-Abstract Methods
 ```{eval-rst}
 .. automethod:: sorrel.environment.Environment.reset
-.. automethod:: sorrel.environment.Environment.run
+.. automethod:: sorrel.environment.Environment.take_turn
+.. automethod:: sorrel.environment.Environment.run_experiment
 ```
