@@ -21,5 +21,6 @@
 .. automethod:: sorrel.models.base_model.BaseModel.set_epsilon
 .. automethod:: sorrel.models.base_model.BaseModel.start_epoch_action
 .. automethod:: sorrel.models.base_model.BaseModel.end_epoch_action
+.. automethod:: sorrel.models.base_model.BaseModel.reset
 ```
 

@@ -22,7 +22,6 @@ reference/entities
 reference/environments
 reference/models
 reference/observation
-reference/config
 reference/location
 reference/utils
 reference/experiment

@@ -97,14 +97,14 @@ We make our custom constructor:
 :end-before: end constructor
 ```
 
-We will use {class}`sorrel.observation.obvservation_spec.OneHotObservationSpec` for `TreasurehuntAgent`'s observation, {class}`sorrel.action.action_spec.AcionSpec` for `TreasurehuntAgent`'s actions, and {class}`sorrel.models.pytorch.PyTorchIQN` for `TreasurehuntAgent`'s model.
+We will use {class}`sorrel.observation.obvservation_spec.OneHotObservationSpec` for `TreasurehuntAgent`'s observation, {class}`sorrel.action.action_spec.ActionSpec` for `TreasurehuntAgent`'s actions, and {class}`sorrel.models.pytorch.PyTorchIQN` for `TreasurehuntAgent`'s model.
 We do not create them in this file (they will be passed into `TreasurehuntAgent`'s constructor externally), 
 but we will use the functionality that they provide by accessing the attributes of this class.
 
 Note that unlike the other base classes we've worked on top of so far, `Agent` is an abstract class, and every custom agent that extends it must implement the methods 
 `reset()`, `pov()`, `get_action()`, `act()`, and `is_done()`. Let's go through them one by one. 
 
-To implement {func}`sorrel.agents.Agent.reset`, we call the agent's model's reset function. This is [required of all sorrel models that inherit the base model class](#sorrel.models.BaseModel.reset), and here's the [specific implementation for the PytorchIQN model we will be using for this agent](#sorrel.models.pytorch.PyTorchIQN).
+To implement {func}`sorrel.agents.Agent.reset`, we call the agent's model's reset function. This is [required of all sorrel models that inherit the base model class](#sorrel.models.base_model.BaseModel.reset), and here's the [specific implementation for the PytorchIQN model we will be using for this agent](#sorrel.models.pytorch.PyTorchIQN).
 ```{literalinclude} /../../sorrel/examples/treasurehunt/agents.py
 :pyobject: TreasurehuntAgent.reset
 ```
