@@ -184,11 +184,7 @@ class CleanupAgent(Agent[Cleanup]):
                 self.encounters[target_object.kind] = 0
             self.encounters[target_object.kind] += 1
 
-            # Eat an apple tree.
-            if isinstance(target_object, Apple):
-                env.add(target_location, AppleTree())
-
-        env.game_score += reward
+        env.total_reward += reward
 
         # try moving to new_location
         env.move(self, new_location)
@@ -215,6 +211,7 @@ class Beam(Entity):
         super().__init__()
         self.sprite = Path(__file__).parent / "./assets/beam.png"
         self.turn_counter = 0
+        self.has_transitions = True
 
     def transition(self, env: GridworldEnv):
         # Beams persist for one full turn, then disappear.

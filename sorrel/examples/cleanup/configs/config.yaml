@@ -33,10 +33,11 @@ model:
       model_update_freq: 4
       epsilon: 0.8
       device: cpu
+  epsilon_decay: 0.0001
 
 agent:
   agent:
-    num: 1
+    num: 10
     model: iqn
     beam_radius: 3
     rotation: False
