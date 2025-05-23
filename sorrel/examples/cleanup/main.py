@@ -16,13 +16,13 @@ from omegaconf import DictConfig
 from sorrel.action.action_spec import ActionSpec
 from sorrel.examples.cleanup.agents import CleanupAgent, CleanupObservation
 from sorrel.examples.cleanup.entities import (
-    EmptyEntity,
-    Wall,
-    River,
-    Pollution,
-    AppleTree,
     Apple,
-    Sand
+    AppleTree,
+    EmptyEntity,
+    Pollution,
+    River,
+    Sand,
+    Wall,
 )
 from sorrel.examples.cleanup.env import Cleanup
 from sorrel.experiment import Experiment
@@ -43,6 +43,7 @@ ENTITY_LIST = [
     "ZapBeam",
     "CleanupAgent",
 ]
+
 
 class CleanupExperiment(Experiment[Cleanup]):
 
@@ -71,9 +72,11 @@ class CleanupExperiment(Experiment[Cleanup]):
 
             agents.append(
                 CleanupAgent(
-                    observation_spec=observation_spec, action_spec=action_spec, model=model
+                    observation_spec=observation_spec,
+                    action_spec=action_spec,
+                    model=model,
                 )
-            ) 
+            )
 
         self.agents = agents
 
@@ -134,9 +137,10 @@ class CleanupExperiment(Experiment[Cleanup]):
             loc = tuple(loc)
             self.env.add(loc, agent)
 
+
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def main(cfg: DictConfig):
-    
+
     # import argparse
     #
     # parser = argparse.ArgumentParser()
@@ -155,10 +159,11 @@ def main(cfg: DictConfig):
     # )
     # parser.add_argument("--verbose", "-v", action="count", default=0)
     # args = parser.parse_args()
-    
+
     env = Cleanup(cfg=cfg, default_entity=EmptyEntity())
     experiment = CleanupExperiment(env, cfg)
     experiment.run()
+
 
 # begin main
 if __name__ == "__main__":

@@ -17,11 +17,7 @@ from sorrel.environments import GridworldEnv
 class Cleanup(GridworldEnv):
     """Cleanup Environment."""
 
-    def __init__(
-        self,
-        cfg,
-        default_entity: Entity
-    ):
+    def __init__(self, cfg, default_entity: Entity):
         self.cfg = cfg
         self.channels = (
             cfg.agent.agent.obs.channels
