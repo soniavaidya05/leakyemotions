@@ -65,7 +65,7 @@ class PyTorchModel(nn.Module, BaseModel):
         during the turn.
 
         Not every model will need to do anything before this, but this function should
-        be implemented to match the common gem main interface.
+        be implemented to match the common sorrel main experiment loop interface.
         """
         pass
 
@@ -74,7 +74,7 @@ class PyTorchModel(nn.Module, BaseModel):
         during the turn.
 
         Not every model will need to do anything after this, but this function should be
-        implemented to match the common gem main interface.
+        implemented to match the common sorrel main experiment loop interface.
         """
         pass
 
