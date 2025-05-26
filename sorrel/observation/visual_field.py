@@ -1,9 +1,9 @@
 # Import base packages
 import numpy as np
 
-# Import gem packages
-from sorrel.worlds import Gridworld
+# sorrel imports
 from sorrel.utils.helpers import shift
+from sorrel.worlds import Gridworld
 
 
 def visual_field(

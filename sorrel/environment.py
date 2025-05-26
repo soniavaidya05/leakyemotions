@@ -1,13 +1,14 @@
 from abc import abstractmethod
+from pathlib import Path
+
 from numpy import ndenumerate
 from omegaconf import DictConfig, OmegaConf
-from pathlib import Path
 
 from sorrel.agents import Agent
 from sorrel.entities import Entity
-from sorrel.worlds import Gridworld
 from sorrel.utils.logging import ConsoleLogger, Logger
 from sorrel.utils.visualization import ImageRenderer
+from sorrel.worlds import Gridworld
 
 
 class Environment[W: Gridworld]:
@@ -54,8 +55,8 @@ class Environment[W: Gridworld]:
 
         Note that self.world.map is already created with the specified dimensions, and
         every space is filled with the default entity of the environment, as part of
-        self.world.create_world() when this experiment is constructed. One simply needs to
-        place the agents and any additional entitites in self.world.map.
+        self.world.create_world() when this experiment is constructed. One simply needs
+        to place the agents and any additional entitites in self.world.map.
         """
         pass
 
@@ -114,6 +115,11 @@ class Environment[W: Gridworld]:
             # Reset the environment at the start of each epoch
             self.reset()
 
+            # Determine whether to animate this turn.
+            animate_this_turn = animate and (
+                epoch % self.config.experiment.record_period == 0
+            )
+
             # start epoch action for each agent model
             for agent in self.agents:
                 agent.model.start_epoch_action(epoch=epoch)
@@ -121,14 +127,14 @@ class Environment[W: Gridworld]:
             # run the environment for the specified number of turns
             while not self.turn >= self.config.experiment.max_turns:
                 # renderer should never be None if animate is true; this is just written for pyright to not complain
-                if animate and renderer is not None:
-                    renderer.add_image(self.world, epoch)
+                if animate_this_turn and renderer is not None:
+                    renderer.add_image(self.world)
                 self.take_turn()
-            
+
             self.world.is_done = True
 
-            # generate the gif if animate is true
-            if animate and renderer is not None:
+            # generate the gif if animation was done
+            if animate_this_turn and renderer is not None:
                 renderer.save_gif(epoch, Path(__file__).parent / "./data/")
 
             # At the end of each epoch, train the agents.
@@ -137,6 +143,7 @@ class Environment[W: Gridworld]:
                 loss = agent.model.train_step()
                 total_loss += loss
 
+            # Log the information
             if logging:
                 if not logger:
                     logger = ConsoleLogger(self.config.experiment.epochs)

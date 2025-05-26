@@ -244,16 +244,15 @@ class ImageRenderer:
         """Zero out the frames."""
         del self.frames[:]
 
-    def add_image(self, world: Gridworld, epoch: int) -> None:
+    def add_image(self, world: Gridworld) -> None:
         """Add an image to the frames.
 
         Args:
             env (Gridworld): The environment.
             epoch (int): The epoch.
         """
-        if epoch % self.record_period == 0:
-            full_sprite = render_sprite(world)
-            self.frames.append(image_from_array(full_sprite))
+        full_sprite = render_sprite(world)
+        self.frames.append(image_from_array(full_sprite))
 
     def save_gif(self, epoch: int, folder: os.PathLike) -> None:
         """Save a gif to disk.
@@ -262,10 +261,9 @@ class ImageRenderer:
             epoch (int): The epoch.
             folder (os.PathLike): The destination folder.
         """
-        if epoch % self.record_period == 0:
-            animate_gif(self.frames, f"{self.experiment_name}_epoch{epoch}", folder)
-            # Clear frames
-            self.clear()
+        animate_gif(self.frames, f"{self.experiment_name}_epoch{epoch}", folder)
+        # Clear frames
+        self.clear()
 
 
 # --------------------------- #
