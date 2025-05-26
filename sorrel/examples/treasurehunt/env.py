@@ -4,12 +4,12 @@ import numpy as np
 import torch
 
 from sorrel.action.action_spec import ActionSpec
+from sorrel.environment import Environment
 
 # imports from our example
 from sorrel.examples.treasurehunt.agents import TreasurehuntAgent
 from sorrel.examples.treasurehunt.entities import EmptyEntity, Sand, Wall
 from sorrel.examples.treasurehunt.world import TreasurehuntWorld
-from sorrel.environment import Environment
 
 # sorrel imports
 from sorrel.models.pytorch import PyTorchIQN

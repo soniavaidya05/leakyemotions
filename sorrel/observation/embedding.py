@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sorrel.worlds import Gridworld
 from sorrel.location import Location
+from sorrel.worlds import Gridworld
 
 
 def positional_embedding(

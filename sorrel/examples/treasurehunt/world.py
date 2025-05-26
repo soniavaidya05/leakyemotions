@@ -17,7 +17,9 @@ class TreasurehuntWorld(Gridworld):
         layers = 2
         if type(config) != DictConfig:
             config = OmegaConf.create(config)
-        super().__init__(config.world.height, config.world.width, layers, default_entity)
+        super().__init__(
+            config.world.height, config.world.width, layers, default_entity
+        )
 
         self.gem_value = config.world.gem_value
         self.spawn_prob = config.world.spawn_prob

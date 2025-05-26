@@ -3,9 +3,9 @@ from typing import Sequence
 
 import numpy as np
 
-from sorrel.worlds import Gridworld
 from sorrel.observation.visual_field import visual_field, visual_field_ascii
 from sorrel.utils.helpers import one_hot_encode
+from sorrel.worlds import Gridworld
 
 
 class ObservationSpec[T: (np.ndarray, str)]():

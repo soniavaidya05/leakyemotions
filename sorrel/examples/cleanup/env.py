@@ -6,6 +6,7 @@ import torch
 
 # sorrel imports
 from sorrel.action.action_spec import ActionSpec
+from sorrel.environment import Environment
 from sorrel.examples.cleanup.agents import CleanupAgent, CleanupObservation
 from sorrel.examples.cleanup.entities import (
     Apple,
@@ -17,7 +18,6 @@ from sorrel.examples.cleanup.entities import (
     Wall,
 )
 from sorrel.examples.cleanup.world import CleanupWorld
-from sorrel.environment import Environment
 from sorrel.models.pytorch import PyTorchIQN
 
 # endregion                #
@@ -93,9 +93,9 @@ class CleanupEnv(Environment[CleanupWorld]):
                     ):
                         self.world.add(index, River())
                     # Bottom third = orchard
-                    elif H > (self.world.height - 1 - (self.world.height // 3)) and H < (
-                        self.world.height - 1
-                    ):
+                    elif H > (
+                        self.world.height - 1 - (self.world.height // 3)
+                    ) and H < (self.world.height - 1):
                         self.world.add(index, AppleTree())
                         apple_spawn_points.append(index)
                     # Middle third = potential agent spawn points
@@ -128,6 +128,3 @@ class CleanupEnv(Environment[CleanupWorld]):
         for loc, agent in zip(locs, self.agents):
             loc = tuple(loc)
             self.world.add(loc, agent)
-
-
-

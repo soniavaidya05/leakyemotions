@@ -3,8 +3,8 @@ from pathlib import Path
 import numpy as np
 
 from sorrel.entities import Entity
-from sorrel.worlds import Gridworld
 from sorrel.examples.cleanup.world import CleanupWorld
+from sorrel.worlds import Gridworld
 
 # --------------------------------------------------- #
 # region: Environment Entity classes for Cleanup Task #

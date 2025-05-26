@@ -5,12 +5,12 @@ import numpy as np
 from sorrel.action.action_spec import ActionSpec
 from sorrel.agents import Agent
 from sorrel.entities import Entity
-from sorrel.worlds import Gridworld
 from sorrel.examples.cleanup.entities import Apple, AppleTree, EmptyEntity
 from sorrel.examples.cleanup.world import CleanupWorld
 from sorrel.location import Location, Vector
 from sorrel.models import BaseModel
 from sorrel.observation import embedding, observation_spec
+from sorrel.worlds import Gridworld
 
 # --------------------------- #
 # region: Cleanup agent class #
@@ -94,8 +94,8 @@ class CleanupAgent(Agent[CleanupWorld]):
         return model_output
 
     def spawn_beam(self, world: CleanupWorld, action: str) -> None:
-        """Generate a beam extending config.agent.agent.beam_radius pixels out in front of
-        the agent.
+        """Generate a beam extending config.agent.agent.beam_radius pixels out in front
+        of the agent.
 
         Args:
             world: The world tospawn the beam in.
@@ -133,7 +133,9 @@ class CleanupAgent(Agent[CleanupWorld]):
 
         # Exclude any locations that have walls...
         placeable_locs = [
-            loc for loc in valid_locs if not str(world.observe(loc.to_tuple())) == "Wall"
+            loc
+            for loc in valid_locs
+            if not str(world.observe(loc.to_tuple())) == "Wall"
         ]
 
         # Then, place beams in all of the remaining valid locations.

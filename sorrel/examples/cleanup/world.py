@@ -27,7 +27,9 @@ class CleanupWorld(Gridworld):
         self.agent_layer = 1
         self.beam_layer = 2
         self.pollution = 0
-        super().__init__(config.env.height, config.env.width, config.env.layers, default_entity)
+        super().__init__(
+            config.env.height, config.env.width, config.env.layers, default_entity
+        )
         self.mode = config.env.mode
         self.max_turns = config.experiment.max_turns
         self.pollution_threshold = config.env.pollution_threshold

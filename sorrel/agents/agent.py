@@ -4,9 +4,9 @@ import numpy as np
 
 from sorrel.action.action_spec import ActionSpec
 from sorrel.entities import Entity
-from sorrel.worlds import Gridworld
 from sorrel.models import BaseModel
 from sorrel.observation.observation_spec import ObservationSpec
+from sorrel.worlds import Gridworld
 
 
 class Agent[W: Gridworld](Entity[W]):
