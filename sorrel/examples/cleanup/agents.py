@@ -84,8 +84,6 @@ class CleanupAgent(Agent[CleanupWorld]):
 
     def get_action(self, state: np.ndarray) -> int:
         prev_states = self.model.memory.current_state()
-        print(prev_states.shape)
-        print(state.shape)
         stacked_states = np.vstack((prev_states, state))
 
         # Flatten the model input

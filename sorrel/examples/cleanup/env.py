@@ -74,9 +74,9 @@ class CleanupEnv(Environment[CleanupWorld]):
         self.agents = agents
 
     def override_agents(self, agents: list[Agent]) -> None:
-        """Override the current agent configuration with a list of new agents and 
-        resets the environment.
-        
+        """Override the current agent configuration with a list of new agents and resets
+        the environment.
+
         Args:
             agents: A list of new agents
         """
