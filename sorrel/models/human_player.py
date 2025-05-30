@@ -41,15 +41,14 @@ class HumanPlayer(BaseModel):
         memory_size: int,
         show: bool = True,
     ):
-        self.name = ""
         self.action_list = np.arange(action_space)
-        self.num_frames = memory_size
         self.show = show
         self.tile_size = 16
         self.num_channels = 4
-        self.num_layers = 3
+        # Shape the input for use with the dummy memory function and the observation function.
         self.input_size = input_size
         _input_size = (1, self.input_size[0] * self.input_size[1] * self.input_size[2] * (self.tile_size**2) * self.num_channels)
+        # We will slice off the human memory zero input.
         self.SLICE = np.prod(_input_size)
         self.memory = HumanMemory(1, _input_size, 1)
 
@@ -57,7 +56,7 @@ class HumanPlayer(BaseModel):
         """Observe a visual field sprite output."""
 
         if self.show:
-            # clear_output(wait=True)
+            clear_output(wait=True)
 
             state = state[:, self.SLICE:]
             state = state.reshape(
@@ -99,6 +98,6 @@ class HumanPlayer(BaseModel):
                 if num_retries > 5:
                     raise KeyboardInterrupt("Too many invalid inputs. Quitting...")
                 print("Please try again. Possible actions are below.")
-                print(self.action_list + np.array(["quit"]))
+                print(np.concatenate((self.action_list, ["quit"])))
 
         return action
