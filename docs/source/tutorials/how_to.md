@@ -185,4 +185,4 @@ Most of the work is done by calling the [Experiment.run_experiment()](#sorrel.en
 
 Here, we use a dictionary to store our configs for the experiment and pass in constants for the environment parameters. In general, we recommend using configuration files for a more clean and centralized approach: here's a [quick tutorial](./configuration_files.md).
 
-And we're done! You can run this script from command line, and see the animations in `treasurehunt\data`.
+And we're done! You can run this script from command line, and see the animations in `./data` (under the current working directory).

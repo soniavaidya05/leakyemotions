@@ -1,3 +1,4 @@
+import os
 from abc import abstractmethod
 from pathlib import Path
 
@@ -107,7 +108,7 @@ class Environment[W: Gridworld]:
             animate: Whether to animate the experiment. Defaults to True.
             logging: Whether to log the experiment. Defaults to True.
             logger: The logger to use. Defaults to a ConsoleLogger.
-            output_dir: The directory to save the animations to. Defaults to "./data/".
+            output_dir: The directory to save the animations to. Defaults to "./data/" (relative to current working directory).
         """
         renderer = None
         if animate:
@@ -141,7 +142,7 @@ class Environment[W: Gridworld]:
             # generate the gif if animation was done
             if animate_this_turn and renderer is not None:
                 if output_dir is None:
-                    output_dir = Path(__file__).parent / "./data/"
+                    output_dir = Path(os.getcwd()) / "./data/"
                 renderer.save_gif(epoch, output_dir)
 
             # At the end of each epoch, train the agents.
