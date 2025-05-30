@@ -1,4 +1,9 @@
 ---
+ci:
+  skip: [pyright]  # pyright is not run in CI, only locally
+  # using the pyright mirror with additional dependencies times out
+  # need to standardize venv in repo if we want to use it in CI
+
 repos:
   - repo: https://github.com/python/black
     rev: 25.1.0
@@ -35,3 +40,8 @@ repos:
         additional_dependencies: ["pyright"]
         args:
           - --project=pyproject.toml
+  # - repo: https://github.com/RobertCraigie/pyright-python
+  #   rev: v1.1.401
+  #   hooks:
+  #   - id: pyright
+  #     additional_dependencies: ["matplotlib", "numpy", "pyyaml", "pytest", "torch", "jax", "flax", "hydra-core", "dill", "ipython", "pillow", "tensorboard"]

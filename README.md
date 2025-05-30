@@ -1,6 +1,9 @@
 <img style="width: 100px" src="https://github.com/social-ai-uoft/sorrel/blob/main/media/sorrel-icon.png" />
 
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/social-ai-uoft/sorrel/main.svg)](https://results.pre-commit.ci/latest/github/social-ai-uoft/sorrel/main) ![pytest status](https://github.com/social-ai-uoft/sorrel/workflows/PyTest/badge.svg)
+![pytest status](https://github.com/social-ai-uoft/sorrel/workflows/PyTest/badge.svg) 
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
+[![License](https://img.shields.io/github/license/social-ai-uoft/sorrel)](https://github.com/social-ai-uoft/sorrel/blob/main/LICENSE)
+[![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # Sorrel
 
