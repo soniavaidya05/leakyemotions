@@ -31,5 +31,6 @@ reference/environment
 :hidden:
 :caption: Development
 
-development/paper
+Github <https://github.com/social-ai-uoft/sorrel>
+Paper (link to be added)
 ```
