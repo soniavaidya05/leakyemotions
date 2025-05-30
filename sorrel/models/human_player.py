@@ -91,7 +91,7 @@ class HumanPlayer(BaseModel):
                     action = 3
             elif action_ in [str(act) for act in self.action_list]:
                 action = int(action_)
-            elif action == "quit":
+            elif action_ == "quit":
                 raise KeyboardInterrupt("Quitting...")
             else:
                 num_retries += 1
