@@ -13,7 +13,7 @@ from PIL import Image as img  # this is the module
 from PIL.PngImagePlugin import PngImageFile
 
 # Import sorrel-specific packages
-from sorrel.environments import GridworldEnv
+from sorrel.worlds import Gridworld
 
 # --------------- #
 # endregion       #
@@ -25,14 +25,14 @@ from sorrel.environments import GridworldEnv
 
 
 def render_sprite(
-    env: GridworldEnv,
+    world: Gridworld,
     location: Optional[Sequence] = None,
     vision: Optional[int] = None,
     tile_size: list[int] | np.ndarray = [16, 16],
 ) -> list[np.ndarray]:
     """Render a sprite of (2k + 1, 2k + 1) tiles centered at location, where k=vision.
 
-    If vision or location is None, render the entire world.
+    If vision or location is None, render the entire world.map.
 
     Args:
         location: defines the location to centre the visualization on. Defaults to None.
@@ -42,14 +42,13 @@ def render_sprite(
     Returns:
         A list of np.ndarrays of C x H x W, determined either by the world size or the vision size.
     """
-    world = env.world
 
     # get wall sprite
-    wall_sprite = env.get_entities_of_kind("Wall")[0].sprite
+    wall_sprite = world.get_entities_of_kind("Wall")[0].sprite
 
     # If no vision or location is provided, show the whole map (do not centre on the location)
     if vision is None or location is None:
-        location = (world.shape[0] // 2, world.shape[1] // 2)
+        location = (world.map.shape[0] // 2, world.map.shape[1] // 2)
         # Use the largest location dimension to ensure that the entire map is visible in the event of a non-square map
         vision_i = location[0]
         vision_j = location[1]
@@ -60,7 +59,7 @@ def render_sprite(
     # Layer handling...
     # Separate images will be generated per layer. These will be returned as a list and can then be plotted as a list.
     layers = []
-    for z in range(world.shape[2]):
+    for z in range(world.map.shape[2]):
 
         bounds = (
             location[0] - vision_i,
@@ -87,7 +86,7 @@ def render_sprite(
 
         for i in range(bounds[0], bounds[1] + 1):
             for j in range(bounds[2], bounds[3] + 1):
-                if i < 0 or j < 0 or i >= world.shape[0] or j >= world.shape[1]:
+                if i < 0 or j < 0 or i >= world.map.shape[0] or j >= world.map.shape[1]:
                     # Tile is out of bounds, use wall_app
                     tile_image = (
                         img.open(os.path.expanduser(wall_sprite))
@@ -95,7 +94,7 @@ def render_sprite(
                         .convert("RGBA")
                     )
                 else:
-                    tile_appearance = world[i, j, z].sprite
+                    tile_appearance = world.map[i, j, z].sprite
                     tile_image = (
                         img.open(os.path.expanduser(tile_appearance))
                         .resize(tile_size)
@@ -245,16 +244,15 @@ class ImageRenderer:
         """Zero out the frames."""
         del self.frames[:]
 
-    def add_image(self, env: GridworldEnv, epoch: int) -> None:
+    def add_image(self, world: Gridworld) -> None:
         """Add an image to the frames.
 
         Args:
-            env (GridworldEnv): The environment.
+            env (Gridworld): The environment.
             epoch (int): The epoch.
         """
-        if epoch % self.record_period == 0:
-            full_sprite = render_sprite(env)
-            self.frames.append(image_from_array(full_sprite))
+        full_sprite = render_sprite(world)
+        self.frames.append(image_from_array(full_sprite))
 
     def save_gif(self, epoch: int, folder: os.PathLike) -> None:
         """Save a gif to disk.
@@ -263,10 +261,9 @@ class ImageRenderer:
             epoch (int): The epoch.
             folder (os.PathLike): The destination folder.
         """
-        if epoch % self.record_period == 0:
-            animate_gif(self.frames, f"{self.experiment_name}_epoch{epoch}", folder)
-            # Clear frames
-            self.clear()
+        animate_gif(self.frames, f"{self.experiment_name}_epoch{epoch}", folder)
+        # Clear frames
+        self.clear()
 
 
 # --------------------------- #

@@ -139,7 +139,6 @@ dmypy.json
 output/
 outputs/
 logs/
-gem/.DS_Store
 data/
 sorrel/examples/cleanup/data/
 sorrel/examples/cleanup/runs/

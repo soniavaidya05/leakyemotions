@@ -4,12 +4,12 @@ import numpy as np
 
 from sorrel.action.action_spec import ActionSpec
 from sorrel.entities import Entity
-from sorrel.environments import GridworldEnv
 from sorrel.models import BaseModel
 from sorrel.observation.observation_spec import ObservationSpec
+from sorrel.worlds import Gridworld
 
 
-class Agent[E: GridworldEnv](Entity[E]):
+class Agent[W: Gridworld](Entity[W]):
     """An abstract class for agents, a special type of entities.
 
     Note that this is a subclass of :py:class:`agentarium.entities.Entity`.
@@ -57,11 +57,11 @@ class Agent[E: GridworldEnv](Entity[E]):
         pass
 
     @abstractmethod
-    def pov(self, env: E) -> np.ndarray:
+    def pov(self, world: W) -> np.ndarray:
         """Defines the agent's observation function.
 
         Args:
-            env (GridworldEnv): the environment that this agent is observing.
+            env (Gridworld): the environment that this agent is observing.
 
         Returns:
             torch.Tensor: the observed state.
@@ -81,11 +81,11 @@ class Agent[E: GridworldEnv](Entity[E]):
         pass
 
     @abstractmethod
-    def act(self, env: E, action: int) -> float:
+    def act(self, world: W, action: int) -> float:
         """Act on the environment.
 
         Args:
-            env (GridworldEnv): The environment in which the agent is acting.
+            env (Gridworld): The environment in which the agent is acting.
             action: an element from this agent's action space indicating the action to take.
 
         Returns:
@@ -94,13 +94,13 @@ class Agent[E: GridworldEnv](Entity[E]):
         pass
 
     @abstractmethod
-    def is_done(self, env: E) -> bool:
+    def is_done(self, world: W) -> bool:
         """Determines if the agent is done acting given the environment.
 
         This might be based on the experiment's maximum number of turns from the agent's cfg file.
 
         Args:
-            env (GridworldEnv): the environment that the agent is in.
+            env (Gridworld): the environment that the agent is in.
 
         Returns:
             bool: whether the agent is done acting. False by default.
@@ -120,7 +120,7 @@ class Agent[E: GridworldEnv](Entity[E]):
         """
         self.model.memory.add(state, action, reward, done)
 
-    def transition(self, env: E) -> None:
+    def transition(self, world: W) -> None:
         """Processes a full transition step for the agent.
 
         This function does the following:
@@ -130,12 +130,12 @@ class Agent[E: GridworldEnv](Entity[E]):
         - Determines if the agent is done through :meth:`is_done()`
 
         Args:
-            env (GridworldEnv): the environment that this agent is acting in.
+            env (Gridworld): the environment that this agent is acting in.
         """
-        state = self.pov(env)
+        state = self.pov(world)
         action = self.get_action(state)
-        reward = self.act(env, action)
-        done = self.is_done(env)
+        reward = self.act(world, action)
+        done = self.is_done(world)
 
-        env.total_reward += reward
+        world.total_reward += reward
         self.add_memory(state, action, reward, done)

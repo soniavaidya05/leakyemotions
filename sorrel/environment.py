@@ -1,31 +1,33 @@
 from abc import abstractmethod
 from pathlib import Path
 
+from numpy import ndenumerate
 from omegaconf import DictConfig, OmegaConf
 
 from sorrel.agents import Agent
-from sorrel.environments import GridworldEnv
+from sorrel.entities import Entity
 from sorrel.utils.logging import ConsoleLogger, Logger
 from sorrel.utils.visualization import ImageRenderer
+from sorrel.worlds import Gridworld
 
 
-class Experiment[E: GridworldEnv]:
+class Environment[W: Gridworld]:
     """An abstract wrapper class for running experiments with agents and environments.
 
     Attributes:
-        env: The environment to run the experiment in.
+        world: The world that the experiment includes.
         config: The configurations for the experiment.
 
             .. note::
-                Some default methods provided by this class, such as `run`, require certain config parameters to be defined.
+                Some default methods provided by this class, such as `run_experiment`, require certain config parameters to be defined.
                 These parameters are listed in the docstring of the method.
     """
 
-    env: E
+    world: W
     config: DictConfig
     agents: list[Agent]
 
-    def __init__(self, env: E, config: DictConfig | dict | list) -> None:
+    def __init__(self, world: W, config: DictConfig | dict | list) -> None:
 
         if isinstance(config, DictConfig):
             self.config = config
@@ -37,8 +39,9 @@ class Experiment[E: GridworldEnv]:
 
         self.setup_agents()
 
-        self.env = env
-        self.env.create_world()
+        self.world = world
+        self.turn = 0
+        self.world.create_world()
         self.populate_environment()
 
     @abstractmethod
@@ -48,24 +51,40 @@ class Experiment[E: GridworldEnv]:
 
     @abstractmethod
     def populate_environment(self) -> None:
-        """This method should populate self.env.world.
+        """This method should populate self.world.map.
 
-        Note that self.env.world is already created with the specified dimensions, and
+        Note that self.world.map is already created with the specified dimensions, and
         every space is filled with the default entity of the environment, as part of
-        self.env.create_world() when this experiment is constructed. One simply needs to
-        place the agents and any additional entitites in self.env.world.
+        self.world.create_world() when this experiment is constructed. One simply needs
+        to place the agents and any additional entitites in self.world.map.
         """
         pass
 
     def reset(self) -> None:
         """Reset the experiment, including the environment and the agents."""
-        self.env.create_world()
+        self.turn = 0
+        self.world.is_done = False
+        self.world.create_world()
         self.populate_environment()
         for agent in self.agents:
             agent.reset()
 
+    def take_turn(self) -> None:
+        """Performs a full step in the environment.
+
+        This function iterates through the environment and performs transition() for
+        each entity, then transitions each agent.
+        """
+        self.turn += 1
+        for _, x in ndenumerate(self.world.map):
+            x: Entity
+            if x.has_transitions and not isinstance(x, Agent):
+                x.transition(self.world)
+        for agent in self.agents:
+            agent.transition(self.world)
+
     # TODO: ability to save/load?
-    def run(
+    def run_experiment(
         self, animate: bool = True, logging: bool = True, logger: Logger | None = None
     ) -> None:
         """Run the experiment.
@@ -88,7 +107,7 @@ class Experiment[E: GridworldEnv]:
         renderer = None
         if animate:
             renderer = ImageRenderer(
-                experiment_name=self.env.__class__.__name__,
+                experiment_name=self.world.__class__.__name__,
                 record_period=self.config.experiment.record_period,
                 num_turns=self.config.experiment.max_turns,
             )
@@ -96,19 +115,26 @@ class Experiment[E: GridworldEnv]:
             # Reset the environment at the start of each epoch
             self.reset()
 
+            # Determine whether to animate this turn.
+            animate_this_turn = animate and (
+                epoch % self.config.experiment.record_period == 0
+            )
+
             # start epoch action for each agent model
             for agent in self.agents:
                 agent.model.start_epoch_action(epoch=epoch)
 
             # run the environment for the specified number of turns
-            while not self.env.turn >= self.config.experiment.max_turns:
+            while not self.turn >= self.config.experiment.max_turns:
                 # renderer should never be None if animate is true; this is just written for pyright to not complain
-                if animate and renderer is not None:
-                    renderer.add_image(self.env, epoch)
-                self.env.take_turn()
+                if animate_this_turn and renderer is not None:
+                    renderer.add_image(self.world)
+                self.take_turn()
 
-            # generate the gif if animate is true
-            if animate and renderer is not None:
+            self.world.is_done = True
+
+            # generate the gif if animation was done
+            if animate_this_turn and renderer is not None:
                 renderer.save_gif(epoch, Path(__file__).parent / "./data/")
 
             # At the end of each epoch, train the agents.
@@ -117,13 +143,14 @@ class Experiment[E: GridworldEnv]:
                 loss = agent.model.train_step()
                 total_loss += loss
 
+            # Log the information
             if logging:
                 if not logger:
                     logger = ConsoleLogger(self.config.experiment.epochs)
                 logger.record_turn(
                     epoch,
                     total_loss,
-                    self.env.total_reward,
+                    self.world.total_reward,
                     self.agents[0].model.epsilon,
                 )
 

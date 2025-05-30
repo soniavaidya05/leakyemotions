@@ -6,7 +6,7 @@ from sorrel.entities.entity import Entity
 from sorrel.location import Location
 
 
-class GridworldEnv:
+class Gridworld:
     """Basic gridworld environment class with functions for getting and manipulating the
     locations of entities.
 
@@ -25,9 +25,10 @@ class GridworldEnv:
     layers: int
     default_entity: Entity
 
-    world: np.ndarray
+    map: np.ndarray
     turn: int
     total_reward: float
+    is_done: bool
 
     def __init__(self, height: int, width: int, layers: int, default_entity: Entity):
         self.height = height
@@ -35,8 +36,8 @@ class GridworldEnv:
         self.layers = layers
         self.default_entity = default_entity
         self.create_world()
-        self.turn = 0
         self.total_reward = 0.0
+        self.is_done = False
 
     def create_world(self) -> None:
         """Assigns self.world a new gridworld of size self.height x self.width x
@@ -48,15 +49,14 @@ class GridworldEnv:
         resetting environments.
         """
 
-        self.world = np.full((self.height, self.width, self.layers), Entity())
+        self.map = np.full((self.height, self.width, self.layers), Entity())
 
         # Define the location of each entity
-        for index, x in np.ndenumerate(self.world):
+        for index, x in np.ndenumerate(self.map):
             # we have to make deep copies of default_entity since it's an instance
-            self.world[index] = copy.deepcopy(self.default_entity)
-            self.world[index].location = index
+            self.map[index] = copy.deepcopy(self.default_entity)
+            self.map[index].location = index
 
-        self.turn = 0
         self.total_reward = 0.0
 
     def add(self, target_location: tuple[int, ...], entity: Entity) -> None:
@@ -68,7 +68,7 @@ class GridworldEnv:
             entity (Entity): the entity to be added.
         """
         entity.location = target_location
-        self.world[target_location] = entity
+        self.map[target_location] = entity
 
     def remove(self, target_location: tuple[int, ...]) -> Entity:
         """Remove the entity at a location.
@@ -81,10 +81,10 @@ class GridworldEnv:
         Returns:
             Entity: the entity previously at the given location.
         """
-        entity = self.world[target_location]
+        entity = self.map[target_location]
         fill_entity = copy.deepcopy(self.default_entity)
         fill_entity.location = target_location
-        self.world[target_location] = fill_entity
+        self.map[target_location] = fill_entity
         return entity
 
     def move(self, entity: Entity, new_location: tuple[int, ...]) -> bool:
@@ -100,18 +100,18 @@ class GridworldEnv:
         Returns:
             bool: True if move was successful (i.e. the entity currently at new_location is passable), False otherwise.
         """
-        if self.world[new_location].passable:
+        if self.map[new_location].passable:
             self.remove(new_location)
 
             # Move the entity from the old location to the new location
             previous_location = entity.location
             entity.location = new_location
-            self.world[new_location] = entity
+            self.map[new_location] = entity
 
             # Fill the old location with a deep copy of the default_entity
             fill_entity = copy.deepcopy(self.default_entity)
             fill_entity.location = previous_location
-            self.world[previous_location] = fill_entity
+            self.map[previous_location] = fill_entity
             return True
         else:
             return False
@@ -125,7 +125,7 @@ class GridworldEnv:
         Returns:
             Entity: the entity at the observed location.
         """
-        return self.world[target_location]
+        return self.map[target_location]
 
     def observe_all_layers(self, target_location: tuple[int, ...]) -> list[Entity]:
         """Observes entities on all layers at a target location.
@@ -138,24 +138,8 @@ class GridworldEnv:
         """
         entities = []
         for i in range(self.layers):
-            entities.append(self.world[(*target_location[:-1], i)])
+            entities.append(self.map[(*target_location[:-1], i)])
         return entities
-
-    def take_turn(self) -> None:
-        """Performs a full step in the environment.
-
-        This function iterates through the environment and performs transition() for
-        each entity, then transitions each agent.
-        """
-        self.turn += 1
-        agents = []
-        for _, x in np.ndenumerate(self.world):
-            if hasattr(x, "model"):
-                agents.append(x)
-            elif x.has_transitions:
-                x.transition(self)
-        for agent in agents:
-            agent.transition(self)
 
     # --------------------------- #
     # region: utility functions   #
@@ -174,7 +158,7 @@ class GridworldEnv:
         if isinstance(index, Location):
             index = index.to_tuple()
         # Get world shape
-        shape = self.world.shape
+        shape = self.map.shape
         # Can't compare if the tuples are of unequal size
         if len(index) != len(shape):
             raise IndexError(
@@ -194,14 +178,14 @@ class GridworldEnv:
         the same kind.
 
         Args:
-            world (np.array): the world of a particular GridworldEnv.
+            world (np.array): the world of a particular Gridworld.
             kind (str): the class string (or string representation) of the query entity.
 
         Returns:
             list[Entity]: a list of all entities in the world that have the same kind.
         """
         entities = []
-        for _, x in np.ndenumerate(self.world):
+        for _, x in np.ndenumerate(self.map):
             if x.kind == kind:
                 entities.append(x)
         return entities

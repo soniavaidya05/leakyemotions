@@ -5,12 +5,12 @@ import numpy as np
 from sorrel.action.action_spec import ActionSpec
 from sorrel.agents import Agent
 from sorrel.entities import Entity
-from sorrel.environments import GridworldEnv
 from sorrel.examples.cleanup.entities import Apple, AppleTree, EmptyEntity
-from sorrel.examples.cleanup.env import Cleanup
+from sorrel.examples.cleanup.world import CleanupWorld
 from sorrel.location import Location, Vector
 from sorrel.models import BaseModel
 from sorrel.observation import embedding, observation_spec
+from sorrel.worlds import Gridworld
 
 # --------------------------- #
 # region: Cleanup agent class #
@@ -49,19 +49,19 @@ class CleanupObservation(observation_spec.OneHotObservationSpec):
                 + (4 * self.embedding_size),  # Embedding size
             )
 
-    def observe(self, env: GridworldEnv, location: tuple | Location | None = None):
+    def observe(self, world: Gridworld, location: tuple | Location | None = None):
         """Location must be provided for this observation."""
         if location is None:
             raise ValueError("Location must not be None for CleanupObservation.")
-        visual_field = super().observe(env, location).flatten()
+        visual_field = super().observe(world, location).flatten()
         pos_code = embedding.positional_embedding(
-            location, env, (self.embedding_size, self.embedding_size)
+            location, world, (self.embedding_size, self.embedding_size)
         )
 
         return np.concatenate((visual_field, pos_code))
 
 
-class CleanupAgent(Agent[Cleanup]):
+class CleanupAgent(Agent[CleanupWorld]):
     """A Cleanup agent that uses the IQN model."""
 
     def __init__(
@@ -77,8 +77,8 @@ class CleanupAgent(Agent[Cleanup]):
 
         self.encounters = {}
 
-    def pov(self, env: Cleanup) -> np.ndarray:
-        image = self.observation_spec.observe(env, self.location)
+    def pov(self, world: CleanupWorld) -> np.ndarray:
+        image = self.observation_spec.observe(world, self.location)
         # flatten the image to get the state
         return image.reshape(1, -1)
 
@@ -93,12 +93,12 @@ class CleanupAgent(Agent[Cleanup]):
 
         return model_output
 
-    def spawn_beam(self, env: Cleanup, action: str) -> None:
-        """Generate a beam extending cfg.agent.agent.beam_radius pixels out in front of
-        the agent.
+    def spawn_beam(self, world: CleanupWorld, action: str) -> None:
+        """Generate a beam extending config.agent.agent.beam_radius pixels out in front
+        of the agent.
 
         Args:
-            env: The environment to spawn the beam in.
+            world: The world tospawn the beam in.
             action: The action to take.
         """
 
@@ -116,36 +116,38 @@ class CleanupAgent(Agent[Cleanup]):
         beam_locs = (
             [
                 (tile_above + (forward_vector * i))
-                for i in range(1, env.cfg.agent.agent.beam_radius + 1)
+                for i in range(1, world.config.agent.agent.beam_radius + 1)
             ]
             + [
                 (tile_above + (right_vector) + (forward_vector * i))
-                for i in range(env.cfg.agent.agent.beam_radius)
+                for i in range(world.config.agent.agent.beam_radius)
             ]
             + [
                 (tile_above + (left_vector) + (forward_vector * i))
-                for i in range(env.cfg.agent.agent.beam_radius)
+                for i in range(world.config.agent.agent.beam_radius)
             ]
         )
 
         # Check beam layer to determine which locations are valid...
-        valid_locs = [loc for loc in beam_locs if env.valid_location(loc)]
+        valid_locs = [loc for loc in beam_locs if world.valid_location(loc)]
 
         # Exclude any locations that have walls...
         placeable_locs = [
-            loc for loc in valid_locs if not str(env.observe(loc.to_tuple())) == "Wall"
+            loc
+            for loc in valid_locs
+            if not str(world.observe(loc.to_tuple())) == "Wall"
         ]
 
         # Then, place beams in all of the remaining valid locations.
         for loc in placeable_locs:
             if action == "clean":
-                env.remove(loc.to_tuple())
-                env.add(loc.to_tuple(), CleanBeam())
+                world.remove(loc.to_tuple())
+                world.add(loc.to_tuple(), CleanBeam())
             elif action == "zap":
-                env.remove(loc.to_tuple())
-                env.add(loc.to_tuple(), ZapBeam())
+                world.remove(loc.to_tuple())
+                world.add(loc.to_tuple(), ZapBeam())
 
-    def act(self, env: Cleanup, action: int) -> float:
+    def act(self, world: CleanupWorld, action: int) -> float:
 
         # Translate the model output to an action string
         action_name = self.action_spec.get_readable_action(action)
@@ -170,10 +172,10 @@ class CleanupAgent(Agent[Cleanup]):
             new_location = (self.location[0], self.location[1] + 1, self.location[2])
 
         # Attempt to spawn beam
-        self.spawn_beam(env, action_name)
+        self.spawn_beam(world, action_name)
 
         # get reward obtained from object at new_location
-        target_objects = env.observe_all_layers(new_location)
+        target_objects = world.observe_all_layers(new_location)
         target_locations = [
             (*new_location[:-1], i) for i, _ in enumerate(target_objects)
         ]
@@ -184,15 +186,15 @@ class CleanupAgent(Agent[Cleanup]):
                 self.encounters[target_object.kind] = 0
             self.encounters[target_object.kind] += 1
 
-        env.total_reward += reward
+        world.total_reward += reward
 
         # try moving to new_location
-        env.move(self, new_location)
+        world.move(self, new_location)
 
         return reward
 
-    def is_done(self, env: Cleanup) -> bool:
-        return env.turn >= env.max_turns
+    def is_done(self, world: CleanupWorld) -> bool:
+        return world.turn >= world.max_turns
 
 
 # --------------------------- #
@@ -213,10 +215,10 @@ class Beam(Entity):
         self.turn_counter = 0
         self.has_transitions = True
 
-    def transition(self, env: GridworldEnv):
+    def transition(self, world: Gridworld):
         # Beams persist for one full turn, then disappear.
         if self.turn_counter >= 1:
-            env.add(self.location, EmptyEntity())
+            world.add(self.location, EmptyEntity())
         else:
             self.turn_counter += 1
 
