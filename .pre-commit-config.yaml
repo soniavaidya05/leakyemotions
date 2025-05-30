@@ -39,4 +39,4 @@ repos:
     rev: v1.1.401
     hooks:
     - id: pyright
-      additional_dependencies: ["pyright", "matplotlib", "numpy", "pyyaml", "pytest", "torch", "jax", "flax", "hydra-core", "dill", "ipython", "pillow", "tensorboard"]
+      additional_dependencies: ["matplotlib", "numpy", "pyyaml", "pytest", "torch", "jax", "flax", "hydra-core", "dill", "ipython", "pillow", "tensorboard"]
