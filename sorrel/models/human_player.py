@@ -45,8 +45,11 @@ class HumanPlayer(BaseModel):
         self.action_list = np.arange(action_space)
         self.num_frames = memory_size
         self.show = show
-        self.input_size = tuple([shape * 16 for shape in input_size])
-        _input_size = (1, self.input_size[0] * self.input_size[1] * 3 * 4)
+        self.tile_size = 16
+        self.num_channels = 4
+        self.num_layers = 3
+        self.input_size = input_size
+        _input_size = (1, self.input_size[0] * self.input_size[1] * self.input_size[2] * (self.tile_size**2) * self.num_channels)
         self.SLICE = np.prod(_input_size)
         self.memory = HumanMemory(1, _input_size, 1)
 
@@ -58,16 +61,19 @@ class HumanPlayer(BaseModel):
 
             state = state[:, self.SLICE:]
             state = state.reshape(
-                (self.input_size[0], self.input_size[1], 4, -1)
+                (
+                    -1, 
+                    self.input_size[0] * self.tile_size, 
+                    self.input_size[1] * self.tile_size, 
+                    self.num_channels
+                )
             )
             state = np.array(state, dtype=int)
-            print(state.shape)
-            print(state[:, :, :, 0])
 
             state_ = []
-            for i in range(state.shape[3]):
+            for i in range(state.shape[0]):
                 state_.append(
-                    state[:, :, :, i]
+                    state[i, :, :, :]
                 )
             plot(state_)
 
