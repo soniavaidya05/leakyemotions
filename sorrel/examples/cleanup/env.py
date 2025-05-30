@@ -6,6 +6,7 @@ import torch
 
 # sorrel imports
 from sorrel.action.action_spec import ActionSpec
+from sorrel.agents import Agent
 from sorrel.environment import Environment
 from sorrel.examples.cleanup.agents import CleanupAgent, CleanupObservation
 from sorrel.examples.cleanup.entities import (
@@ -70,6 +71,15 @@ class CleanupEnv(Environment[CleanupWorld]):
                 )
             )
 
+        self.agents = agents
+
+    def override_agents(self, agents: list[Agent]) -> None:
+        """Override the current agent configuration with a list of new agents and 
+        resets the environment.
+        
+        Args:
+            agents: A list of new agents
+        """
         self.agents = agents
 
     def populate_environment(self):

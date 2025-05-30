@@ -48,6 +48,7 @@ class ObservationSpec[T: (np.ndarray, str)]():
         self.full_view = full_view
         self.vision_radius = vision_radius if vision_radius else 0
         self.entity_map = self.generate_map(entity_list)
+        self.input_size = (1,)
 
     @abstractmethod
     def generate_map(self, entity_list: list[str]) -> dict[str, T]:
