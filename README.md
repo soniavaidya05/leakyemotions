@@ -132,7 +132,7 @@ Then, view the updated documentations by opening ``.\docs\build\html\index.html`
 
 ## Citing the project
 
-TODO: Insert paper citation here
+Gelpí, R. A., Ju, Y., Jackson, E. C., Tang, Y., Verch, S., Voelcker, C., & Cunningham, W. A. (2025). Sorrel: A simple and flexible framework for multi-agent reinforcement learning. [arXiv:2506.00228 [cs.MA]](https://doi.org/10.48550/arXiv.2506.00228)
 
 ## Maintainers
 Sorrel is currently maintained by Yibing Ju (aka [@bing-j](https://github.com/bing-j)) and [Rebekah Gelpi](https://rgelpi.github.io) (aka [@rgelpi](https://github.com/galacticglum)).
