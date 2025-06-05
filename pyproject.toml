@@ -16,6 +16,11 @@ contributors = [
     {name = "Wil Cunningham"}
 ]
 
+[project.urls]
+Homepage = "https://github.com/social-ai-uoft/sorrel"
+Documentation = "https://sorrel.readthedocs.io"
+Paper = "https://doi.org/10.48550/arXiv.2506.00228"
+
 [tool.poetry]
 packages = [{ include = "sorrel" }]
 
