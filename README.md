@@ -25,7 +25,7 @@ with our own solutions to both novel and long-standing RL problems.
 
 > [!IMPORTANT]
 > We recommend you follow these instructions in a fresh conda/virtual environment to keep packages isolated
-> from other environments and/or Python versions. Python 3.11+ is required.
+> from other environments and/or Python versions. Python 3.12+ is required.
 
 To create a [virtual environment](https://docs.python.org/3/library/venv.html),
 navigate to your project directory in the terminal and run:
