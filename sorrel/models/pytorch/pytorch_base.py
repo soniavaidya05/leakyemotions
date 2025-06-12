@@ -126,7 +126,7 @@ class PyTorchModel(nn.Module, BaseModel):
         if hasattr(self, "optimizer") and isinstance(
             self.optimizer, torch.optim.Optimizer
         ):
-            self.optimizer.load_state_dict(checkpoint["target"])
+            self.optimizer.load_state_dict(checkpoint["optimizer"])
 
     # ---------------------------------- #
     # endregion: Helper functions        #
