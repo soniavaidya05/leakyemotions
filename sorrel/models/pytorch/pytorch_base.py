@@ -57,7 +57,6 @@ class PyTorchModel(nn.Module, BaseModel):
 
     @abstractmethod
     def take_action(self, state) -> int:
-        """Take an action based on the model."""
         pass
 
     def start_epoch_action(self, **kwargs):

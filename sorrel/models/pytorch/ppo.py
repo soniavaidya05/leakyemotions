@@ -69,15 +69,21 @@ class ActorCritic(nn.Module):
       self, 
       input_size: int,
       action_space: int,
-      layer_size: int
+      layer_size: int = 64,
+      dropout: bool = False
   ):
     """Initialize the actor-critic module.
 
     Args:
       input_size: The size of the input layer.
       action_space: The number of actions that can be taken.
+      layer_size: The multiplier for the hidden layer size.
+      dropout: Whether to include dropout. Defaults to False.
     """
     super().__init__()
+
+    # Dropout probability
+    p = 0.2 if dropout else 0.0
 
     # Actor network
     self.actor = nn.Sequential(
@@ -85,19 +91,20 @@ class ActorCritic(nn.Module):
       nn.Tanh(),
       nn.Linear(layer_size, layer_size * 2),
       nn.Tanh(),
-      # nn.Dropout(p=0.2),
+      nn.Dropout(p=p),
       nn.Linear(layer_size * 2, layer_size),
       nn.Tanh(),
       nn.Linear(layer_size, action_space),
       nn.Softmax(dim=-1)
     )
 
+    # Critic network
     self.critic = nn.Sequential(
       nn.Linear(input_size, layer_size),
       nn.Tanh(),
       nn.Linear(layer_size, layer_size * 2),
       nn.Tanh(),
-      # nn.Dropout(p=0.2),
+      nn.Dropout(p=p),
       nn.Linear(layer_size * 2, layer_size),
       nn.Tanh(),
       nn.Linear(layer_size, 1),
@@ -184,6 +191,11 @@ class PyTorchPPO(PyTorchModel):
     self.k_epochs = k_epochs
     self.loss_fn = nn.MSELoss()
 
+  def start_epoch_action(self, **kwargs):
+    """Actions before the epoch is started for the PPO model.
+    
+    This should clear out the memory from previous epochs."""
+    self.memory.clear()
 
   def take_action(self, state: np.ndarray) -> tuple: #type: ignore
     with torch.no_grad():
