@@ -148,13 +148,16 @@ class Environment[W: Gridworld]:
 
             # end epoch action for each agent model
             for agent in self.agents:
-                agent.model.end_epoch_action(epoch=epoch)            
+                agent.model.end_epoch_action(epoch=epoch)
 
-            # At the end of each epoch, train the agents.
-            with Pool() as pool:
-                # Use multiprocessing to train agents in parallel
-                models = [agent.model for agent in self.agents]
-                total_loss = sum(pool.map(lambda model: model.train_step(), models))
+            # # At the end of each epoch, train the agents.
+            # with Pool() as pool:
+            #     # Use multiprocessing to train agents in parallel
+            #     models = [agent.model for agent in self.agents]
+            #     total_loss = sum(pool.map(lambda model: model.train_step(), models))
+            total_loss = 0
+            for agent in self.agents:
+                total_loss = agent.model.train_step()
 
             # Log the information
             if logging:
