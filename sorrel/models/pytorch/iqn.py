@@ -38,6 +38,7 @@ from sorrel.buffers import Buffer
 # Import sorrel-specific packages
 from sorrel.models.pytorch.layers import NoisyLinear
 from sorrel.models.pytorch.pytorch_base import DoublePyTorchModel
+from sorrel.models.pytorch.pytorch_base import PyTorchModel
 
 # ------------------------ #
 # endregion                #
