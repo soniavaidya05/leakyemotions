@@ -20,6 +20,7 @@ if __name__ == "__main__":
         "model": {
             "agent_vision_radius": 3,
             "epsilon_decay": 0.0001,
+            # "checkpoint": 2000 # Model trial checkpoint
         },
         "world": {
             "agents": 5,

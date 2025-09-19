@@ -42,7 +42,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
         """
         agent_num = self.config.world.agents
         agents = []
-        for _ in range(agent_num):
+        for i in range(agent_num):
             # create the observation spec
             entity_list = ENTITY_LIST
             observation_spec = LeakyEmotionsObservationSpec(
@@ -80,6 +80,11 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
                 GAMMA=0.99,
                 n_quantiles=12
             )
+
+            if "checkpoint" in self.config.model:
+                model.load(
+                    Path(__file__).parent / f"./checkpoints/trial{self.config.model.checkpoint}_agent{i}.pkl"
+                )
 
             agents.append(
                 LeakyEmotionsAgent(
@@ -237,6 +242,8 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
             for agent in self.agents:
                 loss = agent.model.train_step()
                 total_loss += loss
+                # Decrement the epsilon decay
+                agent.model.epsilon_decay(self.config.model.epsilon_decay)
 
             # Log the information
             if logging:
@@ -252,7 +259,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
 
             # update epsilon
             if epoch % 500 == 0:
-                for agent in self.agents:
-                    agent.model.epsilon_decay(self.config.model.epsilon_decay)
-                    agent.model.save(f'./sorrel/examples/leakyemotions/save_pretrained/trial{epoch}.pkl')
+                for i, agent in enumerate(self.agents):
+                    
+                    agent.model.save(f'./sorrel/examples/leakyemotions/checkpoints/trial{epoch}_agent{i}.pkl')
 
