@@ -127,15 +127,10 @@ class IQN(nn.Module):
         # batch_size, timesteps, C, H, W = input.size()
         # c_out = input.view(batch_size * timesteps, C, H, W)
         # r_in = c_out.view(batch_size, -1)
-        print(input)
-        print(type(input))
-        print(input.size())
-        print(type(input.size()[0]))
         batch_size = input.size()[0]
         r_in = input.view(batch_size, -1)
 
         # Pass input through linear layer and activation function ([1, 250])
-        print(r_in)
         x = self.head1(r_in)
         x = torch.relu(x)
 
@@ -167,7 +162,8 @@ class IQN(nn.Module):
         return out.view(batch_size, n_tau, self.action_space), taus
 
     def get_qvalues(self, inputs):
-        inputs = torch.tensor(inputs)
+        # Ensure inputs are float32 tensors to match model parameters dtype
+        inputs = torch.tensor(inputs, dtype=torch.float32)
         quantiles, _ = self.forward(inputs, self.n_quantiles)
         actions = quantiles.mean(dim=1)
         return actions

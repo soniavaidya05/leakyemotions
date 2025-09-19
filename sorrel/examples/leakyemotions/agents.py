@@ -38,16 +38,15 @@ class LeakyEmotionsAgent(Agent[LeakyEmotionsWorld]):
     def get_action(self, state: np.ndarray) -> int:
         """Gets the action from the model, using the stacked states."""
         if not hasattr(self.model, "name"):
-
-            # Update the agent emotion.
-            self.update_emotion(state)
             
             # Stack previous frames as needed.
             prev_states = self.model.memory.current_state()
-            stacked_states = np.vstack((prev_states, state)) if prev_states else state
+            stacked_states = np.vstack((prev_states, state))
 
             # Take action
             model_input = stacked_states.reshape(1, -1)
+            # Update the agent emotion.
+            self.update_emotion(model_input)
             action = self.model.take_action(model_input)
         
         else:
@@ -61,7 +60,7 @@ class LeakyEmotionsAgent(Agent[LeakyEmotionsWorld]):
         Args:
             state: The observed input.
         """
-        self.emotion = self.model.state_value(state)
+        self.emotion = self.model.state_value(state) #type: ignore
 
     def act(self, world: LeakyEmotionsWorld, action: int) -> float:
         """Act on the environment, returning the reward."""
