@@ -127,11 +127,15 @@ class IQN(nn.Module):
         # batch_size, timesteps, C, H, W = input.size()
         # c_out = input.view(batch_size * timesteps, C, H, W)
         # r_in = c_out.view(batch_size, -1)
-
+        print(input)
+        print(type(input))
+        print(input.size())
+        print(type(input.size()[0]))
         batch_size = input.size()[0]
         r_in = input.view(batch_size, -1)
 
         # Pass input through linear layer and activation function ([1, 250])
+        print(r_in)
         x = self.head1(r_in)
         x = torch.relu(x)
 
@@ -163,6 +167,7 @@ class IQN(nn.Module):
         return out.view(batch_size, n_tau, self.action_space), taus
 
     def get_qvalues(self, inputs):
+        inputs = torch.tensor(inputs)
         quantiles, _ = self.forward(inputs, self.n_quantiles)
         actions = quantiles.mean(dim=1)
         return actions
@@ -423,6 +428,11 @@ class iRainbowModel(DoublePyTorchModel):
         #     else:
         #         kwargs["losses"] += kwargs["loss"]
 
+    def state_value(self, state):
+        """Compute state value from Q-values using a greedy policy."""
+        q_values = self.qnetwork_local.get_qvalues(state)
+        return float(q_values.max(dim=1).values.item())
+
 
 # ------------------------ #
 # endregion                #
@@ -443,3 +453,4 @@ def calculate_huber_loss(td_errors: torch.Tensor, k: float = 1.0) -> torch.Tenso
         td_errors.abs() <= k, 0.5 * td_errors.pow(2), k * (td_errors.abs() - 0.5 * k)
     )
     return loss
+

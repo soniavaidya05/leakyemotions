@@ -10,7 +10,7 @@ from pathlib import Path
 from sorrel.action.action_spec import ActionSpec
 from sorrel.agents import Agent
 from sorrel.environment import Environment
-from sorrel.models.pytorch.iqn import IQN
+from sorrel.models.pytorch.iqn import iRainbowModel
 from sorrel.utils.logging import Logger, ConsoleLogger, TensorboardLogger
 from sorrel.utils.visualization import ImageRenderer
 
@@ -62,13 +62,22 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
             action_spec = ActionSpec(["up", "down", "left", "right"])
 
             # create the model
-            model = IQN(
+            model = iRainbowModel(
                 input_size=observation_spec.input_size,
                 action_space=action_spec.n_actions,
                 layer_size=250,
+                epsilon=0.7,
                 device="cpu",
                 seed=torch.random.seed(),
                 n_frames=5,
+                n_step=3,
+                sync_freq=200,
+                model_update_freq=4,
+                batch_size=64,
+                memory_size=1024,
+                LR=0.00025,
+                TAU=0.001,
+                GAMMA=0.99,
                 n_quantiles=12
             )
 
