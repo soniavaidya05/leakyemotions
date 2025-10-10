@@ -13,7 +13,7 @@ if __name__ == "__main__":
     # object configurations
     config = {
         "experiment": {
-            "epochs": 5000,
+            "epochs": 10000,
             "max_turns": 50,
             "record_period": 50,
         },

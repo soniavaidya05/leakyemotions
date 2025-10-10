@@ -262,4 +262,5 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
                 for i, agent in enumerate(self.agents):
                     
                     agent.model.save(f'./sorrel/examples/leakyemotions/checkpoints/trial{epoch}_agent{i}.pkl')
-
+        
+        logger.close()
