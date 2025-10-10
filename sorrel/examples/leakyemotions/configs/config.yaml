@@ -41,7 +41,7 @@ agent:
     rotation: False
     obs:
       channels: 8
-      vision: 5
+      vision: 4
       num_frames: 5
       embeddings: 3
 
