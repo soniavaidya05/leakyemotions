@@ -11,6 +11,7 @@ from sorrel.action.action_spec import ActionSpec
 from sorrel.agents import Agent
 from sorrel.environment import Environment
 from sorrel.models.pytorch.iqn import iRainbowModel
+from sorrel.observation.observation_spec import OneHotObservationSpec
 from sorrel.utils.logging import Logger, ConsoleLogger, TensorboardLogger
 from sorrel.utils.visualization import ImageRenderer
 
@@ -45,13 +46,20 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
         for i in range(agent_num):
             # create the observation spec
             entity_list = ENTITY_LIST
-            observation_spec = LeakyEmotionsObservationSpec(
-                entity_list,
-                full_view=False,
-                # note that here we require self.config to have the entry model.agent_vision_radius
-                # don't forget to pass it in as part of config when creating this experiment!
-                vision_radius=self.config.model.agent_vision_radius,
-            )
+            if self.config.world.has_emotion:
+                observation_spec = LeakyEmotionsObservationSpec(
+                    entity_list,
+                    full_view=False,
+                    # note that here we require self.config to have the entry model.agent_vision_radius
+                    # don't forget to pass it in as part of config when creating this experiment!
+                    vision_radius=self.config.model.agent_vision_radius,
+                )
+            else:
+                observation_spec = OneHotObservationSpec(
+                    entity_list,
+                    full_view=False,
+                    vision_radius=self.config.model.agent_vision_radius,
+                )
             
             observation_spec.override_input_size(
                 np.zeros(observation_spec.input_size, dtype=int).reshape(1, -1).shape
@@ -66,7 +74,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
                 input_size=observation_spec.input_size,
                 action_space=action_spec.n_actions,
                 layer_size=250,
-                epsilon=0.7,
+                epsilon=0.05,
                 device="cpu",
                 seed=torch.random.seed(),
                 n_frames=5,

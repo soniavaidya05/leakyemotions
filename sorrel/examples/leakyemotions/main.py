@@ -20,14 +20,15 @@ if __name__ == "__main__":
         "model": {
             "agent_vision_radius": 3,
             "epsilon_decay": 0.0001,
-            # "checkpoint": 2000 # Model trial checkpoint
+            # "checkpoint": 5000 # Model trial checkpoint
         },
         "world": {
             "agents": 5,
             "wolves": 0,
             "height": 25,
             "width": 25,
-            "spawn_prob": 0.005,
+            "spawn_prob": 0.003,
+            "has_emotion": False
         },
     }
 
