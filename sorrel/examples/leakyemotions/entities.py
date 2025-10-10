@@ -19,11 +19,15 @@ class Bush(Entity[LeakyEmotionsWorld]):
         self.value = 1 
         self.ripeness = ripe_num
         self.has_transitions = True
-        self.sprite = Path(__file__).parent / "./assets/bush.png"
+        self.sprite = Path(__file__).parent / "./assets/bush_new.png"
         self.kind="Bush"
     
     def transition(self, world: LeakyEmotionsWorld):
         self.ripeness += 1
+        if self.ripeness >= 5:
+            self.sprite = Path(__file__).parent / "./assets/bush.png"
+        if self.ripeness >= 10:
+            self.sprite = Path(__file__).parent / "./assets/bush_old.png"
         if self.ripeness > 14:
             world.remove(self.location)
             world.add(self.location, Grass())
