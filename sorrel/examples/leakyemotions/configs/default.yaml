@@ -1,0 +1,16 @@
+experiment:
+  epochs: 100
+  max_turns: 50
+  record_period: 50
+        
+model: 
+  agent_vision_radius: 3
+  epsilon_decay: 0.0001
+
+world:
+  agents: 5
+  wolves: 0
+  height: 25
+  width: 25
+  spawn_prob: 0.003
+  has_emotion: False
