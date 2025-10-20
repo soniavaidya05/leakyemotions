@@ -46,7 +46,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
         for i in range(agent_num):
             # create the observation spec
             entity_list = ENTITY_LIST
-            if self.config.world.has_emotion:
+            if self.config.model.has_emotion:
                 observation_spec = LeakyEmotionsObservationSpec(
                     entity_list,
                     full_view=False,
@@ -153,7 +153,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
                 # Add walls around the edge of the world (when indices are first or last)
                 self.world.add(index, Wall())
             elif z == 0:  # if location is on the bottom (first) layer, put grass there
-                self.world.add(index, Grass())
+                self.world.add(index, Grass(bush_lifespan=self.config.world.bush_lifespan))
             elif z == 1: # if location is on third layer, rabbit agents and wolves can appear here 
                 valid_agent_spawn_locations.append(index)
 

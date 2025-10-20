@@ -1,16 +1,18 @@
 experiment:
-  epochs: 100
+  epochs: 5000
   max_turns: 50
   record_period: 50
+  mode: bush
         
 model: 
   agent_vision_radius: 3
+  has_emotion: False
   epsilon_decay: 0.0001
 
 world:
-  agents: 5
+  agents: 10
   wolves: 0
   height: 25
   width: 25
-  spawn_prob: 0.003
-  has_emotion: False
+  spawn_prob: 0.001
+  bush_lifespan: 30

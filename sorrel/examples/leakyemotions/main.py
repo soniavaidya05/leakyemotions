@@ -19,11 +19,13 @@ def create_run_name(config):
     
     world_cfg = config.world
     run_name = (
-        f"agents{world_cfg.agents}_"
-        f"wolves{world_cfg.wolves}_"
-        f"spawn{world_cfg.spawn_prob}_"
-        f"{world_cfg.width}x{world_cfg.height}_"
-        f"vis{config.model.agent_vision_radius}_"
+        f"{config.experiment.mode}-mode_"
+        f"{config.model.has_emotion}-emotion_"
+        f"{config.model.agent_vision_radius}-viz_"
+        f"{world_cfg.agents}-agent_"
+        f"{world_cfg.wolves}-wolf_"
+        f"{world_cfg.spawn_prob}-spawn_"
+        # f"{world_cfg.width}x{world_cfg.height}_" # Static for now
         f"{timestamp}"
     )
     
@@ -90,7 +92,7 @@ if __name__ == "__main__":
     # construct the world
     env = LeakyEmotionsWorld(config=config, default_entity=EmptyEntity())
     # construct the environment
-    experiment = LeakyEmotionsEnv(env, config)
+    experiment = LeakyEmotionsEnv(env, config) # type:ignore[arg-type]
     # run the experiment with default parameters
     name = create_run_name(config)
     experiment.run_experiment(logger=TensorboardLogger(
