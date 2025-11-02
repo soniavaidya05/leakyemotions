@@ -69,8 +69,8 @@ def resolve_config_path(config_name):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, required=True, help="Path to config YAML")
-    parser.add_argument("--mode", type=str, choices=["bush", "wolf", "bush_wolf"], required=True)
+    parser.add_argument("--config", type=str, help="Path to config YAML", default=Path(__file__).parent / "configs/default.yaml")
+    parser.add_argument("--mode", type=str, choices=["bush", "wolf", "bush_wolf"], default="bush_wolf")
     args = parser.parse_args()
 
     

@@ -11,7 +11,7 @@ model:
 
 world:
   agents: 10
-  wolves: 0
+  wolves: 3
   height: 25
   width: 25
   spawn_prob: 0.001

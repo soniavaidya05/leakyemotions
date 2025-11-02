@@ -119,7 +119,7 @@ class Buffer:
         return repr(self)
 
     def __len__(self):
-        return self.size
+        return self.idx
 
     def __getitem__(self, idx):
         return (self.states[idx], self.actions[idx], self.rewards[idx], self.dones[idx])

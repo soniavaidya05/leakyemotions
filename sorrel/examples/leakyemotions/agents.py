@@ -243,8 +243,8 @@ class Wolf(Agent):
                 dead_agent = world.remove(new_location)
                 world.dead_agents.append(dead_agent)         
 
-                # try moving to new_location
-                world.move(self, new_location)
+            # try moving to new_location
+            world.move(self, new_location)
         return 0.
 
     def sleep(self):
