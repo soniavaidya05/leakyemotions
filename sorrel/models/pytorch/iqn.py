@@ -306,7 +306,7 @@ class iRainbowModel(DoublePyTorchModel):
 
         # REPLACED: as suggested by Gemini, Claude, and GPT
         # if (len(self.memory) // self.n_frames // 2) > self.batch_size:
-        if len(self.memory) > self.batch_size:
+        if len(self.memory) > (self.n_frames * self.batch_size):
 
             # Sample minibatch
             states, actions, rewards, next_states, dones, valid = self.memory.sample(

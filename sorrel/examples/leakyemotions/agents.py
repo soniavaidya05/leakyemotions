@@ -227,21 +227,24 @@ class Wolf(Agent):
                 if world.num_agents == 0:
                     world.game_over()
 
-                # Final memory for the dead agent, RIP
-                target_object_state = target_object.pov(world)
-                target_object_would_act = target_object.get_action(target_object_state)
-
-                target_object.add_memory(
-                    state=target_object_state, 
-                    action=target_object_would_act,
-                    reward=-100,
-                    done=True
-                )
-
-                world.total_reward -= 100
-
                 dead_agent = world.remove(new_location)
-                world.dead_agents.append(dead_agent)         
+                # If you haven't already killed this agent...
+                if hash(dead_agent) not in [hash(agent) for agent in world.dead_agents]:
+
+                    # Final memory for the dead agent, RIP
+                    target_object_state = target_object.pov(world)
+                    target_object_would_act = target_object.get_action(target_object_state)
+                    target_object.add_memory(
+                        state=target_object_state, 
+                        action=target_object_would_act,
+                        reward=-100,
+                        done=True
+                    )
+
+                    world.total_reward -= 100
+                    # print(hash(dead_agent))
+                    # print([hash(agent) for agent in world.dead_agents])
+                    world.dead_agents.append(dead_agent) 
 
             # try moving to new_location
             world.move(self, new_location)

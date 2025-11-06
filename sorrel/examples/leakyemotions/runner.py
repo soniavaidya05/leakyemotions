@@ -10,9 +10,9 @@ if __name__ == "__main__":
   config_path = resolve_config_path('default.yaml')
   config = OmegaConf.load(config_path)
 
-  SPAWN_PROBS = [0.001, 0.002, 0.003]
+  SPAWN_PROBS = [0] # [0.001, 0.002, 0.003]
   AGENT_VISION_RADIUS = [3, 4, 5]
-  BUSH_MODE = ["bush", "wolf", "both"]
+  BUSH_MODE = ["wolf"] # ["bush", "wolf", "both"]
   HAS_EMOTION = [True, False]
 
   for spawn_prob in SPAWN_PROBS:

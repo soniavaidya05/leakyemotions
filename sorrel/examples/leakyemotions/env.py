@@ -43,6 +43,8 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
         """
         agent_num = self.config.world.agents
         agents = []
+        bunnies = []
+        wolves = []
         for i in range(agent_num):
             # create the observation spec
             entity_list = ENTITY_LIST
@@ -94,13 +96,14 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
                     Path(__file__).parent / f"./checkpoints/trial{self.config.model.checkpoint}_agent{i}.pkl"
                 )
 
-            agents.append(
-                LeakyEmotionsAgent(
-                    observation_spec=observation_spec,
-                    action_spec=action_spec,
-                    model=model,
-                )
+            bunny = LeakyEmotionsAgent(
+                observation_spec=observation_spec,
+                action_spec=action_spec,
+                model=model,
             )
+
+            bunnies.append(bunny)
+            agents.append(bunny)
         
         wolf_num = self.config.world.wolves
         for _ in range(wolf_num):
@@ -121,15 +124,18 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
             # create the action spec
             action_spec = ActionSpec(["up", "down", "left", "right"])
             
-            agents.append(
-                Wolf(
+            wolf = Wolf(
                     observation_spec=observation_spec, 
                     action_spec=action_spec, 
                     model=WolfModel(1, 4, 1)
                 )
-            )
+
+            wolves.append(wolf)
+            agents.append(wolf)
 
         self.agents = agents
+        self.bunnies = bunnies
+        self.wolves = wolves
 
     def override_agents(self, agents: list[Agent]) -> None:
         """Override the current agent configuration with a list of new agents and resets
@@ -227,15 +233,18 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
             for agent in self.agents:
                 agent.model.start_epoch_action(epoch=epoch)
 
-            bunnies_left = sum([isinstance(agent, LeakyEmotionsAgent) for agent in self.agents]) - len(self.world.dead_agents)
+            bunnies_left = sum([agent.alive for agent in self.bunnies])
 
             # run the environment for the specified number of turns
             while not (self.turn >= self.config.experiment.max_turns) and (bunnies_left > 0):
                 # renderer should never be None if animate is true; this is just written for pyright to not complain
                 if animate_this_turn and renderer is not None:
                     renderer.add_image(self.world)
+                # print(f"Epoch: {epoch}, Turn: {self.turn}")
+                # print(f"Living bunnies: {sum([agent.alive for agent in self.bunnies])}")
+                # print(f"Reward: {self.world.total_reward}")
                 self.take_turn()
-                bunnies_left = sum([isinstance(agent, LeakyEmotionsAgent) for agent in self.agents]) - len(self.world.dead_agents)
+                bunnies_left = sum([agent.alive for agent in self.bunnies])
 
             self.world.is_done = True
 
