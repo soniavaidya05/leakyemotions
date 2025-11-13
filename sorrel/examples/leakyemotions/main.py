@@ -20,7 +20,7 @@ def create_run_name(config):
     world_cfg = config.world
     run_name = (
         f"{config.experiment.mode}-mode_"
-        f"{config.model.has_emotion}-emotion_"
+        f"{config.model.emotion_condition}-emotion_"
         f"{config.model.agent_vision_radius}-viz_"
         f"{world_cfg.agents}-agent_"
         f"{world_cfg.wolves}-wolf_"

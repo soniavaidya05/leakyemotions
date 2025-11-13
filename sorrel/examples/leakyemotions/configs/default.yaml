@@ -6,7 +6,7 @@ experiment:
         
 model: 
   agent_vision_radius: 3
-  has_emotion: False
+  emotion_condition: full # Options: ["full", "self", "other", "none"]
   epsilon_decay: 0.0001
 
 world:

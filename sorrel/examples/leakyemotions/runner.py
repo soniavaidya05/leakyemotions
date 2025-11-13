@@ -10,26 +10,26 @@ if __name__ == "__main__":
   config_path = resolve_config_path('default.yaml')
   config = OmegaConf.load(config_path)
 
-  SPAWN_PROBS = [0] # [0.001, 0.002, 0.003]
+  SPAWN_PROBS = [0.001] # [0.001, 0.002, 0.003]
   AGENT_VISION_RADIUS = [3, 4, 5]
-  BUSH_MODE = ["wolf"] # ["bush", "wolf", "both"]
-  HAS_EMOTION = [True, False]
+  BUSH_MODE = ["bush"] # ["bush", "wolf", "both"]
+  EMOTION_CONDITION = ["full", "self-only", "other-only", "none"]
 
   for spawn_prob in SPAWN_PROBS:
     for avr in AGENT_VISION_RADIUS:
       for mode in BUSH_MODE:
-        for has_emotion in HAS_EMOTION:
+        for emotion_condition in EMOTION_CONDITION:
           print(f"=== === === === === === === === === === === === === ===")
           print(f"===   Running with the following parameter values:  ===")
           print(f"===   Bush mode: {mode:<4}                               ===")
-          print(f"===   Has emotion: {has_emotion:<5}                            ===")
+          print(f"===   Has emotion: {emotion_condition:<10}                       ===")
           print(f"===   Agent vision radius: {avr:<1}                        ===")
           print(f"===   Bush spawn prob: {spawn_prob:<5}                        ===")
           print(f"=== === === === === === === === === === === === === ===")
 
           config.world.spawn_prob = spawn_prob
           config.model.agent_vision_radius = avr
-          config.model.has_emotion = has_emotion
+          config.model.emotion_condition = emotion_condition
           config.experiment.mode = mode
           if mode == "bush":
             config.world.wolves = 0

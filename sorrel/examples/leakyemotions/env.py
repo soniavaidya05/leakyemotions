@@ -17,7 +17,7 @@ from sorrel.utils.visualization import ImageRenderer
 
 # imports from our example
 from sorrel.examples.leakyemotions.agents import LeakyEmotionsAgent, Wolf
-from sorrel.examples.leakyemotions.custom_observation_spec import LeakyEmotionsObservationSpec
+from sorrel.examples.leakyemotions.custom_observation_spec import LeakyEmotionsObservationSpec, InteroceptiveObservationSpec, OtherOnlyObservationSpec, NoEmotionObservationSpec
 from sorrel.examples.leakyemotions.entities import EmptyEntity, Bush, Wall, Grass
 from sorrel.examples.leakyemotions.wolf_model import WolfModel
 from sorrel.examples.leakyemotions.world import LeakyEmotionsWorld
@@ -48,25 +48,39 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
         for i in range(agent_num):
             # create the observation spec
             entity_list = ENTITY_LIST
-            if self.config.model.has_emotion:
-                observation_spec = LeakyEmotionsObservationSpec(
-                    entity_list,
-                    full_view=False,
-                    # note that here we require self.config to have the entry model.agent_vision_radius
-                    # don't forget to pass it in as part of config when creating this experiment!
-                    vision_radius=self.config.model.agent_vision_radius,
-                )
-            else:
-                observation_spec = OneHotObservationSpec(
-                    entity_list,
-                    full_view=False,
-                    vision_radius=self.config.model.agent_vision_radius,
-                )
+            match self.config.model.emotion_condition:
+                case "full":
+                    observation_spec = LeakyEmotionsObservationSpec(
+                        entity_list,
+                        full_view=False,
+                        # note that here we require self.config to have the entry model.agent_vision_radius
+                        # don't forget to pass it in as part of config when creating this experiment!
+                        vision_radius=self.config.model.agent_vision_radius,
+                    )
+                case "self":
+                    observation_spec = InteroceptiveObservationSpec(
+                        entity_list,
+                        full_view=False,
+                        vision_radius=self.config.model.agent_vision_radius,    
+                        )
+                case "other":
+                    observation_spec = OtherOnlyObservationSpec(
+                        entity_list,
+                        full_view=False,
+                        vision_radius=self.config.model.agent_vision_radius,    
+                        )
+                # Default case: no emotions
+                case _:
+                    observation_spec = NoEmotionObservationSpec(
+                        entity_list,
+                        full_view=False,
+                        vision_radius=self.config.model.agent_vision_radius,    
+                        )
             
+            # Flatten input
             observation_spec.override_input_size(
                 np.zeros(observation_spec.input_size, dtype=int).reshape(1, -1).shape
             )
-            
 
             # create the action spec
             action_spec = ActionSpec(["up", "down", "left", "right"])
