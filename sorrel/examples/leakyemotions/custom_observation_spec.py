@@ -44,6 +44,15 @@ class LeakyEmotionsObservationSpec(OneHotObservationSpec):
                 (2 * self.vision_radius + 1),
                 (2 * self.vision_radius + 1),
             )
+        self._emotion_layer_zeroed = False
+
+    def zero_emotion_layer(self, zeroed: bool = True) -> None:
+        """Force the emotion layer to be zeroed out when observing the world."""
+        self._emotion_layer_zeroed = zeroed
+
+    @property
+    def emotion_layer_zeroed(self) -> bool:
+        return self._emotion_layer_zeroed
 
     def shift_helper(
         self,
@@ -125,8 +134,13 @@ class LeakyEmotionsObservationSpec(OneHotObservationSpec):
   
             if entity.kind == "Bush":
                 bush_ripeness_layer[0, *index[1:]] = entity.ripeness
-            elif entity.kind == "LeakyEmotionsAgent":
-                agent_qvalues_layer[0, *index[1:]] = self.emotion_helper(entity, location)
+            elif (
+                not self._emotion_layer_zeroed
+                and entity.kind == "LeakyEmotionsAgent"
+            ):
+                agent_qvalues_layer[0, *index[1:]] = self.emotion_helper(
+                    entity, location
+                )
 
         return np.concatenate((appearance, bush_ripeness_layer, agent_qvalues_layer), axis = 0)
 

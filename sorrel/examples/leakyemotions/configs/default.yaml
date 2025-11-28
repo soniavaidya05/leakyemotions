@@ -3,6 +3,8 @@ experiment:
   max_turns: 50
   record_period: 50
   mode: bush
+  zero_emotion_after_training: false # Set true to freeze the model and evaluate with the emotion layer zeroed.
+  zero_emotion_eval_epochs: 0        # Number of evaluation epochs to run when zeroing the emotion layer.
         
 model: 
   agent_vision_radius: 3

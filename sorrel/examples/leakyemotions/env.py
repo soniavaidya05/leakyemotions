@@ -210,6 +210,9 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
             - experiment.epochs: The number of epochs to run the experiment for.
             - experiment.max_turns: The maximum number of turns each epoch.
             - (Only if `animate` is true) experiment.record_period: The time interval at which to record the experiment.
+        Optional config parameters:
+            - experiment.zero_emotion_after_training: If true, runs a frozen evaluation pass with the emotion layer zeroed out.
+            - experiment.zero_emotion_eval_epochs: The number of evaluation epochs to run when zeroing the emotion layer.
 
         If `animate` is true,
         animates the experiment every `self.config.experiment.record_period` epochs.
@@ -235,9 +238,6 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
             # Reset the environment at the start of each epoch
             self.reset()
 
-            # if epoch % 1000 == 0:
-            #     self.config.world.wolves = (2 * self.config.world.wolves) + 1
-
             # Determine whether to animate this turn.
             animate_this_turn = animate and (
                 epoch % self.config.experiment.record_period == 0
@@ -251,12 +251,8 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
 
             # run the environment for the specified number of turns
             while not (self.turn >= self.config.experiment.max_turns) and (bunnies_left > 0):
-                # renderer should never be None if animate is true; this is just written for pyright to not complain
                 if animate_this_turn and renderer is not None:
                     renderer.add_image(self.world)
-                # print(f"Epoch: {epoch}, Turn: {self.turn}")
-                # print(f"Living bunnies: {sum([agent.alive for agent in self.bunnies])}")
-                # print(f"Reward: {self.world.total_reward}")
                 self.take_turn()
                 bunnies_left = sum([agent.alive for agent in self.bunnies])
 
@@ -273,7 +269,6 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
             for agent in self.agents:
                 loss = agent.model.train_step()
                 total_loss += loss
-                # Decrement the epsilon decay
                 agent.model.epsilon_decay(self.config.model.epsilon_decay)
 
             # Log the information
@@ -293,3 +288,59 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
                 for i, agent in enumerate(self.agents):
                     
                     agent.model.save(f'./sorrel/examples/leakyemotions/checkpoints/trial{epoch}_agent{i}.pkl')
+
+        # Optional zero-emotion evaluation phase (models stay frozen).
+        eval_requested = self.config.experiment.get(
+            "zero_emotion_after_training", False
+        )
+        eval_epochs = self.config.experiment.get("zero_emotion_eval_epochs", 0)
+
+        if eval_requested and eval_epochs > 0:
+            print(
+                f"Running zeroed-emotion evaluation for {eval_epochs} epoch(s) with frozen models."
+            )
+            for agent in self.agents:
+                observation_spec = getattr(agent, "observation_spec", None)
+                if isinstance(observation_spec, LeakyEmotionsObservationSpec):
+                    observation_spec.zero_emotion_layer(True)
+                if hasattr(agent.model, "eval"):
+                    agent.model.eval()
+
+            eval_start_epoch = self.config.experiment.epochs + 1
+            for epoch_offset in range(eval_epochs):
+                epoch_number = eval_start_epoch + epoch_offset
+                self.reset()
+
+                animate_this_turn = animate and (
+                    epoch_number % self.config.experiment.record_period == 0
+                )
+
+                for agent in self.agents:
+                    agent.model.start_epoch_action(epoch=epoch_number)
+
+                bunnies_left = sum([agent.alive for agent in self.bunnies])
+                while not (self.turn >= self.config.experiment.max_turns) and (bunnies_left > 0):
+                    if animate_this_turn and renderer is not None:
+                        renderer.add_image(self.world)
+                    self.take_turn()
+                    bunnies_left = sum([agent.alive for agent in self.bunnies])
+
+                self.world.is_done = True
+
+                if animate_this_turn and renderer is not None:
+                    if output_dir is None:
+                        output_dir = Path(os.getcwd()) / "./data/"
+                    renderer.save_gif(epoch_number, output_dir)
+
+                if logging and logger:
+                    logger.record_turn(
+                        epoch_number,
+                        float("nan"),
+                        self.world.total_reward,
+                        self.agents[0].model.epsilon,
+                    )
+
+            for agent in self.agents:
+                observation_spec = getattr(agent, "observation_spec", None)
+                if isinstance(observation_spec, LeakyEmotionsObservationSpec):
+                    observation_spec.zero_emotion_layer(False)
