@@ -1,0 +1,3 @@
+phase,avg_reward,std_reward
+children_with_adult_guidance,19.098840802225084,15.875528082328385
+children_without_guidance,-0.24438511608050315,8.68222109434655
