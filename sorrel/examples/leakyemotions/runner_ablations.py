@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime
 from pathlib import Path
 import torch
+from torch.utils.tensorboard import SummaryWriter
 from typing import Dict, List
 
 from omegaconf import OmegaConf
@@ -26,21 +27,34 @@ from sorrel.utils.logging import JupyterLogger
 from sorrel.utils.visualization import ImageRenderer
 
 ADULT_EPOCHS = 0
-CHILD_EPOCHS = 10000
+CHILD_EPOCHS = 100000
 
 CHILD_COUNT_OPTIONS = [10]
 ADULT_COUNT_OPTIONS = [0]
 AGENT_MODES = ["child-only"] # ["child-only", "adult-child-both"]
 BUSH_MODE = ["bush"]  # ["bush", "wolf", "both"]
 
-EMOTION_CONDITIONS = ["full", "self", "other", "none"]
-AGENT_VISION_RADIUS = [3, 4]
-SPAWN_PROBS = [0.001]
-BUSH_LIFESPANS = [30]
+EMOTION_CONDITIONS = ["full", "none"]
+AGENT_VISION_RADIUS = [3]
+SPAWN_PROBS = [0.0008, 0.001, 0.002, 0.003]
+BUSH_LIFESPANS = [30, 35, 40, 50]
 
 RUN_LABEL = "emotion_condition_ablations"
 RUNS_ROOT = Path("runs_parent_child")
 ENTITY_LIST = ["EmptyEntity", "Bush", "Wall", "Grass", "LeakyEmotionsAgent", "Wolf"]
+
+
+def write_logger_csv(logger: JupyterLogger, csv_path: Path) -> None:
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    if csv_path.exists():
+        csv_path.unlink()
+    logger.to_csv(csv_path)
+
+
+def save_summary_checkpoint(records: List[Dict[str, float]], summary_path: Path) -> None:
+    summary_df = pd.DataFrame(records)
+    summary_df.to_csv(summary_path, index=False)
+
 
 def clone_config(cfg) -> OmegaConf:
     return OmegaConf.create(OmegaConf.to_container(cfg, resolve=True))
@@ -101,11 +115,16 @@ def run_child_training(
     logger: JupyterLogger | None,
     animate: bool = False,
     output_dir: Path | None = None,
+    csv_log_path: Path | None = None,
+    csv_checkpoint_interval: int | None = None,
+    writer: SummaryWriter | None = None,
+    tensorboard_prefix: str = "child",
 ) -> None:
     assert child_agents, "child_agents list cannot be empty"
     max_turns = env.config.experiment.max_turns
     record_period = env.config.experiment.record_period
     epsilon_decay = getattr(env.config.model, "epsilon_decay", 0.0)
+    checkpoint_interval = csv_checkpoint_interval or record_period or 1
     renderer = None
     if animate:
         if output_dir is None:
@@ -137,6 +156,14 @@ def run_child_training(
             agent.model.epsilon_decay(epsilon_decay)
         if logger is not None:
             logger.record_turn(epoch, total_loss, env.world.total_reward, child_agents[0].model.epsilon)
+            if csv_log_path is not None and (epoch % checkpoint_interval == 0 or epoch == epochs):
+                write_logger_csv(logger, csv_log_path)
+        if writer is not None:
+            tag = tensorboard_prefix or "child"
+            writer.add_scalar(f"{tag}/total_loss", total_loss, epoch)
+            writer.add_scalar(f"{tag}/reward", env.world.total_reward, epoch)
+            writer.add_scalar(f"{tag}/epsilon", child_agents[0].model.epsilon, epoch)
+            writer.flush()
 
 
 def configure_children(env: LeakyEmotionsEnv, cfg, child_count: int) -> List[LeakyEmotionsAgent]:
@@ -164,6 +191,9 @@ def run_ablation_scenario(
 
     scenario_dir = base_dir / f"{mode_label}_adult{adult_count}_child{child_count}"
     scenario_dir.mkdir(parents=True, exist_ok=True)
+    tensorboard_dir = scenario_dir / "tensorboard"
+    tensorboard_dir.mkdir(parents=True, exist_ok=True)
+    writer = SummaryWriter(log_dir=str(tensorboard_dir))
 
     summaries: Dict[str, float] = {
         "condition": condition_label,
@@ -172,41 +202,64 @@ def run_ablation_scenario(
         "child_count": child_count,
     }
 
-    if mode_label == "adult-child-both":
-        adult_logger = JupyterLogger(max_epochs=ADULT_EPOCHS + 1)
-        env.run_experiment(logger=adult_logger, animate=False)
-        adult_rewards = np.array(adult_logger.rewards)
-        np.save(scenario_dir / "adult_training_rewards.npy", adult_rewards)
-        adult_logger.to_csv(scenario_dir / "adult_training_log.csv")
-        summaries["adult_final_reward"] = float(adult_rewards[-1])
-        summaries["adult_best_reward"] = float(np.max(adult_rewards))
-    else:
-        summaries["adult_final_reward"] = np.nan
-        summaries["adult_best_reward"] = np.nan
+    try:
+        if mode_label == "adult-child-both":
+            adult_logger = JupyterLogger(max_epochs=ADULT_EPOCHS + 1)
+            env.run_experiment(logger=adult_logger, animate=False)
+            adult_rewards = np.array(adult_logger.rewards)
+            np.save(scenario_dir / "adult_training_rewards.npy", adult_rewards)
+            adult_log_path = scenario_dir / "adult_training_log.csv"
+            write_logger_csv(adult_logger, adult_log_path)
+            if adult_logger.losses:
+                for epoch_idx, (loss, reward, epsilon) in enumerate(
+                    zip(adult_logger.losses, adult_logger.rewards, adult_logger.epsilons)
+                ):
+                    writer.add_scalar("adult/total_loss", loss, epoch_idx)
+                    writer.add_scalar("adult/reward", reward, epoch_idx)
+                    writer.add_scalar("adult/epsilon", epsilon, epoch_idx)
+                writer.flush()
+            summaries["adult_final_reward"] = float(adult_rewards[-1])
+            summaries["adult_best_reward"] = float(np.max(adult_rewards))
+        else:
+            summaries["adult_final_reward"] = np.nan
+            summaries["adult_best_reward"] = np.nan
 
-    if mode_label == "adult-child-both":
-        adult_agents = list(env.agents)
-        freeze_agent_models(adult_agents)
-        child_agents = configure_children(env, cfg, child_count)
-    elif mode_label == "child-only":
-        env.agents = []
-        env.bunnies = []
-        cfg.world.agents = 0
-        child_agents = configure_children(env, cfg, child_count)
-    else:
-        child_agents = []
+        if mode_label == "adult-child-both":
+            adult_agents = list(env.agents)
+            freeze_agent_models(adult_agents)
+            child_agents = configure_children(env, cfg, child_count)
+        elif mode_label == "child-only":
+            env.agents = []
+            env.bunnies = []
+            cfg.world.agents = 0
+            child_agents = configure_children(env, cfg, child_count)
+        else:
+            child_agents = []
 
-    if child_agents:
-        child_logger = JupyterLogger(max_epochs=CHILD_EPOCHS + 1)
-        run_child_training(env, child_agents, CHILD_EPOCHS, child_logger, animate=False, output_dir=None)
-        guided_rewards = np.array(child_logger.rewards)
-        np.save(scenario_dir / "child_training_rewards.npy", guided_rewards)
-        child_logger.to_csv(scenario_dir / "child_training_log.csv")
-        summaries["child_avg_reward"] = float(np.mean(guided_rewards))
-    else:
-        summaries["child_avg_reward"] = np.nan
+        if child_agents:
+            child_logger = JupyterLogger(max_epochs=CHILD_EPOCHS + 1)
+            child_log_path = scenario_dir / "child_training_log.csv"
+            run_child_training(
+                env,
+                child_agents,
+                CHILD_EPOCHS,
+                child_logger,
+                animate=False,
+                output_dir=None,
+                csv_log_path=child_log_path,
+                writer=writer,
+                tensorboard_prefix="child",
+            )
+            guided_rewards = np.array(child_logger.rewards)
+            np.save(scenario_dir / "child_training_rewards.npy", guided_rewards)
+            write_logger_csv(child_logger, child_log_path)
+            summaries["child_avg_reward"] = float(np.mean(guided_rewards))
+        else:
+            summaries["child_avg_reward"] = np.nan
 
-    return summaries
+        return summaries
+    finally:
+        writer.close()
 
 
 if __name__ == "__main__":
@@ -215,6 +268,7 @@ if __name__ == "__main__":
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir = RUNS_ROOT / f"{timestamp}_{RUN_LABEL}"
     run_dir.mkdir(parents=True, exist_ok=True)
+    summary_path = run_dir / "ablation_summary.csv"
 
     summaries = []
     for bush_lifespan in BUSH_LIFESPANS:
@@ -267,10 +321,10 @@ if __name__ == "__main__":
                                     summary["bush_mode"] = mode
                                     summary["bush_lifespan"] = bush_lifespan
                                     summaries.append(summary)
+                                    save_summary_checkpoint(summaries, summary_path)
 
     if summaries:
-        summary_df = pd.DataFrame(summaries)
-        summary_df.to_csv(run_dir / "ablation_summary.csv", index=False)
-        print(f"Ablation run complete. Summary saved to {run_dir / 'ablation_summary.csv'}")
+        save_summary_checkpoint(summaries, summary_path)
+        print(f"Ablation run complete. Summary saved to {summary_path}")
     else:
         print("No ablation combinations were executed.")
