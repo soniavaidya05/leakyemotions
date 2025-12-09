@@ -42,6 +42,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
         Requires self.config.model.agent_vision_radius to be defined.
         """
         agent_num = self.config.world.agents
+        emotion_length = self.config.model.emotion_length
         agents = []
         bunnies = []
         wolves = []
@@ -50,32 +51,23 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
             entity_list = ENTITY_LIST
             match self.config.model.emotion_condition:
                 case "full":
-                    observation_spec = LeakyEmotionsObservationSpec(
-                        entity_list,
-                        full_view=False,
-                        # note that here we require self.config to have the entry model.agent_vision_radius
-                        # don't forget to pass it in as part of config when creating this experiment!
-                        vision_radius=self.config.model.agent_vision_radius,
-                    )
+                    observation_spec_class = LeakyEmotionsObservationSpec
                 case "self":
-                    observation_spec = InteroceptiveObservationSpec(
-                        entity_list,
-                        full_view=False,
-                        vision_radius=self.config.model.agent_vision_radius,    
-                        )
+                    observation_spec_class = InteroceptiveObservationSpec
                 case "other":
-                    observation_spec = OtherOnlyObservationSpec(
-                        entity_list,
-                        full_view=False,
-                        vision_radius=self.config.model.agent_vision_radius,    
-                        )
+                    observation_spec_class = OtherOnlyObservationSpec
                 # Default case: no emotions
                 case _:
-                    observation_spec = NoEmotionObservationSpec(
-                        entity_list,
-                        full_view=False,
-                        vision_radius=self.config.model.agent_vision_radius,    
-                        )
+                    observation_spec_class = NoEmotionObservationSpec
+                    
+            observation_spec = observation_spec_class(
+                entity_list,
+                full_view=False,
+                # note that here we require self.config to have the entry model.agent_vision_radius
+                # don't forget to pass it in as part of config when creating this experiment!
+                vision_radius=self.config.model.agent_vision_radius,
+                emotion_length=emotion_length
+            )
             
             # Flatten input
             observation_spec.override_input_size(
@@ -107,7 +99,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
 
             if "checkpoint" in self.config.model:
                 model.load(
-                    Path(__file__).parent / f"./checkpoints/trial{self.config.model.checkpoint}_agent{i}.pkl"
+                    Path(__file__).parent / f"./data/checkpoints/trial{self.config.model.checkpoint}_agent{i}.pkl"
                 )
 
             bunny = LeakyEmotionsAgent(
@@ -227,6 +219,14 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
         """
         
         renderer = None
+        if output_dir is None:
+            if hasattr(self.config.experiment, "output_dir"):
+                output_dir = Path(self.config.experiment.output_dir)
+            else:
+                output_dir = Path(__file__).parent / "./data/"
+            assert isinstance(output_dir, Path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
         if animate:
             renderer = ImageRenderer(
                 experiment_name=self.world.__class__.__name__,
@@ -260,9 +260,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
 
             # generate the gif if animation was done
             if animate_this_turn and renderer is not None:
-                if output_dir is None:
-                    output_dir = Path(os.getcwd()) / "./data/"
-                renderer.save_gif(epoch, output_dir)
+                renderer.save_gif(epoch, output_dir / "./gifs/")
 
             # At the end of each epoch, train the agents.
             total_loss = 0
@@ -286,8 +284,8 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
             # update epsilon
             if epoch % 500 == 0:
                 for i, agent in enumerate(self.agents):
-                    
-                    agent.model.save(f'./sorrel/examples/leakyemotions/checkpoints/trial{epoch}_agent{i}.pkl')
+                    os.makedirs(output_dir / f"./checkpoints/", exist_ok=True)
+                    agent.model.save(output_dir / f'./checkpoints/trial{epoch}_agent{i}.pkl')
 
         # Optional zero-emotion evaluation phase (models stay frozen).
         eval_requested = self.config.experiment.get(
@@ -304,7 +302,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
                 if isinstance(observation_spec, LeakyEmotionsObservationSpec):
                     observation_spec.zero_emotion_layer(True)
                 if hasattr(agent.model, "eval"):
-                    agent.model.eval()
+                    agent.model.eval() #type: ignore
 
             eval_start_epoch = self.config.experiment.epochs + 1
             for epoch_offset in range(eval_epochs):
@@ -327,10 +325,9 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
 
                 self.world.is_done = True
 
+                # generate the gif if animation was done
                 if animate_this_turn and renderer is not None:
-                    if output_dir is None:
-                        output_dir = Path(os.getcwd()) / "./data/"
-                    renderer.save_gif(epoch_number, output_dir)
+                    renderer.save_gif(epoch_offset, output_dir / "./gifs/")
 
                 if logging and logger:
                     logger.record_turn(

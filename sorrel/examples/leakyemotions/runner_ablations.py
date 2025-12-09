@@ -8,7 +8,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 from typing import Dict, List
 
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
 
 from sorrel.action.action_spec import ActionSpec
 from sorrel.examples.leakyemotions.agents import LeakyEmotionsAgent
@@ -56,8 +56,10 @@ def save_summary_checkpoint(records: List[Dict[str, float]], summary_path: Path)
     summary_df.to_csv(summary_path, index=False)
 
 
-def clone_config(cfg) -> OmegaConf:
-    return OmegaConf.create(OmegaConf.to_container(cfg, resolve=True))
+def clone_config(cfg) -> DictConfig:
+    config = OmegaConf.create(OmegaConf.to_container(cfg, resolve=True))
+    assert isinstance(config, DictConfig)
+    return config
 
 def build_observation_spec(condition: str, vision_radius: int):
     if condition == "full":
@@ -183,7 +185,7 @@ def run_ablation_scenario(
     adult_count: int,
     child_count: int,
     base_dir: Path,
-) -> Dict[str, float]:
+) -> Dict[str, str | float]:
     cfg.world.agents = adult_count
     cfg.experiment.run_name = create_run_name(cfg)
     world = LeakyEmotionsWorld(config=cfg, default_entity=EmptyEntity())
@@ -195,7 +197,7 @@ def run_ablation_scenario(
     tensorboard_dir.mkdir(parents=True, exist_ok=True)
     writer = SummaryWriter(log_dir=str(tensorboard_dir))
 
-    summaries: Dict[str, float] = {
+    summaries: Dict[str, str | float] = {
         "condition": condition_label,
         "mode": mode_label,
         "adult_count": adult_count,

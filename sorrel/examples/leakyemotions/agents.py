@@ -15,14 +15,15 @@ from sorrel.examples.leakyemotions.world import LeakyEmotionsWorld
 class LeakyEmotionsAgent(Agent[LeakyEmotionsWorld]):
     """An agent that perceives wolves, bushes, and other agents in the environment."""
 
-    def __init__(self, observation_spec, action_spec, model: base_model.BaseModel, location: tuple | None = None):
+    def __init__(self, observation_spec, action_spec, model: base_model.BaseModel, location: tuple | None = None, emotion_length = 1):
         super().__init__(observation_spec, action_spec, model, location)
         self.encounters = {}
         self.passable = False
         self.sprite = Path(__file__).parent / "./assets/leakyemotionagent.png"
         self.id = 0
         self.alive = True
-        self.emotion = 0.
+        self.emotion_length = emotion_length
+        self.emotion = np.zeros(emotion_length)
     
     def reset(self) -> None:
         """Resets the agent by fill in blank images for the memory buffer."""
@@ -60,7 +61,12 @@ class LeakyEmotionsAgent(Agent[LeakyEmotionsWorld]):
         Args:
             state: The observed input.
         """
-        self.emotion = self.model.state_value(state) #type: ignore
+        if self.emotion_length == 1:
+            self.emotion = self.model.state_value(state) #type: ignore
+        elif self.emotion_length == 4:
+            self.emotion = self.model.state_values(state) #type: ignore
+        else:
+            raise NotImplementedError("Only emotion lengths of 1 and 4 are currently supported.")
 
     def act(self, world: LeakyEmotionsWorld, action: int) -> float:
         """Act on the environment, returning the reward."""

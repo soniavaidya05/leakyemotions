@@ -1,3 +1,4 @@
+from pathlib import Path
 from omegaconf import OmegaConf
 
 from sorrel.examples.leakyemotions.main import create_run_name, resolve_config_path
@@ -11,9 +12,9 @@ if __name__ == "__main__":
   config = OmegaConf.load(config_path)
 
   SPAWN_PROBS = [0.001] # [0.001, 0.002, 0.003]
-  AGENT_VISION_RADIUS = [3, 4, 5]
+  AGENT_VISION_RADIUS = [3]
   BUSH_MODE = ["bush"] # ["bush", "wolf", "both"]
-  EMOTION_CONDITION = ["full", "self-only", "other-only", "none"]
+  EMOTION_CONDITION = ["full", "self", "other", "none"]
 
   for spawn_prob in SPAWN_PROBS:
     for avr in AGENT_VISION_RADIUS:
@@ -46,5 +47,5 @@ if __name__ == "__main__":
           name = create_run_name(config)
           env.run_experiment(logger=TensorboardLogger(
               max_epochs=config.experiment.epochs,
-              log_dir=f'./data/tensorboard/{name}/'
+              log_dir=Path(__file__).parent / f'./data/tensorboard/{name}/'
           ))
