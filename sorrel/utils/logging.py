@@ -119,6 +119,7 @@ class ConsoleLogger(Logger):
 
     def record_turn(self, epoch, loss, reward, epsilon=0, **kwargs):
         loss = np.round(loss, 2)
+        reward = np.round(reward, 2)
         # Print beginning of the frame
         if epoch == 0:
             print(f"╔══════════════╦══════════════╦══════════════╗")

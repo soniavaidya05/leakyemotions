@@ -139,3 +139,11 @@ class Agent[W: Gridworld](Entity[W]):
 
         world.total_reward += reward
         self.add_memory(state, action, reward, done)
+
+    def __eq__(self, other):
+        # Agents cannot share locations, so this tests for equality with an immutable class (tuple)
+        return (hash(self.location) == hash(other.location))
+    
+    def __neq__(self, other):
+        # Agents cannot share locations, so this tests for equality with an immutable class (tuple)
+        return (hash(self.location) != hash(other.location))

@@ -18,4 +18,5 @@ world:
   height: 25
   width: 25
   spawn_prob: 0.001
-  bush_lifespan: 30
+  bush_lifespan: 50
+  start_bush: 10
