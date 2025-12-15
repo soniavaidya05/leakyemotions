@@ -147,6 +147,7 @@ def run_child_training(
             env.take_turn()
             bunnies_left = sum(agent.alive for agent in env.bunnies)
         env.world.is_done = True
+        child_reward = float(sum(agent.episode_reward for agent in child_agents))
         if animate_this_turn and renderer is not None:
             renderer.save_gif(epoch, output_dir)
         total_loss = 0.0
@@ -155,13 +156,13 @@ def run_child_training(
             total_loss += loss
             agent.model.epsilon_decay(epsilon_decay)
         if logger is not None:
-            logger.record_turn(epoch, total_loss, env.world.total_reward, child_agents[0].model.epsilon)
+            logger.record_turn(epoch, total_loss, child_reward, child_agents[0].model.epsilon)
             if csv_log_path is not None and (epoch % checkpoint_interval == 0 or epoch == epochs):
                 write_logger_csv(logger, csv_log_path)
         if writer is not None:
             tag = tensorboard_prefix or "child"
             writer.add_scalar(f"{tag}/total_loss", total_loss, epoch)
-            writer.add_scalar(f"{tag}/reward", env.world.total_reward, epoch)
+            writer.add_scalar(f"{tag}/reward", child_reward, epoch)
             writer.add_scalar(f"{tag}/epsilon", child_agents[0].model.epsilon, epoch)
             writer.flush()
 
