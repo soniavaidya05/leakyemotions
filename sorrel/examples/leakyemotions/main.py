@@ -97,7 +97,7 @@ if __name__ == "__main__":
     name = create_run_name(config)
     experiment.run_experiment(logger=TensorboardLogger(
         max_epochs=config.experiment.epochs,
-        log_dir=f'./data/tensorboard/{name}/'
+        log_dir=Path(__file__).parent / f'./data/tensorboard/{name}/'
     ))
 
 # end main

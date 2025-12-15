@@ -24,6 +24,7 @@ class LeakyEmotionsObservationSpec(OneHotObservationSpec):
         full_view: bool,
         vision_radius: int | None = None,
         env_dims: Sequence[int] | None = None,
+        emotion_length = 1
     ):
         r"""
         Initialize the :py:class:`ObservationSpec` object.
@@ -37,14 +38,15 @@ class LeakyEmotionsObservationSpec(OneHotObservationSpec):
         # By default, input_size is (channels, x, y)
         if self.full_view:
             assert isinstance(env_dims, Sequence)  # safeguarded in super().__init__()
-            self.input_size = (len(entity_list) + 2, *env_dims)
+            self.input_size = (len(entity_list) + 1 + emotion_length, *env_dims)
         else:
             self.input_size = (
-                len(entity_list) + 2,
+                len(entity_list) + 1 + emotion_length,
                 (2 * self.vision_radius + 1),
                 (2 * self.vision_radius + 1),
             )
         self._emotion_layer_zeroed = False
+        self.emotion_length = emotion_length
 
     def zero_emotion_layer(self, zeroed: bool = True) -> None:
         """Force the emotion layer to be zeroed out when observing the world."""
@@ -92,7 +94,7 @@ class LeakyEmotionsObservationSpec(OneHotObservationSpec):
         self,
         entity,
         location: tuple | None = None,
-    ) -> float:
+    ) -> np.ndarray:
         """Helper that computes the emotion for the current entity.
 
         Args:
@@ -102,7 +104,6 @@ class LeakyEmotionsObservationSpec(OneHotObservationSpec):
         Returns:
             The emotion value.
         """
-
         return entity.emotion
 
     def observe(
@@ -128,7 +129,7 @@ class LeakyEmotionsObservationSpec(OneHotObservationSpec):
 
         appearance = super().observe(world, location)
         bush_ripeness_layer = np.zeros((1, *appearance.shape[1:]))
-        agent_qvalues_layer = np.zeros((1, *appearance.shape[1:]))
+        agent_qvalues_layer = np.zeros((self.emotion_length, *appearance.shape[1:]))
     
         for index, entity in np.ndenumerate(shifted_world):
   
@@ -138,12 +139,12 @@ class LeakyEmotionsObservationSpec(OneHotObservationSpec):
                 not self._emotion_layer_zeroed
                 and entity.kind == "LeakyEmotionsAgent"
             ):
-                agent_qvalues_layer[0, *index[1:]] = self.emotion_helper(
+                agent_qvalues_layer[0:self.emotion_length, *index[1:]] = self.emotion_helper(
                     entity, location
                 )
 
         return np.concatenate((appearance, bush_ripeness_layer, agent_qvalues_layer), axis = 0)
-
+    
     
 class InteroceptiveObservationSpec(LeakyEmotionsObservationSpec):
     """An ablated version of the Leaky Emotions observation specification in which agents 
@@ -159,9 +160,9 @@ class InteroceptiveObservationSpec(LeakyEmotionsObservationSpec):
         self,
         entity,
         location: tuple | None = None,
-    ) -> float:
+    ) -> np.ndarray:
         # Only returns the emotion if the entity being observed is the observer itself
-        return entity.emotion if entity.location == location else 0.
+        return entity.emotion if entity.location == location else np.zeros(self.emotion_length)
     
     
 class OtherOnlyObservationSpec(LeakyEmotionsObservationSpec):
@@ -178,9 +179,10 @@ class OtherOnlyObservationSpec(LeakyEmotionsObservationSpec):
         self,
         entity,
         location: tuple | None = None,
-    ) -> float:
+    ) -> np.ndarray:
         # Only returns the emotion if the entity being observed is NOT the observer
-        return entity.emotion if entity.location != location else 0.
+        return entity.emotion if entity.location != location else np.zeros(self.emotion_length)
+    
     
 class NoEmotionObservationSpec(LeakyEmotionsObservationSpec):
     """An ablated version of the Leaky Emotions observation specification in which agents
@@ -196,6 +198,6 @@ class NoEmotionObservationSpec(LeakyEmotionsObservationSpec):
         self,
         entity,
         location: tuple | None = None,
-    ) -> float:
+    ) -> np.ndarray:
         # No emotion observation
-        return 0.
+        return np.zeros(self.emotion_length)

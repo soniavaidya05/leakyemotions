@@ -112,6 +112,14 @@ class Environment[W: Gridworld]:
             output_dir: The directory to save the animations to. Defaults to "./data/" (relative to current working directory).
         """
         renderer = None
+        if output_dir is None:
+            if hasattr(self.config.experiment, "output_dir"):
+                output_dir = Path(self.config.experiment.output_dir)
+            else:
+                output_dir = Path(__file__).parent / "./data/"
+            assert isinstance(output_dir, Path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
         if animate:
             renderer = ImageRenderer(
                 experiment_name=self.world.__class__.__name__,
@@ -142,8 +150,6 @@ class Environment[W: Gridworld]:
 
             # generate the gif if animation was done
             if animate_this_turn and renderer is not None:
-                if output_dir is None:
-                    output_dir = Path(os.getcwd()) / "./data/"
                 renderer.save_gif(epoch, output_dir)
 
             # end epoch action for each agent model

@@ -42,6 +42,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
         Requires self.config.model.agent_vision_radius to be defined.
         """
         agent_num = self.config.world.agents
+        emotion_length = self.config.model.emotion_length
         agents = []
         bunnies = []
         wolves = []
@@ -50,32 +51,23 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
             entity_list = ENTITY_LIST
             match self.config.model.emotion_condition:
                 case "full":
-                    observation_spec = LeakyEmotionsObservationSpec(
-                        entity_list,
-                        full_view=False,
-                        # note that here we require self.config to have the entry model.agent_vision_radius
-                        # don't forget to pass it in as part of config when creating this experiment!
-                        vision_radius=self.config.model.agent_vision_radius,
-                    )
+                    observation_spec_class = LeakyEmotionsObservationSpec
                 case "self":
-                    observation_spec = InteroceptiveObservationSpec(
-                        entity_list,
-                        full_view=False,
-                        vision_radius=self.config.model.agent_vision_radius,    
-                        )
+                    observation_spec_class = InteroceptiveObservationSpec
                 case "other":
-                    observation_spec = OtherOnlyObservationSpec(
-                        entity_list,
-                        full_view=False,
-                        vision_radius=self.config.model.agent_vision_radius,    
-                        )
+                    observation_spec_class = OtherOnlyObservationSpec
                 # Default case: no emotions
                 case _:
-                    observation_spec = NoEmotionObservationSpec(
-                        entity_list,
-                        full_view=False,
-                        vision_radius=self.config.model.agent_vision_radius,    
-                        )
+                    observation_spec_class = NoEmotionObservationSpec
+                    
+            observation_spec = observation_spec_class(
+                entity_list,
+                full_view=False,
+                # note that here we require self.config to have the entry model.agent_vision_radius
+                # don't forget to pass it in as part of config when creating this experiment!
+                vision_radius=self.config.model.agent_vision_radius,
+                emotion_length=emotion_length
+            )
             
             # Flatten input
             observation_spec.override_input_size(
@@ -107,7 +99,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
 
             if "checkpoint" in self.config.model:
                 model.load(
-                    Path(__file__).parent / f"./checkpoints/trial{self.config.model.checkpoint}_agent{i}.pkl"
+                    Path(__file__).parent / f"./data/checkpoints/trial{self.config.model.checkpoint}_agent{i}.pkl"
                 )
 
             bunny = LeakyEmotionsAgent(
@@ -165,7 +157,13 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
         Populate the leakyemotions world by creating walls, then randomly spawning the agents.
         Note that every space is already filled with EmptyEntity as part of super().__init__().
         """
+        if hasattr(self.config.world, "start_bush"):
+            self.start_bush = self.config.world.start_bush
+        else:
+            self.start_bush = 0
+
         valid_agent_spawn_locations = []
+        valid_bush_spawn_locations = []
 
         for index in np.ndindex(self.world.map.shape):
             y, x, z = index
@@ -174,6 +172,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
                 self.world.add(index, Wall())
             elif z == 0:  # if location is on the bottom (first) layer, put grass there
                 self.world.add(index, Grass(bush_lifespan=self.config.world.bush_lifespan))
+                valid_bush_spawn_locations.append(index)
             elif z == 1: # if location is on third layer, rabbit agents and wolves can appear here 
                 valid_agent_spawn_locations.append(index)
 
@@ -186,6 +185,14 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
         for loc, agent in zip(agent_locations, self.agents):
             loc = tuple(loc)
             self.world.add(loc, agent)
+
+        bush_locations_indices = np.random.choice(
+            len(valid_bush_spawn_locations), size=self.start_bush, replace=False
+        )
+        bush_locations = [valid_bush_spawn_locations[i] for i in bush_locations_indices]
+        for loc in bush_locations:
+            loc = tuple(loc)
+            self.world.add(loc, Bush(lifespan=self.config.world.bush_lifespan))
 
     def reset(self) -> None:
         """Reset the experiment, including the environment and the agents."""
@@ -227,6 +234,14 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
         """
         
         renderer = None
+        if output_dir is None:
+            if hasattr(self.config.experiment, "output_dir"):
+                output_dir = Path(self.config.experiment.output_dir)
+            else:
+                output_dir = Path(__file__).parent / "./data/"
+            assert isinstance(output_dir, Path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
         if animate:
             renderer = ImageRenderer(
                 experiment_name=self.world.__class__.__name__,
@@ -255,14 +270,19 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
                     renderer.add_image(self.world)
                 self.take_turn()
                 bunnies_left = sum([agent.alive for agent in self.bunnies])
+            # At the end, get the number of bushes
+            active_bushes = sum([
+                entity.kind == "Bush" for entity in self.world.map.flat
+            ])
+            average_pairwise_distance = np.mean([
+                min(Wolf.compute_taxicab_distance(agent1.location, [agent2.location for agent2 in self.agents if agent1 != agent2])) for agent1 in self.agents
+            ])
 
             self.world.is_done = True
 
             # generate the gif if animation was done
             if animate_this_turn and renderer is not None:
-                if output_dir is None:
-                    output_dir = Path(os.getcwd()) / "./data/"
-                renderer.save_gif(epoch, output_dir)
+                renderer.save_gif(epoch, output_dir / "./gifs/")
 
             # At the end of each epoch, train the agents.
             total_loss = 0
@@ -274,20 +294,26 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
             # Log the information
             if logging:
                 if not logger:
-                    logger = ConsoleLogger(self.config.experiment.epochs)
+                    logger = ConsoleLogger(
+                        self.config.experiment.epoch, 
+                        "active_bushes",
+                        "pairwise_distance"
+                    )
                 logger.record_turn(
                     epoch,
                     total_loss,
                     self.world.total_reward,
                     self.agents[0].model.epsilon,
+                    active_bushes=active_bushes,
+                    pairwise_distance=average_pairwise_distance
                 )
             
 
             # update epsilon
             if epoch % 500 == 0:
                 for i, agent in enumerate(self.agents):
-                    
-                    agent.model.save(f'./sorrel/examples/leakyemotions/checkpoints/trial{epoch}_agent{i}.pkl')
+                    os.makedirs(output_dir / f"./checkpoints/", exist_ok=True)
+                    agent.model.save(output_dir / f'./checkpoints/trial{epoch}_agent{i}.pkl')
 
         # Optional zero-emotion evaluation phase (models stay frozen).
         eval_requested = self.config.experiment.get(
@@ -304,7 +330,7 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
                 if isinstance(observation_spec, LeakyEmotionsObservationSpec):
                     observation_spec.zero_emotion_layer(True)
                 if hasattr(agent.model, "eval"):
-                    agent.model.eval()
+                    agent.model.eval() #type: ignore
 
             eval_start_epoch = self.config.experiment.epochs + 1
             for epoch_offset in range(eval_epochs):
@@ -327,10 +353,9 @@ class LeakyEmotionsEnv(Environment[LeakyEmotionsWorld]):
 
                 self.world.is_done = True
 
+                # generate the gif if animation was done
                 if animate_this_turn and renderer is not None:
-                    if output_dir is None:
-                        output_dir = Path(os.getcwd()) / "./data/"
-                    renderer.save_gif(epoch_number, output_dir)
+                    renderer.save_gif(epoch_offset, output_dir / "./gifs/")
 
                 if logging and logger:
                     logger.record_turn(
