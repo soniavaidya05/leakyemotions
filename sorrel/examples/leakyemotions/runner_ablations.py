@@ -11,6 +11,7 @@ from typing import Dict, List
 from omegaconf import OmegaConf, DictConfig
 
 from sorrel.action.action_spec import ActionSpec
+from sorrel.agents import Agent
 from sorrel.examples.leakyemotions.agents import LeakyEmotionsAgent
 from sorrel.examples.leakyemotions.custom_observation_spec import (
     InteroceptiveObservationSpec,
@@ -110,6 +111,22 @@ def freeze_agent_models(agent_list: List[LeakyEmotionsAgent]) -> None:
                     param.requires_grad_(False)
 
 
+def take_turn_with_child_rewards(env: LeakyEmotionsEnv, child_id_set: set[int]) -> float:
+    """Advance the environment one turn while summing reward earned by child agents."""
+    child_reward = 0.0
+    env.turn += 1
+    for _, entity in np.ndenumerate(env.world.map):
+        if getattr(entity, "has_transitions", False) and not isinstance(entity, Agent):
+            entity.transition(env.world)
+    for agent in env.agents:
+        before = env.world.total_reward
+        agent.transition(env.world)
+        after = env.world.total_reward
+        if id(agent) in child_id_set:
+            child_reward += after - before
+    return child_reward
+
+
 def run_child_training(
     env: LeakyEmotionsEnv,
     child_agents: List[LeakyEmotionsAgent],
@@ -123,6 +140,7 @@ def run_child_training(
     tensorboard_prefix: str = "child",
 ) -> None:
     assert child_agents, "child_agents list cannot be empty"
+    child_id_set = {id(agent) for agent in child_agents}
     max_turns = env.config.experiment.max_turns
     record_period = env.config.experiment.record_period
     epsilon_decay = getattr(env.config.model, "epsilon_decay", 0.0)
@@ -143,13 +161,13 @@ def run_child_training(
             agent.model.start_epoch_action(epoch=epoch)
         animate_this_turn = animate and (epoch % record_period == 0)
         bunnies_left = sum(agent.alive for agent in env.bunnies)
+        epoch_child_reward = 0.0
         while env.turn < max_turns and bunnies_left > 0:
             if animate_this_turn and renderer is not None:
                 renderer.add_image(env.world)
-            env.take_turn()
+            epoch_child_reward += take_turn_with_child_rewards(env, child_id_set)
             bunnies_left = sum(agent.alive for agent in env.bunnies)
         env.world.is_done = True
-        child_reward = float(sum(agent.episode_reward for agent in child_agents))
         if animate_this_turn and renderer is not None:
             renderer.save_gif(epoch, output_dir)
         total_loss = 0.0
@@ -158,13 +176,13 @@ def run_child_training(
             total_loss += loss
             agent.model.epsilon_decay(epsilon_decay)
         if logger is not None:
-            logger.record_turn(epoch, total_loss, child_reward, child_agents[0].model.epsilon)
+            logger.record_turn(epoch, total_loss, epoch_child_reward, child_agents[0].model.epsilon)
             if csv_log_path is not None and (epoch % checkpoint_interval == 0 or epoch == epochs):
                 write_logger_csv(logger, csv_log_path)
         if writer is not None:
             tag = tensorboard_prefix or "child"
             writer.add_scalar(f"{tag}/total_loss", total_loss, epoch)
-            writer.add_scalar(f"{tag}/reward", child_reward, epoch)
+            writer.add_scalar(f"{tag}/reward", epoch_child_reward, epoch)
             writer.add_scalar(f"{tag}/epsilon", child_agents[0].model.epsilon, epoch)
             writer.flush()
 
